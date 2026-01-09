@@ -234,7 +234,7 @@ def parse_args() -> argparse.Namespace:
         help="Apply sensor error only once at the first iteration after jitter-iteration.",
     )
     # TODO - add more
-    parser.add_argument("--jitter-iterations", type=str, default="10,40")
+    parser.add_argument("--jitter-iterations", type=str, default="10,20,40")
     parser.add_argument("--jitter-stds", type=str, default="0.05,0.5,1,5")
 
     parser.add_argument("--initial-samples", type=int, default=5)
@@ -248,7 +248,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--seeds", type=str, default=None)
-    parser.add_argument("--num-seeds", type=int, default=10)
+    parser.add_argument("--num-seeds", type=int, default=5)
 
     parser.add_argument("--output-dir", type=Path, default=Path("output"))
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)

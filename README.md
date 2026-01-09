@@ -1,7 +1,7 @@
-# Sensor-error simulation for HITL BO
+# Multi-Objective Bayesian Optimization for Design: Iteration, Acquisition, and Error Robustness Tests
 
 This folder provides a reproducible, data-driven simulation that answers the following
-questions using the eHMI study data:
+questions using the HMI design study data:
 
 - **Effects of sensor errors in implicit HITL optimization**: inject Gaussian jitter
   into the feedback signal after a specified iteration and observe how the next

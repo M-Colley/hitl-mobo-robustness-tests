@@ -32,7 +32,7 @@ questions using the HMI design study data:
 ## Install (latest compatible versions)
 
 ```bash
-python -m pip install --upgrade -r scripts/requirements.txt
+python -m pip install --upgrade -r requirements.txt
 ```
 
 ## Run

@@ -170,16 +170,17 @@ python scripts/bo_sensor_error_simulation.py \
 
 ## Data location
 
-By default the script looks for `eHMI-bo-participantdata` in the repository root
-relative to the script location. If your data lives elsewhere, pass it explicitly:
+By default, the script searches for data in remote Git repositories.
+
+You can also point `data_dir` (or any entry in `data_dirs`) to a remote Git repo
+URL. The script will clone it into `--dataset-cache-dir` before loading observations.
+
+ If your data lives elsewhere, pass it explicitly:
 
 ```bash
 python scripts/bo_sensor_error_simulation.py \
   --data-dir /path/to/eHMI-bo-participantdata
 ```
-
-You can also point `data_dir` (or any entry in `data_dirs`) to a remote Git repo
-URL. The script will clone it into `--dataset-cache-dir` before loading observations.
 
 ### Multiple datasets and custom objectives
 
@@ -190,7 +191,7 @@ columns), provide a JSON dataset config and optionally enable a combined dataset
 [
   {
     "name": "ehmi",
-    "data_dir": "../eHMI-bo-participantdata",
+    "data_dir": "https://github.com/M-Colley/ehmi-optimization-chi25-data",
     "param_columns": ["verticalPosition", "verticalWidth", "horizontalWidth", "r", "g", "b", "a", "blinkFrequency", "volume"],
     "objective_map": {
       "composite": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],

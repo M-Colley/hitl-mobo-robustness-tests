@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.model_selection import KFold, cross_val_score
+from tqdm import tqdm
 
 from bo_sensor_error_simulation import (
     DATA_DIR,
@@ -77,13 +78,14 @@ def evaluate_models_for_objective(
     normalize: bool,
     weights: np.ndarray | None,
     tree_scale: float,
+    progress_desc: str | None = None,
 ) -> dict[str, float]:
     X = df[param_columns].to_numpy(dtype=float)
     scores: dict[str, float] = {}
 
     if objective == "multi_objective":
         Y = compute_objective_matrix(df, objective_columns, normalize)
-        for model_name in models:
+        for model_name in tqdm(models, desc=progress_desc, leave=False):
             per_target = []
             for idx in range(Y.shape[1]):
                 per_target.append(
@@ -93,7 +95,7 @@ def evaluate_models_for_objective(
         return scores
 
     y = compute_objective(df, objective_columns, normalize, weights).to_numpy(dtype=float)
-    for model_name in models:
+    for model_name in tqdm(models, desc=progress_desc, leave=False):
         scores[model_name] = _evaluate_model(model_name, X, y, seed, cv_folds, tree_scale)
     return scores
 
@@ -116,7 +118,7 @@ def main() -> None:
         "datasets": [],
     }
 
-    for dataset in datasets:
+    for dataset in tqdm(datasets, desc="Datasets"):
         objective_names = parse_objective_list(args.objective, args.objectives, dataset.objective_map)
         dataset_entry = {
             "name": dataset.name,
@@ -143,6 +145,7 @@ def main() -> None:
                 args.normalize_objective,
                 weights,
                 tree_scale,
+                progress_desc=f"{dataset.name}:{objective_name}",
             )
             best_model = max(scores.items(), key=lambda item: item[1])[0]
             dataset_entry["objectives"][objective_name] = {

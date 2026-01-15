@@ -360,6 +360,28 @@ def ensure_output_dir(path: Path) -> Path:
     return path
 
 
+def _read_observation_csv(path: Path, required_columns: list[str]) -> pd.DataFrame:
+    last_df: pd.DataFrame | None = None
+    for sep in (";", ","):
+        df = pd.read_csv(path, sep=sep)
+        last_df = df
+        if all(col in df.columns for col in required_columns):
+            return df
+
+    available = ", ".join(
+        [str(col) for col in (last_df.columns if last_df is not None else [])]
+    )
+    missing = (
+        ", ".join(sorted(set(required_columns) - set(last_df.columns)))
+        if last_df is not None
+        else ", ".join(required_columns)
+    )
+    raise ValueError(
+        f"Observation file '{path}' is missing required columns: {missing}. "
+        f"Available columns: {available}"
+    )
+
+
 def load_observations(
     dataset: DatasetConfig,
     objective: str,
@@ -373,11 +395,20 @@ def load_observations(
         dirs = ", ".join(str(path) for path in dataset.data_dirs)
         raise FileNotFoundError(f"No observation files found in {dirs} using {dataset.observation_glob}")
 
-    frames = [pd.read_csv(path, sep=";") for path in files]
+    required_columns = dataset.param_columns + dataset.objective_map[objective]
+    frames = [_read_observation_csv(path, required_columns) for path in files]
     df = pd.concat(frames, ignore_index=True)
 
-    for column in dataset.param_columns + dataset.objective_map[objective] + ["User_ID", "Group_ID"]:
+    for column in required_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
+    for column in ["User_ID", "Group_ID"]:
+        if column in df.columns:
+            df[column] = pd.to_numeric(df[column], errors="coerce")
+
+    if user_id is not None and "User_ID" not in df.columns:
+        raise ValueError("User_ID column missing from observations; cannot filter by --user-id.")
+    if group_id is not None and "Group_ID" not in df.columns:
+        raise ValueError("Group_ID column missing from observations; cannot filter by --group-id.")
 
     if user_id is not None:
         df = df[df["User_ID"] == float(user_id)]

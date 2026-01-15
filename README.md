@@ -21,8 +21,9 @@ questions using the HMI design study data:
 2. Trains **oracle models** to map the 9 eHMI parameters to a target objective
    (composite, single-objective, or multi-objective).
 3. Runs iterative BO with a **Gaussian Process** surrogate.
-4. Trains one or more **oracle models** (Random Forest, Extra Trees, Gradient Boosting,
-   HistGradientBoosting, XGBoost, LightGBM) to map eHMI parameters to the target objective.
+4. Trains one or more **oracle models** (XGBoost, LightGBM, CatBoost, TabPFN,
+   Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting) to map eHMI
+   parameters to the target objective.
 5. Injects **sensor error** (Gaussian jitter) into the observed feedback after a chosen
    iteration.
 6. Writes a per-iteration CSV and a summary of the **parameter adjustment** from
@@ -45,7 +46,7 @@ python scripts/bo_sensor_error_simulation.py \
   --initial-samples 5 \
   --candidate-pool 1000 \
   --objective composite \
-  --oracle-models random_forest,lightgbm,xgboost \
+  --oracle-models xgboost \
   --acq all \
   --seed 7 \
   --output-dir output/bo_sensor_error
@@ -57,8 +58,8 @@ magnitudes (`0.05,0.1,0.2,0.4`). Override these with
 `--jitter-iteration`/`--jitter-std` pair for a focused run.
 
 Oracle models can be swept with `--oracle-models`, or set to a single model with
-`--oracle-model`. The default sweep now covers **Random Forest**, **LightGBM**, and
-**XGBoost**. Use `--oracle-model all` to run all available options:
+`--oracle-model`. The default run uses **XGBoost**. Use `--oracle-model all` to run
+all available options:
 
 ```bash
 python scripts/bo_sensor_error_simulation.py --oracle-model all
@@ -153,6 +154,18 @@ this with either:
 ```bash
 python scripts/bo_sensor_error_simulation.py --objective trust
 python scripts/bo_sensor_error_simulation.py --objectives composite,trust
+```
+
+## Picking the best oracle model
+
+Use the helper script to benchmark oracle models on the loaded dataset(s) and
+write a JSON summary that can be consumed by downstream runs:
+
+```bash
+python scripts/select_best_oracle_model.py \
+  --oracle-models all \
+  --cv-folds 3 \
+  --output-path output/best_oracle_models.json
 ```
 
 ### Objective normalization and weighting
@@ -264,13 +277,12 @@ The summary stats file reports mean and standard deviation across runs.
 ## Sensor error models
 
 Use `--error-model` to control the error type after `--jitter-iteration`. The
-default sweep now uses **gaussian** and **drift**.
+default sweep now uses **gaussian** and **bias**.
 
 - `gaussian` (default): `objective_observed = true + N(0, jitter_std)`
-- `bias`: constant offset `+ error_bias`
-- `drift`: linearly increasing offset `+ error_drift * (iteration - jitter_iteration)`
-- `dropout`: hold the last observed value (`--dropout-strategy hold_last`)
-- `spike`: occasional spikes with probability `error_spike_prob`
+- `bias`: constant offset `+ error_bias`, plus Gaussian jitter
+- `dropout`: hold the last observed value (`--dropout-strategy hold_last`) with Gaussian jitter
+- `spike`: occasional spikes with probability `error_spike_prob`, plus Gaussian jitter
 
 Example:
 

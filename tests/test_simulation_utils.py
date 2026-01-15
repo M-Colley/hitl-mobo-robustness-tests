@@ -33,8 +33,8 @@ def test_parse_objective_list_defaults_to_composite_and_multi() -> None:
 
 
 def test_parse_oracle_models_default_set() -> None:
-    models = bo_sim.parse_oracle_models("xgboost", "random_forest,lightgbm,xgboost")
-    assert models == ["random_forest", "lightgbm", "xgboost"]
+    models = bo_sim.parse_oracle_models("xgboost", "xgboost,lightgbm,catboost,tabpfn")
+    assert models == ["xgboost", "lightgbm", "catboost", "tabpfn"]
 
 
 def test_filter_acquisitions_for_objective() -> None:
@@ -70,7 +70,6 @@ def test_apply_sensor_error_vector_bias() -> None:
         seed=1,
         error_model="bias",
         error_bias=0.5,
-        error_drift=0.01,
         error_spike_prob=0.1,
         error_spike_std=0.2,
         dropout_strategy="hold_last",
@@ -84,14 +83,18 @@ def test_apply_sensor_error_vector_bias() -> None:
     )
     rng = np.random.default_rng(0)
     true_value = np.array([1.0, 2.0])
+    expected_rng = np.random.default_rng(0)
+    jitter = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    expected_bias = np.full_like(true_value, config.error_bias, dtype=float)
+    expected_error = expected_bias + jitter
     observed, error = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
-    assert np.allclose(observed, np.array([1.5, 2.5]))
-    assert np.allclose(error, np.array([0.5, 0.5]))
+    assert np.allclose(observed, true_value + expected_error)
+    assert np.allclose(error, expected_error)
 
 
 def test_oracle_builders_for_key_models() -> None:
     df = make_dummy_df()
-    for model_name in ["random_forest", "lightgbm", "xgboost"]:
+    for model_name in ["xgboost", "lightgbm", "catboost"]:
         oracle = bo_sim.build_oracle(
             df=df,
             objective="composite",
@@ -109,6 +112,95 @@ def test_oracle_builders_for_key_models() -> None:
         pred = oracle.predict(df[bo_sim.PARAM_COLUMNS].iloc[0].to_numpy(dtype=float))
         assert pred.shape == (1,)
 
+
+def test_oracle_builders_multi_objective_xgboost() -> None:
+    df = make_dummy_df()
+    oracle = bo_sim.build_oracle(
+        df=df,
+        objective="multi_objective",
+        objective_columns=bo_sim.OBJECTIVE_MAP["multi_objective"],
+        param_columns=bo_sim.PARAM_COLUMNS,
+        seed=7,
+        normalize=False,
+        weights=None,
+        oracle_model="xgboost",
+        oracle_augmentation="none",
+        oracle_augment_repeats=0,
+        oracle_augment_std=0.0,
+        oracle_fast=True,
+    )
+    pred = oracle.predict(df[bo_sim.PARAM_COLUMNS].iloc[0].to_numpy(dtype=float))
+    assert pred.shape == (len(bo_sim.OBJECTIVE_MAP["multi_objective"]),)
+
+
+def test_build_oracle_model_supports_tabpfn() -> None:
+    model = bo_sim._build_oracle_model("tabpfn", seed=7, tree_scale=0.2)
+    assert model.__class__.__name__ == "TabPFNRegressor"
+
+
+def _make_error_config(error_model: str, jitter_std: float = 0.1) -> bo_sim.SimulationConfig:
+    return bo_sim.SimulationConfig(
+        iterations=5,
+        jitter_iteration=2,
+        jitter_std=jitter_std,
+        single_error=False,
+        initial_samples=1,
+        candidate_pool=10,
+        objective="composite",
+        objective_columns=bo_sim.OBJECTIVE_MAP["composite"],
+        param_columns=bo_sim.PARAM_COLUMNS,
+        seed=1,
+        error_model=error_model,
+        error_bias=0.5,
+        error_spike_prob=1.0,
+        error_spike_std=0.2,
+        dropout_strategy="hold_last",
+        normalize_objective=False,
+        objective_weights=None,
+        acq_num_restarts=2,
+        acq_raw_samples=8,
+        acq_maxiter=15,
+        acq_mc_samples=32,
+        ref_point=None,
+    )
+
+
+def test_apply_sensor_error_uses_jitter_for_gaussian() -> None:
+    config = _make_error_config("gaussian")
+    true_value = np.array([1.0, 2.0])
+    rng = np.random.default_rng(1)
+    expected_rng = np.random.default_rng(1)
+    jitter = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    observed, error = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
+    assert np.allclose(observed, true_value + jitter)
+    assert np.allclose(error, jitter)
+
+
+def test_apply_sensor_error_uses_jitter_for_dropout() -> None:
+    config = _make_error_config("dropout")
+    true_value = np.array([1.0, 2.0])
+    previous_observed = np.array([0.5, 1.5])
+    rng = np.random.default_rng(2)
+    expected_rng = np.random.default_rng(2)
+    jitter = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    expected_observed = previous_observed + jitter
+    observed, error = bo_sim.apply_sensor_error(true_value, 3, config, rng, previous_observed)
+    assert np.allclose(observed, expected_observed)
+    assert np.allclose(error, expected_observed - true_value)
+
+
+def test_apply_sensor_error_uses_jitter_for_spike() -> None:
+    config = _make_error_config("spike")
+    true_value = np.array([1.0, 2.0])
+    rng = np.random.default_rng(3)
+    expected_rng = np.random.default_rng(3)
+    jitter = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    _ = expected_rng.random()
+    spike = expected_rng.normal(0.0, config.error_spike_std, size=true_value.shape)
+    combined = spike + jitter
+    observed, error = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
+    assert np.allclose(observed, true_value + combined)
+    assert np.allclose(error, combined)
 
 def test_augment_oracle_data_jitter() -> None:
     rng = np.random.default_rng(42)
@@ -191,3 +283,19 @@ def test_load_observations_multiple_dirs(tmp_path: Path) -> None:
     )
     loaded = bo_sim.load_observations(dataset, "composite")
     assert loaded.shape[0] == 4
+
+
+def test_summarize_adjustment_includes_avg_regret() -> None:
+    results = pd.DataFrame(
+        {
+            "iteration": [1, 2, 3],
+            "p1": [0.1, 0.2, 0.3],
+            "p2": [0.2, 0.3, 0.4],
+            "best_true_so_far": [1.0, 1.5, 2.0],
+            "simple_regret_true": [0.5, 0.4, 0.3],
+            "regret_cum_true": [0.5, 0.9, 1.2],
+            "regret_avg_true": [0.5, 0.45, 0.4],
+        }
+    )
+    summary = bo_sim.summarize_adjustment(results, 1, ["p1", "p2"])
+    assert np.isclose(summary["final_avg_regret_true"], 0.4)

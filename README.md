@@ -22,7 +22,7 @@ questions using the HMI design study data:
    (composite, single-objective, or multi-objective).
 3. Runs iterative BO with a **Gaussian Process** surrogate.
 4. Trains one or more **oracle models** (XGBoost, LightGBM, CatBoost, TabPFN,
-   Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting) to map eHMI
+   Random Forest, Extra Trees, Gradient Boosting, HistGradientBoosting) to map HMI
    parameters to the target objective.
 5. Injects **sensor error** (Gaussian jitter) into the observed feedback after a chosen
    iteration.

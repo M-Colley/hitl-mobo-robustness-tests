@@ -50,8 +50,10 @@ from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
 )
+from catboost import CatBoostRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
+from tabpfn import TabPFNRegressor
 
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.fit import fit_gpytorch_mll
@@ -132,14 +134,16 @@ SINGLE_ACQUISITION_CHOICES = [
 ]
 MULTI_ACQUISITION_CHOICES = ["qehvi", "qnehvi"]
 ACQUISITION_CHOICES = SINGLE_ACQUISITION_CHOICES + MULTI_ACQUISITION_CHOICES
-ERROR_MODEL_CHOICES = ["gaussian", "bias", "drift", "dropout", "spike"]
+ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike"]
 ORACLE_MODEL_CHOICES = [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "tabpfn",
     "random_forest",
     "extra_trees",
     "gradient_boosting",
     "hist_gradient_boosting",
-    "xgboost",
-    "lightgbm",
 ]
 
 
@@ -176,7 +180,6 @@ class SimulationConfig:
     seed: int
     error_model: str
     error_bias: float
-    error_drift: float
     error_spike_prob: float
     error_spike_std: float
     dropout_strategy: str
@@ -275,10 +278,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-baseline-run", action="store_false", dest="baseline_run")
 
     parser.add_argument("--error-model", type=str, default="gaussian", choices=ERROR_MODEL_CHOICES + ["all"])
-    parser.add_argument("--error-models", type=str, default="gaussian,drift")
+    parser.add_argument("--error-models", type=str, default="gaussian,bias")
 
     parser.add_argument("--error-bias", type=float, default=0.2)
-    parser.add_argument("--error-drift", type=float, default=0.02)
     parser.add_argument("--error-spike-prob", type=float, default=0.1)
     parser.add_argument("--error-spike-std", type=float, default=0.5)
     parser.add_argument("--dropout-strategy", type=str, default="hold_last", choices=["hold_last"])
@@ -293,7 +295,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--kappa", type=float, default=2.0)
 
     parser.add_argument("--oracle-model", type=str, default="xgboost", choices=ORACLE_MODEL_CHOICES + ["all"])
-    parser.add_argument("--oracle-models", type=str, default="random_forest,lightgbm,xgboost")
+    parser.add_argument("--oracle-models", type=str, default="xgboost")
     parser.add_argument(
         "--oracle-augmentation",
         type=str,
@@ -574,6 +576,24 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             colsample_bytree=0.8,
             random_state=seed,
             n_jobs=1,
+        )
+    if oracle_model == "catboost":
+        return CatBoostRegressor(
+            iterations=int(800 * tree_scale),
+            learning_rate=0.05,
+            depth=6,
+            loss_function="RMSE",
+            random_seed=seed,
+            thread_count=1,
+            verbose=False,
+        )
+    if oracle_model == "tabpfn":
+        estimators = max(2, int(round(8 * tree_scale)))
+        return TabPFNRegressor(
+            n_estimators=estimators,
+            device="cpu",
+            n_preprocessing_jobs=1,
+            random_state=seed,
         )
     raise ValueError(f"Unknown oracle model: {oracle_model}")
 
@@ -976,7 +996,6 @@ def write_run_config(
         "",
         "Error model parameters:",
         f"  error_bias: {args.error_bias}",
-        f"  error_drift: {args.error_drift}",
         f"  error_spike_prob: {args.error_spike_prob}",
         f"  error_spike_std: {args.error_spike_std}",
         "",
@@ -1014,25 +1033,25 @@ def apply_sensor_error(
     if config.single_error and iteration != config.jitter_iteration + 1:
         return true_value, np.zeros_like(true_value, dtype=float)
 
+    jitter = rng.normal(0.0, config.jitter_std, size=true_value.shape)
+
     if config.error_model == "gaussian":
-        jitter = rng.normal(0.0, config.jitter_std, size=true_value.shape)
         return true_value + jitter, jitter
     if config.error_model == "bias":
         bias = np.full_like(true_value, config.error_bias, dtype=float)
-        return true_value + bias, bias
-    if config.error_model == "drift":
-        drift_value = config.error_drift * (iteration - config.jitter_iteration)
-        drift = np.full_like(true_value, drift_value, dtype=float)
-        return true_value + drift, drift
+        combined = bias + jitter
+        return true_value + combined, combined
     if config.error_model == "dropout":
         if config.dropout_strategy != "hold_last":
             raise ValueError(f"Unsupported dropout strategy: {config.dropout_strategy}")
-        return previous_observed, previous_observed - true_value
+        observed = previous_observed + jitter
+        return observed, observed - true_value
     if config.error_model == "spike":
+        spike = np.zeros_like(true_value, dtype=float)
         if rng.random() < config.error_spike_prob:
             spike = rng.normal(0.0, config.error_spike_std, size=true_value.shape)
-            return true_value + spike, spike
-        return true_value, np.zeros_like(true_value, dtype=float)
+        combined = spike + jitter
+        return true_value + combined, combined
 
     raise ValueError(f"Unknown error model: {config.error_model}")
 
@@ -1180,6 +1199,7 @@ def run_simulation(
     regret_inst_list: list[float] = []
     regret_cum_list: list[float] = []
     simple_regret_list: list[float] = []
+    regret_avg_list: list[float] = []
 
     bounds_tensor = bounds.tensor
     previous_observed = None
@@ -1296,13 +1316,14 @@ def run_simulation(
             objective_observed_scalar.append(scalar_obs)
             best_true_so_far = max(best_true_so_far, scalar_true)
             r_t = max(0.0, y_opt - scalar_true)
-            cum_regret += r_t
-            s_t = max(0.0, y_opt - best_true_so_far)
+        cum_regret += r_t
+        s_t = max(0.0, y_opt - best_true_so_far)
 
         best_true_list.append(best_true_so_far)
         regret_inst_list.append(r_t)
         regret_cum_list.append(cum_regret)
         simple_regret_list.append(s_t)
+        regret_avg_list.append(cum_regret / float(iteration))
 
     results = pd.DataFrame(X_list, columns=config.param_columns)
     results.insert(0, "iteration", np.arange(1, config.iterations + 1))
@@ -1344,6 +1365,7 @@ def run_simulation(
     results["regret_inst_true"] = regret_inst_list
     results["regret_cum_true"] = regret_cum_list
     results["simple_regret_true"] = simple_regret_list
+    results["regret_avg_true"] = regret_avg_list
 
     return results
 
@@ -1370,6 +1392,7 @@ def summarize_adjustment(
     summary["final_best_true"] = float(results["best_true_so_far"].iloc[-1])
     summary["final_simple_regret_true"] = float(results["simple_regret_true"].iloc[-1])
     summary["final_cum_regret_true"] = float(results["regret_cum_true"].iloc[-1])
+    summary["final_avg_regret_true"] = float(results["regret_avg_true"].iloc[-1])
 
     sr = results["simple_regret_true"].to_numpy(dtype=float)
     summary["auc_simple_regret_true"] = float(np.trapezoid(sr, dx=1.0))
@@ -1462,7 +1485,6 @@ def run_single_seed(
             seed=seed,
             error_model=args.error_model,
             error_bias=args.error_bias,
-            error_drift=args.error_drift,
             error_spike_prob=args.error_spike_prob,
             error_spike_std=args.error_spike_std,
             dropout_strategy=args.dropout_strategy,
@@ -1845,6 +1867,9 @@ def main() -> None:
             excess_entry["final_cum_regret_excess_true"] = (
                 row["final_cum_regret_true_jitter"] - row["final_cum_regret_true_baseline"]
             )
+            excess_entry["final_avg_regret_excess_true"] = (
+                row["final_avg_regret_true_jitter"] - row["final_avg_regret_true_baseline"]
+            )
             excess_entry["auc_simple_regret_excess_true"] = (
                 row["auc_simple_regret_true_jitter"] - row["auc_simple_regret_true_baseline"]
             )
@@ -1859,6 +1884,7 @@ def main() -> None:
             "delta_excess_l2_norm",
             "final_simple_regret_excess_true",
             "final_cum_regret_excess_true",
+            "final_avg_regret_excess_true",
             "auc_simple_regret_excess_true",
         ]
         dataset_stats = (
@@ -1923,6 +1949,8 @@ def main() -> None:
             final_simple_regret_std=("final_simple_regret_true", "std"),
             final_cum_regret_mean=("final_cum_regret_true", "mean"),
             final_cum_regret_std=("final_cum_regret_true", "std"),
+            final_avg_regret_mean=("final_avg_regret_true", "mean"),
+            final_avg_regret_std=("final_avg_regret_true", "std"),
             auc_simple_regret_mean=("auc_simple_regret_true", "mean"),
             auc_simple_regret_std=("auc_simple_regret_true", "std"),
             runs=("delta_l2_norm", "count"),
@@ -1977,6 +2005,8 @@ def main() -> None:
                 "statsmodels",
                 "botorch",
                 "torch",
+                "catboost",
+                "tabpfn",
             ]
         ),
     }

@@ -51,6 +51,7 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
     - posthoc_results: Tukey HSD post-hoc comparisons
     - effect_sizes: Effect size metrics
     - descriptive_stats: Descriptive statistics by group
+    - regret_tests: Paired t-tests for regret metrics
     """
     baseline = final_df[final_df["baseline"]].copy()
     jittered = final_df[~final_df["baseline"]].copy()
@@ -59,8 +60,10 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
     if "dataset" in final_df.columns:
         merge_keys.insert(0, "dataset")
 
+    regret_cols = ["simple_regret_true", "regret_cum_true", "regret_avg_true"]
+    baseline_cols = ["objective_true", "objective_observed", *regret_cols]
     merged = jittered.merge(
-        baseline[merge_keys + ["objective_true", "objective_observed"]],
+        baseline[merge_keys + baseline_cols],
         on=merge_keys,
         how="inner",
         suffixes=("_jitter", "_baseline"),
@@ -387,7 +390,38 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
     results['descriptive_stats'] = desc_stats
     
     # ============================================================================
-    # 5. SAVE RESULTS
+    # 5. REGRET METRICS (Paired t-tests)
+    # ============================================================================
+    print("\n" + "="*80)
+    print("REGRET METRICS (Paired t-tests)")
+    print("="*80)
+
+    regret_tests = []
+    for metric in regret_cols:
+        jitter_col = f"{metric}_jitter"
+        baseline_col = f"{metric}_baseline"
+        if jitter_col not in merged.columns or baseline_col not in merged.columns:
+            continue
+        paired = merged[[jitter_col, baseline_col]].dropna()
+        if len(paired) < 2:
+            print(f"Skipping {metric}: insufficient paired samples")
+            continue
+        t_stat, p_val = ttest_rel(paired[jitter_col], paired[baseline_col])
+        mean_diff = float((paired[jitter_col] - paired[baseline_col]).mean())
+        regret_tests.append({
+            "metric": metric,
+            "t_stat": float(t_stat),
+            "p_value": float(p_val),
+            "mean_diff": mean_diff,
+            "n": int(len(paired)),
+        })
+        print(f"{metric}: t={t_stat:.4f}, p={p_val:.4f}, mean diff={mean_diff:.4f}")
+
+    if regret_tests:
+        results["regret_tests"] = pd.DataFrame(regret_tests)
+
+    # ============================================================================
+    # 6. SAVE RESULTS
     # ============================================================================
     output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -409,6 +443,9 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
     if 'descriptive_stats' in results:
         desc_stats = results['descriptive_stats']
         desc_stats.to_csv(output_dir / "descriptive_statistics.csv")
+
+    if "regret_tests" in results:
+        results["regret_tests"].to_csv(output_dir / "regret_paired_tests.csv", index=False)
     
     # Save one-way ANOVA results if available
     for key in list(results.keys()):
@@ -416,7 +453,7 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
             results[key].to_csv(output_dir / f"{key}.csv", index=False)
     
     # ============================================================================
-    # 6. SIMPLE EFFECTS ANALYSIS (if interaction is significant)
+    # 7. SIMPLE EFFECTS ANALYSIS (if interaction is significant)
     # ============================================================================
     print("\n" + "="*80)
     print("SIMPLE EFFECTS ANALYSIS")

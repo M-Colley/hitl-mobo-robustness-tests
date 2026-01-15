@@ -23,6 +23,9 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
+if "PYTORCH_CUDA_ALLOC_CONF" in os.environ and "PYTORCH_ALLOC_CONF" not in os.environ:
+    os.environ["PYTORCH_ALLOC_CONF"] = os.environ["PYTORCH_CUDA_ALLOC_CONF"]
+    del os.environ["PYTORCH_CUDA_ALLOC_CONF"]
 
 import argparse
 import dataclasses
@@ -210,18 +213,39 @@ class OracleModel:
     model: object
     objective_name: str
     objective_columns: list[str]
+    param_columns: list[str] | None = None
+
+    def _prepare_features(self, X: np.ndarray, model: object) -> np.ndarray | pd.DataFrame:
+        feature_names: list[str] | None = None
+        if hasattr(model, "feature_names_in_"):
+            feature_names = list(model.feature_names_in_)
+        elif hasattr(model, "feature_name_"):
+            feature_names = list(model.feature_name_)
+        elif self.param_columns:
+            feature_names = list(self.param_columns)
+        if feature_names:
+            return pd.DataFrame(X, columns=feature_names)
+        return X
 
     def predict(self, x: np.ndarray) -> np.ndarray:
+        X = x.reshape(1, -1)
         if isinstance(self.model, list):
-            values = [float(m.predict(x.reshape(1, -1))[0]) for m in self.model]
+            values = [
+                float(m.predict(self._prepare_features(X, m))[0]) for m in self.model
+            ]
             return np.asarray(values, dtype=float)
-        return np.asarray([float(self.model.predict(x.reshape(1, -1))[0])], dtype=float)
+        return np.asarray([float(self.model.predict(self._prepare_features(X, self.model))[0])], dtype=float)
 
     def predict_many(self, X: np.ndarray) -> np.ndarray:
         if isinstance(self.model, list):
-            preds = [np.asarray(m.predict(X), dtype=float) for m in self.model]
+            preds = [
+                np.asarray(m.predict(self._prepare_features(X, m)), dtype=float)
+                for m in self.model
+            ]
             return np.stack(preds, axis=1)
-        return np.asarray(self.model.predict(X), dtype=float).reshape(-1, 1)
+        return np.asarray(
+            self.model.predict(self._prepare_features(X, self.model)), dtype=float
+        ).reshape(-1, 1)
 
 
 def parse_args() -> argparse.Namespace:
@@ -480,6 +504,7 @@ def build_oracle(
             oracle_augment_std,
         )
         models = []
+        X_aug_df = pd.DataFrame(X_aug, columns=param_columns)
         for idx, target in enumerate(objective_columns):
             y = Y_aug[:, idx]
             models.append(
@@ -489,15 +514,20 @@ def build_oracle(
                     tree_scale=tree_scale,
                 )
             )
-            models[-1].fit(X_aug, y)
-            train_score = models[-1].score(X_aug, y)
-            y_pred = models[-1].predict(X_aug)
+            models[-1].fit(X_aug_df, y)
+            train_score = models[-1].score(X_aug_df, y)
+            y_pred = models[-1].predict(X_aug_df)
             train_rmse = np.sqrt(np.mean((y - y_pred) ** 2))
             print(f"Oracle ({oracle_model}) for {target} trained on {len(X_aug)} samples:")
             print(f"  R² score: {train_score:.4f}")
             print(f"  RMSE: {train_rmse:.4f}")
 
-        return OracleModel(model=models, objective_name=objective, objective_columns=objective_columns)
+        return OracleModel(
+            model=models,
+            objective_name=objective,
+            objective_columns=objective_columns,
+            param_columns=param_columns,
+        )
 
     y = compute_objective(df, objective_columns, normalize, weights).to_numpy(dtype=float)
     X_aug, y_aug = augment_oracle_data(
@@ -509,23 +539,30 @@ def build_oracle(
         oracle_augment_std,
     )
 
+    X_aug_df = pd.DataFrame(X_aug, columns=param_columns)
+
     model = _build_oracle_model(
         oracle_model=oracle_model,
         seed=seed,
         tree_scale=tree_scale,
     )
 
-    model.fit(X_aug, y_aug)
+    model.fit(X_aug_df, y_aug)
 
     # Report oracle performance
-    train_score = model.score(X_aug, y_aug)
-    y_pred = model.predict(X_aug)
+    train_score = model.score(X_aug_df, y_aug)
+    y_pred = model.predict(X_aug_df)
     train_rmse = np.sqrt(np.mean((y_aug - y_pred) ** 2))
     print(f"Oracle ({oracle_model}) trained on {len(X_aug)} samples:")
     print(f"  R² score: {train_score:.4f}")
     print(f"  RMSE: {train_rmse:.4f}")
 
-    return OracleModel(model=model, objective_name=objective, objective_columns=objective_columns)
+    return OracleModel(
+        model=model,
+        objective_name=objective,
+        objective_columns=objective_columns,
+        param_columns=param_columns,
+    )
 
 
 def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> object:

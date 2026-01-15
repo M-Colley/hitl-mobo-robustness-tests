@@ -576,6 +576,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             colsample_bytree=0.8,
             random_state=seed,
             n_jobs=1,
+            force_row_wise=True,
+            verbosity=-1,
         )
     if oracle_model == "catboost":
         return CatBoostRegressor(

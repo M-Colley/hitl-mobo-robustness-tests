@@ -31,6 +31,7 @@ import argparse
 import dataclasses
 import importlib.metadata
 import json
+import re
 import subprocess
 import time
 import uuid 
@@ -364,6 +365,8 @@ def _read_observation_csv(path: Path, required_columns: list[str]) -> pd.DataFra
     last_df: pd.DataFrame | None = None
     for sep in (";", ","):
         df = pd.read_csv(path, sep=sep)
+        df.columns = df.columns.str.strip()
+        df = _normalize_qehvi_columns(df)
         last_df = df
         if all(col in df.columns for col in required_columns):
             return df
@@ -380,6 +383,20 @@ def _read_observation_csv(path: Path, required_columns: list[str]) -> pd.DataFra
         f"Observation file '{path}' is missing required columns: {missing}. "
         f"Available columns: {available}"
     )
+
+
+def _normalize_qehvi_columns(df: pd.DataFrame) -> pd.DataFrame:
+    qehvi_suffix = re.compile(r"\s+QEHVI$", flags=re.IGNORECASE)
+    existing = set(df.columns)
+    rename_map: dict[str, str] = {}
+    for col in df.columns:
+        base = qehvi_suffix.sub("", col)
+        if base != col and base not in existing:
+            rename_map[col] = base
+            existing.add(base)
+    if rename_map:
+        df = df.rename(columns=rename_map)
+    return df
 
 
 def load_observations(

@@ -219,7 +219,24 @@ columns), provide a JSON dataset config and optionally enable a combined dataset
   {
     "name": "opticarvis",
     "data_dir": "https://github.com/M-Colley/opticarvis-data",
-    "param_columns": ["verticalPosition", "verticalWidth", "horizontalWidth", "r", "g", "b", "a", "blinkFrequency", "volume"],
+    "param_columns": [
+      "Trajectory",
+      "TrajectoryAlpha",
+      "TrajectorySize",
+      "EgoTrajectory",
+      "EgoTrajectoryAlpha",
+      "EgoTrajectorySize",
+      "PedestrianIntention",
+      "PedestrianIntentionSize",
+      "SemanticSegmentation",
+      "SemanticSegmentationAlpha",
+      "CarStatus",
+      "CarStatusAlpha",
+      "CoveredArea",
+      "CoveredAreaAlpha",
+      "CoveredAreaSize",
+      "OccludedCars"
+    ],
     "objective_map": {
       "composite": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],
       "multi_objective": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"]

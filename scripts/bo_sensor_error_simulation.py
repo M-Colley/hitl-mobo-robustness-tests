@@ -54,7 +54,7 @@ from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
 )
-from catboost import CatBoostRegressor
+#from catboost import CatBoostRegressor
 from xgboost import XGBRegressor
 from lightgbm import LGBMRegressor
 from tabpfn import TabPFNRegressor
@@ -142,7 +142,7 @@ ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike"]
 ORACLE_MODEL_CHOICES = [
     "xgboost",
     "lightgbm",
-    "catboost",
+    #"catboost",
     "tabpfn",
     "random_forest",
     "extra_trees",
@@ -319,8 +319,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--xi", type=float, default=0.01)
     parser.add_argument("--kappa", type=float, default=2.0)
 
-    parser.add_argument("--oracle-model", type=str, default="xgboost", choices=ORACLE_MODEL_CHOICES + ["all"])
-    parser.add_argument("--oracle-models", type=str, default="xgboost")
+    parser.add_argument("--oracle-model", type=str, default="extra_trees", choices=ORACLE_MODEL_CHOICES + ["all"])
+    parser.add_argument("--oracle-models", type=str, default="extra_trees")
     parser.add_argument(
         "--oracle-augmentation",
         type=str,
@@ -2092,7 +2092,7 @@ def main() -> None:
                 "statsmodels",
                 "botorch",
                 "torch",
-                "catboost",
+                #"catboost",
                 "tabpfn",
             ]
         ),

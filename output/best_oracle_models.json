@@ -1,0 +1,73 @@
+{
+  "cv_folds": 3,
+  "metric": "r2",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "tabpfn",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "ehmi",
+      "objectives": {
+        "composite": {
+          "best_model": "tabpfn",
+          "scores": {
+            "xgboost": 0.4554307822271804,
+            "lightgbm": 0.43566453993054294,
+            "tabpfn": 0.49452672612172477,
+            "random_forest": 0.45227310494569933,
+            "extra_trees": 0.4758034997541696,
+            "gradient_boosting": 0.4402553061112377,
+            "hist_gradient_boosting": 0.44785423986352235
+          }
+        },
+        "multi_objective": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": 0.3316272645588143,
+            "lightgbm": 0.3188287053399482,
+            "tabpfn": 0.33994292436031237,
+            "random_forest": 0.31905684968278974,
+            "extra_trees": 0.3608101472911894,
+            "gradient_boosting": 0.26462204168169856,
+            "hist_gradient_boosting": 0.31512421347544184
+          }
+        }
+      }
+    },
+    {
+      "name": "opticarvis",
+      "objectives": {
+        "composite": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": 0.10577308287925817,
+            "lightgbm": -0.11118742854759518,
+            "tabpfn": -6.691012703825723,
+            "random_forest": 0.008821884791255044,
+            "extra_trees": 0.20092725486520316,
+            "gradient_boosting": 0.1055653483768592,
+            "hist_gradient_boosting": -0.1111874286807748
+          }
+        },
+        "multi_objective": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": 0.10801498812210016,
+            "lightgbm": -0.10970230438668482,
+            "tabpfn": -3.247370088475745,
+            "random_forest": 0.026531561211346293,
+            "extra_trees": 0.19440605607136724,
+            "gradient_boosting": 0.1073969253497554,
+            "hist_gradient_boosting": -0.10970230440653912
+          }
+        }
+      }
+    }
+  ]
+}

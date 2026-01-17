@@ -33,8 +33,8 @@ def test_parse_objective_list_defaults_to_composite_and_multi() -> None:
 
 
 def test_parse_oracle_models_default_set() -> None:
-    models = bo_sim.parse_oracle_models("xgboost", "xgboost,lightgbm,extra_trees,tabpfn")
-    assert models == ["xgboost", "lightgbm", "extra_trees", "tabpfn"]
+    models = bo_sim.parse_oracle_models("extra_trees", "xgboost,lightgbm,extra_trees")
+    assert models == ["xgboost", "lightgbm", "extra_trees"]
 
 
 def test_filter_acquisitions_for_objective() -> None:
@@ -94,7 +94,7 @@ def test_apply_sensor_error_vector_bias() -> None:
 
 def test_oracle_builders_for_key_models() -> None:
     df = make_dummy_df()
-    for model_name in ["xgboost", "lightgbm", "extra_trees", "tabpfn"]:
+    for model_name in ["xgboost", "lightgbm", "extra_trees"]:
         oracle = bo_sim.build_oracle(
             df=df,
             objective="composite",
@@ -131,11 +131,6 @@ def test_oracle_builders_multi_objective_xgboost() -> None:
     )
     pred = oracle.predict(df[bo_sim.PARAM_COLUMNS].iloc[0].to_numpy(dtype=float))
     assert pred.shape == (len(bo_sim.OBJECTIVE_MAP["multi_objective"]),)
-
-
-def test_build_oracle_model_supports_tabpfn() -> None:
-    model = bo_sim._build_oracle_model("tabpfn", seed=7, tree_scale=0.2)
-    assert model.__class__.__name__ == "TabPFNRegressor"
 
 
 def _make_error_config(error_model: str, jitter_std: float = 0.1) -> bo_sim.SimulationConfig:

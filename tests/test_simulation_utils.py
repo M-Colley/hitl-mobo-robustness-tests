@@ -33,8 +33,8 @@ def test_parse_objective_list_defaults_to_composite_and_multi() -> None:
 
 
 def test_parse_oracle_models_default_set() -> None:
-    models = bo_sim.parse_oracle_models("xgboost", "xgboost,lightgbm,catboost,tabpfn")
-    assert models == ["xgboost", "lightgbm", "catboost", "tabpfn"]
+    models = bo_sim.parse_oracle_models("xgboost", "xgboost,lightgbm,extra_trees,tabpfn")
+    assert models == ["xgboost", "lightgbm", "extra_trees", "tabpfn"]
 
 
 def test_filter_acquisitions_for_objective() -> None:
@@ -94,7 +94,7 @@ def test_apply_sensor_error_vector_bias() -> None:
 
 def test_oracle_builders_for_key_models() -> None:
     df = make_dummy_df()
-    for model_name in ["xgboost", "lightgbm", "catboost"]:
+    for model_name in ["xgboost", "lightgbm", "extra_trees", "tabpfn"]:
         oracle = bo_sim.build_oracle(
             df=df,
             objective="composite",

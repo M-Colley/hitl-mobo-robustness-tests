@@ -1,0 +1,49 @@
+Sensor-error simulation configuration
+============================================================
+
+Datasets:
+  - ehmi: .dataset_cache\ehmi-optimization-chi25-data
+  - opticarvis: .dataset_cache\opticarvis-data
+
+Objectives by dataset:
+  ehmi: composite, multi_objective
+  opticarvis: composite, multi_objective
+Acquisitions: logei, logpi, ei, pi, ucb, qucb, qei, qpi, qnei, greedy, qehvi, qnehvi
+Error models: gaussian, bias
+Oracle models: extra_trees
+Seeds: 7, 8, 9, 10, 11
+
+Core settings:
+  iterations: 50
+  initial_samples: 5
+  jitter_iterations: 10,20,40
+  jitter_stds: 0.05,0.5,1,5
+  single_error: False
+  baseline_run: True
+
+Oracle settings:
+  augmentation: jitter
+  augmentation_repeats: 2
+  augmentation_std: 0.02
+  oracle_fast: False
+
+BO settings:
+  xi: 0.01
+  kappa: 2.0
+  acq_num_restarts: 10
+  acq_raw_samples: 512
+  acq_maxiter: 200
+  acq_mc_samples: 256
+
+Error model parameters:
+  error_bias: 0.2
+  error_spike_prob: 0.1
+  error_spike_std: 0.5
+
+Data filters:
+  user_id: None
+  group_id: None
+
+Normalization:
+  normalize_objective: False
+  objective_weights: None

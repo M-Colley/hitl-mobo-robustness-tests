@@ -1,0 +1,81 @@
+STATISTICAL ANALYSIS REPORT
+================================================================================
+
+METHODOLOGY:
+--------------------------------------------------------------------------------
+1. Mixed ANOVA with Type II sums of squares (or one-way ANOVAs if data limited)
+2. Post-hoc pairwise comparisons using Tukey HSD (when applicable)
+3. Effect sizes: η² (eta-squared) and Cohen's d
+4. Significance level: α = 0.05
+
+INTERPRETATION GUIDELINES:
+--------------------------------------------------------------------------------
+Effect Size (Cohen's d):
+ - Small: 0.2 ≤ |d| < 0.5
+ - Medium: 0.5 ≤ |d| < 0.8
+ - Large: |d| ≥ 0.8
+
+Effect Size (η²):
+ - Small: 0.01 ≤ η² < 0.06
+ - Medium: 0.06 ≤ η² < 0.14
+ - Large: η² ≥ 0.14
+
+KEY FINDINGS:
+--------------------------------------------------------------------------------
+Total conditions tested: 288
+Conditions with LARGE effects: 35
+
+Conditions with largest effects:
+      objective acquisition error_model  jitter_std  jitter_iteration oracle_model  cohens_d_true  cohens_d_obs  n interpretation_true interpretation_obs
+      composite        qnei    gaussian         5.0                40  extra_trees       0.005852      1.239295 10          negligible              LARGE
+multi_objective       qehvi    gaussian         5.0                40  extra_trees       0.003743      1.059680 10          negligible              LARGE
+multi_objective       qehvi        bias         5.0                40  extra_trees       0.001053      1.057547 10          negligible              LARGE
+multi_objective       qehvi        bias         1.0                40  extra_trees       0.000357      0.873935 10          negligible              LARGE
+multi_objective      qnehvi        bias         1.0                10  extra_trees       0.000000      0.844904 10          negligible              LARGE
+multi_objective      qnehvi        bias         5.0                10  extra_trees       0.000000      1.099704 10          negligible              LARGE
+multi_objective      qnehvi        bias         5.0                20  extra_trees       0.000000      1.136498 10          negligible              LARGE
+multi_objective      qnehvi    gaussian         5.0                10  extra_trees       0.000000      1.245874 10          negligible              LARGE
+multi_objective      qnehvi    gaussian         5.0                20  extra_trees       0.000000      1.074205 10          negligible              LARGE
+multi_objective      qnehvi    gaussian         5.0                40  extra_trees       0.000000      0.967541 10          negligible              LARGE
+
+
+ANOVA RESULTS - True Objective:
+--------------------------------------------------------------------------------
+                           sum_sq      df          F    PR(>F)    eta_sq  omega_sq
+C(dataset)           8.611746e+03     1.0   7.552801  0.006029  0.002592  0.002248
+C(objective)         2.556139e+01     1.0   0.022418  0.880990  0.000008 -0.000335
+C(acquisition)       2.811752e+02    11.0   0.022418  0.880990  0.000085 -0.003689
+C(error_model)       3.442490e+01     1.0   0.030192  0.862068  0.000010 -0.000333
+C(jitter_std)        2.095228e+04     3.0   6.125293  0.000378  0.006306  0.005274
+C(jitter_iteration)  3.075308e+04     2.0  13.485758  0.000001  0.009255  0.008566
+Residual             3.262129e+06  2861.0        NaN       NaN  0.981745  0.000000
+
+Model type: main effects only
+
+ANOVA RESULTS - Observed Objective:
+--------------------------------------------------------------------------------
+                           sum_sq      df          F        PR(>F)    eta_sq  omega_sq
+C(dataset)           1.210585e+10     1.0  56.666815  6.876728e-14  0.018484  0.018152
+C(objective)         5.111567e+06     1.0   0.023927  8.770818e-01  0.000008 -0.000318
+C(acquisition)       5.622723e+07    11.0   0.023927  8.770818e-01  0.000086 -0.003501
+C(error_model)       1.401462e+08     1.0   0.656017  4.180371e-01  0.000214 -0.000112
+C(jitter_std)        2.910848e+10     3.0  45.418401  1.142322e-28  0.044446  0.043453
+C(jitter_iteration)  2.305805e+09     2.0   5.396672  4.577886e-03  0.003521  0.002867
+Residual             6.112014e+11  2861.0        NaN           NaN  0.933242  0.000000
+
+Model type: main effects only
+
+POST-HOC TEST RESULTS:
+--------------------------------------------------------------------------------
+See individual CSV files for detailed Tukey HSD comparisons.
+
+
+DESCRIPTIVE STATISTICS:
+--------------------------------------------------------------------------------
+See descriptive_statistics.csv for detailed summaries.
+
+
+DATA QUALITY NOTES:
+--------------------------------------------------------------------------------
+Total observations: 2880
+Sample size per condition: min=10, max=10, mean=10.0

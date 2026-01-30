@@ -1,0 +1,200 @@
+{
+  "args": {
+    "iterations": 50,
+    "jitter_iteration": 20,
+    "jitter_std": 0.2,
+    "single_error": false,
+    "jitter_iterations": "10,20,40",
+    "jitter_stds": "0.05,0.5,1,5",
+    "initial_samples": 5,
+    "candidate_pool": 1000,
+    "objective": null,
+    "objectives": null,
+    "acq": "all",
+    "acq_list": null,
+    "seed": 7,
+    "seeds": null,
+    "num_seeds": 5,
+    "output_dir": "output",
+    "data_dir": "C:\\Users\\mi\\Desktop\\hitl-mobo-robustness-tests\\eHMI-bo-participantdata",
+    "dataset_config": "datasets.json",
+    "combine_datasets": false,
+    "dataset_cache_dir": ".dataset_cache",
+    "baseline_run": true,
+    "error_model": "gaussian",
+    "error_models": "gaussian,bias",
+    "error_bias": 0.2,
+    "error_spike_prob": 0.1,
+    "error_spike_std": 0.5,
+    "dropout_strategy": "hold_last",
+    "user_id": null,
+    "group_id": null,
+    "normalize_objective": false,
+    "objective_weights": null,
+    "xi": 0.01,
+    "kappa": 2.0,
+    "oracle_model": "extra_trees",
+    "oracle_models": "extra_trees",
+    "oracle_augmentation": "jitter",
+    "oracle_augment_repeats": 2,
+    "oracle_augment_std": 0.02,
+    "oracle_fast": false,
+    "oracle_opt_samples": 200000,
+    "oracle_opt_batch_size": 50000,
+    "oracle_opt_seed": 10007,
+    "acq_num_restarts": 10,
+    "acq_raw_samples": 512,
+    "acq_maxiter": 200,
+    "acq_mc_samples": 256,
+    "parallel": false,
+    "n_jobs": -1
+  },
+  "runtime_sec": 70381.26585080009,
+  "parallel_execution": true,
+  "n_workers": 5,
+  "datasets": [
+    {
+      "name": "ehmi",
+      "data_dirs": [
+        ".dataset_cache\\ehmi-optimization-chi25-data"
+      ],
+      "param_columns": [
+        "verticalPosition",
+        "verticalWidth",
+        "horizontalWidth",
+        "r",
+        "g",
+        "b",
+        "a",
+        "blinkFrequency",
+        "volume"
+      ],
+      "objective_map": {
+        "composite": [
+          "Trust",
+          "Understanding",
+          "PerceivedSafety",
+          "Aesthetics",
+          "Acceptance"
+        ],
+        "multi_objective": [
+          "Trust",
+          "Understanding",
+          "PerceivedSafety",
+          "Aesthetics",
+          "Acceptance"
+        ],
+        "trust": [
+          "Trust"
+        ],
+        "understanding": [
+          "Understanding"
+        ],
+        "perceived_safety": [
+          "PerceivedSafety"
+        ],
+        "aesthetics": [
+          "Aesthetics"
+        ],
+        "acceptance": [
+          "Acceptance"
+        ]
+      },
+      "observation_glob": "ObservationsPerEvaluation.csv"
+    },
+    {
+      "name": "opticarvis",
+      "data_dirs": [
+        ".dataset_cache\\opticarvis-data"
+      ],
+      "param_columns": [
+        "Trajectory",
+        "TrajectoryAlpha",
+        "TrajectorySize",
+        "EgoTrajectory",
+        "EgoTrajectoryAlpha",
+        "EgoTrajectorySize",
+        "PedestrianIntention",
+        "PedestrianIntentionSize",
+        "SemanticSegmentation",
+        "SemanticSegmentationAlpha",
+        "CarStatus",
+        "CarStatusAlpha",
+        "CoveredArea",
+        "CoveredAreaAlpha",
+        "CoveredAreaSize",
+        "OccludedCars"
+      ],
+      "objective_map": {
+        "composite": [
+          "Trust",
+          "Understanding",
+          "PerceivedSafety",
+          "Aesthetics",
+          "Acceptance"
+        ],
+        "multi_objective": [
+          "Trust",
+          "Understanding",
+          "PerceivedSafety",
+          "Aesthetics",
+          "Acceptance"
+        ]
+      },
+      "observation_glob": "ObservationsPerEvaluation.csv"
+    }
+  ],
+  "objectives": {
+    "ehmi": [
+      "composite",
+      "multi_objective"
+    ],
+    "opticarvis": [
+      "composite",
+      "multi_objective"
+    ]
+  },
+  "error_models": [
+    "gaussian",
+    "bias"
+  ],
+  "oracle_models": [
+    "extra_trees"
+  ],
+  "acquisitions": [
+    "logei",
+    "logpi",
+    "ei",
+    "pi",
+    "ucb",
+    "qucb",
+    "qei",
+    "qpi",
+    "qnei",
+    "greedy",
+    "qehvi",
+    "qnehvi"
+  ],
+  "seeds": [
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "package_versions": {
+    "numpy": "2.4.1",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.7.2",
+    "scipy": "1.17.0",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2",
+    "tqdm": "4.67.1",
+    "xgboost": "3.1.3",
+    "lightgbm": "4.6.0",
+    "statsmodels": "0.14.6",
+    "botorch": "0.16.1",
+    "torch": "2.9.1",
+    "tabpfn": "6.3.1"
+  }
+}

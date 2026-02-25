@@ -979,14 +979,20 @@ def parse_objective_list(
 def parse_float_list(value: str | None, default: float) -> list[float]:
     if value is None:
         return [default]
-    values = [float(v.strip()) for v in value.split(",") if v.strip()]
+    try:
+        values = [float(v.strip()) for v in value.split(",") if v.strip()]
+    except ValueError as exc:
+        raise ValueError(f"Invalid float list: {value!r}") from exc
     return values or [default]
 
 
 def parse_int_list(value: str | None, default: int) -> list[int]:
     if value is None:
         return [default]
-    values = [int(v.strip()) for v in value.split(",") if v.strip()]
+    try:
+        values = [int(v.strip()) for v in value.split(",") if v.strip()]
+    except ValueError as exc:
+        raise ValueError(f"Invalid int list: {value!r}") from exc
     return values or [default]
 
 

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "bo_sensor_error_simulation.py"
 
@@ -196,6 +197,37 @@ def test_apply_sensor_error_uses_jitter_for_spike() -> None:
     observed, error = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
     assert np.allclose(observed, true_value + combined)
     assert np.allclose(error, combined)
+
+
+def test_parse_float_list_invalid_value_has_clear_error() -> None:
+    with pytest.raises(ValueError, match="Invalid float list"):
+        bo_sim.parse_float_list("0.1,abc,0.3", default=0.2)
+
+
+def test_parse_int_list_invalid_value_has_clear_error() -> None:
+    with pytest.raises(ValueError, match="Invalid int list"):
+        bo_sim.parse_int_list("1,two,3", default=1)
+
+
+def test_validate_sweeps_rejects_iteration_equal_to_total_iterations() -> None:
+    with pytest.raises(ValueError, match=r"within \[1, iterations - 1\]"):
+        bo_sim.validate_sweeps([100], [0.1], iterations=100)
+
+
+def test_compute_objective_handles_zero_range_when_normalizing() -> None:
+    df = pd.DataFrame({"s1": [1.0, 1.0, 1.0], "s2": [2.0, 3.0, 4.0]})
+    objective = bo_sim.compute_objective(df, ["s1", "s2"], normalize=True, weights=None)
+    assert np.allclose(objective.to_numpy(), np.array([0.0, 0.25, 0.5]))
+
+
+def test_augment_oracle_data_zero_repeats_returns_original_arrays() -> None:
+    rng = np.random.default_rng(123)
+    X = np.array([[1.0, 2.0], [3.0, 4.0]])
+    y = np.array([0.1, 0.2])
+    X_aug, y_aug = bo_sim.augment_oracle_data(X, y, rng, "jitter", repeats=0, noise_std=0.01)
+    assert np.array_equal(X_aug, X)
+    assert np.array_equal(y_aug, y)
+
 
 def test_augment_oracle_data_jitter() -> None:
     rng = np.random.default_rng(42)

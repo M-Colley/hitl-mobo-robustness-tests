@@ -34,11 +34,10 @@ import json
 import re
 import subprocess
 import time
-import uuid 
+import uuid
 import warnings
 from pathlib import Path
 
-# add near imports
 import threading
 
 import multiprocessing as mp
@@ -54,10 +53,25 @@ from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
 )
-#from catboost import CatBoostRegressor
-from xgboost import XGBRegressor
-from lightgbm import LGBMRegressor
-from tabpfn import TabPFNRegressor
+try:
+    from xgboost import XGBRegressor
+except ImportError:
+    XGBRegressor = None
+
+try:
+    from lightgbm import LGBMRegressor
+except ImportError:
+    LGBMRegressor = None
+
+
+try:
+    from catboost import CatBoostRegressor
+except ImportError:
+    CatBoostRegressor = None
+try:
+    from tabpfn import TabPFNRegressor
+except ImportError:
+    TabPFNRegressor = None
 
 from botorch.models import SingleTaskGP, ModelListGP
 from botorch.fit import fit_gpytorch_mll
@@ -142,7 +156,7 @@ ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike"]
 ORACLE_MODEL_CHOICES = [
     "xgboost",
     "lightgbm",
-    #"catboost",
+    "catboost",
     "tabpfn",
     "random_forest",
     "extra_trees",
@@ -261,7 +275,7 @@ def parse_args() -> argparse.Namespace:
         default=False,
         help="Apply sensor error only once at the first iteration after jitter-iteration.",
     )
-    # TODO - add more
+    # NOTE: sweep defaults can be overridden with --jitter-iterations/--jitter-stds
     parser.add_argument("--jitter-iterations", type=str, default="10,20,40")
     parser.add_argument("--jitter-stds", type=str, default="0.05,0.5,1,5")
 
@@ -567,7 +581,7 @@ def build_oracle(
             y_pred = models[-1].predict(X_aug_df)
             train_rmse = np.sqrt(np.mean((y - y_pred) ** 2))
             print(f"Oracle ({oracle_model}) for {target} trained on {len(X_aug)} samples:")
-            print(f"  R² score: {train_score:.4f}")
+            print(f"  R^2 score: {train_score:.4f}")
             print(f"  RMSE: {train_rmse:.4f}")
 
         return OracleModel(
@@ -602,7 +616,7 @@ def build_oracle(
     y_pred = model.predict(X_aug_df)
     train_rmse = np.sqrt(np.mean((y_aug - y_pred) ** 2))
     print(f"Oracle ({oracle_model}) trained on {len(X_aug)} samples:")
-    print(f"  R² score: {train_score:.4f}")
+    print(f"  R^2 score: {train_score:.4f}")
     print(f"  RMSE: {train_rmse:.4f}")
 
     return OracleModel(
@@ -643,6 +657,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             random_state=seed,
         )
     if oracle_model == "xgboost":
+        if XGBRegressor is None:
+            raise ImportError("xgboost is required for oracle-model=xgboost. Install it via requirements.txt.")
         return XGBRegressor(
             n_estimators=int(800 * tree_scale),
             learning_rate=0.05,
@@ -653,6 +669,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             n_jobs=1,
         )
     if oracle_model == "lightgbm":
+        if LGBMRegressor is None:
+            raise ImportError("lightgbm is required for oracle-model=lightgbm. Install it via requirements.txt.")
         return LGBMRegressor(
             n_estimators=int(800 * tree_scale),
             learning_rate=0.05,
@@ -665,6 +683,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             verbosity=-1,
         )
     if oracle_model == "catboost":
+        if CatBoostRegressor is None:
+            raise ImportError("catboost is required for oracle-model=catboost. Install it via requirements.txt.")
         return CatBoostRegressor(
             iterations=int(800 * tree_scale),
             learning_rate=0.05,
@@ -675,6 +695,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             verbose=False,
         )
     if oracle_model == "tabpfn":
+        if TabPFNRegressor is None:
+            raise ImportError("tabpfn is required for oracle-model=tabpfn. Install it via requirements.txt.")
         estimators = max(2, int(round(8 * tree_scale)))
         return TabPFNRegressor(
             n_estimators=estimators,
@@ -1764,7 +1786,7 @@ def main() -> None:
         dataset_objectives[dataset.name] = objective_names
         total_runs += (baseline_runs_per_objective + jittered_runs_per_objective) * len(objective_names)
 
-    use_parallel = args.parallel or (len(seeds) > 1 and not args.parallel)
+    use_parallel = args.parallel or len(seeds) > 1
 
     if args.n_jobs == -1:
         n_jobs = mp.cpu_count()
@@ -2089,10 +2111,10 @@ def main() -> None:
                 "tqdm",
                 "xgboost",
                 "lightgbm",
+                "catboost",
                 "statsmodels",
                 "botorch",
                 "torch",
-                #"catboost",
                 "tabpfn",
             ]
         ),
@@ -2124,3 +2146,4 @@ if __name__ == "__main__":
         mp.set_start_method('spawn', force=True)
     
     main()
+

@@ -27,14 +27,17 @@ questions using the HMI design study data:
 5. Injects **sensor error** (Gaussian jitter) into the observed feedback after a chosen
    iteration.
 6. Writes a per-iteration CSV and a summary of the **parameter adjustment** from
-   iteration *N* to *N+1* (e.g., 20 → 21).
-7. Displays a progress bar for each simulation run.
+   iteration *N* to *N+1* (e.g., 20 -> 21).
 
-## Install (latest compatible versions)
+## Install
 
 ```bash
 python -m pip install --upgrade -r requirements.txt
 ```
+
+Recommended: Python 3.11-3.12.
+
+For development tests: `python -m pip install --upgrade -r requirements.txt -r requirements-dev.txt` then `python -m pytest -q`.
 
 ## Run
 
@@ -73,8 +76,7 @@ that isolates the impact of sensor error:
 
 - `bo_sensor_error_summary.csv` includes `baseline=true/false`.
 - `bo_sensor_error_excess_summary.csv` reports `delta_excess_<param>` and
-  `delta_excess_l2_norm` (jittered − baseline).
-
+  `delta_excess_l2_norm` (jittered - baseline).
 Disable the baseline with:
 
 ```bash
@@ -92,7 +94,7 @@ python scripts/bo_sensor_error_simulation.py --no-baseline-run
   - `delta_<param>`: change in each parameter from iteration *N* to *N+1*.
   - `delta_l2_norm`: L2 norm of the parameter change (overall adjustment magnitude).
 - `bo_sensor_error_excess_summary.csv`
-  - Per-acquisition/seed **excess change** (jittered − baseline).
+  - Per-acquisition/seed **excess change** (jittered - baseline).
 - `bo_sensor_error_dataset_effects.csv`
   - Per-dataset and cross-dataset mean/std for jitter excess metrics when baselines are enabled.
 - `bo_sensor_error_summary_stats.csv`
@@ -107,7 +109,7 @@ python scripts/bo_sensor_error_simulation.py --no-baseline-run
 
 ### How these outputs answer your questions
 
-**1) “Effects of sensor errors in implicit HITL optimization”**  
+**1) "Effects of sensor errors in implicit HITL optimization"**  
 Sensor error is simulated by adding Gaussian jitter to the feedback after
 `--jitter-iteration`. The per-iteration CSVs (`bo_sensor_error_<dataset>_<objective>_<acq>_seed<seed>_*.csv`)
 contain both `objective_true` (oracle signal) and `objective_observed`
@@ -115,23 +117,23 @@ jittered values. Comparing these columns after the jitter point shows how
 the optimization is driven by noisy feedback rather than the underlying
 oracle signal.
 
-**2) “Testing 100 iterations (more or less) and integrating one simulated error as feedback … what is the parameter value adjustment in the following iteration?”**  
+**2) "Testing 100 iterations (more or less) and integrating one simulated error as feedback ... what is the parameter value adjustment in the following iteration?"**  
 Set `--iterations 100` and `--jitter-iteration 20` to match the scenario.
 The summary CSV reports the *parameter adjustment* immediately after the
 first noisy feedback is injected:
 
-- `delta_<param>` = (parameter at iteration 21) − (parameter at iteration 20)  
+- `delta_<param>` = (parameter at iteration 21) - (parameter at iteration 20)  
 - `delta_l2_norm` = overall magnitude of the change
 
 These deltas quantify how the algorithm changes its suggested parameters
 in response to the first noisy observation.
 
-**3) “After iteration 20, add artificial jitter to the feedback values”**  
+**3) "After iteration 20, add artificial jitter to the feedback values"**  
 This is the default behavior when `--jitter-iteration 20` is set. All
 iterations > 20 use `objective_observed = objective_true + jitter`.
 For a single injected error (only iteration 21), add `--single-error`.
 
-**4) “Testing different acquisition functions”**  
+**4) "Testing different acquisition functions"**  
 Run `--acq all` to generate per-seed logs such as
 `bo_sensor_error_composite_logei_seed7_baseline_xgboost.csv` and
 `bo_sensor_error_composite_qei_seed7_jittered_xgboost_gaussian_jit20_std0.1.csv`,
@@ -271,8 +273,8 @@ python scripts/bo_sensor_error_simulation.py --group-id 1
 
 ## Interpreting the parameter adjustment
 
-The summary row answers: **“How much did the suggested parameter vector change right
-after the sensor error starts?”**
+The summary row answers: **"How much did the suggested parameter vector change right
+after the sensor error starts?"**
 
 - The `delta_<param>` values show per-parameter adjustments.
 - `delta_l2_norm` provides a single scalar magnitude for the adjustment.
@@ -356,3 +358,10 @@ python scripts/plot_sensor_error_results.py \
 This produces objective trajectory plots per acquisition and a bar chart of
 mean `delta_l2_norm`, plus p-value scatter plots summarizing whether the final
 outcomes differ significantly between baseline and jittered runs.
+
+## Repository Hygiene
+
+Generated artifacts are written under `output/` and are ignored by default to keep commits focused on source changes.
+If you need to share result files, publish them as release artifacts or in external storage instead of committing large plot batches.
+
+

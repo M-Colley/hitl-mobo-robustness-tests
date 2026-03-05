@@ -207,7 +207,7 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
                     else:
                         sig = "ns"
                     
-                    print(f"  {idx}: η² = {row['eta_sq']:.4f} ({size}) {sig}")
+                    print(f"  {idx}: eta^2 = {row['eta_sq']:.4f} ({size}) {sig}")
                 
                 anova_success = True
                 break
@@ -248,7 +248,7 @@ def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -
                         sig = "***" if p_val < 0.001 else "**" if p_val < 0.01 else "*" if p_val < 0.05 else "ns"
                         
                         print(f"    F({len(groups)-1}, {len(merged)-len(groups)}) = {f_stat:.4f}, p = {p_val:.4f} {sig}")
-                        print(f"    η² = {eta_sq:.4f} ({size})")
+                        print(f"    eta^2 = {eta_sq:.4f} ({size})")
                         
                         oneway_results.append({
                             'metric': metric,
@@ -502,19 +502,19 @@ def generate_statistical_report(results: dict, output_dir: Path) -> None:
         f.write("-" * 80 + "\n")
         f.write("1. Mixed ANOVA with Type II sums of squares (or one-way ANOVAs if data limited)\n")
         f.write("2. Post-hoc pairwise comparisons using Tukey HSD (when applicable)\n")
-        f.write("3. Effect sizes: η² (eta-squared) and Cohen's d\n")
-        f.write("4. Significance level: α = 0.05\n\n")
+        f.write("3. Effect sizes: eta^2 (eta-squared) and Cohen's d\n")
+        f.write("4. Significance level: alpha = 0.05\n\n")
         
         f.write("INTERPRETATION GUIDELINES:\n")
         f.write("-" * 80 + "\n")
         f.write("Effect Size (Cohen's d):\n")
-        f.write(" - Small: 0.2 ≤ |d| < 0.5\n")
-        f.write(" - Medium: 0.5 ≤ |d| < 0.8\n")
-        f.write(" - Large: |d| ≥ 0.8\n\n")
-        f.write("Effect Size (η²):\n")
-        f.write(" - Small: 0.01 ≤ η² < 0.06\n")
-        f.write(" - Medium: 0.06 ≤ η² < 0.14\n")
-        f.write(" - Large: η² ≥ 0.14\n\n")
+        f.write(" - Small: 0.2 <= |d| < 0.5\n")
+        f.write(" - Medium: 0.5 <= |d| < 0.8\n")
+        f.write(" - Large: |d| >= 0.8\n\n")
+        f.write("Effect Size (eta^2):\n")
+        f.write(" - Small: 0.01 <= eta^2 < 0.06\n")
+        f.write(" - Medium: 0.06 <= eta^2 < 0.14\n")
+        f.write(" - Large: eta^2 >= 0.14\n\n")
         
         # Summarize key findings
         if 'effect_sizes' in results and not results['effect_sizes'].empty:
@@ -607,121 +607,6 @@ def generate_statistical_report(results: dict, output_dir: Path) -> None:
     
     
     
-def evaluate_final_outcomes(final_df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
-    baseline = final_df[final_df["baseline"]].copy()
-    jittered = final_df[~final_df["baseline"]].copy()
-    merged = jittered.merge(
-        baseline[
-            [
-                "objective",
-                "acquisition",
-                "seed",
-                "oracle_model",
-                "objective_true",
-                "objective_observed",
-            ]
-        ],
-        on=["objective", "acquisition", "seed", "oracle_model"],
-        how="inner",
-        suffixes=("_jitter", "_baseline"),
-    )
-    if merged.empty:
-        return pd.DataFrame()
-
-    rows = []
-    group_cols = [
-        "objective",
-        "acquisition",
-        "error_model",
-        "jitter_iteration",
-        "jitter_std",
-        "oracle_model",
-    ]
-    for keys, group in merged.groupby(group_cols):
-        objective, acquisition, error_model, jitter_iteration, jitter_std, oracle_model = keys
-        n_runs = len(group)
-        mean_true_diff = float(
-            (group["objective_true_jitter"] - group["objective_true_baseline"]).mean()
-        )
-        mean_obs_diff = float(
-            (group["objective_observed_jitter"] - group["objective_observed_baseline"]).mean()
-        )
-        
-        # Calculate Cohen's d effect sizes
-        def cohens_d(group1, group2):
-            diff = group1 - group2
-            return diff.mean() / (diff.std() + 1e-10)  # Add small constant to avoid division by zero
-        
-        cohens_d_true = float(cohens_d(group["objective_true_jitter"], group["objective_true_baseline"]))
-        cohens_d_obs = float(cohens_d(group["objective_observed_jitter"], group["objective_observed_baseline"]))
-        
-        true_p = float("nan")
-        obs_p = float("nan")
-        if n_runs >= 2:
-            true_test = ttest_rel(
-                group["objective_true_jitter"],
-                group["objective_true_baseline"],
-                nan_policy="omit",
-            )
-            obs_test = ttest_rel(
-                group["objective_observed_jitter"],
-                group["objective_observed_baseline"],
-                nan_policy="omit",
-            )
-            true_p = float(true_test.pvalue)
-            obs_p = float(obs_test.pvalue)
-        rows.append(
-            {
-                "objective": objective,
-                "acquisition": acquisition,
-                "error_model": error_model,
-                "jitter_iteration": jitter_iteration,
-                "jitter_std": jitter_std,
-                "oracle_model": oracle_model,
-                "runs": n_runs,
-                "mean_true_diff": mean_true_diff,
-                "mean_observed_diff": mean_obs_diff,
-                "cohens_d_true": cohens_d_true,
-                "cohens_d_observed": cohens_d_obs,
-                "p_value_true": true_p,
-                "p_value_observed": obs_p,
-            }
-        )
-
-    stats = pd.DataFrame(rows)
-    
-    # Apply Bonferroni correction
-    n_tests = len(stats) * 2  # multiply by 2 because we test both true and observed
-    stats["p_value_true_bonferroni"] = stats["p_value_true"] * n_tests
-    stats["p_value_observed_bonferroni"] = stats["p_value_observed"] * n_tests
-    # Cap corrected p-values at 1.0
-    stats["p_value_true_bonferroni"] = stats["p_value_true_bonferroni"].clip(upper=1.0)
-    stats["p_value_observed_bonferroni"] = stats["p_value_observed_bonferroni"].clip(upper=1.0)
-    
-    # Add significance flags (alpha = 0.05)
-    stats["significant_true_uncorrected"] = stats["p_value_true"] < 0.05
-    stats["significant_observed_uncorrected"] = stats["p_value_observed"] < 0.05
-    stats["significant_true_bonferroni"] = stats["p_value_true_bonferroni"] < 0.05
-    stats["significant_observed_bonferroni"] = stats["p_value_observed_bonferroni"] < 0.05
-    
-    stats_path = output_dir / "final_outcome_significance.csv"
-    stats.to_csv(stats_path, index=False)
-    
-    # Print summary
-    print("\nStatistical Testing Summary:")
-    print(f"Total number of comparisons: {len(stats)}")
-    print(f"Total number of tests: {n_tests}")
-    print(f"Bonferroni-corrected alpha: {0.05 / n_tests:.6f}")
-    print(f"\nSignificant results (uncorrected, alpha=0.05):")
-    print(f"  True objective: {stats['significant_true_uncorrected'].sum()}/{len(stats)}")
-    print(f"  Observed objective: {stats['significant_observed_uncorrected'].sum()}/{len(stats)}")
-    print(f"\nSignificant results (Bonferroni-corrected, alpha=0.05):")
-    print(f"  True objective: {stats['significant_true_bonferroni'].sum()}/{len(stats)}")
-    print(f"  Observed objective: {stats['significant_observed_bonferroni'].sum()}/{len(stats)}")
-    
-    return stats
-
-
 def plot_final_outcome_significance(results: dict, output_dir: Path) -> None:
     """Plot significance results from the statistical analysis."""
     if not results or 'effect_sizes' not in results:

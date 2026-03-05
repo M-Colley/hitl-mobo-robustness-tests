@@ -217,4 +217,5 @@ __marimo__/
 
 
 # specific to these tests
-.dataset_cache
+.dataset_cache/
+output/

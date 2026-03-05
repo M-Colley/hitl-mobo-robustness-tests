@@ -1,0 +1,14 @@
+[project]
+name = "hitl-mobo-robustness-tests"
+version = "0.1.0"
+description = "Simulation tooling for HITL Bayesian optimization sensor-error robustness studies."
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

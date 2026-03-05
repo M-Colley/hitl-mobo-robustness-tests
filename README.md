@@ -15,6 +15,14 @@ questions using the HMI design study data:
   start points and magnitudes.
 - **Testing different acquisition functions**: run `ei`, `pi`, `ucb`, or all.
 
+## Quick Start
+
+```bash
+python -m pip install --upgrade -r requirements-eval.txt
+python scripts/bo_sensor_error_simulation.py --iterations 100 --acq all --oracle-model all
+python scripts/plot_sensor_error_results.py --input-dir output --output-dir output/plots
+```
+
 ## What this simulation does
 
 1. Loads all `ObservationsPerEvaluation.csv` files from one or more datasets.
@@ -35,7 +43,8 @@ questions using the HMI design study data:
 python -m pip install --upgrade -r requirements.txt
 ```
 
-Recommended: Python 3.11-3.12.
+Recommended: Python 3.13-3.14.
+For reproducible evaluation runs, use `requirements-eval.txt`.
 
 For development tests: `python -m pip install --upgrade -r requirements.txt -r requirements-dev.txt` then `python -m pytest -q`.
 

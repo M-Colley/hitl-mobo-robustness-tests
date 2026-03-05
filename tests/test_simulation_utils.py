@@ -33,8 +33,8 @@ def test_parse_objective_list_defaults_to_composite_and_multi() -> None:
 
 
 def test_parse_oracle_models_default_set() -> None:
-    models = bo_sim.parse_oracle_models("extra_trees", "xgboost,lightgbm,extra_trees")
-    assert models == ["xgboost", "lightgbm", "extra_trees"]
+    models = bo_sim.parse_oracle_models("extra_trees", "xgboost,lightgbm,catboost,extra_trees")
+    assert models == ["xgboost", "lightgbm", "catboost", "extra_trees"]
 
 
 def test_filter_acquisitions_for_objective() -> None:

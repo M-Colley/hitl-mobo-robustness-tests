@@ -69,8 +69,12 @@ magnitudes (`0.05,0.1,0.2,0.4`). Override these with
 `--jitter-iterations` and `--jitter-stds` or pass a single
 `--jitter-iteration`/`--jitter-std` pair for a focused run.
 
+`--candidate-pool` controls how many random candidates are screened to seed the
+acquisition optimizer's restart points. Larger values improve coverage at the
+cost of extra acquisition evaluations.
+
 Oracle models can be swept with `--oracle-models`, or set to a single model with
-`--oracle-model`. The default run uses **XGBoost**. Use `--oracle-model all` to run
+`--oracle-model`. The default run uses **Extra Trees**. Use `--oracle-model all` to run
 all available options:
 
 ```bash
@@ -108,13 +112,24 @@ python scripts/bo_sensor_error_simulation.py --no-baseline-run
   - Per-dataset and cross-dataset mean/std for jitter excess metrics when baselines are enabled.
 - `bo_sensor_error_summary_stats.csv`
   - Mean/std summary by acquisition and baseline flag.
-- `final_outcome_significance.csv`
-  - Paired t-test results comparing baseline vs jittered **final outcomes**
-    (`objective_true` and `objective_observed`) for each sweep configuration.
 - `run_metadata.json`
   - CLI args, dataset path, package versions, and total runtime.
 - `run_config.txt`
   - Human-readable configuration summary.
+
+The plotting/statistics step writes additional files under `output/.../plots/`:
+
+- `final_outcome_pair_differences.csv`
+  - Baseline/jittered final-outcome pairs and per-seed differences for matched conditions.
+- `final_outcome_paired_tests.csv`
+  - Paired t-test and Wilcoxon results, confidence intervals, and FDR-adjusted p-values
+    for `objective_true`, `objective_observed`, and regret metrics.
+- `regret_paired_tests.csv`
+  - Regret-only subset of the paired tests for easier filtering.
+- `effect_sizes_cohens_dz.csv`
+  - Cohen's dz effect sizes for the final true/observed outcomes.
+- `statistical_report.txt`
+  - Human-readable summary of the paired-condition analysis.
 
 ### How these outputs answer your questions
 
@@ -364,9 +379,9 @@ python scripts/plot_sensor_error_results.py \
   --output-dir output/bo_sensor_error/plots
 ```
 
-This produces objective trajectory plots per acquisition and a bar chart of
-mean `delta_l2_norm`, plus p-value scatter plots summarizing whether the final
-outcomes differ significantly between baseline and jittered runs.
+This produces objective trajectory plots per acquisition, a bar chart of
+mean `delta_l2_norm`, paired-effect heatmaps for the final outcomes, and CSV
+artifacts for matched baseline-vs-jitter statistical tests with FDR correction.
 
 ## Repository Hygiene
 

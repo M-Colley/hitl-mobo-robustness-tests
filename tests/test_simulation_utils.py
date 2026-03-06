@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
+import torch
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts" / "bo_sensor_error_simulation.py"
 
@@ -294,3 +297,116 @@ def test_summarize_adjustment_includes_avg_regret() -> None:
     )
     summary = bo_sim.summarize_adjustment(results, 1, ["p1", "p2"])
     assert np.isclose(summary["final_avg_regret_true"], 0.4)
+
+
+def test_screen_candidate_pool_returns_ranked_initial_conditions() -> None:
+    class IncreasingAcquisition:
+        def __call__(self, X: torch.Tensor) -> torch.Tensor:
+            return X.sum(dim=-1).squeeze(-1)
+
+    bounds = bo_sim.Bounds(
+        low=np.array([0.0, 0.0], dtype=float),
+        high=np.array([1.0, 1.0], dtype=float),
+    )
+    best_candidate, initial_conditions = bo_sim.screen_candidate_pool(
+        acqf=IncreasingAcquisition(),
+        bounds=bounds,
+        rng=np.random.default_rng(0),
+        candidate_pool=8,
+        num_restarts=3,
+    )
+
+    assert initial_conditions.shape == (3, 1, 2)
+    scores = initial_conditions.squeeze(1).sum(dim=1).numpy()
+    assert np.all(scores[:-1] >= scores[1:])
+    assert torch.allclose(best_candidate, initial_conditions[0])
+
+
+def test_validate_inputs_rejects_non_positive_candidate_pool() -> None:
+    args = argparse.Namespace(
+        iterations=10,
+        initial_samples=2,
+        candidate_pool=0,
+        error_spike_prob=0.1,
+        oracle_opt_samples=10_000,
+        oracle_opt_batch_size=1,
+        acq_mc_samples=8,
+        oracle_augment_repeats=0,
+        oracle_augment_std=0.0,
+    )
+    with pytest.raises(ValueError, match="candidate-pool"):
+        bo_sim.validate_inputs(args)
+
+
+def test_run_simulation_multiobjective_regret_not_double_counted() -> None:
+    class SequenceOracle:
+        def __init__(self, outputs: list[np.ndarray]) -> None:
+            self._outputs = [np.asarray(value, dtype=float) for value in outputs]
+            self._index = 0
+
+        def predict(self, x: np.ndarray) -> np.ndarray:
+            value = self._outputs[self._index]
+            self._index += 1
+            return value
+
+    outputs = [
+        np.array([1.0, 1.0]),
+        np.array([2.0, 0.5]),
+        np.array([0.5, 2.0]),
+    ]
+    ref_point = np.array([0.0, 0.0], dtype=float)
+    oracle = SequenceOracle(outputs)
+    bounds = bo_sim.Bounds(
+        low=np.array([0.0, 0.0], dtype=float),
+        high=np.array([1.0, 1.0], dtype=float),
+    )
+    config = bo_sim.SimulationConfig(
+        iterations=3,
+        jitter_iteration=1,
+        jitter_std=0.0,
+        single_error=False,
+        initial_samples=3,
+        candidate_pool=4,
+        objective="multi_objective",
+        objective_columns=["o1", "o2"],
+        param_columns=["p1", "p2"],
+        seed=7,
+        error_model="gaussian",
+        error_bias=0.0,
+        error_spike_prob=0.0,
+        error_spike_std=0.0,
+        dropout_strategy="hold_last",
+        normalize_objective=False,
+        objective_weights=None,
+        acq_num_restarts=2,
+        acq_raw_samples=8,
+        acq_maxiter=15,
+        acq_mc_samples=16,
+        ref_point=ref_point,
+    )
+
+    results = bo_sim.run_simulation(
+        oracle=oracle,
+        bounds=bounds,
+        config=config,
+        acq=bo_sim.AcquisitionConfig(name="greedy"),
+        rng=np.random.default_rng(7),
+        jitter_rng=None,
+        run_id="demo",
+        apply_error=False,
+        oracle_model="dummy",
+        y_opt=10.0,
+    )
+
+    hv_values = []
+    running = []
+    for output in outputs:
+        running.append(output)
+        hv_values.append(bo_sim._compute_hypervolume(running, ref_point))
+    expected_cumulative = np.cumsum([max(0.0, 10.0 - hv) for hv in hv_values])
+
+    assert np.allclose(results["regret_cum_true"].to_numpy(dtype=float), expected_cumulative)
+    assert np.allclose(
+        results["regret_avg_true"].to_numpy(dtype=float),
+        expected_cumulative / np.arange(1, len(expected_cumulative) + 1, dtype=float),
+    )

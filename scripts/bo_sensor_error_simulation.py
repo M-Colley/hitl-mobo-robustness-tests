@@ -280,7 +280,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--jitter-stds", type=str, default="0.05,0.5,1,5")
 
     parser.add_argument("--initial-samples", type=int, default=5)
-    parser.add_argument("--candidate-pool", type=int, default=1000)  # kept for compatibility
+    parser.add_argument(
+        "--candidate-pool",
+        type=int,
+        default=1000,
+        help="Number of random candidates screened to seed acquisition optimization restarts.",
+    )
 
     parser.add_argument("--objective", type=str, default=None)
     parser.add_argument("--objectives", type=str, default=None)
@@ -1026,6 +1031,8 @@ def validate_inputs(args: argparse.Namespace) -> None:
         raise ValueError("iterations must be greater than 1.")
     if args.initial_samples < 1 or args.initial_samples >= args.iterations:
         raise ValueError("initial-samples must be within [1, iterations - 1].")
+    if args.candidate_pool < 1:
+        raise ValueError("candidate-pool must be >= 1.")
     if args.error_spike_prob < 0 or args.error_spike_prob > 1:
         raise ValueError("error-spike-prob must be between 0 and 1.")
     if args.oracle_opt_samples < 10_000:
@@ -1084,6 +1091,7 @@ def write_run_config(
         "Core settings:",
         f"  iterations: {args.iterations}",
         f"  initial_samples: {args.initial_samples}",
+        f"  candidate_pool: {args.candidate_pool}",
         f"  jitter_iterations: {args.jitter_iterations}",
         f"  jitter_stds: {args.jitter_stds}",
         f"  single_error: {args.single_error}",
@@ -1165,15 +1173,43 @@ def apply_sensor_error(
     raise ValueError(f"Unknown error model: {config.error_model}")
 
 
+def screen_candidate_pool(
+    acqf: object,
+    bounds: Bounds,
+    rng: np.random.Generator,
+    candidate_pool: int,
+    num_restarts: int,
+) -> tuple[torch.Tensor, torch.Tensor]:
+    if candidate_pool < 1:
+        raise ValueError("candidate_pool must be >= 1.")
+    if num_restarts < 1:
+        raise ValueError("num_restarts must be >= 1.")
+
+    candidate_np = sample_uniform(bounds, rng, size=int(candidate_pool))
+    candidate_tensor = torch.tensor(candidate_np, dtype=torch.double)
+
+    with torch.no_grad():
+        acq_values = acqf(candidate_tensor.unsqueeze(1)).reshape(-1)
+
+    top_k = min(int(num_restarts), int(candidate_tensor.shape[0]))
+    top_indices = torch.topk(acq_values, k=top_k).indices
+    initial_conditions = candidate_tensor[top_indices].unsqueeze(1)
+    best_candidate = initial_conditions[0].detach()
+    return best_candidate, initial_conditions
+
+
 def get_botorch_candidate(
     gp_model: SingleTaskGP | ModelListGP,
     acq_config: AcquisitionConfig,
+    bounds: Bounds,
     bounds_tensor: torch.Tensor,
     best_f: float | None,
     num_restarts: int,
     raw_samples: int,
     maxiter: int,
     mc_samples: int,
+    candidate_pool: int,
+    rng: np.random.Generator,
     train_X: torch.Tensor,
     train_Y: torch.Tensor | list[torch.Tensor],
     ref_point: np.ndarray | None,
@@ -1262,14 +1298,25 @@ def get_botorch_candidate(
     else:
         raise ValueError(f"Unknown acquisition: {acq_config.name}")
 
+    fallback_candidate, batch_initial_conditions = screen_candidate_pool(
+        acqf=acqf,
+        bounds=bounds,
+        rng=rng,
+        candidate_pool=candidate_pool,
+        num_restarts=num_restarts,
+    )
+
     candidate, _ = optimize_acqf(
         acq_function=acqf,
         bounds=bounds_tensor,
         q=1,
-        num_restarts=int(num_restarts),
+        num_restarts=int(batch_initial_conditions.shape[0]),
         raw_samples=int(raw_samples),
         options={"batch_limit": 5, "maxiter": int(maxiter)},
+        batch_initial_conditions=batch_initial_conditions,
     )
+    if candidate.numel() == 0:
+        return fallback_candidate
     return candidate.detach()
 
 
@@ -1365,12 +1412,15 @@ def run_simulation(
                 candidate_tensor = get_botorch_candidate(
                     gp_model=gp,
                     acq_config=acq,
+                    bounds=bounds,
                     bounds_tensor=bounds_tensor,
                     best_f=best_f,
                     num_restarts=config.acq_num_restarts,
                     raw_samples=config.acq_raw_samples,
                     maxiter=config.acq_maxiter,
                     mc_samples=config.acq_mc_samples,
+                    candidate_pool=config.candidate_pool,
+                    rng=rng,
                     train_X=train_X,
                     train_Y=train_Y_for_acq,
                     ref_point=hv_ref_point,
@@ -1416,8 +1466,6 @@ def run_simulation(
             objective_observed_scalar.append(hv_obs)
             best_true_so_far = max(best_true_so_far, hv_true)
             r_t = max(0.0, y_opt - hv_true)
-            cum_regret += r_t
-            s_t = max(0.0, y_opt - best_true_so_far)
         else:
             scalar_true = float(true_value[0])
             scalar_obs = float(observed_value[0])

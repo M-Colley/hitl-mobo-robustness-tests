@@ -1,18 +1,36 @@
-"""Improved statistical evaluation with ANOVA and proper post-hoc tests."""
+"""Plot simulation outputs and run paired baseline-vs-jitter analyses."""
 from __future__ import annotations
 
 import argparse
+import math
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import seaborn as sns
-from scipy.stats import ttest_rel
-from scipy import stats
-from statsmodels.stats.multicomp import pairwise_tukeyhsd
-from statsmodels.formula.api import ols
-from statsmodels.stats.anova import anova_lm
+from scipy.stats import t as student_t
+from scipy.stats import ttest_1samp, wilcoxon
+from statsmodels.stats.multitest import multipletests
+
+
+PAIRING_BASE_KEYS = ["objective", "acquisition", "seed", "oracle_model"]
+CONDITION_KEYS = [
+    "objective",
+    "acquisition",
+    "error_model",
+    "jitter_std",
+    "jitter_iteration",
+    "oracle_model",
+]
+ANALYSIS_METRICS = [
+    "objective_true",
+    "objective_observed",
+    "simple_regret_true",
+    "regret_cum_true",
+    "regret_avg_true",
+]
+OBJECTIVE_METRICS = ["objective_true", "objective_observed"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,695 +59,338 @@ def summarize_final_outcomes(df: pd.DataFrame) -> pd.DataFrame:
     return final_rows
 
 
-
-def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -> dict:
-    """
-    Comprehensive statistical analysis using ANOVA and appropriate post-hoc tests.
-    
-    Returns dictionary with:
-    - anova_results: Mixed ANOVA results
-    - posthoc_results: Tukey HSD post-hoc comparisons
-    - effect_sizes: Effect size metrics
-    - descriptive_stats: Descriptive statistics by group
-    - regret_tests: Paired t-tests for regret metrics
-    """
-    baseline = final_df[final_df["baseline"]].copy()
-    jittered = final_df[~final_df["baseline"]].copy()
-    
-    merge_keys = ["objective", "acquisition", "seed", "oracle_model"]
+def build_paired_outcome_table(final_df: pd.DataFrame) -> pd.DataFrame:
+    merge_keys = list(PAIRING_BASE_KEYS)
     if "dataset" in final_df.columns:
         merge_keys.insert(0, "dataset")
 
-    regret_cols = ["simple_regret_true", "regret_cum_true", "regret_avg_true"]
-    baseline_cols = ["objective_true", "objective_observed", *regret_cols]
-    merged = jittered.merge(
-        baseline[merge_keys + baseline_cols],
+    baseline = final_df[final_df["baseline"]].copy()
+    jittered = final_df[~final_df["baseline"]].copy()
+
+    baseline_cols = merge_keys + ANALYSIS_METRICS
+    paired = jittered.merge(
+        baseline[baseline_cols],
         on=merge_keys,
         how="inner",
         suffixes=("_jitter", "_baseline"),
     )
-    
-    if merged.empty:
-        return {}
-    
-    # Calculate differences for repeated measures
-    merged["true_diff"] = merged["objective_true_jitter"] - merged["objective_true_baseline"]
-    merged["obs_diff"] = merged["objective_observed_jitter"] - merged["objective_observed_baseline"]
-    
-    results = {}
-    
-    # ============================================================================
-    # 1. MIXED ANOVA (treating seed as random effect)
-    # ============================================================================
-    print("\n" + "="*80)
-    print("MIXED ANOVA ANALYSIS")
-    print("="*80)
-    
-    for metric in ["true_diff", "obs_diff"]:
-        metric_name = "True Objective" if metric == "true_diff" else "Observed Objective"
-        print(f"\n{metric_name} Difference:")
-        print("-" * 80)
-        
-        # Check which factors have multiple levels
-        factors = {
-            'dataset': merged['dataset'].nunique() if 'dataset' in merged.columns else 1,
-            'objective': merged['objective'].nunique(),
-            'acquisition': merged['acquisition'].nunique(),
-            'error_model': merged['error_model'].nunique(),
-            'jitter_std': merged['jitter_std'].nunique(),
-            'jitter_iteration': merged['jitter_iteration'].nunique(),
-            'oracle_model': merged['oracle_model'].nunique(),
+    return paired
+
+
+def _paired_test_from_diff(differences: np.ndarray) -> dict[str, float]:
+    diffs = np.asarray(differences, dtype=float)
+    diffs = diffs[np.isfinite(diffs)]
+    n_pairs = int(diffs.size)
+
+    if n_pairs == 0:
+        return {
+            "n_pairs": 0,
+            "mean_diff": np.nan,
+            "median_diff": np.nan,
+            "mean_abs_diff": np.nan,
+            "std_diff": np.nan,
+            "cohens_dz": np.nan,
+            "ci95_low": np.nan,
+            "ci95_high": np.nan,
+            "t_stat": np.nan,
+            "p_value_t": np.nan,
+            "wilcoxon_stat": np.nan,
+            "p_value_wilcoxon": np.nan,
         }
-        
-        print(f"Factor levels: {factors}")
-        print(f"Total observations: {len(merged)}")
-        
-        # Build formula dynamically based on available factors
-        valid_factors = [f for f, n in factors.items() if n >= 2]
-        
-        if len(valid_factors) == 0:
-            print("Warning: No factors with 2+ levels. Cannot perform ANOVA.")
-            continue
-        
-        # Check if we have enough observations for interaction terms
-        # Rule of thumb: need at least 20 observations per parameter
-        total_combinations = np.prod([factors[f] for f in valid_factors])
-        min_obs_needed = total_combinations * 2  # At least 2 obs per cell
-        
-        print(f"Unique factor combinations: {total_combinations}")
-        print(f"Minimum observations needed: {min_obs_needed}")
-        
-        # Start with full model and fall back to simpler models if needed
-        models_to_try = []
-        
-        if len(valid_factors) >= 3 and len(merged) >= min_obs_needed:
-            # Try full interaction model
-            models_to_try.append(
-                (f"{metric} ~ " + " * ".join([f"C({f})" for f in valid_factors]), "full interaction")
-            )
-        
-        if len(valid_factors) >= 2:
-            # Try additive model (main effects only)
-            models_to_try.append(
-                (f"{metric} ~ " + " + ".join([f"C({f})" for f in valid_factors]), "main effects only")
-            )
-            
-            # Try two-way interactions if we have enough data
-            if len(valid_factors) == 2 and len(merged) >= min_obs_needed:
-                models_to_try.append(
-                    (f"{metric} ~ C({valid_factors[0]}) * C({valid_factors[1]})", "two-way interaction")
-                )
-        
-        if len(valid_factors) == 1:
-            models_to_try.append(
-                (f"{metric} ~ C({valid_factors[0]})", "single factor")
-            )
-        
-        # Try models in order until one works
-        anova_success = False
-        for formula, description in models_to_try:
-            print(f"\nTrying ANOVA: {description}")
-            print(f"Formula: {formula}")
-            
-            try:
-                model = ols(formula, data=merged).fit()
-                
-                # Check for infinite or NaN values
-                if not np.all(np.isfinite(model.params)):
-                    print("  Warning: Model parameters contain infinite or NaN values. Trying simpler model...")
-                    continue
-                
-                anova_table = anova_lm(model, typ=2)
-                
-                # Check if ANOVA table is valid
-                if anova_table['sum_sq'].isna().all() or not np.all(np.isfinite(anova_table['sum_sq'])):
-                    print("  Warning: ANOVA table contains invalid values. Trying simpler model...")
-                    continue
-                
-                # Calculate effect sizes (eta-squared)
-                total_ss = anova_table['sum_sq'].sum()
-                if total_ss > 0:
-                    anova_table['eta_sq'] = anova_table['sum_sq'] / total_ss
-                    anova_table['omega_sq'] = (
-                        (anova_table['sum_sq'] - anova_table['df'] * model.mse_resid) / 
-                        (total_ss + model.mse_resid)
-                    )
-                else:
-                    anova_table['eta_sq'] = np.nan
-                    anova_table['omega_sq'] = np.nan
-                
-                print("\n" + anova_table.to_string())
-                
-                results[f'anova_{metric}'] = anova_table
-                results[f'anova_{metric}_model'] = description
-                
-                # Interpret main effects
-                print("\nEffect Size Interpretation (eta-squared):")
-                for idx, row in anova_table.iterrows():
-                    if pd.isna(row['PR(>F)']) or pd.isna(row['eta_sq']):
-                        continue
-                    
-                    if row['eta_sq'] >= 0.14:
-                        size = "LARGE"
-                    elif row['eta_sq'] >= 0.06:
-                        size = "MEDIUM"
-                    elif row['eta_sq'] >= 0.01:
-                        size = "SMALL"
-                    else:
-                        size = "negligible"
-                    
-                    if row['PR(>F)'] < 0.001:
-                        sig = "***"
-                    elif row['PR(>F)'] < 0.01:
-                        sig = "**"
-                    elif row['PR(>F)'] < 0.05:
-                        sig = "*"
-                    else:
-                        sig = "ns"
-                    
-                    print(f"  {idx}: eta^2 = {row['eta_sq']:.4f} ({size}) {sig}")
-                
-                anova_success = True
-                break
-                
-            except Exception as e:
-                print(f"  Error: {e}")
-                continue
-        
-        if not anova_success:
-            print(f"\nCould not fit any ANOVA model for {metric_name}.")
-            print("Falling back to separate one-way ANOVAs for each factor...")
-            
-            # Perform separate one-way ANOVAs for each factor
-            oneway_results = []
-            for factor in valid_factors:
-                print(f"\n  One-way ANOVA for {factor}:")
-                groups = [group[metric].dropna().values for name, group in merged.groupby(factor)]
-                
-                if len(groups) >= 2 and all(len(g) > 1 for g in groups):
-                    try:
-                        f_stat, p_val = stats.f_oneway(*groups)
-                        
-                        # Calculate eta-squared
-                        grand_mean = merged[metric].mean()
-                        ss_between = sum(len(g) * (g.mean() - grand_mean)**2 for g in groups)
-                        ss_total = sum((merged[metric] - grand_mean)**2)
-                        eta_sq = ss_between / ss_total if ss_total > 0 else 0
-                        
-                        if eta_sq >= 0.14:
-                            size = "LARGE"
-                        elif eta_sq >= 0.06:
-                            size = "MEDIUM"
-                        elif eta_sq >= 0.01:
-                            size = "SMALL"
-                        else:
-                            size = "negligible"
-                        
-                        sig = "***" if p_val < 0.001 else "**" if p_val < 0.01 else "*" if p_val < 0.05 else "ns"
-                        
-                        print(f"    F({len(groups)-1}, {len(merged)-len(groups)}) = {f_stat:.4f}, p = {p_val:.4f} {sig}")
-                        print(f"    eta^2 = {eta_sq:.4f} ({size})")
-                        
-                        oneway_results.append({
-                            'metric': metric,
-                            'factor': factor,
-                            'F': f_stat,
-                            'p_value': p_val,
-                            'eta_sq': eta_sq,
-                            'interpretation': size
-                        })
-                    except Exception as e:
-                        print(f"    Error: {e}")
-                else:
-                    print(f"    Insufficient data for comparison")
-            
-            if oneway_results:
-                results[f'oneway_anova_{metric}'] = pd.DataFrame(oneway_results)
-    
-    # ============================================================================
-    # 2. POST-HOC TESTS (Tukey HSD for pairwise comparisons)
-    # ============================================================================
-    print("\n" + "="*80)
-    print("POST-HOC ANALYSIS (Tukey HSD)")
-    print("="*80)
-    
-    for metric in ["true_diff", "obs_diff"]:
-        metric_name = "True Objective" if metric == "true_diff" else "Observed Objective"
-        
-        # Post-hoc for acquisition strategies
-        n_acquisitions = merged['acquisition'].nunique()
-        if n_acquisitions >= 2:
-            print(f"\n{metric_name} - Pairwise Acquisition Comparisons:")
-            print("-" * 80)
-            try:
-                tukey_acq = pairwise_tukeyhsd(merged[metric], merged['acquisition'])
-                print(tukey_acq)
-                results[f'tukey_acq_{metric}'] = tukey_acq
-            except Exception as e:
-                print(f"Could not perform Tukey HSD for acquisitions: {e}")
-        else:
-            print(f"\n{metric_name} - Skipping acquisition comparisons (only {n_acquisitions} group(s))")
-        
-        # Post-hoc for error models
-        n_error_models = merged['error_model'].nunique()
-        if n_error_models >= 2:
-            print(f"\n{metric_name} - Pairwise Error Model Comparisons:")
-            print("-" * 80)
-            try:
-                tukey_error = pairwise_tukeyhsd(merged[metric], merged['error_model'])
-                print(tukey_error)
-                results[f'tukey_error_{metric}'] = tukey_error
-            except Exception as e:
-                print(f"Could not perform Tukey HSD for error models: {e}")
-        else:
-            print(f"\n{metric_name} - Skipping error model comparisons (only {n_error_models} group(s))")
-        
-        # Post-hoc for jitter_std if there are multiple levels
-        n_jitter_stds = merged['jitter_std'].nunique()
-        if n_jitter_stds >= 2:
-            print(f"\n{metric_name} - Pairwise Jitter Std Comparisons:")
-            print("-" * 80)
-            try:
-                tukey_jitter = pairwise_tukeyhsd(merged[metric], merged['jitter_std'])
-                print(tukey_jitter)
-                results[f'tukey_jitter_{metric}'] = tukey_jitter
-            except Exception as e:
-                print(f"Could not perform Tukey HSD for jitter_std: {e}")
-        else:
-            print(f"\n{metric_name} - Skipping jitter_std comparisons (only {n_jitter_stds} level(s))")
-    
-    # ============================================================================
-    # 3. EFFECT SIZES (Cohen's d) for key comparisons
-    # ============================================================================
-    print("\n" + "="*80)
-    print("EFFECT SIZES (Cohen's d)")
-    print("="*80)
-    
-    def cohens_d(group1, group2):
-        """Calculate Cohen's d effect size."""
-        diff = group1 - group2
-        pooled_std = np.sqrt((group1.std()**2 + group2.std()**2) / 2)
-        return diff.mean() / (pooled_std + 1e-10)
-    
-    effect_sizes = []
-    for (objective, acq, error_model, jitter_std, jitter_iter, oracle), group in merged.groupby(
-        ['objective', 'acquisition', 'error_model', 'jitter_std', 'jitter_iteration', 'oracle_model']
-    ):
-        d_true = cohens_d(group['objective_true_jitter'], group['objective_true_baseline'])
-        d_obs = cohens_d(group['objective_observed_jitter'], group['objective_observed_baseline'])
-        
-        effect_sizes.append({
-            'objective': objective,
-            'acquisition': acq,
-            'error_model': error_model,
-            'jitter_std': jitter_std,
-            'jitter_iteration': jitter_iter,
-            'oracle_model': oracle,
-            'cohens_d_true': d_true,
-            'cohens_d_obs': d_obs,
-            'n': len(group),
-        })
-    
-    effect_df = pd.DataFrame(effect_sizes)
-    
-    # Interpret effect sizes
-    def interpret_d(d):
-        abs_d = abs(d)
-        if abs_d >= 0.8:
-            return "LARGE"
-        elif abs_d >= 0.5:
-            return "MEDIUM"
-        elif abs_d >= 0.2:
-            return "SMALL"
-        else:
-            return "negligible"
-    
-    effect_df['interpretation_true'] = effect_df['cohens_d_true'].apply(interpret_d)
-    effect_df['interpretation_obs'] = effect_df['cohens_d_obs'].apply(interpret_d)
-    
-    print("\nEffect Sizes by Condition:")
-    print(effect_df.to_string(index=False))
-    
-    results['effect_sizes'] = effect_df
-    
-    # ============================================================================
-    # 4. DESCRIPTIVE STATISTICS
-    # ============================================================================
-    print("\n" + "="*80)
-    print("DESCRIPTIVE STATISTICS")
-    print("="*80)
-    
-    desc_stats = merged.groupby(['objective', 'acquisition', 'error_model', 'jitter_std']).agg({
-        'true_diff': ['mean', 'std', 'sem', 'count'],
-        'obs_diff': ['mean', 'std', 'sem', 'count'],
-    }).round(4)
-    
-    print("\nMean Differences by Condition:")
-    print(desc_stats.to_string())
-    
-    results['descriptive_stats'] = desc_stats
-    
-    # ============================================================================
-    # 5. REGRET METRICS (Paired t-tests)
-    # ============================================================================
-    print("\n" + "="*80)
-    print("REGRET METRICS (Paired t-tests)")
-    print("="*80)
 
-    regret_tests = []
-    for metric in regret_cols:
-        jitter_col = f"{metric}_jitter"
-        baseline_col = f"{metric}_baseline"
-        if jitter_col not in merged.columns or baseline_col not in merged.columns:
-            continue
-        paired = merged[[jitter_col, baseline_col]].dropna()
-        if len(paired) < 2:
-            print(f"Skipping {metric}: insufficient paired samples")
-            continue
-        t_stat, p_val = ttest_rel(paired[jitter_col], paired[baseline_col])
-        mean_diff = float((paired[jitter_col] - paired[baseline_col]).mean())
-        regret_tests.append({
-            "metric": metric,
-            "t_stat": float(t_stat),
-            "p_value": float(p_val),
-            "mean_diff": mean_diff,
-            "n": int(len(paired)),
-        })
-        print(f"{metric}: t={t_stat:.4f}, p={p_val:.4f}, mean diff={mean_diff:.4f}")
+    mean_diff = float(np.mean(diffs))
+    median_diff = float(np.median(diffs))
+    mean_abs_diff = float(np.mean(np.abs(diffs)))
 
-    if regret_tests:
-        results["regret_tests"] = pd.DataFrame(regret_tests)
-
-    # ============================================================================
-    # 6. SAVE RESULTS
-    # ============================================================================
-    output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Save ANOVA tables
-    for key, value in results.items():
-        if 'anova' in key and isinstance(value, pd.DataFrame):
-            value.to_csv(output_dir / f"{key}.csv")
-        elif 'tukey' in key and hasattr(value, 'summary'):
-            # Save Tukey results as DataFrame
-            summary_df = pd.DataFrame(data=value.summary().data[1:], columns=value.summary().data[0])
-            summary_df.to_csv(output_dir / f"{key}.csv", index=False)
-    
-    # Save effect sizes
-    if 'effect_sizes' in results:
-        effect_df = results['effect_sizes']
-        effect_df.to_csv(output_dir / "effect_sizes_cohens_d.csv", index=False)
-    
-    # Save descriptive stats
-    if 'descriptive_stats' in results:
-        desc_stats = results['descriptive_stats']
-        desc_stats.to_csv(output_dir / "descriptive_statistics.csv")
-
-    if "regret_tests" in results:
-        results["regret_tests"].to_csv(output_dir / "regret_paired_tests.csv", index=False)
-    
-    # Save one-way ANOVA results if available
-    for key in list(results.keys()):
-        if 'oneway_anova' in key and isinstance(results[key], pd.DataFrame):
-            results[key].to_csv(output_dir / f"{key}.csv", index=False)
-    
-    # ============================================================================
-    # 7. SIMPLE EFFECTS ANALYSIS (if interaction is significant)
-    # ============================================================================
-    print("\n" + "="*80)
-    print("SIMPLE EFFECTS ANALYSIS")
-    print("="*80)
-    
-    # Only perform if we have multiple error models and jitter_std levels
-    if merged['error_model'].nunique() >= 2 and merged['jitter_std'].nunique() >= 2:
-        # Test effect of error_model at each level of jitter_std
-        for jitter_std_val in sorted(merged['jitter_std'].unique()):
-            subset = merged[merged['jitter_std'] == jitter_std_val]
-            print(f"\nEffect of error_model at jitter_std={jitter_std_val}:")
-            
-            for metric in ['true_diff', 'obs_diff']:
-                groups = [group[metric].dropna().values for name, group in subset.groupby('error_model')]
-                # Only perform if we have at least 2 groups with data
-                if len(groups) >= 2 and all(len(g) > 0 for g in groups):
-                    try:
-                        f_stat, p_val = stats.f_oneway(*groups)
-                        sig = "***" if p_val < 0.001 else "**" if p_val < 0.01 else "*" if p_val < 0.05 else "ns"
-                        print(f"  {metric}: F={f_stat:.4f}, p={p_val:.4f} {sig}")
-                    except Exception as e:
-                        print(f"  {metric}: Could not compute F-test ({e})")
-                else:
-                    print(f"  {metric}: Insufficient groups for comparison")
+    if n_pairs > 1:
+        std_diff = float(np.std(diffs, ddof=1))
     else:
-        print("\nSkipping simple effects analysis - need multiple error models and jitter_std levels")
-    
-    print("\n" + "="*80)
-    print("Analysis complete. Results saved to:", output_dir)
-    print("="*80)
-    
-    return results
+        std_diff = 0.0
 
+    cohens_dz = np.nan
+    ci95_low = np.nan
+    ci95_high = np.nan
+    t_stat = np.nan
+    p_value_t = np.nan
 
-# Additional helper function for reporting
-def generate_statistical_report(results: dict, output_dir: Path) -> None:
-    """Generate a human-readable statistical report."""
-    report_path = output_dir / "statistical_report.txt"
-    
-    # Use UTF-8 encoding to support Greek letters and other Unicode characters
-    with open(report_path, 'w', encoding='utf-8') as f:
-        f.write("STATISTICAL ANALYSIS REPORT\n")
-        f.write("=" * 80 + "\n\n")
-        
-        f.write("METHODOLOGY:\n")
-        f.write("-" * 80 + "\n")
-        f.write("1. Mixed ANOVA with Type II sums of squares (or one-way ANOVAs if data limited)\n")
-        f.write("2. Post-hoc pairwise comparisons using Tukey HSD (when applicable)\n")
-        f.write("3. Effect sizes: eta^2 (eta-squared) and Cohen's d\n")
-        f.write("4. Significance level: alpha = 0.05\n\n")
-        
-        f.write("INTERPRETATION GUIDELINES:\n")
-        f.write("-" * 80 + "\n")
-        f.write("Effect Size (Cohen's d):\n")
-        f.write(" - Small: 0.2 <= |d| < 0.5\n")
-        f.write(" - Medium: 0.5 <= |d| < 0.8\n")
-        f.write(" - Large: |d| >= 0.8\n\n")
-        f.write("Effect Size (eta^2):\n")
-        f.write(" - Small: 0.01 <= eta^2 < 0.06\n")
-        f.write(" - Medium: 0.06 <= eta^2 < 0.14\n")
-        f.write(" - Large: eta^2 >= 0.14\n\n")
-        
-        # Summarize key findings
-        if 'effect_sizes' in results and not results['effect_sizes'].empty:
-            effect_df = results['effect_sizes']
-            large_effects = effect_df[
-                (effect_df['interpretation_true'] == 'LARGE') | 
-                (effect_df['interpretation_obs'] == 'LARGE')
-            ]
-            
-            f.write("KEY FINDINGS:\n")
-            f.write("-" * 80 + "\n")
-            f.write(f"Total conditions tested: {len(effect_df)}\n")
-            f.write(f"Conditions with LARGE effects: {len(large_effects)}\n\n")
-            
-            if not large_effects.empty:
-                f.write("Conditions with largest effects:\n")
-                top_effects = large_effects.nlargest(10, 'cohens_d_true')
-                f.write(top_effects.to_string(index=False))
-                f.write("\n\n")
-        else:
-            f.write("KEY FINDINGS:\n")
-            f.write("-" * 80 + "\n")
-            f.write("No effect size data available.\n\n")
-        
-        # Summary of ANOVA results
-        for key in results.keys():
-            if 'anova_true_diff' == key or 'anova_obs_diff' == key:
-                metric = 'True Objective' if 'true' in key else 'Observed Objective'
-                f.write(f"\nANOVA RESULTS - {metric}:\n")
-                f.write("-" * 80 + "\n")
-                anova_table = results[key]
-                f.write(anova_table.to_string())
-                f.write("\n")
-                
-                # Model type used
-                model_key = f"{key}_model"
-                if model_key in results:
-                    f.write(f"\nModel type: {results[model_key]}\n")
-        
-        # Summary of one-way ANOVAs if used
-        for key in results.keys():
-            if 'oneway_anova' in key:
-                metric = 'True Objective' if 'true' in key else 'Observed Objective'
-                f.write(f"\nONE-WAY ANOVA RESULTS - {metric}:\n")
-                f.write("-" * 80 + "\n")
-                f.write(results[key].to_string(index=False))
-                f.write("\n\n")
-        
-        # Summary of post-hoc tests
-        tukey_found = False
-        for key in results.keys():
-            if 'tukey' in key:
-                tukey_found = True
-                break
-        
-        if tukey_found:
-            f.write("\nPOST-HOC TEST RESULTS:\n")
-            f.write("-" * 80 + "\n")
-            f.write("See individual CSV files for detailed Tukey HSD comparisons.\n\n")
-        
-        # Descriptive statistics summary
-        if 'descriptive_stats' in results:
-            f.write("\nDESCRIPTIVE STATISTICS:\n")
-            f.write("-" * 80 + "\n")
-            f.write("See descriptive_statistics.csv for detailed summaries.\n\n")
-        
-        # Data quality notes
-        f.write("\nDATA QUALITY NOTES:\n")
-        f.write("-" * 80 + "\n")
-        if 'effect_sizes' in results and not results['effect_sizes'].empty:
-            effect_df = results['effect_sizes']
-            total_n = effect_df['n'].sum()
-            min_n = effect_df['n'].min()
-            max_n = effect_df['n'].max()
-            mean_n = effect_df['n'].mean()
-            
-            f.write(f"Total observations: {total_n}\n")
-            f.write(f"Sample size per condition: min={min_n}, max={max_n}, mean={mean_n:.1f}\n")
-            
-            # Check for small sample sizes
-            small_n = effect_df[effect_df['n'] < 5]
-            if not small_n.empty:
-                f.write(f"\nWarning: {len(small_n)} condition(s) have fewer than 5 observations.\n")
-                f.write("Results for these conditions should be interpreted with caution.\n")
-        else:
-            f.write("No data quality information available.\n")
-    
-    print(f"\nStatistical report saved to: {report_path}")
-    
-    
-    
-    
-def plot_final_outcome_significance(results: dict, output_dir: Path) -> None:
-    """Plot significance results from the statistical analysis."""
-    if not results or 'effect_sizes' not in results:
-        print("No statistical results to plot")
-        return
-    
-    stats = results['effect_sizes']
-    if stats.empty:
-        print("Effect sizes DataFrame is empty")
-        return
-    
-    # Plot 1: Effect sizes (Cohen's d) heatmap
-    for metric_suffix in ['true', 'obs']:
-        d_col = f'cohens_d_{metric_suffix}'
-        if d_col not in stats.columns:
-            print(f"Column {d_col} not found in stats")
-            continue
+    if n_pairs >= 2 and not np.isclose(std_diff, 0.0):
+        t_result = ttest_1samp(diffs, popmean=0.0)
+        t_stat = float(t_result.statistic)
+        p_value_t = float(t_result.pvalue)
+        sem = std_diff / math.sqrt(n_pairs)
+        critical = float(student_t.ppf(0.975, df=n_pairs - 1))
+        margin = critical * sem
+        ci95_low = mean_diff - margin
+        ci95_high = mean_diff + margin
+        cohens_dz = mean_diff / std_diff
+    elif n_pairs >= 2 and np.allclose(diffs, 0.0):
+        t_stat = 0.0
+        p_value_t = 1.0
+        ci95_low = 0.0
+        ci95_high = 0.0
 
-        for objective, obj_data in stats.groupby('objective'):
-            # Group by key factors
-            for (error_model, oracle_model), data in obj_data.groupby(['error_model', 'oracle_model']):
-                if len(data) < 2:
-                    print(f"Insufficient data for {objective}, {error_model}, {oracle_model} ({len(data)} rows)")
-                    continue
-
-                # Create pivot table for heatmap
-                pivot_data = data.pivot_table(
-                    values=d_col,
-                    index='acquisition',
-                    columns='jitter_std',
-                    aggfunc='mean'
-                )
-
-                # Check if pivot_data is empty or all NaN
-                if pivot_data.empty or pivot_data.isna().all().all():
-                    print(f"No valid data for heatmap: {objective}, {error_model}, {oracle_model}, {metric_suffix}")
-                    continue
-
-                # Check if there's at least some non-NaN data
-                if pivot_data.notna().sum().sum() == 0:
-                    print(f"All NaN values in pivot table: {objective}, {error_model}, {oracle_model}, {metric_suffix}")
-                    continue
-
-                plt.figure(figsize=(12, 6))
-
-                try:
-                    sns.heatmap(
-                        pivot_data,
-                        annot=True,
-                        fmt='.3f',
-                        cmap='RdYlGn',
-                        center=0,
-                        cbar_kws={'label': "Cohen's d"},
-                        mask=pivot_data.isna()  # Mask NaN values
-                    )
-
-                    metric_name = 'True Objective' if metric_suffix == 'true' else 'Observed Objective'
-                    plt.title(f"Effect Sizes ({metric_name}) - {objective}, {error_model}, {oracle_model}")
-                    plt.ylabel("Acquisition Strategy")
-                    plt.xlabel("Jitter Std")
-                    plt.tight_layout()
-
-                    filename = f"effect_sizes_{metric_suffix}_{objective}_{error_model}_{oracle_model}.png"
-                    plt.savefig(output_dir / filename, dpi=200)
-                    print(f"Saved heatmap: {filename}")
-                except Exception as e:
-                    print(
-                        f"Failed to create heatmap for {objective}, {error_model}, {oracle_model}, "
-                        f"{metric_suffix}: {e}"
-                    )
-                finally:
-                    plt.close()
-    
-    # Plot 2: Effect size distributions
-    for objective, obj_data in stats.groupby('objective'):
-        fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-
-        plots_created = False
-        for idx, (metric_suffix, ax) in enumerate(zip(['true', 'obs'], axes)):
-            d_col = f'cohens_d_{metric_suffix}'
-            if d_col not in obj_data.columns:
-                print(f"Column {d_col} not found for distribution plot")
-                continue
-
-            # Check if we have valid data
-            valid_data = obj_data[obj_data[d_col].notna()]
-            if valid_data.empty:
-                print(f"No valid data for distribution plot: {objective}, {metric_suffix}")
-                continue
-
+    wilcoxon_stat = np.nan
+    p_value_wilcoxon = np.nan
+    if n_pairs >= 2:
+        if np.allclose(diffs, 0.0):
+            wilcoxon_stat = 0.0
+            p_value_wilcoxon = 1.0
+        elif np.any(np.abs(diffs) > 0):
             try:
-                sns.boxplot(data=valid_data, x='acquisition', y=d_col, hue='error_model', ax=ax)
+                wilcoxon_result = wilcoxon(diffs, zero_method="wilcox", alternative="two-sided")
+                wilcoxon_stat = float(wilcoxon_result.statistic)
+                p_value_wilcoxon = float(wilcoxon_result.pvalue)
+            except ValueError:
+                pass
 
-                # Add reference lines for effect size thresholds
-                ax.axhline(0.2, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(0.5, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(0.8, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(-0.2, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(-0.5, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(-0.8, color='gray', linestyle='--', alpha=0.5, linewidth=1)
-                ax.axhline(0, color='black', linestyle='-', alpha=0.3, linewidth=1)
+    return {
+        "n_pairs": n_pairs,
+        "mean_diff": mean_diff,
+        "median_diff": median_diff,
+        "mean_abs_diff": mean_abs_diff,
+        "std_diff": std_diff,
+        "cohens_dz": cohens_dz,
+        "ci95_low": ci95_low,
+        "ci95_high": ci95_high,
+        "t_stat": t_stat,
+        "p_value_t": p_value_t,
+        "wilcoxon_stat": wilcoxon_stat,
+        "p_value_wilcoxon": p_value_wilcoxon,
+    }
 
-                metric_name = 'True Objective' if metric_suffix == 'true' else 'Observed Objective'
-                ax.set_title(f"Effect Size Distribution - {objective} ({metric_name})")
-                ax.set_ylabel("Cohen's d")
-                ax.set_xlabel("Acquisition Strategy")
-                ax.tick_params(axis='x', rotation=45)
 
-                plots_created = True
-            except Exception as e:
-                print(f"Failed to create distribution plot for {objective}, {metric_suffix}: {e}")
+def _apply_fdr(df: pd.DataFrame, p_value_column: str) -> pd.DataFrame:
+    adjusted = np.full(len(df), np.nan, dtype=float)
+    rejected = np.zeros(len(df), dtype=bool)
 
-        if plots_created:
-            plt.tight_layout()
-            filename = f"effect_sizes_distribution_{objective}.png"
-            plt.savefig(output_dir / filename, dpi=200)
-            print(f"Saved distribution plot: {filename}")
+    for metric in sorted(df["metric"].unique()):
+        metric_index = df.index[df["metric"] == metric]
+        valid_mask = df.loc[metric_index, p_value_column].notna()
+        if not valid_mask.any():
+            continue
+        valid_index = metric_index[valid_mask]
+        reject, adjusted_p, _, _ = multipletests(
+            df.loc[valid_index, p_value_column].to_numpy(dtype=float),
+            method="fdr_bh",
+        )
+        adjusted[valid_index.to_numpy(dtype=int)] = adjusted_p
+        rejected[valid_index.to_numpy(dtype=int)] = reject
+
+    df[f"{p_value_column}_fdr_bh"] = adjusted
+    df[f"{p_value_column}_rejected"] = rejected
+    return df
+
+
+def evaluate_final_outcomes_improved(final_df: pd.DataFrame, output_dir: Path) -> dict[str, pd.DataFrame]:
+    paired = build_paired_outcome_table(final_df)
+    if paired.empty:
+        return {}
+
+    condition_cols = list(CONDITION_KEYS)
+    if "dataset" in paired.columns:
+        condition_cols.insert(0, "dataset")
+
+    rows: list[dict[str, object]] = []
+    for condition_values, group in paired.groupby(condition_cols, dropna=False):
+        if not isinstance(condition_values, tuple):
+            condition_values = (condition_values,)
+        condition_data = dict(zip(condition_cols, condition_values))
+        for metric in ANALYSIS_METRICS:
+            jitter_col = f"{metric}_jitter"
+            baseline_col = f"{metric}_baseline"
+            diffs = group[jitter_col].to_numpy(dtype=float) - group[baseline_col].to_numpy(dtype=float)
+            stats = _paired_test_from_diff(diffs)
+            rows.append(
+                {
+                    **condition_data,
+                    "metric": metric,
+                    "mean_jitter": float(group[jitter_col].mean()),
+                    "mean_baseline": float(group[baseline_col].mean()),
+                    **stats,
+                }
+            )
+
+    paired_tests = pd.DataFrame(rows)
+    paired_tests = _apply_fdr(paired_tests, "p_value_t")
+    paired_tests = _apply_fdr(paired_tests, "p_value_wilcoxon")
+
+    pair_differences = paired.copy()
+    for metric in ANALYSIS_METRICS:
+        pair_differences[f"{metric}_diff"] = (
+            pair_differences[f"{metric}_jitter"] - pair_differences[f"{metric}_baseline"]
+        )
+
+    effect_sizes = paired_tests[paired_tests["metric"].isin(OBJECTIVE_METRICS)].copy()
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    pair_differences.to_csv(output_dir / "final_outcome_pair_differences.csv", index=False)
+    paired_tests.to_csv(output_dir / "final_outcome_paired_tests.csv", index=False)
+    effect_sizes.to_csv(output_dir / "effect_sizes_cohens_dz.csv", index=False)
+    paired_tests[paired_tests["metric"].str.contains("regret")].to_csv(
+        output_dir / "regret_paired_tests.csv",
+        index=False,
+    )
+
+    return {
+        "paired_outcomes": pair_differences,
+        "paired_tests": paired_tests,
+        "effect_sizes": effect_sizes,
+    }
+
+
+def generate_statistical_report(results: dict[str, pd.DataFrame], output_dir: Path) -> None:
+    report_path = output_dir / "statistical_report.txt"
+    paired_tests = results.get("paired_tests")
+
+    def _mean_abs_effect(values: pd.Series) -> float:
+        numeric = values.to_numpy(dtype=float)
+        numeric = numeric[np.isfinite(numeric)]
+        if numeric.size == 0:
+            return float("nan")
+        return float(np.mean(np.abs(numeric)))
+
+    with report_path.open("w", encoding="utf-8") as handle:
+        handle.write("PAIRED BASELINE VS JITTER ANALYSIS REPORT\n")
+        handle.write("=" * 80 + "\n\n")
+        handle.write("Method summary:\n")
+        handle.write("- Tests are run within matched baseline/jitter condition pairs.\n")
+        handle.write("- Each condition reports one-sample paired t-tests and Wilcoxon signed-rank tests.\n")
+        handle.write("- Benjamini-Hochberg FDR correction is applied separately per metric.\n")
+        handle.write("- Effect sizes use Cohen's dz on paired differences when variance is non-zero.\n\n")
+
+        if paired_tests is None or paired_tests.empty:
+            handle.write("No paired results were available.\n")
+            return
+
+        handle.write("Metric summary:\n")
+        summary = (
+            paired_tests.groupby("metric")
+            .agg(
+                conditions=("metric", "size"),
+                significant_t=("p_value_t_rejected", "sum"),
+                significant_wilcoxon=("p_value_wilcoxon_rejected", "sum"),
+                mean_abs_effect=("cohens_dz", _mean_abs_effect),
+            )
+            .reset_index()
+        )
+        handle.write(summary.to_string(index=False))
+        handle.write("\n\n")
+
+        strongest = paired_tests.assign(abs_effect=np.abs(paired_tests["cohens_dz"])).sort_values(
+            "abs_effect",
+            ascending=False,
+        )
+        strongest = strongest[strongest["abs_effect"].notna()].head(10)
+        handle.write("Largest paired effects:\n")
+        if strongest.empty:
+            handle.write("No non-zero variance effects were available.\n")
         else:
-            print(f"No distribution plots created - insufficient valid data for {objective}")
+            columns = [
+                "metric",
+                "objective",
+                "acquisition",
+                "error_model",
+                "jitter_std",
+                "jitter_iteration",
+                "oracle_model",
+                "n_pairs",
+                "mean_diff",
+                "cohens_dz",
+                "p_value_t_fdr_bh",
+            ]
+            if "dataset" in strongest.columns:
+                columns.insert(0, "dataset")
+            handle.write(strongest[columns].to_string(index=False))
+        handle.write("\n\n")
 
-        plt.close(fig)
-    
-    
+        handle.write("Output files:\n")
+        handle.write("- final_outcome_pair_differences.csv\n")
+        handle.write("- final_outcome_paired_tests.csv\n")
+        handle.write("- regret_paired_tests.csv\n")
+        handle.write("- effect_sizes_cohens_dz.csv\n")
+
+    print(f"Statistical report saved to: {report_path}")
+
+
+def plot_final_outcome_significance(results: dict[str, pd.DataFrame], output_dir: Path) -> None:
+    effect_sizes = results.get("effect_sizes")
+    if effect_sizes is None or effect_sizes.empty:
+        print("No paired effect-size results to plot")
+        return
+
+    for metric, metric_df in effect_sizes.groupby("metric"):
+        metric_label = "true" if metric == "objective_true" else "observed"
+        group_cols = ["objective", "error_model", "oracle_model", "jitter_iteration"]
+        if "dataset" in metric_df.columns:
+            group_cols.insert(0, "dataset")
+
+        for group_values, data in metric_df.groupby(group_cols, dropna=False):
+            if not isinstance(group_values, tuple):
+                group_values = (group_values,)
+            group_dict = dict(zip(group_cols, group_values))
+
+            pivot = data.pivot_table(
+                values="cohens_dz",
+                index="acquisition",
+                columns="jitter_std",
+                aggfunc="mean",
+            )
+            if pivot.empty or pivot.isna().all().all():
+                continue
+
+            significance = data.pivot_table(
+                values="p_value_t_fdr_bh",
+                index="acquisition",
+                columns="jitter_std",
+                aggfunc="min",
+            )
+
+            plt.figure(figsize=(10, 5))
+            sns.heatmap(
+                pivot,
+                annot=True,
+                fmt=".3f",
+                cmap="RdYlGn",
+                center=0,
+                cbar_kws={"label": "Cohen's dz"},
+                mask=pivot.isna(),
+            )
+
+            for row_idx, acquisition in enumerate(pivot.index):
+                for col_idx, jitter_std in enumerate(pivot.columns):
+                    p_value = significance.loc[acquisition, jitter_std]
+                    if pd.notna(p_value) and p_value < 0.05:
+                        plt.text(col_idx + 0.5, row_idx + 0.2, "*", ha="center", va="center", color="black")
+
+            title_parts = [
+                f"metric={metric_label}",
+                f"objective={group_dict['objective']}",
+                f"error={group_dict['error_model']}",
+                f"oracle={group_dict['oracle_model']}",
+                f"jitter_iter={group_dict['jitter_iteration']}",
+            ]
+            if "dataset" in group_dict:
+                title_parts.insert(0, f"dataset={group_dict['dataset']}")
+            plt.title("Paired effect sizes (" + ", ".join(title_parts) + ")")
+            plt.ylabel("Acquisition")
+            plt.xlabel("Jitter std")
+            plt.tight_layout()
+
+            filename_parts = [
+                "paired_effect_sizes",
+                metric_label,
+                str(group_dict["objective"]),
+                str(group_dict["error_model"]),
+                str(group_dict["oracle_model"]),
+                f"jit{group_dict['jitter_iteration']}",
+            ]
+            if "dataset" in group_dict:
+                filename_parts.insert(1, str(group_dict["dataset"]))
+            filename = "_".join(filename_parts) + ".png"
+            plt.savefig(output_dir / filename, dpi=200)
+            plt.close()
+
+
 def plot_objectives(df: pd.DataFrame, output_dir: Path) -> None:
     group_cols = [
         "objective",

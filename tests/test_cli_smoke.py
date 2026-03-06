@@ -4,6 +4,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -55,3 +56,46 @@ def test_plot_loader_and_final_row_summary(tmp_path: Path) -> None:
     assert final_rows.shape[0] == 2
     assert set(final_rows["baseline"].unique()) == {True, False}
 
+
+def test_plot_analysis_builds_paired_outputs(tmp_path: Path) -> None:
+    plot_mod = _load_module("plot_sensor_error_results_mod_analysis", SCRIPTS_DIR / "plot_sensor_error_results.py")
+    final_df = pd.DataFrame(
+        {
+            "dataset": ["demo", "demo", "demo", "demo"],
+            "objective": ["composite", "composite", "composite", "composite"],
+            "acquisition": ["ei", "ei", "ei", "ei"],
+            "seed": [1, 1, 2, 2],
+            "oracle_model": ["xgboost", "xgboost", "xgboost", "xgboost"],
+            "error_model": ["none", "gaussian", "none", "gaussian"],
+            "jitter_std": [0.0, 0.1, 0.0, 0.1],
+            "jitter_iteration": [20, 20, 20, 20],
+            "objective_true": [1.0, 1.3, 2.0, 1.8],
+            "objective_observed": [1.0, 1.4, 2.0, 1.7],
+            "simple_regret_true": [0.5, 0.4, 0.6, 0.7],
+            "regret_cum_true": [1.0, 1.2, 1.5, 1.7],
+            "regret_avg_true": [0.5, 0.6, 0.75, 0.85],
+            "baseline": [True, False, True, False],
+        }
+    )
+
+    results = plot_mod.evaluate_final_outcomes_improved(final_df, tmp_path)
+    paired = plot_mod.build_paired_outcome_table(final_df)
+
+    assert paired.shape[0] == 2
+    paired_tests = results["paired_tests"]
+    assert set(paired_tests["metric"]) == {
+        "objective_true",
+        "objective_observed",
+        "simple_regret_true",
+        "regret_cum_true",
+        "regret_avg_true",
+    }
+
+    true_row = paired_tests.loc[paired_tests["metric"] == "objective_true"].iloc[0]
+    assert np.isclose(true_row["mean_diff"], 0.05)
+    assert "p_value_t_fdr_bh" in paired_tests.columns
+    assert "p_value_wilcoxon_fdr_bh" in paired_tests.columns
+
+    assert (tmp_path / "final_outcome_pair_differences.csv").exists()
+    assert (tmp_path / "final_outcome_paired_tests.csv").exists()
+    assert (tmp_path / "effect_sizes_cohens_dz.csv").exists()

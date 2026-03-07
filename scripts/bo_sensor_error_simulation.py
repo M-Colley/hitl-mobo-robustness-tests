@@ -108,11 +108,14 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
 DATA_DIR = REPO_ROOT / "eHMI-bo-participantdata"
 DEFAULT_DATASET_CONFIG_PATH = REPO_ROOT / "datasets.json"
+DEFAULT_ORACLE_SELECTION_PATH = Path("output") / "best_oracle_models.json"
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 DEFAULT_DATASET_NAME = "default"
+AUTO_ORACLE_MODEL = "auto"
+OBSERVATION_SOURCE_COLUMN = "__source_file"
 if __name__ not in sys.modules:
     current_module = types.ModuleType(__name__)
     current_module.__dict__.update(globals())
@@ -223,6 +226,12 @@ class DatasetConfig:
     param_columns: list[str]
     objective_map: dict[str, list[str]]
     observation_glob: str = "ObservationsPerEvaluation.csv"
+
+
+@dataclasses.dataclass(frozen=True)
+class ObjectiveNormalization:
+    min_vals: np.ndarray
+    ranges: np.ndarray
 
 
 @dataclasses.dataclass
@@ -345,8 +354,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--xi", type=float, default=0.01)
     parser.add_argument("--kappa", type=float, default=2.0)
 
-    parser.add_argument("--oracle-model", type=str, default="extra_trees", choices=ORACLE_MODEL_CHOICES + ["all"])
-    parser.add_argument("--oracle-models", type=str, default="extra_trees")
+    parser.add_argument(
+        "--oracle-model",
+        type=str,
+        default="extra_trees",
+        choices=ORACLE_MODEL_CHOICES + ["all", AUTO_ORACLE_MODEL],
+    )
+    parser.add_argument("--oracle-models", type=str, default=None)
+    parser.add_argument(
+        "--oracle-selection-path",
+        type=Path,
+        default=DEFAULT_ORACLE_SELECTION_PATH,
+        help="JSON file produced by select_best_oracle_model.py for --oracle-model auto.",
+    )
     parser.add_argument(
         "--oracle-augmentation",
         type=str,
@@ -439,7 +459,11 @@ def load_observations(
         raise FileNotFoundError(f"No observation files found in {dirs} using {dataset.observation_glob}")
 
     required_columns = dataset.param_columns + dataset.objective_map[objective]
-    frames = [_read_observation_csv(path, required_columns) for path in files]
+    frames: list[pd.DataFrame] = []
+    for path in files:
+        frame = _read_observation_csv(path, required_columns)
+        frame[OBSERVATION_SOURCE_COLUMN] = str(path.resolve())
+        frames.append(frame)
     df = pd.concat(frames, ignore_index=True)
 
     for column in required_columns:
@@ -469,15 +493,14 @@ def compute_objective(
     objective_columns: list[str],
     normalize: bool,
     weights: np.ndarray | None,
+    normalization: ObjectiveNormalization | None = None,
 ) -> pd.Series:
     cols = objective_columns
     values = df[cols].to_numpy(dtype=float)
 
     if normalize:
-        min_vals = np.nanmin(values, axis=0)
-        max_vals = np.nanmax(values, axis=0)
-        ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
-        values = (values - min_vals) / ranges
+        stats = normalization or fit_objective_normalization(df, cols)
+        values = normalize_objective_values(values, stats)
 
     if weights is None:
         return pd.Series(values.mean(axis=1), index=df.index)
@@ -491,17 +514,34 @@ def compute_objective_matrix(
     df: pd.DataFrame,
     objective_columns: list[str],
     normalize: bool,
+    normalization: ObjectiveNormalization | None = None,
 ) -> np.ndarray:
     cols = objective_columns
     values = df[cols].to_numpy(dtype=float)
 
     if normalize:
-        min_vals = np.nanmin(values, axis=0)
-        max_vals = np.nanmax(values, axis=0)
-        ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
-        values = (values - min_vals) / ranges
+        stats = normalization or fit_objective_normalization(df, cols)
+        values = normalize_objective_values(values, stats)
 
     return values
+
+
+def fit_objective_normalization(
+    df: pd.DataFrame,
+    objective_columns: list[str],
+) -> ObjectiveNormalization:
+    values = df[objective_columns].to_numpy(dtype=float)
+    min_vals = np.nanmin(values, axis=0)
+    max_vals = np.nanmax(values, axis=0)
+    ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
+    return ObjectiveNormalization(min_vals=min_vals, ranges=ranges)
+
+
+def normalize_objective_values(
+    values: np.ndarray,
+    normalization: ObjectiveNormalization,
+) -> np.ndarray:
+    return (values - normalization.min_vals) / normalization.ranges
 
 
 def parse_objective_weights(
@@ -527,6 +567,8 @@ def augment_oracle_data(
     mode: str,
     repeats: int,
     noise_std: float,
+    low: np.ndarray | None = None,
+    high: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     if mode == "none":
         return X, y
@@ -535,11 +577,20 @@ def augment_oracle_data(
     if mode != "jitter":
         raise ValueError(f"Unknown oracle augmentation mode: {mode}")
 
+    if low is None:
+        low = np.min(X, axis=0)
+    if high is None:
+        high = np.max(X, axis=0)
+    low = np.asarray(low, dtype=float)
+    high = np.asarray(high, dtype=float)
+    feature_scales = np.where(high > low, (high - low) * noise_std, 0.0)
+
     augmented_X = [X]
     augmented_y = [y]
     for _ in range(repeats):
-        noise = rng.normal(0.0, noise_std, size=X.shape)
-        augmented_X.append(X + noise)
+        noise = rng.normal(0.0, feature_scales, size=X.shape)
+        jittered = np.clip(X + noise, low, high)
+        augmented_X.append(jittered)
         augmented_y.append(y)
 
     return np.vstack(augmented_X), np.concatenate(augmented_y, axis=0)
@@ -561,6 +612,8 @@ def build_oracle(
 ) -> OracleModel:
     X = df[param_columns].to_numpy(dtype=float)
     rng = np.random.default_rng(seed)
+    low = np.min(X, axis=0)
+    high = np.max(X, axis=0)
 
     if oracle_fast:
         tree_scale = 0.35
@@ -576,6 +629,8 @@ def build_oracle(
             oracle_augmentation,
             oracle_augment_repeats,
             oracle_augment_std,
+            low=low,
+            high=high,
         )
         models = []
         X_aug_df = pd.DataFrame(X_aug, columns=param_columns)
@@ -611,6 +666,8 @@ def build_oracle(
         oracle_augmentation,
         oracle_augment_repeats,
         oracle_augment_std,
+        low=low,
+        high=high,
     )
 
     X_aug_df = pd.DataFrame(X_aug, columns=param_columns)
@@ -836,16 +893,92 @@ def parse_error_models(error_model: str, error_models: str | None) -> list[str]:
 
 
 def parse_oracle_models(oracle_model: str, oracle_models: str | None) -> list[str]:
-    raw = oracle_models or oracle_model
+    raw = oracle_models if oracle_models is not None else oracle_model
     if raw == "all":
         return ORACLE_MODEL_CHOICES
     values = [v.strip() for v in raw.split(",") if v.strip()]
     if not values:
         raise ValueError("At least one oracle model must be specified.")
+    if AUTO_ORACLE_MODEL in values:
+        if len(values) != 1:
+            raise ValueError("'auto' cannot be combined with explicit oracle models.")
+        return [AUTO_ORACLE_MODEL]
     unknown = [v for v in values if v not in ORACLE_MODEL_CHOICES]
     if unknown:
         raise ValueError(f"Unknown oracle model(s): {', '.join(unknown)}")
     return values
+
+
+def load_oracle_selection(path: Path) -> dict[tuple[str, str], dict[str, object]]:
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Oracle selection file not found: {path}. "
+            "Run select_best_oracle_model.py first or pass --oracle-model(s) explicitly."
+        )
+    payload = json.loads(path.read_text())
+    datasets = payload.get("datasets")
+    if not isinstance(datasets, list):
+        raise ValueError("Oracle selection file must contain a top-level 'datasets' list.")
+
+    selection: dict[tuple[str, str], dict[str, object]] = {}
+    for dataset_entry in datasets:
+        if not isinstance(dataset_entry, dict):
+            raise ValueError("Each dataset entry in the oracle selection file must be an object.")
+        dataset_name = str(dataset_entry.get("name"))
+        objectives = dataset_entry.get("objectives")
+        if not isinstance(objectives, dict):
+            raise ValueError(f"Dataset '{dataset_name}' is missing an 'objectives' mapping.")
+        for objective_name, objective_entry in objectives.items():
+            if not isinstance(objective_entry, dict):
+                raise ValueError(
+                    f"Objective '{objective_name}' for dataset '{dataset_name}' must be an object."
+                )
+            best_model = objective_entry.get("best_model")
+            if not isinstance(best_model, str):
+                raise ValueError(
+                    f"Objective '{objective_name}' for dataset '{dataset_name}' is missing 'best_model'."
+                )
+            selection[(dataset_name, str(objective_name))] = objective_entry
+    return selection
+
+
+def resolve_oracle_models_for_objective(
+    requested_models: list[str],
+    dataset_name: str,
+    objective_name: str,
+    oracle_selection: dict[tuple[str, str], dict[str, object]] | None = None,
+) -> list[str]:
+    if requested_models != [AUTO_ORACLE_MODEL]:
+        return requested_models
+    if oracle_selection is None:
+        raise ValueError("Oracle selection data must be provided when using auto oracle mode.")
+    selection_entry = oracle_selection.get((dataset_name, objective_name))
+    if selection_entry is None:
+        raise KeyError(
+            f"No auto-selected oracle found for dataset='{dataset_name}', objective='{objective_name}'."
+        )
+    best_model = selection_entry.get("best_model")
+    if not isinstance(best_model, str):
+        raise ValueError(
+            f"Auto-selection entry for dataset='{dataset_name}', objective='{objective_name}' is invalid."
+        )
+    return [best_model]
+
+
+def infer_oracle_groups(df: pd.DataFrame) -> tuple[np.ndarray | None, str]:
+    if "User_ID" in df.columns:
+        user_ids = df["User_ID"].dropna().astype(str)
+        if user_ids.nunique() >= 2:
+            return df["User_ID"].astype(str).to_numpy(), "User_ID"
+    if "Group_ID" in df.columns:
+        group_ids = df["Group_ID"].dropna().astype(str)
+        if group_ids.nunique() >= 2:
+            return df["Group_ID"].astype(str).to_numpy(), "Group_ID"
+    if OBSERVATION_SOURCE_COLUMN in df.columns:
+        source_ids = df[OBSERVATION_SOURCE_COLUMN].astype(str)
+        if source_ids.nunique() >= 2:
+            return source_ids.to_numpy(), OBSERVATION_SOURCE_COLUMN
+    return None, "row"
 
 
 def is_remote_dataset_path(value: str) -> bool:

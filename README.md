@@ -209,10 +209,17 @@ python scripts/bo_sensor_error_simulation.py \
 
 ## Data location
 
-By default, the script searches for data in remote Git repositories.
+By default, the scripts use the repo-level `datasets.json` file when it exists.
+That means adding a new dataset entry there is enough for both the simulation
+and oracle-selection flows to pick it up automatically. Any remote dataset
+repositories listed there are cloned into `--dataset-cache-dir`.
+
+If `datasets.json` is not present, the scripts fall back to the legacy local
+`eHMI-bo-participantdata` folder next to the repo.
 
 You can also point `data_dir` (or any entry in `data_dirs`) to a remote Git repo
-URL. The script will clone it into `--dataset-cache-dir` before loading observations.
+URL. The script will clone it into `--dataset-cache-dir` before loading observations,
+even when `--dataset-config` is not provided.
 
  If your data lives elsewhere, pass it explicitly:
 

@@ -24,7 +24,12 @@ from bo_sensor_error_simulation import (
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Optional local dataset directory or remote Git repository URL.",
+    )
     parser.add_argument("--dataset-config", type=Path, default=None)
     parser.add_argument("--dataset-cache-dir", type=Path, default=Path(".dataset_cache"))
     parser.add_argument("--objective", type=str, default=None)

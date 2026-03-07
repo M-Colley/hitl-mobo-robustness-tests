@@ -105,7 +105,9 @@ torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DATA_DIR = SCRIPT_DIR.parent / "eHMI-bo-participantdata"
+REPO_ROOT = SCRIPT_DIR.parent
+DATA_DIR = REPO_ROOT / "eHMI-bo-participantdata"
+DEFAULT_DATASET_CONFIG_PATH = REPO_ROOT / "datasets.json"
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -298,7 +300,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-seeds", type=int, default=5)
 
     parser.add_argument("--output-dir", type=Path, default=Path("output"))
-    parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
+    parser.add_argument(
+        "--data-dir",
+        type=str,
+        default=None,
+        help="Optional local dataset directory or remote Git repository URL.",
+    )
     parser.add_argument(
         "--dataset-config",
         type=Path,
@@ -871,26 +878,17 @@ def resolve_data_dirs(raw_dirs: list[str], cache_dir: Path) -> list[Path]:
         if is_remote_dataset_path(entry):
             resolved.append(fetch_remote_dataset(entry, cache_dir))
         else:
-            resolved.append(Path(entry))
+            resolved.append(Path(entry).expanduser())
     return resolved
 
 
-def parse_dataset_configs(
-    data_dir: Path,
-    dataset_config_path: Path | None,
-    cache_dir: Path,
-) -> list[DatasetConfig]:
-    if dataset_config_path is None:
-        return [
-            DatasetConfig(
-                name=DEFAULT_DATASET_NAME,
-                data_dirs=[data_dir],
-                param_columns=list(PARAM_COLUMNS),
-                objective_map={k: list(v) for k, v in OBJECTIVE_MAP.items()},
-                observation_glob="ObservationsPerEvaluation.csv",
-            )
-        ]
+def _default_dataset_config() -> Path | None:
+    if not DEFAULT_DATASET_CONFIG_PATH.is_file():
+        return None
+    return DEFAULT_DATASET_CONFIG_PATH
 
+
+def _load_dataset_payloads(dataset_config_path: Path) -> list[dict]:
     payload = json.loads(dataset_config_path.read_text())
     if isinstance(payload, dict) and "datasets" in payload:
         dataset_payloads = payload["datasets"]
@@ -898,7 +896,32 @@ def parse_dataset_configs(
         dataset_payloads = payload
     else:
         raise ValueError("Dataset config must be a list or a dict with a 'datasets' key.")
+    return dataset_payloads
 
+
+def parse_dataset_configs(
+    data_dir: str | Path | None,
+    dataset_config_path: Path | None,
+    cache_dir: Path,
+) -> list[DatasetConfig]:
+    if dataset_config_path is None:
+        fallback_config_path = _default_dataset_config() if data_dir is None else None
+        if fallback_config_path is not None:
+            dataset_config_path = fallback_config_path
+        else:
+            raw_data_dir = str(data_dir) if data_dir is not None else str(DATA_DIR)
+            resolved_dirs = resolve_data_dirs([raw_data_dir], cache_dir)
+            return [
+                DatasetConfig(
+                    name=DEFAULT_DATASET_NAME,
+                    data_dirs=resolved_dirs,
+                    param_columns=list(PARAM_COLUMNS),
+                    objective_map={k: list(v) for k, v in OBJECTIVE_MAP.items()},
+                    observation_glob="ObservationsPerEvaluation.csv",
+                )
+            ]
+
+    dataset_payloads = _load_dataset_payloads(dataset_config_path)
     datasets: list[DatasetConfig] = []
     for idx, entry in enumerate(dataset_payloads, start=1):
         if not isinstance(entry, dict):

@@ -36,6 +36,32 @@ def test_select_best_oracle_model_rejects_unknown_model() -> None:
         select_mod.parse_oracle_models("unknown_model")
 
 
+def test_simulation_parse_args_preserves_remote_data_dir(monkeypatch: pytest.MonkeyPatch) -> None:
+    sim_mod = _load_module("bo_sensor_error_simulation_args_mod", SCRIPTS_DIR / "bo_sensor_error_simulation.py")
+    remote_url = "https://github.com/M-Colley/ehmi-optimization-chi25-data"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["bo_sensor_error_simulation.py", "--data-dir", remote_url],
+    )
+    args = sim_mod.parse_args()
+    assert args.data_dir == remote_url
+
+
+def test_select_best_oracle_model_parse_args_preserves_remote_data_dir(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    select_mod = _load_module("select_best_oracle_model_args_mod", SCRIPTS_DIR / "select_best_oracle_model.py")
+    remote_url = "https://github.com/M-Colley/opticarvis-data"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["select_best_oracle_model.py", "--data-dir", remote_url],
+    )
+    args = select_mod.parse_args()
+    assert args.data_dir == remote_url
+
+
 def test_plot_loader_and_final_row_summary(tmp_path: Path) -> None:
     plot_mod = _load_module("plot_sensor_error_results_mod", SCRIPTS_DIR / "plot_sensor_error_results.py")
     input_dir = tmp_path / "input"

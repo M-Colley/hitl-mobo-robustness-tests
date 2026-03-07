@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -229,6 +230,81 @@ def test_parse_dataset_configs_from_json(tmp_path: Path) -> None:
     assert datasets[0].name == "dataset_a"
     assert datasets[0].param_columns == ["p1", "p2"]
     assert datasets[0].objective_map["score"] == ["s1", "s2"]
+
+
+def test_parse_dataset_configs_resolves_remote_data_dir_without_dataset_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cached_dir = tmp_path / "cached_repo"
+    cached_dir.mkdir()
+    seen_urls: list[str] = []
+
+    def fake_fetch_remote_dataset(url: str, cache_dir: Path) -> Path:
+        seen_urls.append(url)
+        assert cache_dir == tmp_path
+        return cached_dir
+
+    monkeypatch.setattr(bo_sim, "fetch_remote_dataset", fake_fetch_remote_dataset)
+
+    datasets = bo_sim.parse_dataset_configs(
+        "https://github.com/example/demo-data",
+        None,
+        tmp_path,
+    )
+
+    assert seen_urls == ["https://github.com/example/demo-data"]
+    assert datasets[0].data_dirs == [cached_dir]
+
+
+def test_parse_dataset_configs_uses_repo_dataset_config_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    default_data_dir = tmp_path / "legacy_default_data_dir"
+    default_data_dir.mkdir()
+    local_dataset_dir = tmp_path / "local_dataset"
+    local_dataset_dir.mkdir()
+    config_path = tmp_path / "datasets.json"
+    config_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "fallback_dataset",
+                    "data_dir": str(local_dataset_dir),
+                    "param_columns": ["p1", "p2"],
+                    "objective_map": {"score": ["s1"]},
+                }
+            ]
+        )
+    )
+
+    monkeypatch.setattr(bo_sim, "DATA_DIR", default_data_dir)
+    monkeypatch.setattr(bo_sim, "DEFAULT_DATASET_CONFIG_PATH", config_path)
+
+    datasets = bo_sim.parse_dataset_configs(None, None, tmp_path)
+
+    assert len(datasets) == 1
+    assert datasets[0].name == "fallback_dataset"
+    assert datasets[0].data_dirs == [local_dataset_dir]
+
+
+def test_parse_dataset_configs_falls_back_to_legacy_default_data_dir_without_repo_config(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    default_data_dir = tmp_path / "legacy_default_data_dir"
+    default_data_dir.mkdir()
+    missing_config_path = tmp_path / "missing_datasets.json"
+
+    monkeypatch.setattr(bo_sim, "DATA_DIR", default_data_dir)
+    monkeypatch.setattr(bo_sim, "DEFAULT_DATASET_CONFIG_PATH", missing_config_path)
+
+    datasets = bo_sim.parse_dataset_configs(None, None, tmp_path)
+
+    assert len(datasets) == 1
+    assert datasets[0].name == bo_sim.DEFAULT_DATASET_NAME
+    assert datasets[0].data_dirs == [default_data_dir]
 
 
 def test_combine_dataset_configs_intersection() -> None:

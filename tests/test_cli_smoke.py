@@ -62,6 +62,50 @@ def test_select_best_oracle_model_parse_args_preserves_remote_data_dir(
     assert args.data_dir == remote_url
 
 
+def test_simulation_parse_args_preserves_oracle_auto_mode(monkeypatch: pytest.MonkeyPatch) -> None:
+    sim_mod = _load_module("bo_sensor_error_simulation_auto_args_mod", SCRIPTS_DIR / "bo_sensor_error_simulation.py")
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["bo_sensor_error_simulation.py", "--oracle-model", "auto"],
+    )
+    args = sim_mod.parse_args()
+    assert args.oracle_model == "auto"
+    assert args.oracle_models is None
+
+
+def test_select_best_oracle_model_uses_grouped_validation_for_user_ids() -> None:
+    select_mod = _load_module("select_best_oracle_group_validation_mod", SCRIPTS_DIR / "select_best_oracle_model.py")
+    df = pd.DataFrame(
+        {
+            "p1": [0.0, 0.1, 0.9, 1.0, 0.2, 0.3],
+            "p2": [0.2, 0.3, 0.8, 0.7, 0.4, 0.5],
+            "score": [0.1, 0.15, 0.9, 0.95, 0.2, 0.25],
+            "User_ID": [1, 1, 2, 2, 3, 3],
+        }
+    )
+
+    results = select_mod.evaluate_models_for_objective(
+        df=df,
+        objective="score",
+        objective_columns=["score"],
+        param_columns=["p1", "p2"],
+        models=["extra_trees"],
+        seed=7,
+        cv_folds=5,
+        normalize=False,
+        weights=None,
+        tree_scale=0.1,
+        progress_desc=None,
+    )
+
+    assert results["validation"]["strategy"] == "group_kfold"
+    assert results["validation"]["group_source"] == "User_ID"
+    assert results["validation"]["effective_cv_folds"] == 3
+    assert "extra_trees" in results["scores"]
+    assert "extra_trees" in results["rmse"]
+
+
 def test_plot_loader_and_final_row_summary(tmp_path: Path) -> None:
     plot_mod = _load_module("plot_sensor_error_results_mod", SCRIPTS_DIR / "plot_sensor_error_results.py")
     input_dir = tmp_path / "input"

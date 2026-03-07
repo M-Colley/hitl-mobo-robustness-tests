@@ -41,6 +41,12 @@ def test_parse_oracle_models_default_set() -> None:
     assert models == ["xgboost", "lightgbm", "catboost", "extra_trees"]
 
 
+def test_parse_oracle_models_auto_mode() -> None:
+    assert bo_sim.parse_oracle_models("auto", None) == ["auto"]
+    with pytest.raises(ValueError, match="cannot be combined"):
+        bo_sim.parse_oracle_models("extra_trees", "auto,extra_trees")
+
+
 def test_filter_acquisitions_for_objective() -> None:
     single_acqs = ["ei", "ucb", "qei"]
     assert bo_sim.filter_acquisitions_for_objective(single_acqs, "composite") == single_acqs
@@ -208,6 +214,81 @@ def test_augment_oracle_data_jitter() -> None:
     X_aug, y_aug = bo_sim.augment_oracle_data(X, y, rng, "jitter", repeats=2, noise_std=0.01)
     assert X_aug.shape[0] == 30
     assert y_aug.shape[0] == 30
+
+
+def test_augment_oracle_data_jitter_respects_bounds() -> None:
+    rng = np.random.default_rng(0)
+    X = np.array([[0.0, 0.5], [1.0, 0.7]], dtype=float)
+    y = np.array([1.0, 2.0], dtype=float)
+    X_aug, _ = bo_sim.augment_oracle_data(
+        X,
+        y,
+        rng,
+        "jitter",
+        repeats=3,
+        noise_std=5.0,
+        low=np.array([0.0, 0.0], dtype=float),
+        high=np.array([1.0, 1.0], dtype=float),
+    )
+    assert np.all(X_aug >= 0.0)
+    assert np.all(X_aug <= 1.0)
+
+
+def test_infer_oracle_groups_prefers_user_id() -> None:
+    df = pd.DataFrame(
+        {
+            "User_ID": [1, 1, 2, 2],
+            bo_sim.OBSERVATION_SOURCE_COLUMN: ["a", "a", "b", "b"],
+        }
+    )
+    groups, source = bo_sim.infer_oracle_groups(df)
+    assert source == "User_ID"
+    assert groups is not None
+    assert set(groups.tolist()) == {"1", "2"}
+
+
+def test_infer_oracle_groups_falls_back_to_source_file() -> None:
+    df = pd.DataFrame(
+        {
+            bo_sim.OBSERVATION_SOURCE_COLUMN: ["a", "a", "b", "b"],
+        }
+    )
+    groups, source = bo_sim.infer_oracle_groups(df)
+    assert source == bo_sim.OBSERVATION_SOURCE_COLUMN
+    assert groups is not None
+    assert set(groups.tolist()) == {"a", "b"}
+
+
+def test_load_and_resolve_oracle_selection(tmp_path: Path) -> None:
+    selection_path = tmp_path / "best_oracle_models.json"
+    selection_path.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {
+                        "name": "demo",
+                        "objectives": {
+                            "composite": {
+                                "best_model": "xgboost",
+                                "scores": {"xgboost": 0.9},
+                            }
+                        },
+                    }
+                ]
+            }
+        )
+    )
+
+    selection = bo_sim.load_oracle_selection(selection_path)
+    resolved = bo_sim.resolve_oracle_models_for_objective(
+        ["auto"],
+        "demo",
+        "composite",
+        selection,
+    )
+
+    assert selection[("demo", "composite")]["best_model"] == "xgboost"
+    assert resolved == ["xgboost"]
 
 
 def test_parse_dataset_configs_from_json(tmp_path: Path) -> None:

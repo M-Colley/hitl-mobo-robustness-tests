@@ -1221,15 +1221,25 @@ def write_run_config(
     output_dir: Path,
     dataset_configs: list[DatasetConfig],
     objectives: dict[str, list[str]],
-    acquisition_names: list[str],
+    acquisition_names: dict[tuple[str, str], list[str]],
     error_models: list[str],
-    oracle_models: list[str],
+    requested_oracle_models: list[str],
+    resolved_oracle_models: dict[tuple[str, str], list[str]],
     seeds: list[int],
     args: argparse.Namespace,
 ) -> None:
     dataset_lines = ["Datasets:"]
     for dataset in dataset_configs:
         dataset_lines.append(f"  - {dataset.name}: {', '.join(str(p) for p in dataset.data_dirs)}")
+
+    objective_lines: list[str] = []
+    for dataset_name, objective_names in objectives.items():
+        objective_lines.append(f"  {dataset_name}: {', '.join(objective_names)}")
+        for objective_name in objective_names:
+            key = (dataset_name, objective_name)
+            resolved = ", ".join(resolved_oracle_models[key])
+            acquisitions = ", ".join(acquisition_names[key])
+            objective_lines.append(f"    {objective_name}: oracles=[{resolved}] acquisitions=[{acquisitions}]")
 
     lines = [
         "Sensor-error simulation configuration",
@@ -1238,10 +1248,9 @@ def write_run_config(
         *dataset_lines,
         "",
         "Objectives by dataset:",
-        *[f"  {name}: {', '.join(values)}" for name, values in objectives.items()],
-        f"Acquisitions: {', '.join(acquisition_names)}",
+        *objective_lines,
         f"Error models: {', '.join(error_models)}",
-        f"Oracle models: {', '.join(oracle_models)}",
+        f"Requested oracle models: {', '.join(requested_oracle_models)}",
         f"Seeds: {', '.join(str(s) for s in seeds)}",
         "",
         "Core settings:",
@@ -1254,6 +1263,7 @@ def write_run_config(
         f"  baseline_run: {args.baseline_run}",
         "",
         "Oracle settings:",
+        f"  oracle_selection_path: {args.oracle_selection_path}",
         f"  augmentation: {args.oracle_augmentation}",
         f"  augmentation_repeats: {args.oracle_augment_repeats}",
         f"  augmentation_std: {args.oracle_augment_std}",
@@ -1952,7 +1962,7 @@ def main() -> None:
     jitter_iterations = parse_int_list(args.jitter_iterations, args.jitter_iteration)
     validate_sweeps(jitter_iterations, jitter_stds, args.iterations)
 
-    oracle_models = parse_oracle_models(args.oracle_model, args.oracle_models)
+    requested_oracle_models = parse_oracle_models(args.oracle_model, args.oracle_models)
     seeds = parse_seed_list(args.seeds, args.seed, args.num_seeds)
 
     acquisition_names = parse_acquisition_list(args.acq, args.acq_list)
@@ -1967,19 +1977,18 @@ def main() -> None:
         if combined is not None:
             dataset_configs.append(combined)
 
+    oracle_selection = (
+        load_oracle_selection(args.oracle_selection_path)
+        if requested_oracle_models == [AUTO_ORACLE_MODEL]
+        else None
+    )
+
     output_dir = ensure_output_dir(args.output_dir)
     runtime_start = time.perf_counter()
 
-    baseline_runs_per_objective = len(acquisition_names) * len(seeds) * len(oracle_models) if args.baseline_run else 0
-    jittered_runs_per_objective = (
-        len(acquisition_names)
-        * len(seeds)
-        * len(oracle_models)
-        * len(error_models)
-        * len(jitter_stds)
-        * len(jitter_iterations)
-    )
     dataset_objectives: dict[str, list[str]] = {}
+    objective_acquisition_names: dict[tuple[str, str], list[str]] = {}
+    objective_oracle_models: dict[tuple[str, str], list[str]] = {}
     total_runs = 0
     for dataset in dataset_configs:
         objective_names = parse_objective_list(
@@ -1988,7 +1997,31 @@ def main() -> None:
             dataset.objective_map,
         )
         dataset_objectives[dataset.name] = objective_names
-        total_runs += (baseline_runs_per_objective + jittered_runs_per_objective) * len(objective_names)
+        for objective_name in objective_names:
+            key = (dataset.name, objective_name)
+            filtered_acq_names = filter_acquisitions_for_objective(acquisition_names, objective_name)
+            resolved_models = resolve_oracle_models_for_objective(
+                requested_oracle_models,
+                dataset.name,
+                objective_name,
+                oracle_selection,
+            )
+            objective_acquisition_names[key] = filtered_acq_names
+            objective_oracle_models[key] = resolved_models
+            baseline_runs = (
+                len(filtered_acq_names) * len(seeds) * len(resolved_models)
+                if args.baseline_run
+                else 0
+            )
+            jittered_runs = (
+                len(filtered_acq_names)
+                * len(seeds)
+                * len(resolved_models)
+                * len(error_models)
+                * len(jitter_stds)
+                * len(jitter_iterations)
+            )
+            total_runs += baseline_runs + jittered_runs
 
     use_parallel = args.parallel or len(seeds) > 1
 
@@ -2027,10 +2060,12 @@ def main() -> None:
             bounds = bounds_from_data(df, dataset.param_columns)
             ref_point = compute_reference_point(df, objective_name, objective_columns)
 
-            filtered_acq_names = filter_acquisitions_for_objective(acquisition_names, objective_name)
+            key = (dataset.name, objective_name)
+            filtered_acq_names = objective_acquisition_names[key]
             acquisitions = [
                 AcquisitionConfig(name=n, xi=args.xi, kappa=args.kappa) for n in filtered_acq_names
             ]
+            resolved_oracle_models = objective_oracle_models[key]
 
             if use_parallel and len(seeds) > 1:
                 manager = mp.Manager()
@@ -2057,7 +2092,7 @@ def main() -> None:
                                 seed,
                                 dataset,
                                 objective_name,
-                                oracle_models,
+                                resolved_oracle_models,
                                 acquisitions,
                                 error_models,
                                 jitter_stds,
@@ -2103,7 +2138,7 @@ def main() -> None:
                             seed,
                             dataset,
                             objective_name,
-                            oracle_models,
+                            resolved_oracle_models,
                             acquisitions,
                             error_models,
                             jitter_stds,
@@ -2277,9 +2312,10 @@ def main() -> None:
         output_dir=output_dir,
         dataset_configs=dataset_configs,
         objectives=dataset_objectives,
-        acquisition_names=acquisition_names,
+        acquisition_names=objective_acquisition_names,
         error_models=error_models,
-        oracle_models=oracle_models,
+        requested_oracle_models=requested_oracle_models,
+        resolved_oracle_models=objective_oracle_models,
         seeds=seeds,
         args=args,
     )
@@ -2301,7 +2337,12 @@ def main() -> None:
         ],
         "objectives": dataset_objectives,
         "error_models": error_models,
-        "oracle_models": oracle_models,
+        "requested_oracle_models": requested_oracle_models,
+        "resolved_oracle_models": {
+            f"{dataset_name}:{objective_name}": models
+            for (dataset_name, objective_name), models in objective_oracle_models.items()
+        },
+        "oracle_selection_path": str(args.oracle_selection_path),
         "acquisitions": acquisition_names,
         "seeds": seeds,
         "package_versions": collect_package_versions(

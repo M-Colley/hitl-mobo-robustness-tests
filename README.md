@@ -194,6 +194,24 @@ python scripts/select_best_oracle_model.py \
   --output-path output/best_oracle_models.json
 ```
 
+The selector now uses **grouped cross-validation** when participant/file-level
+grouping information is available:
+
+- `User_ID` if present
+- otherwise `Group_ID` if it has multiple groups
+- otherwise the source observation file path
+
+This avoids overly optimistic row-wise splits when multiple rows come from the
+same participant or recording file.
+
+To consume the selected oracle automatically in the simulation, use:
+
+```bash
+python scripts/bo_sensor_error_simulation.py \
+  --oracle-model auto \
+  --oracle-selection-path output/best_oracle_models.json
+```
+
 ### Objective normalization and weighting
 
 Use `--normalize-objective` to scale each objective column to [0, 1] before
@@ -371,8 +389,13 @@ Use `--acq-mc-samples` to control Monte Carlo sampling for `q*` acquisitions.
 ## Oracle improvements & speed knobs
 
 - **Data augmentation:** enable `--oracle-augmentation jitter` (default) to
-  add Gaussian-noise copies of each training sample. Configure with
-  `--oracle-augment-repeats` and `--oracle-augment-std`.
+  add Gaussian-noise copies of each training sample. The augmentation noise is
+  now scaled per parameter by the observed feature range and clipped back into
+  the observed bounds. Configure with `--oracle-augment-repeats` and
+  `--oracle-augment-std`.
+- **Auto oracle selection:** use `--oracle-model auto` together with
+  `--oracle-selection-path` to apply the best per-dataset/per-objective model
+  from `select_best_oracle_model.py`.
 - **Fast oracles:** use `--oracle-fast` to reduce estimator counts for quicker
   experimentation.
 

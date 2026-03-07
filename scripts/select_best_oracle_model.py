@@ -6,7 +6,9 @@ import json
 from pathlib import Path
 
 import numpy as np
-from sklearn.model_selection import KFold, cross_val_score
+import pandas as pd
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GroupKFold, KFold
 from tqdm import tqdm
 
 from bo_sensor_error_simulation import (
@@ -15,6 +17,8 @@ from bo_sensor_error_simulation import (
     _build_oracle_model,
     compute_objective,
     compute_objective_matrix,
+    fit_objective_normalization,
+    infer_oracle_groups,
     load_observations,
     parse_dataset_configs,
     parse_objective_list,
@@ -58,18 +62,135 @@ def parse_oracle_models(oracle_models: str) -> list[str]:
     return values
 
 
-def _evaluate_model(
-    model_name: str,
-    X: np.ndarray,
-    y: np.ndarray,
+def _build_feature_frame(df: pd.DataFrame, param_columns: list[str]) -> pd.DataFrame:
+    return pd.DataFrame(df[param_columns].to_numpy(dtype=float), columns=param_columns)
+
+
+def _build_cv_splits(
+    df: pd.DataFrame,
     seed: int,
     cv_folds: int,
+) -> tuple[list[tuple[np.ndarray, np.ndarray]], dict[str, object]]:
+    groups, group_source = infer_oracle_groups(df)
+    if groups is not None:
+        unique_groups = np.unique(groups)
+        if unique_groups.size >= 2:
+            n_splits = min(cv_folds, int(unique_groups.size))
+            splitter = GroupKFold(n_splits=n_splits)
+            splits = list(splitter.split(df, groups=groups))
+            return splits, {
+                "strategy": "group_kfold",
+                "group_source": group_source,
+                "effective_cv_folds": n_splits,
+            }
+
+    n_splits = min(cv_folds, len(df))
+    if n_splits < 2:
+        raise ValueError("Not enough rows to run cross-validation.")
+    splitter = KFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    return list(splitter.split(df)), {
+        "strategy": "kfold",
+        "group_source": None,
+        "effective_cv_folds": n_splits,
+    }
+
+
+def _evaluate_model_single_objective(
+    model_name: str,
+    df: pd.DataFrame,
+    objective_columns: list[str],
+    param_columns: list[str],
+    seed: int,
     tree_scale: float,
+    normalize: bool,
+    weights: np.ndarray | None,
+    splits: list[tuple[np.ndarray, np.ndarray]],
+) -> dict[str, float]:
+    r2_scores: list[float] = []
+    rmse_scores: list[float] = []
+    for train_idx, test_idx in splits:
+        train_df = df.iloc[train_idx]
+        test_df = df.iloc[test_idx]
+        normalization = (
+            fit_objective_normalization(train_df, objective_columns)
+            if normalize
+            else None
+        )
+        y_train = compute_objective(
+            train_df,
+            objective_columns,
+            normalize,
+            weights,
+            normalization=normalization,
+        ).to_numpy(dtype=float)
+        y_test = compute_objective(
+            test_df,
+            objective_columns,
+            normalize,
+            weights,
+            normalization=normalization,
+        ).to_numpy(dtype=float)
+        model = _build_oracle_model(model_name, seed=seed, tree_scale=tree_scale)
+        X_train = _build_feature_frame(train_df, param_columns)
+        X_test = _build_feature_frame(test_df, param_columns)
+        model.fit(X_train, y_train)
+        preds = np.asarray(model.predict(X_test), dtype=float)
+        r2_scores.append(float(r2_score(y_test, preds)))
+        rmse_scores.append(float(np.sqrt(mean_squared_error(y_test, preds))))
+    return {
+        "r2": float(np.mean(r2_scores)),
+        "rmse": float(np.mean(rmse_scores)),
+    }
+
+
+def _evaluate_model_multi_objective(
+    model_name: str,
+    df: pd.DataFrame,
+    objective_columns: list[str],
+    param_columns: list[str],
+    seed: int,
+    tree_scale: float,
+    normalize: bool,
+    splits: list[tuple[np.ndarray, np.ndarray]],
 ) -> float:
-    model = _build_oracle_model(model_name, seed=seed, tree_scale=tree_scale)
-    cv = KFold(n_splits=cv_folds, shuffle=True, random_state=seed)
-    scores = cross_val_score(model, X, y, cv=cv, scoring="r2")
-    return float(np.mean(scores))
+    r2_scores: list[float] = []
+    rmse_scores: list[float] = []
+    for train_idx, test_idx in splits:
+        train_df = df.iloc[train_idx]
+        test_df = df.iloc[test_idx]
+        normalization = (
+            fit_objective_normalization(train_df, objective_columns)
+            if normalize
+            else None
+        )
+        Y_train = compute_objective_matrix(
+            train_df,
+            objective_columns,
+            normalize,
+            normalization=normalization,
+        )
+        Y_test = compute_objective_matrix(
+            test_df,
+            objective_columns,
+            normalize,
+            normalization=normalization,
+        )
+        X_train = _build_feature_frame(train_df, param_columns)
+        X_test = _build_feature_frame(test_df, param_columns)
+        per_target_r2: list[float] = []
+        per_target_rmse: list[float] = []
+        for idx in range(Y_train.shape[1]):
+            model = _build_oracle_model(model_name, seed=seed, tree_scale=tree_scale)
+            model.fit(X_train, Y_train[:, idx])
+            preds = np.asarray(model.predict(X_test), dtype=float)
+            per_target_r2.append(float(r2_score(Y_test[:, idx], preds)))
+            per_target_rmse.append(float(np.sqrt(mean_squared_error(Y_test[:, idx], preds))))
+        r2_scores.append(float(np.mean(per_target_r2)))
+        rmse_scores.append(float(np.mean(per_target_rmse)))
+    return {
+        "r2": float(np.mean(r2_scores)),
+        "rmse": float(np.mean(rmse_scores)),
+    }
 
 
 def evaluate_models_for_objective(
@@ -85,24 +206,44 @@ def evaluate_models_for_objective(
     tree_scale: float,
     progress_desc: str | None = None,
 ) -> dict[str, float]:
-    X = df[param_columns].to_numpy(dtype=float)
-    scores: dict[str, float] = {}
+    cv_splits, validation_info = _build_cv_splits(df, seed, cv_folds)
+    scores: dict[str, dict[str, float]] = {}
 
     if objective == "multi_objective":
-        Y = compute_objective_matrix(df, objective_columns, normalize)
         for model_name in tqdm(models, desc=progress_desc, leave=False):
-            per_target = []
-            for idx in range(Y.shape[1]):
-                per_target.append(
-                    _evaluate_model(model_name, X, Y[:, idx], seed, cv_folds, tree_scale)
-                )
-            scores[model_name] = float(np.mean(per_target))
-        return scores
+            scores[model_name] = _evaluate_model_multi_objective(
+                model_name,
+                df,
+                objective_columns,
+                param_columns,
+                seed,
+                tree_scale,
+                normalize,
+                cv_splits,
+            )
+        return {
+            "scores": {name: metrics["r2"] for name, metrics in scores.items()},
+            "rmse": {name: metrics["rmse"] for name, metrics in scores.items()},
+            "validation": validation_info,
+        }
 
-    y = compute_objective(df, objective_columns, normalize, weights).to_numpy(dtype=float)
     for model_name in tqdm(models, desc=progress_desc, leave=False):
-        scores[model_name] = _evaluate_model(model_name, X, y, seed, cv_folds, tree_scale)
-    return scores
+        scores[model_name] = _evaluate_model_single_objective(
+            model_name,
+            df,
+            objective_columns,
+            param_columns,
+            seed,
+            tree_scale,
+            normalize,
+            weights,
+            cv_splits,
+        )
+    return {
+        "scores": {name: metrics["r2"] for name, metrics in scores.items()},
+        "rmse": {name: metrics["rmse"] for name, metrics in scores.items()},
+        "validation": validation_info,
+    }
 
 
 def main() -> None:
@@ -117,8 +258,9 @@ def main() -> None:
     tree_scale = 0.35 if args.oracle_fast else 1.0
 
     results_payload = {
-        "cv_folds": args.cv_folds,
-        "metric": "r2",
+        "cv_folds_requested": args.cv_folds,
+        "selection_metric": "r2",
+        "tie_breaker_metric": "rmse",
         "oracle_models": model_list,
         "datasets": [],
     }
@@ -139,7 +281,7 @@ def main() -> None:
             df = load_observations(dataset, objective_name)
             if args.max_rows is not None:
                 df = df.head(int(args.max_rows))
-            scores = evaluate_models_for_objective(
+            evaluation = evaluate_models_for_objective(
                 df,
                 objective_name,
                 objective_columns,
@@ -152,10 +294,20 @@ def main() -> None:
                 tree_scale,
                 progress_desc=f"{dataset.name}:{objective_name}",
             )
-            best_model = max(scores.items(), key=lambda item: item[1])[0]
+            scores = evaluation["scores"]
+            rmse = evaluation["rmse"]
+            validation = evaluation["validation"]
+            best_model = max(
+                scores.items(),
+                key=lambda item: (item[1], -rmse[item[0]]),
+            )[0]
             dataset_entry["objectives"][objective_name] = {
                 "best_model": best_model,
                 "scores": scores,
+                "rmse": rmse,
+                "validation_strategy": validation["strategy"],
+                "group_source": validation["group_source"],
+                "effective_cv_folds": validation["effective_cv_folds"],
             }
         results_payload["datasets"].append(dataset_entry)
 

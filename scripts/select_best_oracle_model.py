@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--oracle-models", type=str, default="all")
     parser.add_argument("--oracle-fast", action="store_true", default=False)
     parser.add_argument("--seed", type=int, default=7)
-    parser.add_argument("--cv-folds", type=int, default=3)
+    parser.add_argument("--cv-folds", type=int, default=5)
     parser.add_argument("--output-path", type=Path, default=Path("output") / "best_oracle_models.json")
     parser.add_argument("--normalize-objective", action="store_true", default=False)
     parser.add_argument("--objective-weights", type=str, default=None)
@@ -255,7 +255,7 @@ def main() -> None:
     datasets = parse_dataset_configs(args.data_dir, args.dataset_config, args.dataset_cache_dir)
 
     model_list = parse_oracle_models(args.oracle_models)
-    tree_scale = 0.35 if args.oracle_fast else 1.0
+    tree_scale = 0.7 if args.oracle_fast else 1.0
 
     results_payload = {
         "cv_folds_requested": args.cv_folds,

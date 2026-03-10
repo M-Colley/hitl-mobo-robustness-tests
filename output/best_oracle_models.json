@@ -1,9 +1,11 @@
 {
-  "cv_folds": 3,
-  "metric": "r2",
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
   "oracle_models": [
     "xgboost",
     "lightgbm",
+    "catboost",
     "tabpfn",
     "random_forest",
     "extra_trees",
@@ -15,28 +17,56 @@
       "name": "ehmi",
       "objectives": {
         "composite": {
-          "best_model": "tabpfn",
+          "best_model": "extra_trees",
           "scores": {
-            "xgboost": 0.4554307822271804,
-            "lightgbm": 0.43566453993054294,
-            "tabpfn": 0.49452672612172477,
-            "random_forest": 0.45227310494569933,
-            "extra_trees": 0.4758034997541696,
-            "gradient_boosting": 0.4402553061112377,
-            "hist_gradient_boosting": 0.44785423986352235
-          }
+            "xgboost": -0.009537612824469032,
+            "lightgbm": -0.058217874091394096,
+            "catboost": 0.07075257340960814,
+            "tabpfn": 0.08203032617603023,
+            "random_forest": -0.007336063988373697,
+            "extra_trees": 0.09720759628790243,
+            "gradient_boosting": -0.036867684446617054,
+            "hist_gradient_boosting": -0.059369135513529424
+          },
+          "rmse": {
+            "xgboost": 0.6436935728746421,
+            "lightgbm": 0.6591741414646115,
+            "catboost": 0.6204139759788039,
+            "tabpfn": 0.6189484478472289,
+            "random_forest": 0.6488852862856701,
+            "extra_trees": 0.612336568573597,
+            "gradient_boosting": 0.6517467000810726,
+            "hist_gradient_boosting": 0.6590625621080974
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5
         },
         "multi_objective": {
           "best_model": "extra_trees",
           "scores": {
-            "xgboost": 0.3316272645588143,
-            "lightgbm": 0.3188287053399482,
-            "tabpfn": 0.33994292436031237,
-            "random_forest": 0.31905684968278974,
-            "extra_trees": 0.3608101472911894,
-            "gradient_boosting": 0.26462204168169856,
-            "hist_gradient_boosting": 0.31512421347544184
-          }
+            "xgboost": -0.2407105789996054,
+            "lightgbm": -0.34978493256232,
+            "catboost": -0.23395530857976618,
+            "tabpfn": -0.2845567128905202,
+            "random_forest": -0.22870700309184944,
+            "extra_trees": -0.17248056586304136,
+            "gradient_boosting": -0.2679149013163404,
+            "hist_gradient_boosting": -0.34302740332229764
+          },
+          "rmse": {
+            "xgboost": 0.9196783609355409,
+            "lightgbm": 0.941440453006378,
+            "catboost": 0.912462752103439,
+            "tabpfn": 0.9147737527088207,
+            "random_forest": 0.91217535331219,
+            "extra_trees": 0.8966930177843055,
+            "gradient_boosting": 0.9276170380810174,
+            "hist_gradient_boosting": 0.9425735457637465
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5
         }
       }
     },
@@ -44,28 +74,113 @@
       "name": "opticarvis",
       "objectives": {
         "composite": {
-          "best_model": "extra_trees",
+          "best_model": "gradient_boosting",
           "scores": {
-            "xgboost": 0.10577308287925817,
-            "lightgbm": -0.11118742854759518,
-            "tabpfn": -6.691012703825723,
-            "random_forest": 0.008821884791255044,
-            "extra_trees": 0.20092725486520316,
-            "gradient_boosting": 0.1055653483768592,
-            "hist_gradient_boosting": -0.1111874286807748
-          }
+            "xgboost": 0.9999997968141934,
+            "lightgbm": 4.440892098500626e-16,
+            "catboost": 0.9999999996355113,
+            "tabpfn": 0.2534852239820121,
+            "random_forest": 0.43932798733419753,
+            "extra_trees": 0.5716800793063223,
+            "gradient_boosting": 0.9999999999999999,
+            "hist_gradient_boosting": 0.0
+          },
+          "rmse": {
+            "xgboost": 0.0007748446751375406,
+            "lightgbm": 1.7189687010128276,
+            "catboost": 3.281784127331787e-05,
+            "tabpfn": 1.4852076354437778,
+            "random_forest": 1.2871299857208047,
+            "extra_trees": 1.1249989208147197,
+            "gradient_boosting": 1.4765275647293116e-08,
+            "hist_gradient_boosting": 1.7189687010128278
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "__source_file",
+          "effective_cv_folds": 2
         },
         "multi_objective": {
+          "best_model": "gradient_boosting",
+          "scores": {
+            "xgboost": 0.9999997396183506,
+            "lightgbm": 0.0,
+            "catboost": 0.9999999996227927,
+            "tabpfn": 0.11121549526486758,
+            "random_forest": 0.44192725369102603,
+            "extra_trees": 0.5916984968740386,
+            "gradient_boosting": 1.0,
+            "hist_gradient_boosting": 0.0
+          },
+          "rmse": {
+            "xgboost": 0.0007374003227088189,
+            "lightgbm": 1.727399904226702,
+            "catboost": 3.165812542529772e-05,
+            "tabpfn": 1.6107727688310844,
+            "random_forest": 1.2945718544546463,
+            "extra_trees": 1.1107640171561957,
+            "gradient_boosting": 1.4551602939362706e-08,
+            "hist_gradient_boosting": 1.727399904226702
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "__source_file",
+          "effective_cv_folds": 2
+        }
+      }
+    },
+    {
+      "name": "provoice",
+      "objectives": {
+        "composite": {
           "best_model": "extra_trees",
           "scores": {
-            "xgboost": 0.10801498812210016,
-            "lightgbm": -0.10970230438668482,
-            "tabpfn": -3.247370088475745,
-            "random_forest": 0.026531561211346293,
-            "extra_trees": 0.19440605607136724,
-            "gradient_boosting": 0.1073969253497554,
-            "hist_gradient_boosting": -0.10970230440653912
-          }
+            "xgboost": -0.05372492734398655,
+            "lightgbm": -0.07413963426366812,
+            "catboost": -0.05095012995782082,
+            "tabpfn": -0.015340996289320064,
+            "random_forest": -0.022661745969630775,
+            "extra_trees": -0.008178955320106573,
+            "gradient_boosting": -0.11157559007013898,
+            "hist_gradient_boosting": -0.05120817372077835
+          },
+          "rmse": {
+            "xgboost": 0.9524290061187823,
+            "lightgbm": 0.9631424146898071,
+            "catboost": 0.9511987417413318,
+            "tabpfn": 0.936664942423613,
+            "random_forest": 0.9389045815275917,
+            "extra_trees": 0.9322741947277471,
+            "gradient_boosting": 0.9769358912482282,
+            "hist_gradient_boosting": 0.9532627281352088
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5
+        },
+        "multi_objective": {
+          "best_model": "tabpfn",
+          "scores": {
+            "xgboost": -0.14203791806289023,
+            "lightgbm": -0.1659629368628958,
+            "catboost": -0.14309990227962627,
+            "tabpfn": -0.02955405198679083,
+            "random_forest": -0.11013820479503937,
+            "extra_trees": -0.09496873715938602,
+            "gradient_boosting": -0.22836980003973747,
+            "hist_gradient_boosting": -0.1485433923104833
+          },
+          "rmse": {
+            "xgboost": 1.5759553287319814,
+            "lightgbm": 1.590530644596567,
+            "catboost": 1.5790843864824828,
+            "tabpfn": 1.524139909658488,
+            "random_forest": 1.5556837055643955,
+            "extra_trees": 1.5461264108364425,
+            "gradient_boosting": 1.626102870933251,
+            "hist_gradient_boosting": 1.5788474676493778
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5
         }
       }
     }

@@ -48,5 +48,22 @@
       "composite": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],
       "multi_objective": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"]
     }
+  },
+  {
+    "name": "provoice",
+    "data_dir": "https://github.com/JSusak/ProVoiceData",
+    "param_columns": [
+      "InterventionLightingTransparency",
+      "AuditoryAlertVolume",
+      "InterventionSymbolTransparency",
+      "LevelOfAutonomy"
+    ],
+    "objective_map": {
+      "composite": ["Predictability", "Percieved Usefulness", "-Mental Demand"],
+      "multi_objective": ["Predictability", "Percieved Usefulness", "-Mental Demand"],
+      "predictability": ["Predictability"],
+      "usefulness": ["Percieved Usefulness"],
+      "mental_demand": ["-Mental Demand"]
+    }
   }
 ]

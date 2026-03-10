@@ -116,6 +116,11 @@ warnings.filterwarnings("ignore", category=RuntimeWarning)
 DEFAULT_DATASET_NAME = "default"
 AUTO_ORACLE_MODEL = "auto"
 OBSERVATION_SOURCE_COLUMN = "__source_file"
+COLUMN_ALIASES = {
+    "UserID": "User_ID",
+    "GroupID": "Group_ID",
+    "ConditionID": "Condition_ID",
+}
 if __name__ not in sys.modules:
     current_module = types.ModuleType(__name__)
     current_module.__dict__.update(globals())
@@ -412,7 +417,7 @@ def _read_observation_csv(path: Path, required_columns: list[str]) -> pd.DataFra
     for sep in (";", ","):
         df = pd.read_csv(path, sep=sep)
         df.columns = df.columns.str.strip()
-        df = _normalize_qehvi_columns(df)
+        df = _normalize_observation_columns(df)
         last_df = df
         if all(col in df.columns for col in required_columns):
             return df
@@ -445,6 +450,43 @@ def _normalize_qehvi_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _normalize_observation_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df = _normalize_qehvi_columns(df)
+    rename_map = {
+        source: target
+        for source, target in COLUMN_ALIASES.items()
+        if source in df.columns and target not in df.columns
+    }
+    if rename_map:
+        df = df.rename(columns=rename_map)
+    return df
+
+
+def _objective_base_column(column: str) -> str:
+    return column[1:] if column.startswith("-") else column
+
+
+def _objective_sign(column: str) -> float:
+    return -1.0 if column.startswith("-") else 1.0
+
+
+def _objective_required_columns(objective_columns: list[str]) -> list[str]:
+    return [_objective_base_column(column) for column in objective_columns]
+
+
+def _extract_objective_values(df: pd.DataFrame, objective_columns: list[str]) -> np.ndarray:
+    base_columns = _objective_required_columns(objective_columns)
+    values = df[base_columns].to_numpy(dtype=float)
+    signs = np.asarray([_objective_sign(column) for column in objective_columns], dtype=float)
+    return values * signs
+
+
+def _objective_output_name(column: str) -> str:
+    if column.startswith("-"):
+        return f"neg_{_objective_base_column(column)}"
+    return column
+
+
 def load_observations(
     dataset: DatasetConfig,
     objective: str,
@@ -458,13 +500,16 @@ def load_observations(
         dirs = ", ".join(str(path) for path in dataset.data_dirs)
         raise FileNotFoundError(f"No observation files found in {dirs} using {dataset.observation_glob}")
 
-    required_columns = dataset.param_columns + dataset.objective_map[objective]
+    objective_columns = dataset.objective_map[objective]
+    required_columns = dataset.param_columns + _objective_required_columns(objective_columns)
     frames: list[pd.DataFrame] = []
     for path in files:
         frame = _read_observation_csv(path, required_columns)
         frame[OBSERVATION_SOURCE_COLUMN] = str(path.resolve())
         frames.append(frame)
     df = pd.concat(frames, ignore_index=True)
+
+    df = _normalize_observation_columns(df)
 
     for column in required_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
@@ -482,7 +527,7 @@ def load_observations(
     if group_id is not None:
         df = df[df["Group_ID"] == float(group_id)]
 
-    df = df.dropna(subset=dataset.param_columns + dataset.objective_map[objective])
+    df = df.dropna(subset=dataset.param_columns + _objective_required_columns(objective_columns))
     if df.empty:
         raise ValueError("No data remaining after applying user/group filters.")
     return df.reset_index(drop=True)
@@ -495,11 +540,10 @@ def compute_objective(
     weights: np.ndarray | None,
     normalization: ObjectiveNormalization | None = None,
 ) -> pd.Series:
-    cols = objective_columns
-    values = df[cols].to_numpy(dtype=float)
+    values = _extract_objective_values(df, objective_columns)
 
     if normalize:
-        stats = normalization or fit_objective_normalization(df, cols)
+        stats = normalization or fit_objective_normalization(df, objective_columns)
         values = normalize_objective_values(values, stats)
 
     if weights is None:
@@ -516,11 +560,10 @@ def compute_objective_matrix(
     normalize: bool,
     normalization: ObjectiveNormalization | None = None,
 ) -> np.ndarray:
-    cols = objective_columns
-    values = df[cols].to_numpy(dtype=float)
+    values = _extract_objective_values(df, objective_columns)
 
     if normalize:
-        stats = normalization or fit_objective_normalization(df, cols)
+        stats = normalization or fit_objective_normalization(df, objective_columns)
         values = normalize_objective_values(values, stats)
 
     return values
@@ -530,7 +573,7 @@ def fit_objective_normalization(
     df: pd.DataFrame,
     objective_columns: list[str],
 ) -> ObjectiveNormalization:
-    values = df[objective_columns].to_numpy(dtype=float)
+    values = _extract_objective_values(df, objective_columns)
     min_vals = np.nanmin(values, axis=0)
     max_vals = np.nanmax(values, axis=0)
     ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
@@ -1210,7 +1253,7 @@ def compute_reference_point(
 ) -> np.ndarray | None:
     if objective != "multi_objective":
         return None
-    values = df[objective_columns].to_numpy(dtype=float)
+    values = _extract_objective_values(df, objective_columns)
     min_vals = np.nanmin(values, axis=0)
     max_vals = np.nanmax(values, axis=0)
     ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
@@ -1655,8 +1698,9 @@ def run_simulation(
     results["objective_observed"] = objective_observed_scalar
     if is_multi:
         for idx, column in enumerate(config.objective_columns):
-            results[f"objective_true_{column}"] = [float(v[idx]) for v in y_true_list]
-            results[f"objective_observed_{column}"] = [float(v[idx]) for v in y_observed_list]
+            output_name = _objective_output_name(column)
+            results[f"objective_true_{output_name}"] = [float(v[idx]) for v in y_true_list]
+            results[f"objective_observed_{output_name}"] = [float(v[idx]) for v in y_observed_list]
 
     if apply_error:
         if config.single_error:
@@ -1669,7 +1713,8 @@ def run_simulation(
     if is_multi:
         results["error_magnitude_l2"] = [float(np.linalg.norm(err)) for err in error_magnitudes]
         for idx, column in enumerate(config.objective_columns):
-            results[f"error_magnitude_{column}"] = [float(err[idx]) for err in error_magnitudes]
+            output_name = _objective_output_name(column)
+            results[f"error_magnitude_{output_name}"] = [float(err[idx]) for err in error_magnitudes]
     else:
         results["error_magnitude"] = [float(err[0]) for err in error_magnitudes]
     results["acquisition"] = acq.name

@@ -4,24 +4,33 @@ Sensor-error simulation configuration
 Datasets:
   - ehmi: .dataset_cache\ehmi-optimization-chi25-data
   - opticarvis: .dataset_cache\opticarvis-data
+  - provoice: .dataset_cache\ProVoiceData
 
 Objectives by dataset:
   ehmi: composite, multi_objective
+    composite: oracles=[extra_trees] acquisitions=[logei, logpi, ei, pi, ucb, qucb, qei, qpi, qnei, greedy]
+    multi_objective: oracles=[extra_trees] acquisitions=[qehvi, qnehvi]
   opticarvis: composite, multi_objective
-Acquisitions: logei, logpi, ei, pi, ucb, qucb, qei, qpi, qnei, greedy, qehvi, qnehvi
+    composite: oracles=[gradient_boosting] acquisitions=[logei, logpi, ei, pi, ucb, qucb, qei, qpi, qnei, greedy]
+    multi_objective: oracles=[gradient_boosting] acquisitions=[qehvi, qnehvi]
+  provoice: composite, multi_objective
+    composite: oracles=[extra_trees] acquisitions=[logei, logpi, ei, pi, ucb, qucb, qei, qpi, qnei, greedy]
+    multi_objective: oracles=[tabpfn] acquisitions=[qehvi, qnehvi]
 Error models: gaussian, bias
-Oracle models: extra_trees
+Requested oracle models: auto
 Seeds: 7, 8, 9, 10, 11
 
 Core settings:
   iterations: 50
   initial_samples: 5
+  candidate_pool: 1000
   jitter_iterations: 10,20,40
   jitter_stds: 0.05,0.5,1,5
   single_error: False
   baseline_run: True
 
 Oracle settings:
+  oracle_selection_path: output\best_oracle_models.json
   augmentation: jitter
   augmentation_repeats: 2
   augmentation_std: 0.02

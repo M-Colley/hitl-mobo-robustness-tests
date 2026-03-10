@@ -13,10 +13,10 @@
     "acq": "all",
     "acq_list": null,
     "seed": 7,
-    "seeds": null,
+    "seeds": "7,8,9,10,11",
     "num_seeds": 5,
     "output_dir": "output",
-    "data_dir": "C:\\Users\\mi\\Desktop\\hitl-mobo-robustness-tests\\eHMI-bo-participantdata",
+    "data_dir": null,
     "dataset_config": "datasets.json",
     "combine_datasets": false,
     "dataset_cache_dir": ".dataset_cache",
@@ -33,8 +33,9 @@
     "objective_weights": null,
     "xi": 0.01,
     "kappa": 2.0,
-    "oracle_model": "extra_trees",
-    "oracle_models": "extra_trees",
+    "oracle_model": "auto",
+    "oracle_models": null,
+    "oracle_selection_path": "output\\best_oracle_models.json",
     "oracle_augmentation": "jitter",
     "oracle_augment_repeats": 2,
     "oracle_augment_std": 0.02,
@@ -46,10 +47,10 @@
     "acq_raw_samples": 512,
     "acq_maxiter": 200,
     "acq_mc_samples": 256,
-    "parallel": false,
+    "parallel": true,
     "n_jobs": -1
   },
-  "runtime_sec": 70381.26585080009,
+  "runtime_sec": 47466.574442199955,
   "parallel_execution": true,
   "n_workers": 5,
   "datasets": [
@@ -142,6 +143,40 @@
         ]
       },
       "observation_glob": "ObservationsPerEvaluation.csv"
+    },
+    {
+      "name": "provoice",
+      "data_dirs": [
+        ".dataset_cache\\ProVoiceData"
+      ],
+      "param_columns": [
+        "InterventionLightingTransparency",
+        "AuditoryAlertVolume",
+        "InterventionSymbolTransparency",
+        "LevelOfAutonomy"
+      ],
+      "objective_map": {
+        "composite": [
+          "Predictability",
+          "Percieved Usefulness",
+          "-Mental Demand"
+        ],
+        "multi_objective": [
+          "Predictability",
+          "Percieved Usefulness",
+          "-Mental Demand"
+        ],
+        "predictability": [
+          "Predictability"
+        ],
+        "usefulness": [
+          "Percieved Usefulness"
+        ],
+        "mental_demand": [
+          "-Mental Demand"
+        ]
+      },
+      "observation_glob": "ObservationsPerEvaluation.csv"
     }
   ],
   "objectives": {
@@ -152,15 +187,40 @@
     "opticarvis": [
       "composite",
       "multi_objective"
+    ],
+    "provoice": [
+      "composite",
+      "multi_objective"
     ]
   },
   "error_models": [
     "gaussian",
     "bias"
   ],
-  "oracle_models": [
-    "extra_trees"
+  "requested_oracle_models": [
+    "auto"
   ],
+  "resolved_oracle_models": {
+    "ehmi:composite": [
+      "extra_trees"
+    ],
+    "ehmi:multi_objective": [
+      "extra_trees"
+    ],
+    "opticarvis:composite": [
+      "gradient_boosting"
+    ],
+    "opticarvis:multi_objective": [
+      "gradient_boosting"
+    ],
+    "provoice:composite": [
+      "extra_trees"
+    ],
+    "provoice:multi_objective": [
+      "tabpfn"
+    ]
+  },
+  "oracle_selection_path": "output\\best_oracle_models.json",
   "acquisitions": [
     "logei",
     "logpi",
@@ -183,18 +243,19 @@
     11
   ],
   "package_versions": {
-    "numpy": "2.4.1",
+    "numpy": "2.3.5",
     "pandas": "2.3.3",
-    "scikit-learn": "1.7.2",
-    "scipy": "1.17.0",
+    "scikit-learn": "1.8.0",
+    "scipy": "1.17.1",
     "matplotlib": "3.10.8",
     "seaborn": "0.13.2",
-    "tqdm": "4.67.1",
-    "xgboost": "3.1.3",
+    "tqdm": "4.67.3",
+    "xgboost": "3.2.0",
     "lightgbm": "4.6.0",
+    "catboost": "1.2.10",
     "statsmodels": "0.14.6",
-    "botorch": "0.16.1",
-    "torch": "2.9.1",
-    "tabpfn": "6.3.1"
+    "botorch": "0.17.2",
+    "torch": "2.10.0+cu128",
+    "tabpfn": "6.4.1"
   }
 }

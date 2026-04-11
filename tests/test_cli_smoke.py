@@ -14,7 +14,7 @@ if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
 
-def _load_module(module_name: str, path: Path):
+def _load_module(module_name: str, path: Path) -> object:
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
     assert spec is not None and spec.loader is not None

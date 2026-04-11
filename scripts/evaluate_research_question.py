@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import warnings
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -272,7 +273,9 @@ def compute_condition_rankings(paired: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
         else:
             diff = pivot.iloc[:, 0] - pivot.iloc[:, 1]
             try:
-                result = wilcoxon(diff.to_numpy(dtype=float), zero_method="wilcox", alternative="two-sided")
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    result = wilcoxon(diff.to_numpy(dtype=float), zero_method="wilcox", alternative="two-sided")
                 stat = float(result.statistic)
                 p_value = float(result.pvalue)
             except ValueError:

@@ -2177,28 +2177,25 @@ def main() -> None:
                         pass
 
             else:
-                try:
-                    for seed in seeds:
-                        seed_summaries, _ = run_single_seed(
-                            seed,
-                            dataset,
-                            objective_name,
-                            resolved_oracle_models,
-                            acquisitions,
-                            error_models,
-                            jitter_stds,
-                            jitter_iterations,
-                            df,
-                            bounds,
-                            args,
-                            weights,
-                            ref_point,
-                            progress_q=None,
-                            progress_update=progress.update,
-                        )
-                        summaries.extend(seed_summaries)
-                finally:
-                    pass
+                for seed in seeds:
+                    seed_summaries, _ = run_single_seed(
+                        seed,
+                        dataset,
+                        objective_name,
+                        resolved_oracle_models,
+                        acquisitions,
+                        error_models,
+                        jitter_stds,
+                        jitter_iterations,
+                        df,
+                        bounds,
+                        args,
+                        weights,
+                        ref_point,
+                        progress_q=None,
+                        progress_update=progress.update,
+                    )
+                    summaries.extend(seed_summaries)
 
     progress.close()
 
@@ -2211,8 +2208,8 @@ def main() -> None:
     summary_df.to_csv(summary_path, index=False)
 
     if args.baseline_run:
-        jittered = summary_df[summary_df["baseline"] == False]
-        baseline = summary_df[summary_df["baseline"] == True]
+        jittered = summary_df[~summary_df["baseline"]]
+        baseline = summary_df[summary_df["baseline"]]
 
         merged = jittered.merge(
             baseline,

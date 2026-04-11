@@ -567,3 +567,99 @@ def test_run_simulation_multiobjective_regret_not_double_counted() -> None:
         results["regret_avg_true"].to_numpy(dtype=float),
         expected_cumulative / np.arange(1, len(expected_cumulative) + 1, dtype=float),
     )
+
+
+# ---------------------------------------------------------------------------
+# validate_inputs edge cases
+# ---------------------------------------------------------------------------
+
+def _make_valid_args(**overrides) -> argparse.Namespace:
+    defaults = dict(
+        iterations=10,
+        initial_samples=2,
+        candidate_pool=5,
+        error_spike_prob=0.1,
+        oracle_opt_samples=10_000,
+        oracle_opt_batch_size=1,
+        acq_mc_samples=8,
+        oracle_augment_repeats=0,
+        oracle_augment_std=0.0,
+    )
+    defaults.update(overrides)
+    return argparse.Namespace(**defaults)
+
+
+def test_validate_inputs_rejects_iterations_le_1() -> None:
+    with pytest.raises(ValueError, match="iterations"):
+        bo_sim.validate_inputs(_make_valid_args(iterations=1))
+
+
+def test_validate_inputs_rejects_initial_samples_gte_iterations() -> None:
+    with pytest.raises(ValueError, match="initial-samples"):
+        bo_sim.validate_inputs(_make_valid_args(initial_samples=10, iterations=10))
+
+
+def test_validate_inputs_rejects_initial_samples_lt_1() -> None:
+    with pytest.raises(ValueError, match="initial-samples"):
+        bo_sim.validate_inputs(_make_valid_args(initial_samples=0))
+
+
+def test_validate_inputs_rejects_spike_prob_out_of_range() -> None:
+    with pytest.raises(ValueError, match="error-spike-prob"):
+        bo_sim.validate_inputs(_make_valid_args(error_spike_prob=1.5))
+
+
+def test_validate_inputs_rejects_small_oracle_opt_samples() -> None:
+    with pytest.raises(ValueError, match="oracle-opt-samples"):
+        bo_sim.validate_inputs(_make_valid_args(oracle_opt_samples=999))
+
+
+def test_validate_inputs_accepts_valid_args() -> None:
+    bo_sim.validate_inputs(_make_valid_args())  # should not raise
+
+
+# ---------------------------------------------------------------------------
+# compute_reference_point
+# ---------------------------------------------------------------------------
+
+def test_compute_reference_point_returns_none_for_single_objective() -> None:
+    df = make_dummy_df()
+    ref = bo_sim.compute_reference_point(df, "composite", bo_sim.OBJECTIVE_MAP["composite"])
+    assert ref is None
+
+
+def test_compute_reference_point_shape_matches_objectives() -> None:
+    df = make_dummy_df()
+    cols = bo_sim.OBJECTIVE_MAP["multi_objective"]
+    ref = bo_sim.compute_reference_point(df, "multi_objective", cols)
+    assert ref is not None
+    assert ref.shape == (len(cols),)
+    # reference point must be strictly below the observed min
+    min_vals = df[cols].min().to_numpy()
+    assert np.all(ref < min_vals)
+
+
+# ---------------------------------------------------------------------------
+# _compute_hypervolume
+# ---------------------------------------------------------------------------
+
+def test_compute_hypervolume_single_point() -> None:
+    ref = np.array([0.0, 0.0])
+    hv = bo_sim._compute_hypervolume([np.array([1.0, 2.0])], ref)
+    assert np.isclose(hv, 2.0)
+
+
+def test_compute_hypervolume_two_dominating_points() -> None:
+    ref = np.array([0.0, 0.0])
+    # [2,1] and [1,2] together cover more than either alone
+    hv = bo_sim._compute_hypervolume([np.array([2.0, 1.0]), np.array([1.0, 2.0])], ref)
+    assert hv > 2.0  # strictly more than a single dominant point
+
+
+def test_compute_hypervolume_dominated_point_ignored() -> None:
+    ref = np.array([0.0, 0.0])
+    hv_single = bo_sim._compute_hypervolume([np.array([2.0, 2.0])], ref)
+    hv_with_dominated = bo_sim._compute_hypervolume(
+        [np.array([2.0, 2.0]), np.array([1.0, 1.0])], ref
+    )
+    assert np.isclose(hv_single, hv_with_dominated)

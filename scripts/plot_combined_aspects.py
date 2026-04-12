@@ -16,6 +16,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--evaluation-dir", type=Path, default=Path("output/evaluation"))
     parser.add_argument("--output-dir", type=Path, default=Path("output/evaluation/figures"))
     parser.add_argument("--shortlist", type=str, default="pi,logpi,qucb")
+    parser.add_argument(
+        "--iteration-logs-dir",
+        type=Path,
+        default=None,
+        help="Directory containing per-iteration CSV logs for regret trajectory plots "
+             "(defaults to evaluation-dir parent).",
+    )
     return parser.parse_args()
 
 
@@ -203,6 +210,190 @@ def plot_response_scatter(summary: pd.DataFrame, output_dir: Path) -> list[str]:
     return paths
 
 
+def plot_regret_trajectories(
+    iteration_logs_dir: Path,
+    output_dir: Path,
+    shortlist: list[str],
+) -> list[str]:
+    """Per-iteration regret curves: baseline vs jittered, mean ± 95 % CI.
+
+    For each (objective, acquisition, error_model, jitter_std, jitter_iteration)
+    combination a figure is produced showing how simple_regret_true evolves over
+    BO iterations.  A shaded band represents the 95 % bootstrap CI across seeds.
+    The vertical dashed line marks the first iteration where noise is applied.
+    """
+    files = sorted(iteration_logs_dir.glob("bo_sensor_error_*_seed*_*.csv"))
+    if not files:
+        return []
+
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    if "simple_regret_true" not in df.columns or "iteration" not in df.columns:
+        return []
+
+    df["baseline"] = df["error_model"] == "none"
+    if shortlist:
+        df = df[df["acquisition"].isin(shortlist)]
+
+    paths: list[str] = []
+    sns.set_theme(style="whitegrid")
+
+    group_cols = ["objective", "error_model", "jitter_std", "jitter_iteration"]
+    if "dataset" in df.columns:
+        group_cols.insert(0, "dataset")
+
+    for group_values, group_df in df.groupby(group_cols, dropna=False):
+        if not isinstance(group_values, tuple):
+            group_values = (group_values,)
+        meta = dict(zip(group_cols, group_values))
+
+        if meta["error_model"] == "none":
+            continue
+
+        jitter_iteration = int(meta["jitter_iteration"])
+        acquisitions = sorted(group_df["acquisition"].dropna().unique().tolist())
+        n_acq = len(acquisitions)
+        if n_acq == 0:
+            continue
+
+        fig, axes = plt.subplots(
+            1, n_acq,
+            figsize=(4.5 * n_acq, 4.0),
+            sharey=True,
+            squeeze=False,
+        )
+
+        palette = sns.color_palette("Set2", 2)
+
+        for col_idx, acq in enumerate(acquisitions):
+            ax = axes[0, col_idx]
+            acq_df = group_df[group_df["acquisition"] == acq]
+
+            for is_baseline, label, color in [
+                (True,  "Baseline (no noise)", palette[0]),
+                (False, "Jittered",            palette[1]),
+            ]:
+                sub = acq_df[acq_df["baseline"] == is_baseline]
+                if sub.empty:
+                    continue
+                stats = (
+                    sub.groupby("iteration")["simple_regret_true"]
+                    .agg(["mean", "std", "count"])
+                    .reset_index()
+                )
+                stats["se"] = stats["std"] / np.sqrt(stats["count"])
+                # 95 % CI using t-distribution (df = count - 1)
+                from scipy.stats import t as student_t_dist
+                t_crit = student_t_dist.ppf(0.975, df=np.maximum(stats["count"] - 1, 1))
+                stats["ci"] = t_crit * stats["se"]
+
+                ax.plot(stats["iteration"], stats["mean"], label=label, color=color, linewidth=1.8)
+                ax.fill_between(
+                    stats["iteration"],
+                    stats["mean"] - stats["ci"],
+                    stats["mean"] + stats["ci"],
+                    alpha=0.20,
+                    color=color,
+                )
+
+            ax.axvline(x=jitter_iteration + 0.5, color="grey", linestyle="--", linewidth=1.0, alpha=0.7)
+            ax.set_title(acq, fontsize=10)
+            ax.set_xlabel("Iteration")
+            if col_idx == 0:
+                ax.set_ylabel("Simple regret (true)")
+            if col_idx == n_acq - 1:
+                ax.legend(fontsize=8)
+
+        title_parts = [f"{k}={v}" for k, v in meta.items()]
+        fig.suptitle("Regret trajectory  |  " + "  ·  ".join(title_parts), fontsize=9, y=1.01)
+        fig.tight_layout()
+
+        safe = lambda v: str(v).replace("/", "-").replace(".", "p")
+        suffix = "_".join(safe(v) for v in group_values)
+        path = output_dir / f"regret_trajectory_{suffix}.png"
+        fig.savefig(path, dpi=220, bbox_inches="tight")
+        plt.close(fig)
+        paths.append(str(path))
+
+    return paths
+
+
+def plot_effect_size_forest(
+    evaluation_dir: Path,
+    output_dir: Path,
+) -> list[str]:
+    """Forest plot of Cohen's dz per acquisition function.
+
+    Reads effect_sizes_cohens_dz.csv produced by plot_sensor_error_results.py and
+    renders one forest plot per (objective, error_model, jitter_iteration) slice.
+    Each row is one acquisition function; the horizontal bar is the 95 % CI.
+    """
+    es_path = evaluation_dir / "effect_sizes_cohens_dz.csv"
+    if not es_path.exists():
+        return []
+
+    df = pd.read_csv(es_path)
+    required = {"acquisition", "cohens_dz", "ci95_low", "ci95_high", "objective", "error_model", "jitter_iteration"}
+    if not required.issubset(df.columns):
+        return []
+
+    paths: list[str] = []
+    sns.set_theme(style="whitegrid")
+
+    group_cols = ["objective", "error_model", "jitter_iteration"]
+    if "dataset" in df.columns:
+        group_cols.insert(0, "dataset")
+
+    for group_values, group_df in df.groupby(group_cols, dropna=False):
+        if not isinstance(group_values, tuple):
+            group_values = (group_values,)
+        meta = dict(zip(group_cols, group_values))
+
+        plot_df = (
+            group_df.groupby("acquisition")[["cohens_dz", "ci95_low", "ci95_high"]]
+            .mean()
+            .reset_index()
+            .sort_values("cohens_dz")
+        )
+        if plot_df.empty:
+            continue
+
+        fig, ax = plt.subplots(figsize=(6.0, max(2.5, 0.45 * len(plot_df))))
+        y_pos = np.arange(len(plot_df))
+
+        colors = ["#d62728" if v > 0 else "#2ca02c" for v in plot_df["cohens_dz"]]
+        ax.barh(y_pos, plot_df["cohens_dz"], color=colors, alpha=0.75, height=0.5)
+        ax.errorbar(
+            plot_df["cohens_dz"],
+            y_pos,
+            xerr=[
+                plot_df["cohens_dz"] - plot_df["ci95_low"],
+                plot_df["ci95_high"] - plot_df["cohens_dz"],
+            ],
+            fmt="none",
+            color="black",
+            capsize=4,
+            linewidth=1.2,
+        )
+        ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(plot_df["acquisition"], fontsize=9)
+        ax.set_xlabel("Cohen's dz  (jittered − baseline)")
+        ax.set_title(
+            "Effect sizes  |  " + "  ·  ".join(f"{k}={v}" for k, v in meta.items()),
+            fontsize=9,
+        )
+        fig.tight_layout()
+
+        safe = lambda v: str(v).replace("/", "-").replace(".", "p")
+        suffix = "_".join(safe(v) for v in group_values)
+        path = output_dir / f"forest_effect_sizes_{suffix}.png"
+        fig.savefig(path, dpi=220, bbox_inches="tight")
+        plt.close(fig)
+        paths.append(str(path))
+
+    return paths
+
+
 def write_manifest(output_dir: Path, paths: list[str], shortlist: list[str]) -> None:
     manifest = output_dir / "figure_manifest.txt"
     with manifest.open("w", encoding="utf-8") as handle:
@@ -224,6 +415,9 @@ def main() -> None:
     paths.extend(plot_rank_progression(rankings, args.output_dir, shortlist))
     paths.extend(plot_winner_maps(rankings, args.output_dir))
     paths.extend(plot_response_scatter(summary, args.output_dir))
+    logs_dir = args.iteration_logs_dir if args.iteration_logs_dir else args.evaluation_dir.parent
+    paths.extend(plot_regret_trajectories(logs_dir, args.output_dir, shortlist))
+    paths.extend(plot_effect_size_forest(args.evaluation_dir, args.output_dir))
     write_manifest(args.output_dir, paths, shortlist)
     print(f"Saved {len(paths)} figures to {args.output_dir}")
 

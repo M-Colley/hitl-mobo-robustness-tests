@@ -8,7 +8,7 @@ tqdm>=4.67.3
 xgboost>=3.2.0
 lightgbm>=4.6.0
 catboost==1.2.10
-tabpfn>=7.1.1
+tabpfn>=8.0.2
 statsmodels>=0.14.6
 botorch>=0.17.2
 torch>=2.11.0

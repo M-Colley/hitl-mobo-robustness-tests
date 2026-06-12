@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib.colors import ListedColormap
+from scipy.stats import t as student_t_dist
 
 
 def parse_args() -> argparse.Namespace:
@@ -219,7 +220,7 @@ def plot_regret_trajectories(
 
     For each (objective, acquisition, error_model, jitter_std, jitter_iteration)
     combination a figure is produced showing how simple_regret_true evolves over
-    BO iterations.  A shaded band represents the 95 % bootstrap CI across seeds.
+    BO iterations.  A shaded band represents the t-based 95 % CI across seeds.
     The vertical dashed line marks the first iteration where noise is applied.
     """
     files = sorted(iteration_logs_dir.glob("bo_sensor_error_*_seed*_*.csv"))
@@ -230,9 +231,23 @@ def plot_regret_trajectories(
     if "simple_regret_true" not in df.columns or "iteration" not in df.columns:
         return []
 
-    df["baseline"] = df["error_model"] == "none"
     if shortlist:
         df = df[df["acquisition"].isin(shortlist)]
+
+    # Baseline runs carry error_model == "none" (and jitter_iteration=0 in
+    # their logs), so they never share an error_model/jitter_std/jitter_iteration
+    # group with jittered runs.  Pre-split and match baselines to each jittered
+    # group on the non-error keys only.
+    baseline_df = df[df["error_model"] == "none"]
+    jittered_df = df[df["error_model"] != "none"]
+    if jittered_df.empty:
+        return []
+
+    match_keys = [
+        key
+        for key in ["dataset", "objective", "acquisition", "seed", "oracle_model"]
+        if key in df.columns
+    ]
 
     paths: list[str] = []
     sns.set_theme(style="whitegrid")
@@ -241,13 +256,10 @@ def plot_regret_trajectories(
     if "dataset" in df.columns:
         group_cols.insert(0, "dataset")
 
-    for group_values, group_df in df.groupby(group_cols, dropna=False):
+    for group_values, group_df in jittered_df.groupby(group_cols, dropna=False):
         if not isinstance(group_values, tuple):
             group_values = (group_values,)
         meta = dict(zip(group_cols, group_values))
-
-        if meta["error_model"] == "none":
-            continue
 
         jitter_iteration = int(meta["jitter_iteration"])
         acquisitions = sorted(group_df["acquisition"].dropna().unique().tolist())
@@ -267,12 +279,18 @@ def plot_regret_trajectories(
         for col_idx, acq in enumerate(acquisitions):
             ax = axes[0, col_idx]
             acq_df = group_df[group_df["acquisition"] == acq]
+            # Baseline runs matched on dataset/objective/acquisition/seed
+            # (and oracle_model); deliberately NOT on jitter_iteration.
+            base_df = baseline_df.merge(
+                acq_df[match_keys].drop_duplicates(),
+                on=match_keys,
+                how="inner",
+            )
 
-            for is_baseline, label, color in [
-                (True,  "Baseline (no noise)", palette[0]),
-                (False, "Jittered",            palette[1]),
+            for sub, label, color in [
+                (base_df, "Baseline (no noise)", palette[0]),
+                (acq_df,  "Jittered",            palette[1]),
             ]:
-                sub = acq_df[acq_df["baseline"] == is_baseline]
                 if sub.empty:
                     continue
                 stats = (
@@ -281,8 +299,7 @@ def plot_regret_trajectories(
                     .reset_index()
                 )
                 stats["se"] = stats["std"] / np.sqrt(stats["count"])
-                # 95 % CI using t-distribution (df = count - 1)
-                from scipy.stats import t as student_t_dist
+                # t-based 95 % CI (df = count - 1)
                 t_crit = student_t_dist.ppf(0.975, df=np.maximum(stats["count"] - 1, 1))
                 stats["ci"] = t_crit * stats["se"]
 
@@ -323,8 +340,9 @@ def plot_effect_size_forest(
 ) -> list[str]:
     """Forest plot of Cohen's dz per acquisition function.
 
-    Reads effect_sizes_cohens_dz.csv produced by plot_sensor_error_results.py and
-    renders one forest plot per (objective, error_model, jitter_iteration) slice.
+    Reads effect_sizes_cohens_dz.csv written into the evaluation dir by
+    evaluate_research_question.py and renders one forest plot per
+    (dataset, objective, error_model, jitter_iteration) slice.
     Each row is one acquisition function; the horizontal bar is the 95 % CI.
     """
     es_path = evaluation_dir / "effect_sizes_cohens_dz.csv"
@@ -335,6 +353,17 @@ def plot_effect_size_forest(
     required = {"acquisition", "cohens_dz", "ci95_low", "ci95_high", "objective", "error_model", "jitter_iteration"}
     if not required.issubset(df.columns):
         return []
+
+    # ci95_low/ci95_high bound mean_diff (raw metric units).  Rescale by
+    # std_diff so the error bars share the Cohen's dz scale of the bars
+    # (dz = mean_diff / std_diff).
+    if "std_diff" in df.columns:
+        scale = df["std_diff"].where(df["std_diff"] > 0)
+        df["dz_ci95_low"] = df["ci95_low"] / scale
+        df["dz_ci95_high"] = df["ci95_high"] / scale
+    else:
+        df["dz_ci95_low"] = df["ci95_low"]
+        df["dz_ci95_high"] = df["ci95_high"]
 
     paths: list[str] = []
     sns.set_theme(style="whitegrid")
@@ -349,7 +378,7 @@ def plot_effect_size_forest(
         meta = dict(zip(group_cols, group_values))
 
         plot_df = (
-            group_df.groupby("acquisition")[["cohens_dz", "ci95_low", "ci95_high"]]
+            group_df.groupby("acquisition")[["cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
             .mean()
             .reset_index()
             .sort_values("cohens_dz")
@@ -366,8 +395,8 @@ def plot_effect_size_forest(
             plot_df["cohens_dz"],
             y_pos,
             xerr=[
-                plot_df["cohens_dz"] - plot_df["ci95_low"],
-                plot_df["ci95_high"] - plot_df["cohens_dz"],
+                plot_df["cohens_dz"] - plot_df["dz_ci95_low"],
+                plot_df["dz_ci95_high"] - plot_df["cohens_dz"],
             ],
             fmt="none",
             color="black",

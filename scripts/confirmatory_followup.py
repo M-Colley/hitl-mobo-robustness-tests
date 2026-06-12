@@ -1,4 +1,39 @@
-"""Prepare and analyze a confirmatory follow-up experiment."""
+"""Prepare and analyze a confirmatory follow-up experiment.
+
+Seed handling (confirmatory vs. exploratory)
+--------------------------------------------
+The head-to-head hypothesis (e.g. pi vs. logpi) was *selected* on the
+broad-screen seeds (seeds < ``--seed-start``). Reusing those seeds in the
+confirmatory tests would double-dip and invalidate the p-values. Therefore:
+
+- Everything labeled "confirmatory" (the condition-level and dataset-level
+  paired tests, ``head_to_head_*.csv``, and the main LaTeX/CSV table) is
+  computed from the NEW seeds only, i.e. ``seed >= --seed-start`` (seeds in
+  ``range(seed_start, seed_start + num_new_seeds)``).
+- The broad-screen logs are still copied next to the new runs so plots stay
+  rich; analyses over the pooled (screening + new) seeds are written as
+  clearly labeled ``exploratory_pooled_*`` outputs and figures, and must not
+  be used for confirmatory claims.
+
+Dataset-level metric choice
+---------------------------
+Different (jitter_std, jitter_iteration) cells produce mechanically different
+excess-AUC magnitudes, so raw ``auc_simple_regret_excess_true`` must not be
+averaged across conditions before testing. The dataset-level confirmatory test
+therefore prefers the per-noisy-iteration normalized metric
+``auc_simple_regret_excess_true_postonset_per_iter`` written by
+``evaluate_research_question.py``. If that column is unavailable (older
+evaluation outputs), the raw excess AUC is rescaled by the per-condition
+standard deviation of the paired differences (scale-only standardization, no
+centering) before averaging across conditions.
+
+Multiple comparisons
+--------------------
+Benjamini-Hochberg FDR correction is applied across rows separately per test
+family (t-tests as one family, Wilcoxon as another) and per metric; the main
+table only declares a winner when the FDR-corrected primary test (paired t)
+is significant, otherwise it reports "n.s.".
+"""
 from __future__ import annotations
 
 import argparse
@@ -20,6 +55,10 @@ from statsmodels.stats.multitest import multipletests
 PRIMARY_METRIC = "auc_simple_regret_excess_true"
 SECONDARY_METRIC = "final_simple_regret_excess_true"
 REACTION_METRIC = "response_l2_excess"
+# Per-noisy-iteration normalized excess AUC: comparable across error conditions,
+# so it is the preferred metric when averaging across conditions before testing.
+DATASET_PRIMARY_METRIC = "auc_simple_regret_excess_true_postonset_per_iter"
+ALPHA = 0.05
 
 
 def parse_args() -> argparse.Namespace:
@@ -61,6 +100,12 @@ def prepare_directories(output_root: Path) -> dict[str, Path]:
 
 
 def copy_existing_logs(base_input_dir: Path, raw_dir: Path, objective: str, acquisitions: list[str]) -> list[Path]:
+    """Copy broad-screen logs next to the new runs.
+
+    These screening-seed logs feed ONLY the pooled ``exploratory_pooled_*``
+    outputs and figures; the confirmatory tests filter them out by seed
+    (see module docstring).
+    """
     copied: list[Path] = []
     for acquisition in acquisitions:
         pattern = f"bo_sensor_error_*_{objective}_{acquisition}_seed*_*.csv"
@@ -159,8 +204,27 @@ def paired_stats_from_diff(diff: pd.Series, ref: pd.Series, challenger: pd.Serie
 
 def build_head_to_head_table(paired: pd.DataFrame, reference: str, challenger: str) -> pd.DataFrame:
     subset = paired[paired["acquisition"].isin([reference, challenger])].copy()
-    index_cols = ["dataset", "objective", "error_model", "jitter_iteration", "jitter_std", "seed"]
+    index_cols = ["dataset", "objective", "oracle_model", "error_model", "jitter_iteration", "jitter_std", "seed"]
+    if "oracle_model" not in subset.columns:
+        # Older evaluation outputs: the duplicate check below still catches any
+        # silent pooling across oracles.
+        index_cols.remove("oracle_model")
     value_cols = [PRIMARY_METRIC, SECONDARY_METRIC, REACTION_METRIC]
+    if DATASET_PRIMARY_METRIC in subset.columns:
+        value_cols.append(DATASET_PRIMARY_METRIC)
+    if subset.empty:
+        columns = list(index_cols)
+        columns += [f"{metric}_{acq}" for metric in value_cols for acq in (reference, challenger)]
+        columns += [f"{metric}_diff_{challenger}_minus_{reference}" for metric in value_cols]
+        return pd.DataFrame(columns=columns)
+    cell_sizes = subset.groupby(index_cols + ["acquisition"], dropna=False).size()
+    if (cell_sizes > 1).any():
+        duplicated = cell_sizes[cell_sizes > 1]
+        raise ValueError(
+            "Duplicate paired rows for the same "
+            f"{index_cols + ['acquisition']} cell; refusing to silently pool. "
+            f"Offending cells:\n{duplicated.to_string()}"
+        )
     pivot = subset.pivot_table(index=index_cols, columns="acquisition", values=value_cols, aggfunc="mean")
     pivot.columns = [f"{metric}_{acq}" for metric, acq in pivot.columns]
     pivot = pivot.reset_index()
@@ -173,10 +237,33 @@ def build_head_to_head_table(paired: pd.DataFrame, reference: str, challenger: s
     return pivot
 
 
+def apply_fdr_within_metric(tests: pd.DataFrame) -> pd.DataFrame:
+    """Benjamini-Hochberg correction per test family (t / Wilcoxon) and per metric."""
+    if tests.empty:
+        return tests
+    tests = tests.reset_index(drop=True)
+    for column in ["p_value_t", "p_value_wilcoxon"]:
+        adjusted = np.full(len(tests), np.nan, dtype=float)
+        rejected = np.zeros(len(tests), dtype=bool)
+        for metric in tests["metric"].dropna().unique():
+            metric_index = tests.index[tests["metric"] == metric]
+            valid_mask = tests.loc[metric_index, column].notna()
+            if not valid_mask.any():
+                continue
+            valid_index = metric_index[valid_mask]
+            reject, p_adj, _, _ = multipletests(tests.loc[valid_index, column], method="fdr_bh")
+            adjusted[valid_index.to_numpy(dtype=int)] = p_adj
+            rejected[valid_index.to_numpy(dtype=int)] = reject
+        tests[f"{column}_fdr_bh"] = adjusted
+        tests[f"{column}_rejected"] = rejected
+    return tests
+
+
 def summarize_condition_tests(head_to_head: pd.DataFrame, reference: str, challenger: str) -> pd.DataFrame:
     rows: list[dict[str, object]] = []
     metrics = [PRIMARY_METRIC, SECONDARY_METRIC]
-    group_cols = ["dataset", "objective", "error_model", "jitter_iteration", "jitter_std"]
+    group_cols = ["dataset", "objective", "oracle_model", "error_model", "jitter_iteration", "jitter_std"]
+    group_cols = [column for column in group_cols if column in head_to_head.columns]
     for group_values, group in head_to_head.groupby(group_cols, dropna=False):
         if not isinstance(group_values, tuple):
             group_values = (group_values,)
@@ -196,25 +283,36 @@ def summarize_condition_tests(head_to_head: pd.DataFrame, reference: str, challe
                 **stats,
             })
     tests = pd.DataFrame(rows)
-    for column in ["p_value_t", "p_value_wilcoxon"]:
-        adjusted = np.full(len(tests), np.nan, dtype=float)
-        rejected = np.zeros(len(tests), dtype=bool)
-        for metric in tests["metric"].dropna().unique():
-            metric_index = tests.index[tests["metric"] == metric]
-            valid_mask = tests.loc[metric_index, column].notna()
-            if not valid_mask.any():
-                continue
-            valid_index = metric_index[valid_mask]
-            reject, p_adj, _, _ = multipletests(tests.loc[valid_index, column], method="fdr_bh")
-            adjusted[valid_index.to_numpy(dtype=int)] = p_adj
-            rejected[valid_index.to_numpy(dtype=int)] = reject
-        tests[f"{column}_fdr_bh"] = adjusted
-        tests[f"{column}_rejected"] = rejected
-    return tests
+    return apply_fdr_within_metric(tests)
 
 
-def summarize_dataset_tests(head_to_head: pd.DataFrame, reference: str, challenger: str) -> tuple[pd.DataFrame, pd.DataFrame]:
-    metrics = [PRIMARY_METRIC, SECONDARY_METRIC]
+def summarize_dataset_tests(head_to_head: pd.DataFrame, reference: str, challenger: str) -> tuple[pd.DataFrame, pd.DataFrame, str]:
+    """Seed-level averaging across conditions, then paired tests per dataset.
+
+    Raw excess AUC is incommensurate across (jitter_std, jitter_iteration)
+    cells, so averaging it across conditions before testing is invalid. This
+    function prefers the per-noisy-iteration normalized metric
+    ``DATASET_PRIMARY_METRIC``; when unavailable it rescales the raw excess
+    AUC by the per-condition standard deviation of the paired differences
+    (scale-only, no centering) before averaging. Returns the seed-level table,
+    the FDR-corrected test table, and the name of the primary metric used.
+    """
+    diff_suffix = f"diff_{challenger}_minus_{reference}"
+    if f"{DATASET_PRIMARY_METRIC}_{diff_suffix}" in head_to_head.columns:
+        primary_metric = DATASET_PRIMARY_METRIC
+    else:
+        head_to_head = head_to_head.copy()
+        primary_metric = f"{PRIMARY_METRIC}_per_condition_sd"
+        condition_cols = ["dataset", "objective", "oracle_model", "error_model", "jitter_iteration", "jitter_std"]
+        condition_cols = [column for column in condition_cols if column in head_to_head.columns]
+        base_diff_col = f"{PRIMARY_METRIC}_{diff_suffix}"
+        scale = head_to_head.groupby(condition_cols, dropna=False)[base_diff_col].transform(lambda s: s.std(ddof=1))
+        scale = scale.where(scale > 0)
+        head_to_head[f"{primary_metric}_{reference}"] = head_to_head[f"{PRIMARY_METRIC}_{reference}"] / scale
+        head_to_head[f"{primary_metric}_{challenger}"] = head_to_head[f"{PRIMARY_METRIC}_{challenger}"] / scale
+        head_to_head[f"{primary_metric}_{diff_suffix}"] = head_to_head[base_diff_col] / scale
+
+    metrics = [primary_metric, SECONDARY_METRIC]
     seed_rows: list[dict[str, object]] = []
     stats_rows: list[dict[str, object]] = []
 
@@ -228,6 +326,8 @@ def summarize_dataset_tests(head_to_head: pd.DataFrame, reference: str, challeng
             )
         seed_rows.append(row)
     seed_df = pd.DataFrame(seed_rows)
+    if seed_df.empty:
+        return seed_df, pd.DataFrame(), primary_metric
 
     for (dataset, objective), group in seed_df.groupby(["dataset", "objective"], dropna=False):
         for metric in metrics:
@@ -245,19 +345,30 @@ def summarize_dataset_tests(head_to_head: pd.DataFrame, reference: str, challeng
                 "challenger": challenger,
                 **stats,
             })
-    return seed_df, pd.DataFrame(stats_rows)
+    return seed_df, apply_fdr_within_metric(pd.DataFrame(stats_rows)), primary_metric
 
 
 def build_main_confirmatory_table(
     dataset_tests: pd.DataFrame,
     reference: str,
     challenger: str,
+    primary_metric: str,
 ) -> pd.DataFrame:
-    table = dataset_tests[dataset_tests["metric"] == PRIMARY_METRIC].copy()
+    if dataset_tests.empty:
+        return dataset_tests.copy()
+    table = dataset_tests[dataset_tests["metric"] == primary_metric].copy()
     if table.empty:
         return table
 
-    table["winner"] = np.where(table["mean_diff"] < 0, challenger, reference)
+    # The paired t-test on seed-averaged diffs is the pre-specified primary
+    # test; a winner is only declared when its FDR-corrected p-value rejects.
+    significant = table["p_value_t_fdr_bh"].notna() & (table["p_value_t_fdr_bh"] < ALPHA)
+    direction = np.select(
+        [table["mean_diff"] < 0, table["mean_diff"] > 0],
+        [challenger, reference],
+        default="n.s.",
+    )
+    table["winner"] = np.where(significant, direction, "n.s.")
     table["comparison"] = f"{reference} vs {challenger}"
     table["delta_label"] = f"{challenger} - {reference}"
     ordered_columns = [
@@ -273,6 +384,8 @@ def build_main_confirmatory_table(
         "cohens_dz",
         "p_value_t",
         "p_value_wilcoxon",
+        "p_value_t_fdr_bh",
+        "p_value_wilcoxon_fdr_bh",
         "winner",
         "delta_label",
     ]
@@ -313,6 +426,7 @@ def write_main_confirmatory_table(
     main_table: pd.DataFrame,
     reference: str,
     challenger: str,
+    primary_metric: str,
 ) -> None:
     csv_path = output_dir / "main_confirmatory_table.csv"
     tex_path = output_dir / "main_confirmatory_table.tex"
@@ -320,7 +434,10 @@ def write_main_confirmatory_table(
 
     caption = (
         f"Confirmatory paired comparison for the primary robustness metric "
-        f"({PRIMARY_METRIC}) using matched seeds."
+        f"({primary_metric}) on the held-out confirmatory seeds only "
+        f"(screening seeds excluded). p-values are Benjamini-Hochberg "
+        f"FDR-corrected across rows; a winner is declared only when the "
+        f"corrected paired t-test is significant."
     )
     label = "tab:confirmatory-primary"
     lines = [
@@ -328,19 +445,20 @@ def write_main_confirmatory_table(
         r"\centering",
         rf"\caption{{{_latex_escape(caption)}}}",
         rf"\label{{{label}}}",
-        r"\begin{tabular}{llrrrrrrll}",
+        r"\begin{tabular}{llrrrrrrrrrrl}",
         r"\toprule",
         (
             "Dataset & Objective & $n$ & "
             f"Mean {_latex_escape(reference)} & Mean {_latex_escape(challenger)} & "
             rf"$\Delta$ ({_latex_escape(challenger)} - {_latex_escape(reference)}) & "
-            r"95\% CI & $d_z$ & $p_t$ & $p_W$ \\"
+            r"95\% CI & $d_z$ & $p_t$ & $p_W$ & "
+            r"$p_t^{\mathrm{BH}}$ & $p_W^{\mathrm{BH}}$ & Winner \\"
         ),
         r"\midrule",
     ]
 
     if main_table.empty:
-        lines.append(r"\multicolumn{10}{c}{No confirmatory results available yet.} \\")
+        lines.append(r"\multicolumn{13}{c}{No confirmatory results available yet.} \\")
     else:
         for _, row in main_table.iterrows():
             ci_text = f"[{_format_numeric(row['ci95_low'])}, {_format_numeric(row['ci95_high'])}]"
@@ -357,6 +475,9 @@ def write_main_confirmatory_table(
                         _format_numeric(row["cohens_dz"]),
                         _latex_escape(_format_p_value(row["p_value_t"])),
                         _latex_escape(_format_p_value(row["p_value_wilcoxon"])),
+                        _latex_escape(_format_p_value(row["p_value_t_fdr_bh"])),
+                        _latex_escape(_format_p_value(row["p_value_wilcoxon_fdr_bh"])),
+                        _latex_escape(row["winner"]),
                     ]
                 )
                 + r" \\"
@@ -374,6 +495,7 @@ def write_main_confirmatory_table(
 
 
 def plot_confirmatory_heatmaps(condition_summary: pd.DataFrame, output_dir: Path, acquisitions: list[str]) -> list[str]:
+    """Exploratory heatmaps over the pooled (screening + confirmatory) seeds."""
     paths: list[str] = []
     data = condition_summary[condition_summary["acquisition"].isin(acquisitions)].copy()
     for acquisition, subset in data.groupby("acquisition", dropna=False):
@@ -391,9 +513,9 @@ def plot_confirmatory_heatmaps(condition_summary: pd.DataFrame, output_dir: Path
                 ax.set_title(f"{dataset} / {error_model}")
                 ax.set_xlabel("Jitter std")
                 ax.set_ylabel("Jitter iteration")
-        fig.suptitle(f"Confirmatory heatmap: {acquisition}", y=0.99)
+        fig.suptitle(f"Exploratory heatmap (pooled seeds): {acquisition}", y=0.99)
         fig.tight_layout()
-        path = output_dir / f"confirmatory_heatmap_{acquisition}.png"
+        path = output_dir / f"exploratory_pooled_heatmap_{acquisition}.png"
         fig.savefig(path, dpi=220, bbox_inches="tight")
         plt.close(fig)
         paths.append(str(path))
@@ -401,32 +523,46 @@ def plot_confirmatory_heatmaps(condition_summary: pd.DataFrame, output_dir: Path
 
 
 def plot_winner_map(head_to_head: pd.DataFrame, reference: str, challenger: str, output_dir: Path) -> str:
+    """Exploratory winner map over pooled (screening + confirmatory) seeds.
+
+    NaN mean diffs render as masked blanks and exact-zero diffs as explicit
+    ties; neither is attributed to the reference acquisition.
+    """
     data = head_to_head.copy()
     diff_col = f"{PRIMARY_METRIC}_diff_{challenger}_minus_{reference}"
-    data["winner"] = np.where(data[diff_col] < 0, challenger, reference)
     mean_data = data.groupby(["dataset", "error_model", "jitter_iteration", "jitter_std"], dropna=False).agg(mean_diff=(diff_col, "mean")).reset_index()
-    mean_data["winner"] = np.where(mean_data["mean_diff"] < 0, challenger, reference)
-    code_map = {reference: 0, challenger: 1}
-    mean_data["winner_code"] = mean_data["winner"].map(code_map)
+    diff = mean_data["mean_diff"].to_numpy(dtype=float)
+    code_map = {reference: 0.0, "tie": 1.0, challenger: 2.0}
+    mean_data["winner_code"] = np.select(
+        [diff < 0, diff > 0],
+        [code_map[challenger], code_map[reference]],
+        default=code_map["tie"],
+    )
+    mean_data.loc[~np.isfinite(diff), "winner_code"] = np.nan
+    code_labels = {code: label for label, code in code_map.items()}
     datasets = sorted(mean_data["dataset"].dropna().unique().tolist())
     error_models = sorted(mean_data["error_model"].dropna().unique().tolist())
     fig, axes = plt.subplots(len(datasets), len(error_models), figsize=(4.8 * len(error_models), 3.8 * len(datasets)), squeeze=False)
-    cmap = ListedColormap(sns.color_palette("Set2", n_colors=2))
+    palette = sns.color_palette("Set2", n_colors=2)
+    cmap = ListedColormap([palette[0], "lightgrey", palette[1]])
     for row_idx, dataset in enumerate(datasets):
         for col_idx, error_model in enumerate(error_models):
             ax = axes[row_idx, col_idx]
             subset = mean_data[(mean_data["dataset"] == dataset) & (mean_data["error_model"] == error_model)]
             pivot = subset.pivot_table(index="jitter_iteration", columns="jitter_std", values="winner_code", aggfunc="mean")
-            annot = subset.pivot_table(index="jitter_iteration", columns="jitter_std", values="winner", aggfunc="first")
-            sns.heatmap(pivot, ax=ax, annot=annot, fmt="", cmap=cmap, cbar=False, mask=pivot.isna())
+            annot = pivot.astype(object)
+            for code, label in code_labels.items():
+                annot = annot.mask(pivot == code, label)
+            annot = annot.where(pivot.notna(), "")
+            sns.heatmap(pivot, ax=ax, annot=annot, fmt="", cmap=cmap, vmin=0.0, vmax=2.0, cbar=False, mask=pivot.isna())
             ax.set_title(f"{dataset} / {error_model}")
             ax.set_xlabel("Jitter std")
             ax.set_ylabel("Jitter iteration")
-    handles = [plt.Line2D([0], [0], marker="s", linestyle="", color=cmap(code), markersize=10, label=label) for label, code in code_map.items()]
-    fig.legend(handles=handles, loc="upper center", ncol=2)
-    fig.suptitle(f"Winner map: {reference} vs {challenger}", y=1.02)
+    handles = [plt.Line2D([0], [0], marker="s", linestyle="", color=cmap(code / 2.0), markersize=10, label=label) for label, code in code_map.items()]
+    fig.legend(handles=handles, loc="upper center", ncol=3)
+    fig.suptitle(f"Winner map (exploratory, pooled seeds): {reference} vs {challenger}", y=1.02)
     fig.tight_layout()
-    path = output_dir / f"winner_map_{reference}_vs_{challenger}.png"
+    path = output_dir / f"exploratory_pooled_winner_map_{reference}_vs_{challenger}.png"
     fig.savefig(path, dpi=220, bbox_inches="tight")
     plt.close(fig)
     return str(path)
@@ -452,16 +588,18 @@ def plot_head_to_head_lines(condition_summary: pd.DataFrame, output_dir: Path, a
         ax.axhline(0.0, color="grey", linewidth=1, alpha=0.5)
     plot.set_titles(row_template="{row_name}", col_template="jitter={col_name}")
     plot.set_axis_labels("Jitter std", "Mean excess AUC regret")
-    plot.fig.suptitle("Head-to-head robustness lines", y=1.02)
-    path = output_dir / "head_to_head_lines.png"
+    plot.fig.suptitle("Head-to-head robustness lines (exploratory, pooled seeds)", y=1.02)
+    path = output_dir / "exploratory_pooled_head_to_head_lines.png"
     plot.savefig(path, dpi=220, bbox_inches="tight")
     plt.close(plot.fig)
     return str(path)
 
 
-def plot_paired_points(seed_df: pd.DataFrame, output_dir: Path, reference: str, challenger: str) -> list[str]:
+def plot_paired_points(seed_df: pd.DataFrame, output_dir: Path, reference: str, challenger: str, primary_metric: str) -> list[str]:
     paths: list[str] = []
-    for metric, label in [(PRIMARY_METRIC, "primary"), (SECONDARY_METRIC, "secondary")]:
+    if seed_df.empty:
+        return paths
+    for metric, label in [(primary_metric, "primary"), (SECONDARY_METRIC, "secondary")]:
         rows: list[dict[str, object]] = []
         for _, row in seed_df.iterrows():
             rows.append({"dataset": row["dataset"], "seed": row["seed"], "acquisition": reference, "value": row[f"{metric}_{reference}"]})
@@ -479,7 +617,7 @@ def plot_paired_points(seed_df: pd.DataFrame, output_dir: Path, reference: str, 
             ax.set_title(dataset)
             ax.set_xlabel("")
             ax.set_ylabel(metric)
-        fig.suptitle(f"Paired confirmatory comparison: {metric}", y=1.02)
+        fig.suptitle(f"Paired confirmatory comparison (new seeds only): {metric}", y=1.02)
         fig.tight_layout()
         path = output_dir / f"paired_points_{label}.png"
         fig.savefig(path, dpi=220, bbox_inches="tight")
@@ -488,7 +626,7 @@ def plot_paired_points(seed_df: pd.DataFrame, output_dir: Path, reference: str, 
     return paths
 
 
-def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests: pd.DataFrame, dataset_tests: pd.DataFrame, reference: str, challenger: str, copied_count: int, new_seed_count: int, run_simulation_flag: bool) -> None:
+def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests: pd.DataFrame, dataset_tests: pd.DataFrame, reference: str, challenger: str, copied_count: int, new_seed_count: int, run_simulation_flag: bool, seed_start: int) -> None:
     path = output_root / "confirmatory_summary.txt"
     with path.open("w", encoding="utf-8") as handle:
         handle.write("CONFIRMATORY FOLLOW-UP SUMMARY\n")
@@ -497,9 +635,15 @@ def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests
         handle.write(f"- Broad-screen results were narrowed to {reference} vs {challenger}.\n")
         handle.write("- Objective kept: composite.\n")
         handle.write("- Error sweep kept: same jitter iterations, jitter stds, and error models.\n")
-        handle.write(f"- Existing broad-screen logs reused: {copied_count} files.\n")
+        handle.write(
+            f"- Existing broad-screen logs reused for exploratory pooled outputs only: {copied_count} files.\n"
+        )
         handle.write(f"- Newly requested seeds: {new_seed_count}.\n")
-        handle.write(f"- New simulation executed in this run: {run_simulation_flag}.\n\n")
+        handle.write(f"- New simulation executed in this run: {run_simulation_flag}.\n")
+        handle.write(
+            f"- IMPORTANT: all confirmatory tests below use ONLY new seeds (seed >= {seed_start}); "
+            "the screening seeds that generated the hypothesis are excluded to avoid double-dipping.\n\n"
+        )
         handle.write("Key exports\n")
         handle.write("- Main LaTeX table: evaluation/main_confirmatory_table.tex\n")
         handle.write("- Main CSV table: evaluation/main_confirmatory_table.csv\n\n")
@@ -512,14 +656,14 @@ def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests
             handle.write(broad.to_string(index=False))
             handle.write("\n\n")
 
-        handle.write("Confirmatory dataset-level paired tests\n")
+        handle.write("Confirmatory dataset-level paired tests (new seeds only, BH-corrected)\n")
         if dataset_tests.empty:
-            handle.write("- No confirmatory paired tests available yet.\n\n")
+            handle.write("- No confirmatory paired tests available yet (run with --run-simulation to generate new seeds).\n\n")
         else:
             handle.write(dataset_tests.to_string(index=False))
             handle.write("\n\n")
 
-        handle.write("Condition-level paired tests\n")
+        handle.write("Confirmatory condition-level paired tests (new seeds only, BH-corrected)\n")
         if condition_tests.empty:
             handle.write("- No condition-level tests available yet.\n")
         else:
@@ -546,22 +690,36 @@ def main() -> None:
     condition_summary = pd.read_csv(paths["evaluation"] / "condition_summary.csv")
     paired = pd.read_csv(paths["evaluation"] / "paired_excess_metrics.csv")
 
-    head_to_head = build_head_to_head_table(paired, reference, challenger)
-    condition_tests = summarize_condition_tests(head_to_head, reference, challenger)
-    seed_df, dataset_tests = summarize_dataset_tests(head_to_head, reference, challenger)
-    main_table = build_main_confirmatory_table(dataset_tests, reference, challenger)
+    # Pooled (screening + new seeds): exploratory only — the hypothesis was
+    # selected on the screening seeds, so pooled tests would double-dip.
+    exploratory_head_to_head = build_head_to_head_table(paired, reference, challenger)
+    exploratory_condition_tests = summarize_condition_tests(exploratory_head_to_head, reference, challenger)
 
+    # Confirmatory analysis: new seeds only (seed >= args.seed_start).
+    confirmatory_paired = paired[paired["seed"] >= args.seed_start].copy()
+    if confirmatory_paired.empty:
+        print(
+            f"WARNING: no runs with seed >= {args.seed_start} found; confirmatory "
+            "tables will be empty. Run with --run-simulation to generate the new seeds."
+        )
+    head_to_head = build_head_to_head_table(confirmatory_paired, reference, challenger)
+    condition_tests = summarize_condition_tests(head_to_head, reference, challenger)
+    seed_df, dataset_tests, dataset_primary_metric = summarize_dataset_tests(head_to_head, reference, challenger)
+    main_table = build_main_confirmatory_table(dataset_tests, reference, challenger, dataset_primary_metric)
+
+    exploratory_head_to_head.to_csv(paths["evaluation"] / "exploratory_pooled_head_to_head_pairs.csv", index=False)
+    exploratory_condition_tests.to_csv(paths["evaluation"] / "exploratory_pooled_condition_tests.csv", index=False)
     head_to_head.to_csv(paths["evaluation"] / "head_to_head_pairs.csv", index=False)
     condition_tests.to_csv(paths["evaluation"] / "head_to_head_condition_tests.csv", index=False)
     seed_df.to_csv(paths["evaluation"] / "head_to_head_seed_averages.csv", index=False)
     dataset_tests.to_csv(paths["evaluation"] / "head_to_head_dataset_tests.csv", index=False)
-    write_main_confirmatory_table(paths["evaluation"], main_table, reference, challenger)
+    write_main_confirmatory_table(paths["evaluation"], main_table, reference, challenger, dataset_primary_metric)
 
     figure_paths: list[str] = []
     figure_paths.extend(plot_confirmatory_heatmaps(condition_summary, paths["figures"], acquisitions))
-    figure_paths.append(plot_winner_map(head_to_head, reference, challenger, paths["figures"]))
+    figure_paths.append(plot_winner_map(exploratory_head_to_head, reference, challenger, paths["figures"]))
     figure_paths.append(plot_head_to_head_lines(condition_summary, paths["figures"], acquisitions))
-    figure_paths.extend(plot_paired_points(seed_df, paths["figures"], reference, challenger))
+    figure_paths.extend(plot_paired_points(seed_df, paths["figures"], reference, challenger, dataset_primary_metric))
 
     manifest = paths["figures"] / "figure_manifest.txt"
     with manifest.open("w", encoding="utf-8") as handle:
@@ -570,7 +728,7 @@ def main() -> None:
         for figure_path in figure_paths:
             handle.write(Path(figure_path).name + "\n")
 
-    write_summary(args.output_root, base_overall, condition_tests, dataset_tests, reference, challenger, len(copied), len(seeds), args.run_simulation)
+    write_summary(args.output_root, base_overall, condition_tests, dataset_tests, reference, challenger, len(copied), len(seeds), args.run_simulation, args.seed_start)
     print(f"Confirmatory outputs saved to {args.output_root}")
 
 

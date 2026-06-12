@@ -19,7 +19,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import streamlit as st
+
+try:
+    import streamlit as st
+except ImportError as exc:
+    sys.stderr.write(
+        "The dashboard requires streamlit, which is not installed.\n"
+        "Install it with `pip install streamlit` (or `pip install .[dashboard]`).\n"
+    )
+    raise SystemExit(1) from exc
+
 from scipy.stats import t as student_t_dist
 
 # ---------------------------------------------------------------------------
@@ -78,21 +87,31 @@ def page_trajectories(logs: pd.DataFrame) -> None:
         "Shaded band = 95 % CI.  Dashed line = first noise-affected iteration."
     )
 
-    cols = st.columns(4)
+    has_dataset = "dataset" in logs.columns
+    cols = st.columns(5 if has_dataset else 4)
+    col_offset = 0
+    if has_dataset:
+        datasets = sorted(logs["dataset"].dropna().unique())
+        dataset = cols[0].selectbox("Dataset", datasets)
+        logs = logs[logs["dataset"] == dataset]
+        col_offset = 1
+
     objectives = sorted(logs["objective"].dropna().unique())
-    objective = cols[0].selectbox("Objective", objectives)
+    objective = cols[col_offset].selectbox("Objective", objectives)
 
     error_models = sorted(logs.loc[logs["error_model"] != "none", "error_model"].dropna().unique())
     if not error_models:
         st.info("No jittered runs found.")
         return
-    error_model = cols[1].selectbox("Error model", error_models)
+    error_model = cols[col_offset + 1].selectbox("Error model", error_models)
 
-    jitter_stds = sorted(logs["jitter_std"].dropna().unique())
-    jitter_std = cols[2].selectbox("Jitter std", jitter_stds)
+    jitter_stds = sorted(logs.loc[logs["error_model"] != "none", "jitter_std"].dropna().unique())
+    jitter_std = cols[col_offset + 2].selectbox("Jitter std", jitter_stds)
 
-    jitter_iterations = sorted(logs["jitter_iteration"].dropna().astype(int).unique())
-    jitter_iteration = cols[3].selectbox("Jitter iteration", jitter_iterations)
+    jitter_iterations = sorted(
+        logs.loc[logs["error_model"] != "none", "jitter_iteration"].dropna().astype(int).unique()
+    )
+    jitter_iteration = cols[col_offset + 3].selectbox("Jitter iteration", jitter_iterations)
 
     acquisitions = sorted(logs["acquisition"].dropna().unique())
     selected_acqs = st.multiselect("Acquisitions", acquisitions, default=acquisitions)
@@ -244,15 +263,23 @@ def page_forest_plot(eval_outputs: dict[str, pd.DataFrame]) -> None:
         st.info("effect_sizes_cohens_dz.csv not found in evaluation directory.")
         return
 
-    cols = st.columns(3)
+    has_dataset = "dataset" in es.columns
+    cols = st.columns(4 if has_dataset else 3)
+    col_offset = 0
+    if has_dataset:
+        datasets = sorted(es["dataset"].dropna().unique())
+        dataset = cols[0].selectbox("Dataset", datasets)
+        es = es[es["dataset"] == dataset]
+        col_offset = 1
+
     objectives = sorted(es["objective"].dropna().unique())
-    objective = cols[0].selectbox("Objective", objectives)
+    objective = cols[col_offset].selectbox("Objective", objectives)
 
     error_models = sorted(es["error_model"].dropna().unique())
-    error_model = cols[1].selectbox("Error model", error_models)
+    error_model = cols[col_offset + 1].selectbox("Error model", error_models)
 
     jitter_iterations = sorted(es["jitter_iteration"].dropna().astype(int).unique())
-    jit_iter = cols[2].selectbox("Jitter iteration", jitter_iterations)
+    jit_iter = cols[col_offset + 2].selectbox("Jitter iteration", jitter_iterations)
 
     sub = es[
         (es["objective"] == objective)
@@ -263,8 +290,19 @@ def page_forest_plot(eval_outputs: dict[str, pd.DataFrame]) -> None:
         st.info("No data for the selected filters.")
         return
 
+    # ci95_low/ci95_high bound mean_diff (raw metric units); rescale by
+    # std_diff so the error bars share the Cohen's dz scale of the bars.
+    sub = sub.copy()
+    if "std_diff" in sub.columns:
+        scale = sub["std_diff"].where(sub["std_diff"] > 0)
+        sub["dz_ci95_low"] = sub["ci95_low"] / scale
+        sub["dz_ci95_high"] = sub["ci95_high"] / scale
+    else:
+        sub["dz_ci95_low"] = sub["ci95_low"]
+        sub["dz_ci95_high"] = sub["ci95_high"]
+
     plot_df = (
-        sub.groupby("acquisition")[["cohens_dz", "ci95_low", "ci95_high"]]
+        sub.groupby("acquisition")[["cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
         .mean()
         .reset_index()
         .sort_values("cohens_dz")
@@ -278,8 +316,8 @@ def page_forest_plot(eval_outputs: dict[str, pd.DataFrame]) -> None:
         plot_df["cohens_dz"],
         y_pos,
         xerr=[
-            plot_df["cohens_dz"] - plot_df["ci95_low"],
-            plot_df["ci95_high"] - plot_df["cohens_dz"],
+            plot_df["cohens_dz"] - plot_df["dz_ci95_low"],
+            plot_df["dz_ci95_high"] - plot_df["cohens_dz"],
         ],
         fmt="none",
         color="black",

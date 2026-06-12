@@ -207,6 +207,109 @@ def test_apply_sensor_error_uses_jitter_for_spike() -> None:
     assert np.allclose(observed, true_value + combined)
     assert np.allclose(error, combined)
 
+def test_apply_sensor_error_drift_ramps_linearly() -> None:
+    config = _make_error_config("drift", jitter_std=1.0)
+    # iterations=5, jitter_iteration=2 -> span = 3; at iteration 5 the ramp
+    # reaches the full jitter_std.
+    true_value = np.array([1.0, 2.0])
+    rng = np.random.default_rng(0)
+    observed3, error3 = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
+    assert np.allclose(error3, 1.0 * (3 - 2) / 3)
+    observed5, error5 = bo_sim.apply_sensor_error(true_value, 5, config, rng, true_value)
+    assert np.allclose(error5, 1.0)
+    assert np.allclose(observed5, true_value + 1.0)
+
+
+def test_apply_sensor_error_ar1_is_serially_correlated() -> None:
+    config = _make_error_config("ar1", jitter_std=0.5)
+    rho = config.error_ar1_rho
+    true_value = np.array([1.0, 2.0])
+    rng = np.random.default_rng(5)
+    expected_rng = np.random.default_rng(5)
+    # apply_sensor_error draws the base jitter first, then the AR innovation.
+    _ = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    innovation = expected_rng.normal(
+        0.0, config.jitter_std * np.sqrt(1.0 - rho**2), size=true_value.shape
+    )
+    previous_error = np.array([0.3, -0.2])
+    observed, error = bo_sim.apply_sensor_error(
+        true_value, 3, config, rng, true_value, previous_error=previous_error
+    )
+    assert np.allclose(error, rho * previous_error + innovation)
+    assert np.allclose(observed, true_value + error)
+
+
+def test_apply_sensor_error_clips_and_rounds_to_response_scale() -> None:
+    import dataclasses
+
+    config = dataclasses.replace(
+        _make_error_config("gaussian", jitter_std=100.0),
+        response_clip_low=np.array([1.0, 1.0]),
+        response_clip_high=np.array([7.0, 7.0]),
+        response_round=1.0,
+    )
+    true_value = np.array([4.0, 4.0])
+    for seed in range(10):
+        observed, _ = bo_sim.apply_sensor_error(
+            true_value, 3, config, np.random.default_rng(seed), true_value
+        )
+        assert np.all(observed >= 1.0) and np.all(observed <= 7.0)
+        assert np.allclose(observed, np.round(observed))
+
+
+def test_resolve_sweep_values_conflict_and_fallbacks() -> None:
+    parse = lambda raw: bo_sim.parse_float_list(raw, 0.2)
+    flags = ("--jitter-stds", "--jitter-std")
+    # Plural wins when given alone.
+    assert bo_sim.resolve_sweep_values("0.1,0.3", None, "1,2", parse, flags) == [0.1, 0.3]
+    # Singular is honored (previously silently ignored).
+    assert bo_sim.resolve_sweep_values(None, 0.7, "1,2", parse, flags) == [0.7]
+    # Default sweep applies when neither flag is set.
+    assert bo_sim.resolve_sweep_values(None, None, "1,2", parse, flags) == [1.0, 2.0]
+    # Passing both is an explicit error, not silent precedence.
+    with pytest.raises(ValueError, match="not both"):
+        bo_sim.resolve_sweep_values("0.1", 0.7, "1,2", parse, flags)
+
+
+def test_parse_error_models_conflict_and_default() -> None:
+    assert bo_sim.parse_error_models(None, None) == ["gaussian", "bias"]
+    assert bo_sim.parse_error_models("drift", None) == ["drift"]
+    with pytest.raises(ValueError, match="not both"):
+        bo_sim.parse_error_models("gaussian", "gaussian,bias")
+
+
+def test_validate_sweeps_allows_onset_zero() -> None:
+    bo_sim.validate_sweeps([0, 10], [0.5], iterations=20)  # should not raise
+    with pytest.raises(ValueError, match="jitter-iteration"):
+        bo_sim.validate_sweeps([-1], [0.5], iterations=20)
+
+
+def test_filter_acquisitions_includes_model_free_floors() -> None:
+    acqs = ["ei", "random", "sobol", "qehvi"]
+    assert bo_sim.filter_acquisitions_for_objective(acqs, "composite") == ["ei", "random", "sobol"]
+    assert bo_sim.filter_acquisitions_for_objective(acqs, "multi_objective") == [
+        "random",
+        "sobol",
+        "qehvi",
+    ]
+
+
+def test_estimate_oracle_optimum_anchored_on_known_points() -> None:
+    class PeakOracle:
+        def predict_many(self, X: np.ndarray) -> np.ndarray:
+            # Sharp spike at the known point that random search will miss.
+            target = np.array([0.123456, 0.654321])
+            dist = np.linalg.norm(X - target, axis=1)
+            return np.where(dist < 1e-9, 100.0, 0.0).reshape(-1, 1)
+
+    bounds = bo_sim.Bounds(low=np.zeros(2), high=np.ones(2))
+    X_known = np.array([[0.123456, 0.654321]])
+    y_opt = bo_sim.estimate_oracle_optimum(
+        PeakOracle(), bounds, seed=0, n=10_000, batch_size=5_000, X_known=X_known
+    )
+    assert np.isclose(y_opt, 100.0)
+
+
 def test_augment_oracle_data_jitter() -> None:
     rng = np.random.default_rng(42)
     X = rng.normal(size=(10, 3))
@@ -440,20 +543,52 @@ def test_load_observations_multiple_dirs(tmp_path: Path) -> None:
     assert loaded.shape[0] == 4
 
 
-def test_summarize_adjustment_includes_avg_regret() -> None:
-    results = pd.DataFrame(
+def _make_adjustment_results(iterations: int = 4) -> pd.DataFrame:
+    # Quadratic params so the (t+1)->(t+2) delta differs from (t)->(t+1).
+    iters = list(range(1, iterations + 1))
+    return pd.DataFrame(
         {
-            "iteration": [1, 2, 3],
-            "p1": [0.1, 0.2, 0.3],
-            "p2": [0.2, 0.3, 0.4],
-            "best_true_so_far": [1.0, 1.5, 2.0],
-            "simple_regret_true": [0.5, 0.4, 0.3],
-            "regret_cum_true": [0.5, 0.9, 1.2],
-            "regret_avg_true": [0.5, 0.45, 0.4],
+            "iteration": iters,
+            "p1": [float(i) ** 2 * 0.1 for i in iters],
+            "p2": [float(i) ** 2 * 0.2 for i in iters],
+            "best_true_so_far": [1.0 + 0.5 * i for i in iters],
+            "simple_regret_true": [0.5 - 0.1 * i for i in iters],
+            "regret_cum_true": [0.5 * i for i in iters],
+            "regret_avg_true": [0.5] * len(iters),
+            "inference_simple_regret_true": [0.6 - 0.1 * i for i in iters],
+            "acq_opt_failed": [False] * len(iters),
         }
     )
+
+
+def test_summarize_adjustment_includes_avg_regret() -> None:
+    results = _make_adjustment_results(iterations=3)
     summary = bo_sim.summarize_adjustment(results, 1, ["p1", "p2"])
-    assert np.isclose(summary["final_avg_regret_true"], 0.4)
+    assert np.isclose(summary["final_avg_regret_true"], 0.5)
+    assert np.isclose(summary["final_inference_simple_regret_true"], 0.3)
+
+
+def test_summarize_adjustment_uses_response_step_convention() -> None:
+    """The delta must span (jitter_iteration+1) -> (jitter_iteration+2):
+    noise first affects the observation at t+1 and the first candidate that
+    can react is proposed at t+2 (README convention)."""
+    results = _make_adjustment_results(iterations=4)
+    jit = 1
+    summary = bo_sim.summarize_adjustment(results, jit, ["p1", "p2"])
+    # p1 = 0.1*i^2: delta over iterations 2->3 is 0.1*(9-4) = 0.5
+    assert np.isclose(summary["delta_p1"], 0.5)
+    assert np.isclose(summary["delta_p2"], 1.0)
+    expected_l2 = float(np.linalg.norm([0.5, 1.0]))
+    assert np.isclose(summary["delta_l2_norm"], expected_l2)
+
+
+def test_summarize_adjustment_nan_when_response_step_out_of_range() -> None:
+    results = _make_adjustment_results(iterations=3)
+    # jit=2 -> response step is iterations 3->4, but the run ends at 3.
+    summary = bo_sim.summarize_adjustment(results, 2, ["p1", "p2"])
+    assert np.isnan(summary["delta_l2_norm"])
+    # Run-level summaries are still reported.
+    assert np.isfinite(summary["final_simple_regret_true"])
 
 
 def test_screen_candidate_pool_returns_ranked_initial_conditions() -> None:

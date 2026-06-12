@@ -1,8 +1,22 @@
-"""Select the best oracle model based on cross-validated performance."""
+"""Select the best oracle model based on cross-validated performance.
+
+The selected oracle becomes the ground-truth "simulated human" for all
+downstream robustness experiments, so this script also audits fidelity:
+
+- duplicated (parameters, objectives) rows are reported, because duplicates
+  shared across CV folds produce leakage and implausibly perfect scores;
+- a warning is emitted when grouped CV silently downgrades the fold count;
+- near-perfect (R^2 > 0.99) and near-zero/negative best scores are flagged
+  loudly, since both invalidate the "human ground truth" interpretation.
+
+Training protocol matches the simulation (same tree scale and the same jitter
+augmentation applied to the training folds), so selection results transfer.
+"""
 from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +29,7 @@ from bo_sensor_error_simulation import (
     DATA_DIR,
     ORACLE_MODEL_CHOICES,
     _build_oracle_model,
+    augment_oracle_data,
     compute_objective,
     compute_objective_matrix,
     fit_objective_normalization,
@@ -46,6 +61,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--normalize-objective", action="store_true", default=False)
     parser.add_argument("--objective-weights", type=str, default=None)
     parser.add_argument("--max-rows", type=int, default=None)
+    parser.add_argument(
+        "--oracle-augmentation",
+        type=str,
+        default="jitter",
+        choices=["none", "jitter"],
+        help="Match the simulation's oracle training augmentation (train folds only).",
+    )
+    parser.add_argument("--oracle-augment-repeats", type=int, default=2)
+    parser.add_argument("--oracle-augment-std", type=float, default=0.02)
+    parser.add_argument(
+        "--dedup",
+        action="store_true",
+        default=False,
+        help="Drop duplicated (parameters, objectives) rows before cross-validation. "
+        "Duplicates shared across folds inflate CV scores via leakage.",
+    )
     return parser.parse_args()
 
 
@@ -95,6 +126,29 @@ def _build_cv_splits(
     }
 
 
+def _maybe_augment(
+    X_train: pd.DataFrame,
+    y_train: np.ndarray,
+    param_columns: list[str],
+    seed: int,
+    augmentation: str,
+    augment_repeats: int,
+    augment_std: float,
+) -> tuple[pd.DataFrame, np.ndarray]:
+    if augmentation == "none":
+        return X_train, y_train
+    rng = np.random.default_rng(seed)
+    X_aug, y_aug = augment_oracle_data(
+        X_train.to_numpy(dtype=float),
+        y_train,
+        rng,
+        augmentation,
+        augment_repeats,
+        augment_std,
+    )
+    return pd.DataFrame(X_aug, columns=param_columns), y_aug
+
+
 def _evaluate_model_single_objective(
     model_name: str,
     df: pd.DataFrame,
@@ -105,6 +159,9 @@ def _evaluate_model_single_objective(
     normalize: bool,
     weights: np.ndarray | None,
     splits: list[tuple[np.ndarray, np.ndarray]],
+    augmentation: str = "none",
+    augment_repeats: int = 2,
+    augment_std: float = 0.02,
 ) -> dict[str, float]:
     r2_scores: list[float] = []
     rmse_scores: list[float] = []
@@ -133,6 +190,9 @@ def _evaluate_model_single_objective(
         model = _build_oracle_model(model_name, seed=seed, tree_scale=tree_scale)
         X_train = _build_feature_frame(train_df, param_columns)
         X_test = _build_feature_frame(test_df, param_columns)
+        X_train, y_train = _maybe_augment(
+            X_train, y_train, param_columns, seed, augmentation, augment_repeats, augment_std
+        )
         model.fit(X_train, y_train)
         preds = np.asarray(model.predict(X_test), dtype=float)
         r2_scores.append(float(r2_score(y_test, preds)))
@@ -152,7 +212,10 @@ def _evaluate_model_multi_objective(
     tree_scale: float,
     normalize: bool,
     splits: list[tuple[np.ndarray, np.ndarray]],
-) -> float:
+    augmentation: str = "none",
+    augment_repeats: int = 2,
+    augment_std: float = 0.02,
+) -> dict[str, float]:
     r2_scores: list[float] = []
     rmse_scores: list[float] = []
     for train_idx, test_idx in splits:
@@ -180,8 +243,17 @@ def _evaluate_model_multi_objective(
         per_target_r2: list[float] = []
         per_target_rmse: list[float] = []
         for idx in range(Y_train.shape[1]):
+            X_fit, y_fit = _maybe_augment(
+                X_train,
+                Y_train[:, idx],
+                param_columns,
+                seed,
+                augmentation,
+                augment_repeats,
+                augment_std,
+            )
             model = _build_oracle_model(model_name, seed=seed, tree_scale=tree_scale)
-            model.fit(X_train, Y_train[:, idx])
+            model.fit(X_fit, y_fit)
             preds = np.asarray(model.predict(X_test), dtype=float)
             per_target_r2.append(float(r2_score(Y_test[:, idx], preds)))
             per_target_rmse.append(float(np.sqrt(mean_squared_error(Y_test[:, idx], preds))))
@@ -191,6 +263,37 @@ def _evaluate_model_multi_objective(
         "r2": float(np.mean(r2_scores)),
         "rmse": float(np.mean(rmse_scores)),
     }
+
+
+def audit_duplicates(
+    df: pd.DataFrame,
+    param_columns: list[str],
+    objective_columns: list[str],
+    dedup: bool,
+    context: str,
+) -> tuple[pd.DataFrame, float]:
+    """Report (and optionally drop) duplicated (X, y) rows.
+
+    Duplicated rows that land in different CV folds leak the answer to the
+    held-out fold and produce implausibly perfect scores (observed in practice:
+    R^2 = 0.9999999999 with RMSE ~1e-8).
+    """
+    base_objective_columns = [col.lstrip("-") for col in objective_columns]
+    key_columns = [col for col in param_columns + base_objective_columns if col in df.columns]
+    duplicated = df.duplicated(subset=key_columns, keep="first")
+    fraction = float(duplicated.mean()) if len(df) else 0.0
+    if duplicated.any():
+        print(
+            f"WARNING [{context}]: {int(duplicated.sum())} of {len(df)} rows "
+            f"({fraction:.1%}) are exact (parameters, objectives) duplicates. "
+            "Cross-validation scores are inflated by leakage unless deduplicated "
+            "(--dedup).",
+            file=sys.stderr,
+        )
+    if dedup and duplicated.any():
+        df = df.loc[~duplicated].reset_index(drop=True)
+        print(f"[{context}] deduplicated to {len(df)} rows.", file=sys.stderr)
+    return df, fraction
 
 
 def evaluate_models_for_objective(
@@ -205,8 +308,20 @@ def evaluate_models_for_objective(
     weights: np.ndarray | None,
     tree_scale: float,
     progress_desc: str | None = None,
-) -> dict[str, float]:
+    augmentation: str = "none",
+    augment_repeats: int = 2,
+    augment_std: float = 0.02,
+) -> dict[str, object]:
     cv_splits, validation_info = _build_cv_splits(df, seed, cv_folds)
+    if validation_info["effective_cv_folds"] < cv_folds:
+        print(
+            f"WARNING [{progress_desc or objective}]: requested {cv_folds} CV folds "
+            f"but only {validation_info['effective_cv_folds']} are possible "
+            f"(strategy={validation_info['strategy']}, "
+            f"group_source={validation_info['group_source']}). Scores are less "
+            "stable and group separation is weaker.",
+            file=sys.stderr,
+        )
     scores: dict[str, dict[str, float]] = {}
 
     if objective == "multi_objective":
@@ -220,6 +335,9 @@ def evaluate_models_for_objective(
                 tree_scale,
                 normalize,
                 cv_splits,
+                augmentation,
+                augment_repeats,
+                augment_std,
             )
         return {
             "scores": {name: metrics["r2"] for name, metrics in scores.items()},
@@ -238,6 +356,9 @@ def evaluate_models_for_objective(
             normalize,
             weights,
             cv_splits,
+            augmentation,
+            augment_repeats,
+            augment_std,
         )
     return {
         "scores": {name: metrics["r2"] for name, metrics in scores.items()},
@@ -281,6 +402,13 @@ def main() -> None:
             df = load_observations(dataset, objective_name)
             if args.max_rows is not None:
                 df = df.head(int(args.max_rows))
+            df, duplicate_fraction = audit_duplicates(
+                df,
+                dataset.param_columns,
+                objective_columns,
+                args.dedup,
+                context=f"{dataset.name}:{objective_name}",
+            )
             evaluation = evaluate_models_for_objective(
                 df,
                 objective_name,
@@ -293,6 +421,9 @@ def main() -> None:
                 weights,
                 tree_scale,
                 progress_desc=f"{dataset.name}:{objective_name}",
+                augmentation=args.oracle_augmentation,
+                augment_repeats=args.oracle_augment_repeats,
+                augment_std=args.oracle_augment_std,
             )
             scores = evaluation["scores"]
             rmse = evaluation["rmse"]
@@ -301,6 +432,25 @@ def main() -> None:
                 scores.items(),
                 key=lambda item: (item[1], -rmse[item[0]]),
             )[0]
+            best_score = scores[best_model]
+            if best_score > 0.99:
+                print(
+                    f"WARNING [{dataset.name}:{objective_name}]: best CV R^2 = "
+                    f"{best_score:.6f} is implausibly close to 1. This is a leakage "
+                    "signature (duplicated rows across folds or objectives derived "
+                    "deterministically from parameters); audit the data before "
+                    "trusting this oracle.",
+                    file=sys.stderr,
+                )
+            if best_score < 0.3:
+                print(
+                    f"WARNING [{dataset.name}:{objective_name}]: best CV R^2 = "
+                    f"{best_score:.3f}. The oracle has weak predictive validity for "
+                    "held-out humans; downstream robustness results should be framed "
+                    "as data-derived synthetic test functions, not as human ground "
+                    "truth.",
+                    file=sys.stderr,
+                )
             dataset_entry["objectives"][objective_name] = {
                 "best_model": best_model,
                 "scores": scores,
@@ -308,6 +458,10 @@ def main() -> None:
                 "validation_strategy": validation["strategy"],
                 "group_source": validation["group_source"],
                 "effective_cv_folds": validation["effective_cv_folds"],
+                "cv_folds_requested": args.cv_folds,
+                "duplicate_row_fraction": duplicate_fraction,
+                "deduplicated": bool(args.dedup),
+                "oracle_augmentation": args.oracle_augmentation,
             }
         results_payload["datasets"].append(dataset_entry)
 

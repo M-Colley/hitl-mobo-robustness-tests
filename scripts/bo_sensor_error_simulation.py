@@ -161,8 +161,18 @@ SINGLE_ACQUISITION_CHOICES = [
     "greedy",
 ]
 MULTI_ACQUISITION_CHOICES = ["qehvi", "qnehvi"]
-ACQUISITION_CHOICES = SINGLE_ACQUISITION_CHOICES + MULTI_ACQUISITION_CHOICES
-ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike"]
+# Model-free floors: candidates are independent of observations, so they bound
+# what "no learning" achieves and anchor the robustness rankings.
+BASELINE_ACQUISITION_CHOICES = ["random", "sobol"]
+ACQUISITION_CHOICES = (
+    SINGLE_ACQUISITION_CHOICES + MULTI_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES
+)
+ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
+
+DEFAULT_ERROR_MODELS = "gaussian,bias"
+DEFAULT_JITTER_ITERATIONS = "10,20,40"
+DEFAULT_JITTER_STDS = "0.05,0.5,1,5"
+INCUMBENT_CHOICES = ["posterior_mean", "observed_max"]
 ORACLE_MODEL_CHOICES = [
     "xgboost",
     "lightgbm",
@@ -222,6 +232,17 @@ class SimulationConfig:
 
     # Multi-objective settings
     ref_point: np.ndarray | None
+
+    # Human-plausible error-model extensions
+    error_ar1_rho: float = 0.8
+    response_clip_low: np.ndarray | None = None
+    response_clip_high: np.ndarray | None = None
+    response_round: float | None = None
+
+    # Incumbent definition for improvement-based acquisitions.
+    # "posterior_mean" avoids the noisy-max pitfall where a single positive
+    # noise spike inflates best_f beyond any achievable value.
+    incumbent: str = "posterior_mean"
 
 
 @dataclasses.dataclass
@@ -283,17 +304,37 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iterations", type=int, default=50)
 
-    parser.add_argument("--jitter-iteration", type=int, default=20)
-    parser.add_argument("--jitter-std", type=float, default=0.2)
+    parser.add_argument(
+        "--jitter-iteration",
+        type=int,
+        default=None,
+        help="Single jitter onset iteration. Mutually exclusive with --jitter-iterations. "
+        "Use 0 to apply noise to every observation after the first.",
+    )
+    parser.add_argument(
+        "--jitter-std",
+        type=float,
+        default=None,
+        help="Single jitter std. Mutually exclusive with --jitter-stds.",
+    )
     parser.add_argument(
         "--single-error",
         action="store_true",
         default=False,
         help="Apply sensor error only once at the first iteration after jitter-iteration.",
     )
-    # NOTE: sweep defaults can be overridden with --jitter-iterations/--jitter-stds
-    parser.add_argument("--jitter-iterations", type=str, default="10,20,40")
-    parser.add_argument("--jitter-stds", type=str, default="0.05,0.5,1,5")
+    parser.add_argument(
+        "--jitter-iterations",
+        type=str,
+        default=None,
+        help=f"Comma-separated jitter onset sweep (default: {DEFAULT_JITTER_ITERATIONS}).",
+    )
+    parser.add_argument(
+        "--jitter-stds",
+        type=str,
+        default=None,
+        help=f"Comma-separated jitter std sweep (default: {DEFAULT_JITTER_STDS}).",
+    )
 
     parser.add_argument("--initial-samples", type=int, default=5)
     parser.add_argument(
@@ -342,13 +383,59 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--baseline-run", action="store_true", default=True)
     parser.add_argument("--no-baseline-run", action="store_false", dest="baseline_run")
 
-    parser.add_argument("--error-model", type=str, default="gaussian", choices=ERROR_MODEL_CHOICES + ["all"])
-    parser.add_argument("--error-models", type=str, default="gaussian,bias")
+    parser.add_argument(
+        "--error-model",
+        type=str,
+        default=None,
+        choices=ERROR_MODEL_CHOICES + ["all"],
+        help="Single error model. Mutually exclusive with --error-models.",
+    )
+    parser.add_argument(
+        "--error-models",
+        type=str,
+        default=None,
+        help=f"Comma-separated error models (default: {DEFAULT_ERROR_MODELS}).",
+    )
 
     parser.add_argument("--error-bias", type=float, default=0.2)
     parser.add_argument("--error-spike-prob", type=float, default=0.1)
     parser.add_argument("--error-spike-std", type=float, default=0.5)
     parser.add_argument("--dropout-strategy", type=str, default="hold_last", choices=["hold_last"])
+    parser.add_argument(
+        "--error-ar1-rho",
+        type=float,
+        default=0.8,
+        help="Autocorrelation coefficient for the ar1 error model.",
+    )
+    parser.add_argument(
+        "--response-clip",
+        type=str,
+        default="none",
+        help="Clip noisy observations to the response scale: 'none', 'auto' "
+        "(use the data min/max per objective), or 'low,high' explicit bounds.",
+    )
+    parser.add_argument(
+        "--response-round",
+        type=float,
+        default=None,
+        help="Round noisy observations to this granularity (e.g. the rating-scale step).",
+    )
+    parser.add_argument(
+        "--incumbent",
+        type=str,
+        default="posterior_mean",
+        choices=INCUMBENT_CHOICES,
+        help="Incumbent (best_f) definition for improvement-based acquisitions. "
+        "'posterior_mean' is robust to noisy observations; 'observed_max' is the "
+        "classic noise-naive choice.",
+    )
+    parser.add_argument(
+        "--min-oracle-r2",
+        type=float,
+        default=None,
+        help="Refuse to run when an auto-selected oracle's cross-validated R^2 is below "
+        "this threshold. A warning is always printed below 0.3.",
+    )
 
     parser.add_argument("--user-id", type=str, default=None)
     parser.add_argument("--group-id", type=str, default=None)
@@ -403,6 +490,15 @@ def parse_args() -> argparse.Namespace:
     help="Enable parallel processing (auto-enabled for multiple seeds)",)
     parser.add_argument("--n-jobs", type=int, default=-1,
     help="Number of parallel jobs (-1 = all cores, -2 = all but one)",)
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        default=False,
+        help="Reuse per-run CSVs already present in --output-dir instead of "
+        "re-simulating them. Safe because runs are fully seeded and "
+        "deterministic; summaries are rebuilt from the loaded files. Use to "
+        "continue a multi-day sweep after an interruption (e.g. reboot).",
+    )
 
     return parser.parse_args()
 
@@ -515,17 +611,26 @@ def load_observations(
         df[column] = pd.to_numeric(df[column], errors="coerce")
     for column in ["User_ID", "Group_ID"]:
         if column in df.columns:
-            df[column] = pd.to_numeric(df[column], errors="coerce")
+            numeric = pd.to_numeric(df[column], errors="coerce")
+            # Keep alphanumeric IDs (e.g. "0F") as strings: coercing them to
+            # NaN would silently disable per-user grouping and filtering.
+            if numeric.notna().sum() >= df[column].notna().sum():
+                df[column] = numeric
 
     if user_id is not None and "User_ID" not in df.columns:
         raise ValueError("User_ID column missing from observations; cannot filter by --user-id.")
     if group_id is not None and "Group_ID" not in df.columns:
         raise ValueError("Group_ID column missing from observations; cannot filter by --group-id.")
 
+    def _filter_by_id(frame: pd.DataFrame, column: str, value: str) -> pd.DataFrame:
+        if pd.api.types.is_numeric_dtype(frame[column]):
+            return frame[frame[column] == float(value)]
+        return frame[frame[column].astype(str) == str(value)]
+
     if user_id is not None:
-        df = df[df["User_ID"] == float(user_id)]
+        df = _filter_by_id(df, "User_ID", user_id)
     if group_id is not None:
-        df = df[df["Group_ID"] == float(group_id)]
+        df = _filter_by_id(df, "Group_ID", group_id)
 
     df = df.dropna(subset=dataset.param_columns + _objective_required_columns(objective_columns))
     if df.empty:
@@ -659,7 +764,9 @@ def build_oracle(
     high = np.max(X, axis=0)
 
     if oracle_fast:
-        tree_scale = 0.35
+        # Keep in sync with select_best_oracle_model.py's fast mode so that
+        # oracle-selection results transfer to the simulation.
+        tree_scale = 0.7
     else:
         tree_scale = 1.0
 
@@ -836,10 +943,17 @@ def estimate_oracle_optimum(
     seed: int,
     n: int,
     batch_size: int,
+    X_known: np.ndarray | None = None,
 ) -> float:
+    """Estimate max of the oracle by random search, optionally anchored on
+    known points (e.g. the training data) so the estimate is never below the
+    oracle's value at any observed design."""
     rng = np.random.default_rng(seed)
     best = -np.inf
     d = len(bounds.low)
+
+    if X_known is not None and len(X_known) > 0:
+        best = max(best, float(np.max(oracle.predict_many(np.asarray(X_known, dtype=float)))))
 
     remaining = int(n)
     while remaining > 0:
@@ -859,10 +973,13 @@ def estimate_oracle_hypervolume(
     n: int,
     batch_size: int,
     ref_point: np.ndarray,
+    X_known: np.ndarray | None = None,
 ) -> float:
     rng = np.random.default_rng(seed)
     d = len(bounds.low)
     collected: list[np.ndarray] = []
+    if X_known is not None and len(X_known) > 0:
+        collected.append(oracle.predict_many(np.asarray(X_known, dtype=float)))
 
     remaining = int(n)
     while remaining > 0:
@@ -905,25 +1022,32 @@ def parse_acquisition_list(acq_arg: str, acq_list: str | None) -> list[str]:
 
 
 def filter_acquisitions_for_objective(acquisitions: list[str], objective: str) -> list[str]:
+    # random/sobol are model-free and valid for every objective type.
     if objective == "multi_objective":
-        filtered = [a for a in acquisitions if a in MULTI_ACQUISITION_CHOICES]
-        if not filtered:
+        allowed = MULTI_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES
+        filtered = [a for a in acquisitions if a in allowed]
+        if not [a for a in filtered if a in MULTI_ACQUISITION_CHOICES] and not filtered:
             raise ValueError(
                 "Multi-objective optimization requires one of "
-                f"{', '.join(MULTI_ACQUISITION_CHOICES)}."
+                f"{', '.join(allowed)}."
             )
         return filtered
-    filtered = [a for a in acquisitions if a in SINGLE_ACQUISITION_CHOICES]
+    allowed = SINGLE_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES
+    filtered = [a for a in acquisitions if a in allowed]
     if not filtered:
         raise ValueError(
             "Single-objective optimization requires one of "
-            f"{', '.join(SINGLE_ACQUISITION_CHOICES)}."
+            f"{', '.join(allowed)}."
         )
     return filtered
 
 
-def parse_error_models(error_model: str, error_models: str | None) -> list[str]:
-    raw = error_models or error_model
+def parse_error_models(error_model: str | None, error_models: str | None) -> list[str]:
+    if error_model is not None and error_models is not None:
+        raise ValueError("Pass either --error-model or --error-models, not both.")
+    raw = error_models if error_models is not None else error_model
+    if raw is None:
+        raw = DEFAULT_ERROR_MODELS
     if raw == "all":
         return ERROR_MODEL_CHOICES
     values = [v.strip() for v in raw.split(",") if v.strip()]
@@ -933,6 +1057,23 @@ def parse_error_models(error_model: str, error_models: str | None) -> list[str]:
     if unknown:
         raise ValueError(f"Unknown error model(s): {', '.join(unknown)}")
     return values
+
+
+def resolve_sweep_values(
+    plural: str | None,
+    singular: float | int | None,
+    default: str,
+    parse: callable,
+    flag_names: tuple[str, str],
+) -> list:
+    """Resolve a sweep from plural/singular CLI flags, refusing ambiguous input."""
+    if plural is not None and singular is not None:
+        raise ValueError(f"Pass either {flag_names[0]} or {flag_names[1]}, not both.")
+    if plural is not None:
+        return parse(plural)
+    if singular is not None:
+        return [singular]
+    return parse(default)
 
 
 def parse_oracle_models(oracle_model: str, oracle_models: str | None) -> list[str]:
@@ -1145,10 +1286,10 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
         return None
     first = datasets[0]
     if any(dataset.param_columns != first.param_columns for dataset in datasets[1:]):
-        warnings.warn("Cannot combine datasets with different parameter columns.")
+        print("Cannot combine datasets with different parameter columns.", file=sys.stderr)
         return None
     if any(dataset.observation_glob != first.observation_glob for dataset in datasets[1:]):
-        warnings.warn("Cannot combine datasets with different observation_glob patterns.")
+        print("Cannot combine datasets with different observation_glob patterns.", file=sys.stderr)
         return None
 
     common_objectives = set(first.objective_map.keys())
@@ -1162,7 +1303,7 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
             objective_map[objective] = columns
 
     if not objective_map:
-        warnings.warn("No common objectives found to build a combined dataset.")
+        print("No common objectives found to build a combined dataset.", file=sys.stderr)
         return None
 
     combined_dirs: list[Path] = []
@@ -1218,11 +1359,45 @@ def parse_int_list(value: str | None, default: int) -> list[int]:
 
 def validate_sweeps(jitter_iterations: list[int], jitter_stds: list[float], iterations: int) -> None:
     for j in jitter_iterations:
-        if j < 1 or j >= iterations:
-            raise ValueError("Each jitter-iteration must be within [1, iterations - 1].")
+        # 0 means: noise affects every observation after the first (the
+        # human-plausible "noisy from the start" condition).
+        if j < 0 or j >= iterations:
+            raise ValueError("Each jitter-iteration must be within [0, iterations - 1].")
     for s in jitter_stds:
         if s < 0:
             raise ValueError("Each jitter-std must be >= 0.")
+
+
+def parse_response_clip(
+    response_clip: str,
+    df: pd.DataFrame,
+    objective: str,
+    objective_columns: list[str],
+    normalize: bool,
+    weights: np.ndarray | None,
+) -> tuple[np.ndarray | None, np.ndarray | None]:
+    """Resolve --response-clip into per-output low/high bounds.
+
+    'auto' uses the observed data range of the objective (per column for
+    multi_objective, of the scalarized objective otherwise) so that noisy
+    observations stay on the instrument scale.
+    """
+    if response_clip == "none":
+        return None, None
+    if response_clip == "auto":
+        if objective == "multi_objective":
+            values = compute_objective_matrix(df, objective_columns, normalize)
+            return np.nanmin(values, axis=0), np.nanmax(values, axis=0)
+        values = compute_objective(df, objective_columns, normalize, weights).to_numpy(dtype=float)
+        return np.array([np.nanmin(values)]), np.array([np.nanmax(values)])
+    parts = [p.strip() for p in response_clip.split(",") if p.strip()]
+    if len(parts) != 2:
+        raise ValueError("--response-clip must be 'none', 'auto', or 'low,high'.")
+    low, high = float(parts[0]), float(parts[1])
+    if low >= high:
+        raise ValueError("--response-clip low must be smaller than high.")
+    n_out = len(objective_columns) if objective == "multi_objective" else 1
+    return np.full(n_out, low), np.full(n_out, high)
 
 
 def validate_inputs(args: argparse.Namespace) -> None:
@@ -1250,10 +1425,14 @@ def compute_reference_point(
     df: pd.DataFrame,
     objective: str,
     objective_columns: list[str],
+    normalize: bool = False,
 ) -> np.ndarray | None:
     if objective != "multi_objective":
         return None
-    values = _extract_objective_values(df, objective_columns)
+    # The reference point must live in the same space as the oracle outputs:
+    # when --normalize-objective is set the oracle predicts normalized values,
+    # so the reference point is computed on normalized values as well.
+    values = compute_objective_matrix(df, objective_columns, normalize)
     min_vals = np.nanmin(values, axis=0)
     max_vals = np.nanmax(values, axis=0)
     ranges = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
@@ -1270,6 +1449,8 @@ def write_run_config(
     resolved_oracle_models: dict[tuple[str, str], list[str]],
     seeds: list[int],
     args: argparse.Namespace,
+    jitter_iterations: list[int] | None = None,
+    jitter_stds: list[float] | None = None,
 ) -> None:
     dataset_lines = ["Datasets:"]
     for dataset in dataset_configs:
@@ -1300,8 +1481,11 @@ def write_run_config(
         f"  iterations: {args.iterations}",
         f"  initial_samples: {args.initial_samples}",
         f"  candidate_pool: {args.candidate_pool}",
-        f"  jitter_iterations: {args.jitter_iterations}",
-        f"  jitter_stds: {args.jitter_stds}",
+        f"  jitter_iterations: {jitter_iterations if jitter_iterations is not None else args.jitter_iterations}",
+        f"  jitter_stds: {jitter_stds if jitter_stds is not None else args.jitter_stds}",
+        f"  incumbent: {args.incumbent}",
+        f"  response_clip: {args.response_clip}",
+        f"  response_round: {args.response_round}",
         f"  single_error: {args.single_error}",
         f"  baseline_run: {args.baseline_run}",
         "",
@@ -1347,12 +1531,26 @@ def collect_package_versions(packages: list[str]) -> dict[str, str]:
     return versions
 
 
+def _postprocess_response(observed: np.ndarray, config: SimulationConfig) -> np.ndarray:
+    """Map a noisy observation back onto the response instrument.
+
+    Real raters produce bounded, discrete responses; without this step, large
+    noise levels yield impossible ratings (e.g. -4.6 on a 1-7 scale).
+    """
+    if config.response_round is not None and config.response_round > 0:
+        observed = np.round(observed / config.response_round) * config.response_round
+    if config.response_clip_low is not None and config.response_clip_high is not None:
+        observed = np.clip(observed, config.response_clip_low, config.response_clip_high)
+    return observed
+
+
 def apply_sensor_error(
     true_value: np.ndarray,
     iteration: int,
     config: SimulationConfig,
     rng: np.random.Generator,
     previous_observed: np.ndarray,
+    previous_error: np.ndarray | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     if iteration <= config.jitter_iteration:
         return true_value, np.zeros_like(true_value, dtype=float)
@@ -1362,24 +1560,44 @@ def apply_sensor_error(
     jitter = rng.normal(0.0, config.jitter_std, size=true_value.shape)
 
     if config.error_model == "gaussian":
-        return true_value + jitter, jitter
-    if config.error_model == "bias":
+        observed = true_value + jitter
+    elif config.error_model == "bias":
         bias = np.full_like(true_value, config.error_bias, dtype=float)
-        combined = bias + jitter
-        return true_value + combined, combined
-    if config.error_model == "dropout":
+        observed = true_value + bias + jitter
+    elif config.error_model == "dropout":
         if config.dropout_strategy != "hold_last":
             raise ValueError(f"Unsupported dropout strategy: {config.dropout_strategy}")
         observed = previous_observed + jitter
-        return observed, observed - true_value
-    if config.error_model == "spike":
+    elif config.error_model == "spike":
         spike = np.zeros_like(true_value, dtype=float)
         if rng.random() < config.error_spike_prob:
             spike = rng.normal(0.0, config.error_spike_std, size=true_value.shape)
-        combined = spike + jitter
-        return true_value + combined, combined
+        observed = true_value + spike + jitter
+    elif config.error_model == "drift":
+        # Systematic drift/fatigue: bias ramps linearly from 0 at onset to
+        # jitter_std at the final iteration (jitter_std doubles as the drift
+        # magnitude so the sweep stays a single swept factor).
+        span = max(1, config.iterations - config.jitter_iteration)
+        ramp = config.jitter_std * (iteration - config.jitter_iteration) / span
+        observed = true_value + np.full_like(true_value, ramp, dtype=float)
+    elif config.error_model == "ar1":
+        # Serially correlated rating error: e_t = rho * e_{t-1} + innovation,
+        # with stationary SD equal to jitter_std.
+        rho = float(config.error_ar1_rho)
+        innovation = rng.normal(
+            0.0, config.jitter_std * np.sqrt(max(0.0, 1.0 - rho**2)), size=true_value.shape
+        )
+        prev = (
+            previous_error
+            if previous_error is not None
+            else np.zeros_like(true_value, dtype=float)
+        )
+        observed = true_value + rho * prev + innovation
+    else:
+        raise ValueError(f"Unknown error model: {config.error_model}")
 
-    raise ValueError(f"Unknown error model: {config.error_model}")
+    observed = _postprocess_response(observed, config)
+    return observed, observed - true_value
 
 
 def screen_candidate_pool(
@@ -1556,6 +1774,7 @@ def run_simulation(
     y_true_list: list[np.ndarray] = []
     error_magnitudes: list[np.ndarray] = []
     fit_times: list[float] = []
+    acq_failures: list[bool] = []
 
     # Regret tracking (computed on true objective)
     best_true_so_far = -np.inf
@@ -1566,17 +1785,39 @@ def run_simulation(
     simple_regret_list: list[float] = []
     regret_avg_list: list[float] = []
 
+    # Inference regret: the incumbent the experimenter would actually pick
+    # (best by OBSERVED value), scored by its TRUE value. Unlike
+    # simple_regret_true this does not assume an omniscient final
+    # recommendation, so it captures the identification cost of noise.
+    inference_regret_list: list[float] = []
+    inference_value_list: list[float] = []
+
     bounds_tensor = bounds.tensor
     previous_observed = None
+    previous_error: np.ndarray | None = None
 
     is_multi = config.objective == "multi_objective"
     objective_true_scalar: list[float] = []
     objective_observed_scalar: list[float] = []
     hv_ref_point = config.ref_point if config.ref_point is not None else None
 
+    sobol_engine = (
+        torch.quasirandom.SobolEngine(dimension=len(bounds.low), scramble=True, seed=config.seed)
+        if acq.name == "sobol"
+        else None
+    )
+
     for iteration in range(1, config.iterations + 1):
+        acq_failed = False
         if iteration <= config.initial_samples:
             candidate_np = sample_uniform(bounds, rng, size=1)[0]
+            fit_time = 0.0
+        elif acq.name == "random":
+            candidate_np = sample_uniform(bounds, rng, size=1)[0]
+            fit_time = 0.0
+        elif acq.name == "sobol":
+            draw = sobol_engine.draw(1).to(torch.double).cpu().numpy()[0]
+            candidate_np = bounds.low + draw * (bounds.high - bounds.low)
             fit_time = 0.0
         else:
             fit_start = time.perf_counter()
@@ -1614,7 +1855,15 @@ def run_simulation(
                 )
                 mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
                 fit_gpytorch_mll(mll)
-                best_f = train_Y.max().item()
+                if config.incumbent == "posterior_mean":
+                    # Max posterior mean over visited points: robust to noisy
+                    # observations (a single positive noise spike cannot
+                    # inflate best_f beyond achievable values).
+                    with torch.no_grad():
+                        posterior_mean = gp.posterior(train_X).mean.reshape(-1)
+                    best_f = posterior_mean.max().item()
+                else:
+                    best_f = train_Y.max().item()
                 train_Y_for_acq = train_Y
 
             try:
@@ -1636,7 +1885,14 @@ def run_simulation(
                 )
                 candidate_np = candidate_tensor.cpu().numpy().flatten()
             except Exception as e:
-                warnings.warn(f"BoTorch optimization failed, falling back to random. Error: {e}")
+                # Recorded per-iteration (acq_opt_failed column) so downstream
+                # analysis can detect contaminated runs; never silently absorbed.
+                acq_failed = True
+                print(
+                    f"[acq-fallback] run={run_id} acq={acq.name} iteration={iteration}: "
+                    f"BoTorch optimization failed, falling back to random. Error: {e}",
+                    file=sys.stderr,
+                )
                 candidate_np = sample_uniform(bounds, rng, size=1)[0]
 
             fit_time = time.perf_counter() - fit_start
@@ -1655,6 +1911,7 @@ def run_simulation(
                 config=config,
                 rng=jitter_rng,
                 previous_observed=previous_observed,
+                previous_error=previous_error,
             )
         else:
             observed_value, error_magnitude = true_value, np.zeros_like(true_value, dtype=float)
@@ -1664,8 +1921,13 @@ def run_simulation(
         y_observed_list.append(observed_value)
         error_magnitudes.append(error_magnitude)
         fit_times.append(fit_time)
+        acq_failures.append(acq_failed)
         previous_observed = observed_value
+        previous_error = error_magnitude
 
+        # Regret values are intentionally NOT clamped at zero: y_opt is a
+        # sampling-based estimate that BO can legitimately exceed, and clamping
+        # censors the metric distribution (observed in 22% of earlier runs).
         if is_multi:
             if hv_ref_point is None:
                 raise ValueError("ref_point required for multi_objective.")
@@ -1674,22 +1936,34 @@ def run_simulation(
             objective_true_scalar.append(hv_true)
             objective_observed_scalar.append(hv_obs)
             best_true_so_far = max(best_true_so_far, hv_true)
-            r_t = max(0.0, y_opt - hv_true)
+            r_t = y_opt - hv_true
+            # Inference incumbent: Pareto set as identified from OBSERVED
+            # values, scored by the TRUE values of those same points.
+            obs_t = torch.tensor(np.vstack(y_observed_list), dtype=torch.double)
+            nd_mask = is_non_dominated(obs_t)
+            inferred_true = [y_true_list[i] for i in range(len(y_true_list)) if bool(nd_mask[i])]
+            inference_value = _compute_hypervolume(inferred_true, hv_ref_point)
         else:
             scalar_true = float(true_value[0])
             scalar_obs = float(observed_value[0])
             objective_true_scalar.append(scalar_true)
             objective_observed_scalar.append(scalar_obs)
             best_true_so_far = max(best_true_so_far, scalar_true)
-            r_t = max(0.0, y_opt - scalar_true)
+            r_t = y_opt - scalar_true
+            # Inference incumbent: the point the experimenter would pick
+            # (highest OBSERVED value so far), scored by its TRUE value.
+            best_obs_idx = int(np.argmax(objective_observed_scalar))
+            inference_value = float(objective_true_scalar[best_obs_idx])
         cum_regret += r_t
-        s_t = max(0.0, y_opt - best_true_so_far)
+        s_t = y_opt - best_true_so_far
 
         best_true_list.append(best_true_so_far)
         regret_inst_list.append(r_t)
         regret_cum_list.append(cum_regret)
         simple_regret_list.append(s_t)
         regret_avg_list.append(cum_regret / float(iteration))
+        inference_value_list.append(inference_value)
+        inference_regret_list.append(y_opt - inference_value)
 
     results = pd.DataFrame(X_list, columns=config.param_columns)
     results.insert(0, "iteration", np.arange(1, config.iterations + 1))
@@ -1719,6 +1993,7 @@ def run_simulation(
         results["error_magnitude"] = [float(err[0]) for err in error_magnitudes]
     results["acquisition"] = acq.name
     results["fit_time_sec"] = fit_times
+    results["acq_opt_failed"] = acq_failures
     results["seed"] = config.seed
     results["run_id"] = run_id
     results["error_model"] = config.error_model if apply_error else "none"
@@ -1726,6 +2001,9 @@ def run_simulation(
     results["jitter_iteration"] = config.jitter_iteration
     results["oracle_model"] = oracle_model
     results["objective"] = config.objective
+    # Authoritative schema marker so downstream consumers do not have to
+    # infer parameter columns from a hand-maintained reserved-column set.
+    results["param_columns"] = ",".join(config.param_columns)
 
     # Regret columns
     results["y_opt"] = float(y_opt)
@@ -1734,6 +2012,8 @@ def run_simulation(
     results["regret_cum_true"] = regret_cum_list
     results["simple_regret_true"] = simple_regret_list
     results["regret_avg_true"] = regret_avg_list
+    results["inference_value_true"] = inference_value_list
+    results["inference_simple_regret_true"] = inference_regret_list
 
     return results
 
@@ -1743,16 +2023,30 @@ def summarize_adjustment(
     jitter_iteration: int,
     param_columns: list[str],
 ) -> pd.Series:
+    """Summarize a run relative to a jitter onset.
+
+    The response delta uses the (t+1) -> (t+2) convention: noise first affects
+    the observation at iteration jitter_iteration + 1, so the first candidate
+    that can react to it is proposed at iteration jitter_iteration + 2. This
+    matches evaluate_research_question.build_response_table and the README.
+    """
     max_iter = int(results["iteration"].max())
-    if jitter_iteration < 1 or jitter_iteration >= max_iter:
-        raise ValueError("jitter_iteration must be within [1, max_iteration - 1].")
+    if jitter_iteration < 0 or jitter_iteration >= max_iter:
+        raise ValueError("jitter_iteration must be within [0, max_iteration - 1].")
 
-    current = results.loc[results["iteration"] == jitter_iteration, param_columns].iloc[0]
-    nxt = results.loc[results["iteration"] == jitter_iteration + 1, param_columns].iloc[0]
-    delta = nxt - current
-    l2_norm = float(np.linalg.norm(delta.to_numpy()))
-
-    summary = {f"delta_{col}": float(delta[col]) for col in param_columns}
+    start_iter = jitter_iteration + 1
+    end_iter = jitter_iteration + 2
+    if end_iter <= max_iter:
+        current = results.loc[results["iteration"] == start_iter, param_columns].iloc[0]
+        nxt = results.loc[results["iteration"] == end_iter, param_columns].iloc[0]
+        delta = nxt - current
+        l2_norm = float(np.linalg.norm(delta.to_numpy()))
+        summary = {f"delta_{col}": float(delta[col]) for col in param_columns}
+    else:
+        # The response step falls outside the run; report NaN rather than a
+        # silently wrong window.
+        l2_norm = float("nan")
+        summary = {f"delta_{col}": float("nan") for col in param_columns}
     summary["delta_l2_norm"] = l2_norm
     summary["iteration"] = jitter_iteration
 
@@ -1761,11 +2055,48 @@ def summarize_adjustment(
     summary["final_simple_regret_true"] = float(results["simple_regret_true"].iloc[-1])
     summary["final_cum_regret_true"] = float(results["regret_cum_true"].iloc[-1])
     summary["final_avg_regret_true"] = float(results["regret_avg_true"].iloc[-1])
+    summary["final_inference_simple_regret_true"] = float(
+        results["inference_simple_regret_true"].iloc[-1]
+    )
 
     sr = results["simple_regret_true"].to_numpy(dtype=float)
     summary["auc_simple_regret_true"] = float(np.trapezoid(sr, dx=1.0))
+    ir = results["inference_simple_regret_true"].to_numpy(dtype=float)
+    summary["auc_inference_simple_regret_true"] = float(np.trapezoid(ir, dx=1.0))
+    summary["acq_opt_failures"] = int(results["acq_opt_failed"].sum())
 
     return pd.Series(summary)
+
+
+def _load_resumable_run(path: Path, iterations: int) -> pd.DataFrame | None:
+    """Load a previously written per-run CSV if it is complete and usable.
+
+    Returns None (caller re-simulates) when the file is missing, truncated,
+    or lacks the columns the summary step needs. Reusing files is safe
+    because every run is fully determined by its seed and configuration.
+    """
+    if not path.is_file():
+        return None
+    required = {
+        "iteration",
+        "run_id",
+        "jitter_std",
+        "error_model",
+        "simple_regret_true",
+        "inference_simple_regret_true",
+        "regret_cum_true",
+        "regret_avg_true",
+        "best_true_so_far",
+        "acq_opt_failed",
+        "dataset",
+    }
+    try:
+        loaded = pd.read_csv(path)
+    except Exception:
+        return None
+    if len(loaded) != iterations or not required.issubset(loaded.columns):
+        return None
+    return loaded
 
 
 def run_single_seed(
@@ -1820,6 +2151,7 @@ def run_single_seed(
             oracle_fast=args.oracle_fast,
         )
 
+        X_known = df[dataset.param_columns].to_numpy(dtype=float)
         if objective == "multi_objective":
             if ref_point is None:
                 raise ValueError("ref_point must be provided for multi_objective.")
@@ -1830,6 +2162,7 @@ def run_single_seed(
                 n=args.oracle_opt_samples,
                 batch_size=args.oracle_opt_batch_size,
                 ref_point=ref_point,
+                X_known=X_known,
             )
         else:
             y_opt = estimate_oracle_optimum(
@@ -1838,12 +2171,24 @@ def run_single_seed(
                 seed=args.oracle_opt_seed,
                 n=args.oracle_opt_samples,
                 batch_size=args.oracle_opt_batch_size,
+                X_known=X_known,
             )
 
+        clip_low, clip_high = parse_response_clip(
+            args.response_clip,
+            df,
+            objective,
+            objective_columns,
+            args.normalize_objective,
+            weights,
+        )
+
+        # Baseline runs carry neutral error metadata; the per-condition values
+        # are substituted via dataclasses.replace for each jittered run.
         base_config = SimulationConfig(
             iterations=args.iterations,
-            jitter_iteration=args.jitter_iteration,
-            jitter_std=args.jitter_std,
+            jitter_iteration=0,
+            jitter_std=0.0,
             single_error=args.single_error,
             initial_samples=args.initial_samples,
             candidate_pool=args.candidate_pool,
@@ -1851,7 +2196,7 @@ def run_single_seed(
             objective_columns=objective_columns,
             param_columns=dataset.param_columns,
             seed=seed,
-            error_model=args.error_model,
+            error_model="none",
             error_bias=args.error_bias,
             error_spike_prob=args.error_spike_prob,
             error_spike_std=args.error_spike_std,
@@ -1863,36 +2208,48 @@ def run_single_seed(
             acq_maxiter=args.acq_maxiter,
             acq_mc_samples=args.acq_mc_samples,
             ref_point=ref_point,
+            error_ar1_rho=args.error_ar1_rho,
+            response_clip_low=clip_low,
+            response_clip_high=clip_high,
+            response_round=args.response_round,
+            incumbent=args.incumbent,
         )
 
         for acq in acquisitions:
             # Baseline run
             if args.baseline_run:
-                baseline_run_id = str(uuid.uuid4())
-                run_rng = np.random.default_rng(seed)
-                torch.manual_seed(seed)
-
-                config = dataclasses.replace(base_config, seed=seed)
-                run_start = time.perf_counter()
-                baseline_results = run_simulation(
-                    oracle=oracle,
-                    bounds=bounds,
-                    config=config,
-                    acq=acq,
-                    rng=run_rng,
-                    jitter_rng=None,
-                    run_id=baseline_run_id,
-                    apply_error=False,
-                    oracle_model=oracle_model,
-                    y_opt=y_opt,
-                )
-                baseline_results["dataset"] = dataset.name
-                baseline_runtime = time.perf_counter() - run_start
-
                 results_path = args.output_dir / (
                     f"bo_sensor_error_{dataset.name}_{objective}_{acq.name}_seed{seed}_baseline_{oracle_model}.csv"
                 )
-                baseline_results.to_csv(results_path, index=False)
+                baseline_results = (
+                    _load_resumable_run(results_path, args.iterations) if args.resume else None
+                )
+                if baseline_results is not None:
+                    baseline_run_id = str(baseline_results["run_id"].iloc[0])
+                    baseline_runtime = 0.0
+                else:
+                    baseline_run_id = str(uuid.uuid4())
+                    run_rng = np.random.default_rng(seed)
+                    torch.manual_seed(seed)
+
+                    config = dataclasses.replace(base_config, seed=seed)
+                    run_start = time.perf_counter()
+                    baseline_results = run_simulation(
+                        oracle=oracle,
+                        bounds=bounds,
+                        config=config,
+                        acq=acq,
+                        rng=run_rng,
+                        jitter_rng=None,
+                        run_id=baseline_run_id,
+                        apply_error=False,
+                        oracle_model=oracle_model,
+                        y_opt=y_opt,
+                    )
+                    baseline_results["dataset"] = dataset.name
+                    baseline_runtime = time.perf_counter() - run_start
+
+                    baseline_results.to_csv(results_path, index=False)
 
                 for jitter_iteration in jitter_iterations:
                     summary = summarize_adjustment(
@@ -1924,50 +2281,72 @@ def run_single_seed(
             for error_model in error_models:
                 for jitter_std in jitter_stds:
                     for jitter_iteration in jitter_iterations:
-                        run_id = str(uuid.uuid4())
-                        run_rng = np.random.default_rng(seed)
-                        torch.manual_seed(seed)
-
-                        jitter_seed = np.random.SeedSequence(
-                            [
-                                seed,
-                                ACQUISITION_CHOICES.index(acq.name),
-                                int(jitter_iteration),
-                                int(round(float(jitter_std) * 1_000_000)),
-                                ERROR_MODEL_CHOICES.index(error_model),
-                            ]
-                        )
-                        jitter_rng = np.random.default_rng(jitter_seed)
-
-                        config = dataclasses.replace(
-                            base_config,
-                            seed=seed,
-                            error_model=error_model,
-                            jitter_std=float(jitter_std),
-                            jitter_iteration=int(jitter_iteration),
-                        )
-
-                        run_start = time.perf_counter()
-                        results = run_simulation(
-                            oracle=oracle,
-                            bounds=bounds,
-                            config=config,
-                            acq=acq,
-                            rng=run_rng,
-                            jitter_rng=jitter_rng,
-                            run_id=run_id,
-                            apply_error=True,
-                            oracle_model=oracle_model,
-                            y_opt=y_opt,
-                        )
-                        results["dataset"] = dataset.name
-                        run_runtime = time.perf_counter() - run_start
-
+                        # Disambiguate variant parameters in the filename so
+                        # non-default runs cannot overwrite each other.
+                        variant_parts = []
+                        if error_model == "bias" and args.error_bias != 0.2:
+                            variant_parts.append(f"bias{args.error_bias}")
+                        if error_model == "spike":
+                            variant_parts.append(f"sp{args.error_spike_prob}-{args.error_spike_std}")
+                        if error_model == "ar1" and args.error_ar1_rho != 0.8:
+                            variant_parts.append(f"rho{args.error_ar1_rho}")
+                        if args.single_error:
+                            variant_parts.append("single")
+                        variant_suffix = ("_" + "_".join(variant_parts)) if variant_parts else ""
                         results_path = args.output_dir / (
                             f"bo_sensor_error_{dataset.name}_{objective}_{acq.name}_seed{seed}_jittered_"
-                            f"{oracle_model}_{error_model}_jit{jitter_iteration}_std{jitter_std}.csv"
+                            f"{oracle_model}_{error_model}_jit{jitter_iteration}_std{jitter_std}{variant_suffix}.csv"
                         )
-                        results.to_csv(results_path, index=False)
+
+                        results = (
+                            _load_resumable_run(results_path, args.iterations)
+                            if args.resume
+                            else None
+                        )
+                        if results is not None:
+                            run_id = str(results["run_id"].iloc[0])
+                            run_runtime = 0.0
+                        else:
+                            run_id = str(uuid.uuid4())
+                            run_rng = np.random.default_rng(seed)
+                            torch.manual_seed(seed)
+
+                            jitter_seed = np.random.SeedSequence(
+                                [
+                                    seed,
+                                    ACQUISITION_CHOICES.index(acq.name),
+                                    int(jitter_iteration),
+                                    int(round(float(jitter_std) * 1_000_000)),
+                                    ERROR_MODEL_CHOICES.index(error_model),
+                                ]
+                            )
+                            jitter_rng = np.random.default_rng(jitter_seed)
+
+                            config = dataclasses.replace(
+                                base_config,
+                                seed=seed,
+                                error_model=error_model,
+                                jitter_std=float(jitter_std),
+                                jitter_iteration=int(jitter_iteration),
+                            )
+
+                            run_start = time.perf_counter()
+                            results = run_simulation(
+                                oracle=oracle,
+                                bounds=bounds,
+                                config=config,
+                                acq=acq,
+                                rng=run_rng,
+                                jitter_rng=jitter_rng,
+                                run_id=run_id,
+                                apply_error=True,
+                                oracle_model=oracle_model,
+                                y_opt=y_opt,
+                            )
+                            results["dataset"] = dataset.name
+                            run_runtime = time.perf_counter() - run_start
+
+                            results.to_csv(results_path, index=False)
 
                         summary = summarize_adjustment(
                             results,
@@ -2003,14 +2382,33 @@ def main() -> None:
     validate_inputs(args)
 
     error_models = parse_error_models(args.error_model, args.error_models)
-    jitter_stds = parse_float_list(args.jitter_stds, args.jitter_std)
-    jitter_iterations = parse_int_list(args.jitter_iterations, args.jitter_iteration)
+    jitter_stds = resolve_sweep_values(
+        args.jitter_stds,
+        args.jitter_std,
+        DEFAULT_JITTER_STDS,
+        lambda raw: parse_float_list(raw, 0.2),
+        ("--jitter-stds", "--jitter-std"),
+    )
+    jitter_iterations = resolve_sweep_values(
+        args.jitter_iterations,
+        args.jitter_iteration,
+        DEFAULT_JITTER_ITERATIONS,
+        lambda raw: parse_int_list(raw, 20),
+        ("--jitter-iterations", "--jitter-iteration"),
+    )
     validate_sweeps(jitter_iterations, jitter_stds, args.iterations)
 
     requested_oracle_models = parse_oracle_models(args.oracle_model, args.oracle_models)
     seeds = parse_seed_list(args.seeds, args.seed, args.num_seeds)
 
     acquisition_names = parse_acquisition_list(args.acq, args.acq_list)
+
+    if args.combine_datasets and requested_oracle_models == [AUTO_ORACLE_MODEL]:
+        raise ValueError(
+            "--combine-datasets is not supported with --oracle-model auto: "
+            "select_best_oracle_model.py produces no entry for the combined dataset. "
+            "Pass an explicit oracle model instead."
+        )
 
     dataset_configs = parse_dataset_configs(
         args.data_dir,
@@ -2034,6 +2432,7 @@ def main() -> None:
     dataset_objectives: dict[str, list[str]] = {}
     objective_acquisition_names: dict[tuple[str, str], list[str]] = {}
     objective_oracle_models: dict[tuple[str, str], list[str]] = {}
+    oracle_cv_scores: dict[str, float | None] = {}
     total_runs = 0
     for dataset in dataset_configs:
         objective_names = parse_objective_list(
@@ -2053,6 +2452,35 @@ def main() -> None:
             )
             objective_acquisition_names[key] = filtered_acq_names
             objective_oracle_models[key] = resolved_models
+
+            # Oracle fidelity gate: the oracle is the ground-truth "human" for
+            # all downstream claims, so a low cross-validated R^2 must never
+            # pass silently.
+            if oracle_selection is not None:
+                entry = oracle_selection.get((dataset.name, objective_name), {})
+                scores = entry.get("scores")
+                best_model = entry.get("best_model")
+                cv_score = None
+                if isinstance(scores, dict) and isinstance(best_model, str):
+                    raw_score = scores.get(best_model)
+                    cv_score = float(raw_score) if raw_score is not None else None
+                oracle_cv_scores[f"{dataset.name}:{objective_name}"] = cv_score
+                if cv_score is not None:
+                    if args.min_oracle_r2 is not None and cv_score < args.min_oracle_r2:
+                        raise ValueError(
+                            f"Auto-selected oracle '{best_model}' for "
+                            f"{dataset.name}/{objective_name} has cross-validated "
+                            f"R^2={cv_score:.3f} < --min-oracle-r2={args.min_oracle_r2}. "
+                            "The simulated human has insufficient predictive validity."
+                        )
+                    if cv_score < 0.3:
+                        print(
+                            f"WARNING: oracle '{best_model}' for {dataset.name}/"
+                            f"{objective_name} has low cross-validated R^2={cv_score:.3f}. "
+                            "Results simulate a weakly human-grounded test function; "
+                            "report this fidelity alongside any conclusions.",
+                            file=sys.stderr,
+                        )
             baseline_runs = (
                 len(filtered_acq_names) * len(seeds) * len(resolved_models)
                 if args.baseline_run
@@ -2089,6 +2517,7 @@ def main() -> None:
         print("Using sequential processing")
 
     summaries: list[pd.Series] = []
+    failed_seeds: list[dict[str, str]] = []
 
     progress = tqdm(total=total_runs, desc="Simulation runs", unit="run")
 
@@ -2103,7 +2532,9 @@ def main() -> None:
             )
             df = load_observations(dataset, objective_name, args.user_id, args.group_id)
             bounds = bounds_from_data(df, dataset.param_columns)
-            ref_point = compute_reference_point(df, objective_name, objective_columns)
+            ref_point = compute_reference_point(
+                df, objective_name, objective_columns, args.normalize_objective
+            )
 
             key = (dataset.name, objective_name)
             filtered_acq_names = objective_acquisition_names[key]
@@ -2159,9 +2590,23 @@ def main() -> None:
                                 seed_summaries, _ = future.result()
                                 summaries.extend(seed_summaries)
                             except Exception as e:
-                                print(f"\nError processing seed {seed}: {e}")
                                 import traceback
+
+                                print(
+                                    f"\nError processing seed {seed} "
+                                    f"({dataset.name}/{objective_name}): {e}",
+                                    file=sys.stderr,
+                                )
                                 traceback.print_exc()
+                                failed_seeds.append(
+                                    {
+                                        "seed": str(seed),
+                                        "dataset": dataset.name,
+                                        "objective": objective_name,
+                                        "error": repr(e),
+                                        "traceback": traceback.format_exc(),
+                                    }
+                                )
                 finally:
                     try:
                         progress_q.put(None)
@@ -2360,13 +2805,42 @@ def main() -> None:
         resolved_oracle_models=objective_oracle_models,
         seeds=seeds,
         args=args,
+        jitter_iterations=jitter_iterations,
+        jitter_stds=jitter_stds,
     )
+
+    def _git_commit(path: Path) -> str | None:
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(path), "rev-parse", "HEAD"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            return result.stdout.strip()
+        except Exception:
+            return None
+
+    data_dir_commits = {}
+    for dataset in dataset_configs:
+        for data_dir in dataset.data_dirs:
+            commit = _git_commit(data_dir)
+            if commit is not None:
+                data_dir_commits[str(data_dir)] = commit
 
     metadata_payload = {
         "args": vars(args),
         "runtime_sec": float(time.perf_counter() - runtime_start),
         "parallel_execution": bool(use_parallel and len(seeds) > 1),
         "n_workers": int(n_jobs) if (use_parallel and len(seeds) > 1) else 1,
+        "git_commit": _git_commit(REPO_ROOT),
+        "python_version": sys.version,
+        "platform": sys.platform,
+        "data_dir_commits": data_dir_commits,
+        "resolved_oracle_cv_r2": oracle_cv_scores,
+        "failed_seeds": failed_seeds,
+        "effective_jitter_stds": jitter_stds,
+        "effective_jitter_iterations": jitter_iterations,
         "datasets": [
             {
                 "name": dataset.name,
@@ -2425,6 +2899,15 @@ def main() -> None:
     if use_parallel and len(seeds) > 1:
         print(f"Parallel speedup with {n_jobs} workers")
     print(f"Results saved to: {output_dir}")
+
+    if failed_seeds:
+        failed_ids = ", ".join(sorted({entry["seed"] for entry in failed_seeds}))
+        print(
+            f"ERROR: {len(failed_seeds)} seed run(s) failed (seeds: {failed_ids}). "
+            "Summary outputs are incomplete; see run_metadata.json['failed_seeds'].",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":

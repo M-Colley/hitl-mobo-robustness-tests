@@ -11,15 +11,22 @@ if not defined BROAD_EVAL_OUTPUT set "BROAD_EVAL_OUTPUT=output\evaluation"
 if not defined BROAD_FIGURE_OUTPUT set "BROAD_FIGURE_OUTPUT=output\evaluation\figures"
 if not defined CONFIRMATORY_OUTPUT set "CONFIRMATORY_OUTPUT=output\confirmatory"
 
-if not defined ORACLE_MODELS set "ORACLE_MODELS=all"
+REM tabpfn is excluded as an oracle candidate: the oracle is queried 200k+
+REM times per run for optimum estimation, which is intractable for TabPFN on
+REM CPU (the January 2026 run resolved provoice to tabpfn and produced no
+REM output). Tree ensembles answer those queries in milliseconds.
+if not defined ORACLE_MODELS set "ORACLE_MODELS=xgboost,lightgbm,catboost,random_forest,extra_trees,gradient_boosting,hist_gradient_boosting"
 if not defined ORACLE_CV_FOLDS set "ORACLE_CV_FOLDS=5"
 
-if not defined BROAD_SEEDS set "BROAD_SEEDS=7,8,9,10,11"
+REM 20 screening seeds so per-condition Wilcoxon/Friedman tests have usable
+REM power (min attainable two-sided Wilcoxon p at n=20 is ~2e-6).
+if not defined BROAD_SEEDS set "BROAD_SEEDS=7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26"
 if not defined SHORTLIST set "SHORTLIST=pi,logpi,qucb"
 
 if not defined CONFIRMATORY_OBJECTIVE set "CONFIRMATORY_OBJECTIVE=composite"
 if not defined CONFIRMATORY_ACQ set "CONFIRMATORY_ACQ=pi,logpi"
-if not defined CONFIRMATORY_SEED_START set "CONFIRMATORY_SEED_START=12"
+REM Confirmatory seeds must not overlap the screening seeds above.
+if not defined CONFIRMATORY_SEED_START set "CONFIRMATORY_SEED_START=27"
 if not defined CONFIRMATORY_SEED_COUNT set "CONFIRMATORY_SEED_COUNT=20"
 
 echo [1/4] Selecting oracle models...

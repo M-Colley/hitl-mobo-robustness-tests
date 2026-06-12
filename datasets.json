@@ -26,6 +26,7 @@
   {
     "name": "opticarvis",
     "data_dir": "https://github.com/M-Colley/opticarvis-data",
+    "observation_glob": "data/S_*ObservationsPerEvaluation.csv",
     "param_columns": [
       "Trajectory",
       "TrajectoryAlpha",

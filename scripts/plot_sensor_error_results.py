@@ -399,27 +399,37 @@ def plot_objectives(df: pd.DataFrame, output_dir: Path) -> None:
         "jitter_std",
         "jitter_iteration",
         "oracle_model",
-        "iteration",
     ]
+    # Group per dataset so incomparable datasets are not pooled into one curve
+    # (legacy frames without a dataset column keep the old behaviour).
+    if "dataset" in df.columns:
+        group_cols.insert(0, "dataset")
     grouped = (
-        df.groupby(group_cols)[["objective_true", "objective_observed"]].mean().reset_index()
+        df.groupby(group_cols + ["iteration"])[["objective_true", "objective_observed"]]
+        .mean()
+        .reset_index()
     )
-    for (objective, acq, error_model, jitter_std, jitter_iteration, oracle_model), data in grouped.groupby(
-        ["objective", "acquisition", "error_model", "jitter_std", "jitter_iteration", "oracle_model"]
-    ):
+    for group_values, data in grouped.groupby(group_cols):
+        if not isinstance(group_values, tuple):
+            group_values = (group_values,)
+        meta = dict(zip(group_cols, group_values))
         plt.figure(figsize=(8, 4))
         sns.lineplot(data=data, x="iteration", y="objective_true", label="Objective (true)")
         sns.lineplot(data=data, x="iteration", y="objective_observed", label="Objective (observed)")
+        title_prefix = f"{meta['dataset']}, " if "dataset" in meta else ""
         plt.title(
             "Objective trajectory "
-            f"({objective}, {acq}, {error_model}, {oracle_model}, jitter={jitter_iteration}, std={jitter_std})"
+            f"({title_prefix}{meta['objective']}, {meta['acquisition']}, {meta['error_model']}, "
+            f"{meta['oracle_model']}, jitter={meta['jitter_iteration']}, std={meta['jitter_std']})"
         )
         plt.xlabel("Iteration")
         plt.ylabel("Objective")
         plt.tight_layout()
+        filename_prefix = f"{meta['dataset']}_" if "dataset" in meta else ""
         filename = (
             "objective_trajectory_"
-            f"{objective}_{acq}_{error_model}_{oracle_model}_jit{jitter_iteration}_std{jitter_std}.png"
+            f"{filename_prefix}{meta['objective']}_{meta['acquisition']}_{meta['error_model']}_"
+            f"{meta['oracle_model']}_jit{meta['jitter_iteration']}_std{meta['jitter_std']}.png"
         )
         plt.savefig(output_dir / filename, dpi=200)
         plt.close()
@@ -430,11 +440,38 @@ def plot_adjustments(input_dir: Path, output_dir: Path) -> None:
     if not summary_stats.exists():
         return
     stats = pd.read_csv(summary_stats)
-    for (objective, error_model, jitter_iteration), data in stats.groupby(
-        ["objective", "error_model", "jitter_iteration"]
-    ):
+
+    group_cols = ["objective", "error_model", "jitter_iteration"]
+    if "dataset" in stats.columns:
+        group_cols.insert(0, "dataset")
+
+    # Baseline rows only exist under error_model == "none", so faceting by
+    # error_model with hue="baseline" alone never shows the contrast.  Inject
+    # the matching baseline rows into each jittered facet instead, replicated
+    # across the facet's jitter_std columns (baselines have jitter_std=0.0).
+    baseline_stats = stats[stats["error_model"] == "none"]
+    jittered_stats = stats[stats["error_model"] != "none"]
+
+    for group_values, data in jittered_stats.groupby(group_cols):
+        if not isinstance(group_values, tuple):
+            group_values = (group_values,)
+        meta = dict(zip(group_cols, group_values))
+
+        match = (baseline_stats["objective"] == meta["objective"]) & (
+            baseline_stats["jitter_iteration"] == meta["jitter_iteration"]
+        )
+        if "dataset" in meta:
+            match &= baseline_stats["dataset"] == meta["dataset"]
+        base = baseline_stats[match]
+
+        frames = [data] + [
+            base.assign(jitter_std=jitter_std)
+            for jitter_std in sorted(data["jitter_std"].unique())
+        ]
+        plot_data = pd.concat(frames, ignore_index=True)
+
         plot = sns.catplot(
-            data=data,
+            data=plot_data,
             x="acquisition",
             y="delta_l2_mean",
             hue="baseline",
@@ -443,12 +480,18 @@ def plot_adjustments(input_dir: Path, output_dir: Path) -> None:
             height=4,
             aspect=1.1,
         )
+        title_prefix = f"{meta['dataset']} / " if "dataset" in meta else ""
         plot.fig.suptitle(
-            f"Mean parameter adjustment (L2 norm) - {objective} / {error_model} (jitter={jitter_iteration})"
+            "Mean parameter adjustment (L2 norm) "
+            f"- {title_prefix}{meta['objective']} / {meta['error_model']} (jitter={meta['jitter_iteration']})"
         )
         plot.set_axis_labels("acquisition", "Mean delta L2")
         plot.tight_layout()
-        filename = f"delta_l2_mean_{objective}_{error_model}_jit{jitter_iteration}.png"
+        filename_prefix = f"{meta['dataset']}_" if "dataset" in meta else ""
+        filename = (
+            f"delta_l2_mean_{filename_prefix}{meta['objective']}_{meta['error_model']}"
+            f"_jit{meta['jitter_iteration']}.png"
+        )
         plot.savefig(output_dir / filename, dpi=200)
         plt.close(plot.fig)
 
@@ -458,8 +501,15 @@ def plot_excess_adjustments(input_dir: Path, output_dir: Path) -> None:
     if not excess_path.exists():
         return
     excess = pd.read_csv(excess_path)
+    agg_cols = ["objective", "acquisition", "error_model", "jitter_iteration", "jitter_std"]
+    facet_cols = ["objective", "jitter_iteration", "jitter_std"]
+    # Aggregate and facet per dataset so incomparable datasets are not pooled
+    # (legacy frames without a dataset column keep the old behaviour).
+    if "dataset" in excess.columns:
+        agg_cols.insert(0, "dataset")
+        facet_cols.insert(0, "dataset")
     summary = (
-        excess.groupby(["objective", "acquisition", "error_model", "jitter_iteration", "jitter_std"])
+        excess.groupby(agg_cols)
         .agg(
             delta_excess_l2_mean=("delta_excess_l2_norm", "mean"),
             delta_excess_l2_std=("delta_excess_l2_norm", "std"),
@@ -467,9 +517,10 @@ def plot_excess_adjustments(input_dir: Path, output_dir: Path) -> None:
         )
         .reset_index()
     )
-    for (objective, jitter_iteration, jitter_std), data in summary.groupby(
-        ["objective", "jitter_iteration", "jitter_std"]
-    ):
+    for group_values, data in summary.groupby(facet_cols):
+        if not isinstance(group_values, tuple):
+            group_values = (group_values,)
+        meta = dict(zip(facet_cols, group_values))
         plt.figure(figsize=(8, 4))
         sns.barplot(
             data=data,
@@ -477,14 +528,21 @@ def plot_excess_adjustments(input_dir: Path, output_dir: Path) -> None:
             y="delta_excess_l2_mean",
             hue="error_model",
         )
+        title_prefix = f"{meta['dataset']} " if "dataset" in meta else ""
         plt.title(
             "Mean excess adjustment (L2 norm) "
-            f"- {objective} jitter={jitter_iteration}, std={jitter_std:.2f}"
+            f"- {title_prefix}{meta['objective']} jitter={meta['jitter_iteration']}, "
+            f"std={meta['jitter_std']:.2f}"
         )
         plt.ylabel("Mean delta excess L2")
         plt.tight_layout()
+        filename_prefix = f"{meta['dataset']}_" if "dataset" in meta else ""
         plt.savefig(
-            output_dir / f"delta_excess_l2_mean_{objective}_jit{jitter_iteration}_std{jitter_std}.png",
+            output_dir
+            / (
+                f"delta_excess_l2_mean_{filename_prefix}{meta['objective']}"
+                f"_jit{meta['jitter_iteration']}_std{meta['jitter_std']}.png"
+            ),
             dpi=200,
         )
         plt.close()

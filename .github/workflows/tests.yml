@@ -6,11 +6,18 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.13", "3.14"]
+        include:
+          # The canonical experiment workflow (run_full_workflow.bat) runs on
+          # Windows; test at least one Python version there.
+          - os: windows-latest
+            python-version: "3.13"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -19,6 +26,10 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements-eval.txt
+            requirements-dev.txt
 
       - name: Install dependencies
         run: |
@@ -28,4 +39,3 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -q
-

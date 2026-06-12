@@ -460,6 +460,7 @@ class TestBuildPairedTable:
         jitter_iteration: int,
         response_l2: float,
         auc_regret: float,
+        n_iterations: int = 25,
     ) -> dict:
         return {
             "run_id": run_id,
@@ -472,12 +473,17 @@ class TestBuildPairedTable:
             "error_model": error_model,
             "jitter_std": jitter_std,
             "jitter_iteration": jitter_iteration,
+            "n_iterations": n_iterations,
+            "acq_opt_failures": 0,
             "response_l2": response_l2,
             "final_best_true": 1.0,
             "final_simple_regret_true": 0.5,
             "final_cum_regret_true": 2.0,
             "final_avg_regret_true": 0.4,
             "auc_simple_regret_true": auc_regret,
+            "auc_simple_regret_true_postonset_per_iter": auc_regret / max(1, n_iterations - jitter_iteration - 1),
+            "final_inference_simple_regret_true": 0.6,
+            "auc_inference_simple_regret_true": auc_regret + 1.0,
             "param_columns": "p1,p2",
         }
 
@@ -510,3 +516,107 @@ class TestBuildPairedTable:
         paired = eval_mod.build_paired_table(df)
         assert paired.shape[0] == 1
         assert paired.iloc[0]["acquisition"] == "ei"
+
+    def test_paired_table_requires_same_run_length(self) -> None:
+        """A 50-iteration jittered run must not pair with a 100-iteration baseline."""
+        rows = [
+            self._make_response_row("j1", "ei", 1, False, "gaussian", 0.5, 10, 1.5, 3.0, n_iterations=50),
+            self._make_response_row("b1", "ei", 1, True, "none", 0.0, 10, 1.0, 2.0, n_iterations=100),
+        ]
+        with pytest.raises(ValueError, match="No baseline"):
+            eval_mod.build_paired_table(pd.DataFrame(rows))
+
+    def test_paired_table_rejects_duplicate_baselines(self) -> None:
+        rows = [
+            self._make_response_row("j1", "ei", 1, False, "gaussian", 0.5, 10, 1.5, 3.0),
+            self._make_response_row("b1", "ei", 1, True, "none", 0.0, 10, 1.0, 2.0),
+            self._make_response_row("b2", "ei", 1, True, "none", 0.0, 10, 1.1, 2.1),
+        ]
+        with pytest.raises(ValueError, match="Duplicate baseline"):
+            eval_mod.build_paired_table(pd.DataFrame(rows))
+
+
+# ---------------------------------------------------------------------------
+# evaluate_research_question: AUC numerics and rankings statistics
+# ---------------------------------------------------------------------------
+
+class TestAUCAndRankingStatistics:
+    def _make_log(self, run_id: str, error_model: str, seed: int, acquisition: str = "ei",
+                  jitter_iteration: int = 10, n_iterations: int = 20,
+                  regret_offset: float = 0.0) -> pd.DataFrame:
+        iters = list(range(1, n_iterations + 1))
+        n = len(iters)
+        return pd.DataFrame({
+            "run_id": run_id,
+            "dataset": "demo",
+            "objective": "composite",
+            "acquisition": acquisition,
+            "seed": seed,
+            "oracle_model": "xgboost",
+            "error_model": error_model,
+            "jitter_std": 0.5 if error_model != "none" else 0.0,
+            "jitter_iteration": jitter_iteration if error_model != "none" else 0,
+            "iteration": iters,
+            "p1": [float(i) * 0.1 for i in iters],
+            "p2": [float(i) * 0.2 for i in iters],
+            "objective_true": [float(i) for i in iters],
+            "objective_observed": [float(i) for i in iters],
+            "best_true_so_far": [float(i) for i in iters],
+            "simple_regret_true": [float(n - i) + regret_offset for i in iters],
+            "regret_cum_true": [float(i) for i in iters],
+            "regret_avg_true": [1.0] * n,
+            "inference_simple_regret_true": [float(n - i) + regret_offset + 0.5 for i in iters],
+            "acq_opt_failed": [False] * n,
+            "y_opt": [float(n)] * n,
+            "error_applied": [i > jitter_iteration for i in iters],
+            "error_magnitude": [0.0] * n,
+            "error_magnitude_l2": [0.0] * n,
+            "regret_inst_true": [1.0] * n,
+        })
+
+    def test_auc_matches_trapezoid_numerically(self) -> None:
+        log = self._make_log("r1", "gaussian", seed=1)
+        table = eval_mod.build_response_table(log)
+        row = table.iloc[0]
+        sr = log["simple_regret_true"].to_numpy(dtype=float)
+        assert np.isclose(row["auc_simple_regret_true"], np.trapezoid(sr, dx=1.0))
+        # Post-onset AUC: iterations jitter+1..n, normalized per noisy iteration.
+        jit = int(row["jitter_iteration"])
+        post = sr[jit:]
+        expected = np.trapezoid(post, dx=1.0) / (len(post) - 1)
+        assert np.isclose(row["auc_simple_regret_true_postonset_per_iter"], expected)
+        # Inference AUC integrates the inference-regret column.
+        ir = log["inference_simple_regret_true"].to_numpy(dtype=float)
+        assert np.isclose(row["auc_inference_simple_regret_true"], np.trapezoid(ir, dx=1.0))
+
+    def _paired_for_seeds(self, n_seeds: int) -> pd.DataFrame:
+        frames = []
+        for seed in range(1, n_seeds + 1):
+            for acq, offset in [("ei", 0.0), ("ucb", 0.1 * seed)]:
+                frames.append(self._make_log(f"b_{acq}_{seed}", "none", seed, acq))
+                frames.append(self._make_log(f"j_{acq}_{seed}", "gaussian", seed, acq,
+                                             regret_offset=offset))
+        logs = pd.concat(frames, ignore_index=True)
+        table = eval_mod.build_response_table(logs)
+        return eval_mod.build_paired_table(table)
+
+    def test_wilcoxon_min_attainable_p_flagged_at_n5(self) -> None:
+        paired = self._paired_for_seeds(5)
+        _, tests = eval_mod.compute_condition_rankings(paired)
+        wilcoxon_rows = tests[tests["test_name"] == "wilcoxon"]
+        assert not wilcoxon_rows.empty
+        assert np.allclose(wilcoxon_rows["min_attainable_p"], 2.0 / 2.0**5)
+        assert wilcoxon_rows["underpowered"].all()
+
+    def test_rankings_include_normalized_rank_and_absolute_metric(self) -> None:
+        paired = self._paired_for_seeds(5)
+        rankings, _ = eval_mod.compute_condition_rankings(paired)
+        assert "mean_rank_normalized" in rankings.columns
+        assert rankings["mean_rank_normalized"].between(0.0, 1.0).all()
+        assert "mean_auc_simple_regret_true_jitter" in rankings.columns
+
+    def test_duplicate_cells_raise_instead_of_silent_pooling(self) -> None:
+        paired = self._paired_for_seeds(3)
+        duplicated = pd.concat([paired, paired.iloc[[0]]], ignore_index=True)
+        with pytest.raises(ValueError, match="Multiple paired rows"):
+            eval_mod.compute_condition_rankings(duplicated)

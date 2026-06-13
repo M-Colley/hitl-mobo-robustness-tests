@@ -1,0 +1,640 @@
+done ehmi ridge cold (0.0s)
+done ehmi ridge warm_per_user (0.3s)
+done ehmi knn_k5 cold (0.1s)
+done ehmi knn_k5 warm_per_user (0.3s)
+done ehmi knn_k10 cold (0.1s)
+done ehmi knn_k10 warm_per_user (51.3s)
+done ehmi svr_rbf_C1 cold (0.2s)
+done ehmi svr_rbf_C1 warm_per_user (0.2s)
+done ehmi svr_rbf_C10 cold (0.3s)
+done ehmi svr_rbf_C10 warm_per_user (0.2s)
+done ehmi gp_rbf_white cold (41.4s)
+done ehmi gp_rbf_white warm_per_user (4.9s)
+done ehmi mlp_64_32 cold (7.8s)
+done ehmi mlp_64_32 warm_per_user (12.3s)
+done opticarvis ridge cold (0.1s)
+done opticarvis ridge warm_per_user (0.4s)
+done opticarvis knn_k5 cold (7.2s)
+done opticarvis knn_k5 warm_per_user (62.9s)
+done opticarvis knn_k10 cold (7.2s)
+done opticarvis knn_k10 warm_per_user (60.5s)
+done opticarvis svr_rbf_C1 cold (0.2s)
+done opticarvis svr_rbf_C1 warm_per_user (0.2s)
+done opticarvis svr_rbf_C10 cold (0.2s)
+done opticarvis svr_rbf_C10 warm_per_user (0.2s)
+done opticarvis gp_rbf_white cold (40.8s)
+done opticarvis gp_rbf_white warm_per_user (5.8s)
+done opticarvis mlp_64_32 cold (1.2s)
+done opticarvis mlp_64_32 warm_per_user (13.4s)
+done provoice ridge cold (0.0s)
+done provoice ridge warm_per_user (0.1s)
+done provoice knn_k5 cold (0.0s)
+done provoice knn_k5 warm_per_user (0.1s)
+done provoice knn_k10 cold (0.1s)
+done provoice knn_k10 warm_per_user (21.9s)
+done provoice svr_rbf_C1 cold (0.1s)
+done provoice svr_rbf_C1 warm_per_user (0.1s)
+done provoice svr_rbf_C10 cold (0.2s)
+done provoice svr_rbf_C10 warm_per_user (0.1s)
+done provoice gp_rbf_white cold (25.8s)
+done provoice gp_rbf_white warm_per_user (2.5s)
+done provoice mlp_64_32 cold (1.9s)
+done provoice mlp_64_32 warm_per_user (2.6s)
+tabpfn first-fold timing ehmi: 15.1s
+done ehmi tabpfn_ref cold (63.1s)
+tabpfn first-fold timing opticarvis: 12.0s
+done opticarvis tabpfn_ref cold (59.4s)
+tabpfn first-fold timing provoice: 8.9s
+done provoice tabpfn_ref cold (38.6s)
+RESULTS_JSON_BEGIN
+{
+  "experiment": "zoo",
+  "rows": [
+    {
+      "dataset": "ehmi",
+      "model": "ridge",
+      "protocol": "cold",
+      "r2_mean_fold": 0.06074562053423769,
+      "r2_pooled": 0.12843403600019876,
+      "rmse_pooled": 0.6720301699525049,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 0.0
+    },
+    {
+      "dataset": "ehmi",
+      "model": "ridge",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.6167255426286805,
+      "r2_median_user": -17.00694475300145,
+      "rmse_pooled": 0.4261671320999074,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.3
+    },
+    {
+      "dataset": "ehmi",
+      "model": "knn_k5",
+      "protocol": "cold",
+      "r2_mean_fold": 0.036655864917539874,
+      "r2_pooled": 0.13985764083298102,
+      "rmse_pooled": 0.6676114975593896,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "ehmi",
+      "model": "knn_k5",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.6592471339486832,
+      "r2_median_user": -1.8224177201042635,
+      "rmse_pooled": 0.4018322340434319,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.3
+    },
+    {
+      "dataset": "ehmi",
+      "model": "knn_k10",
+      "protocol": "cold",
+      "r2_mean_fold": 0.11193078920330815,
+      "r2_pooled": 0.20577259254812108,
+      "rmse_pooled": 0.6415212910231475,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "ehmi",
+      "model": "knn_k10",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.6824290184240787,
+      "r2_median_user": -6.76000891918758,
+      "rmse_pooled": 0.3879229010214152,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 51.3
+    },
+    {
+      "dataset": "ehmi",
+      "model": "svr_rbf_C1",
+      "protocol": "cold",
+      "r2_mean_fold": 0.15644213674058954,
+      "r2_pooled": 0.223593711464393,
+      "rmse_pooled": 0.6342831316061809,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "ehmi",
+      "model": "svr_rbf_C1",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.605920608203935,
+      "r2_median_user": -30.155352204457827,
+      "rmse_pooled": 0.43213244547247803,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "ehmi",
+      "model": "svr_rbf_C10",
+      "protocol": "cold",
+      "r2_mean_fold": 0.052778148738829536,
+      "r2_pooled": 0.14542828999268653,
+      "rmse_pooled": 0.6654461173336607,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 0.3
+    },
+    {
+      "dataset": "ehmi",
+      "model": "svr_rbf_C10",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.5764105360325007,
+      "r2_median_user": -23.709123375217903,
+      "rmse_pooled": 0.44802019203142984,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "ehmi",
+      "model": "gp_rbf_white",
+      "protocol": "cold",
+      "r2_mean_fold": 0.11574798029652138,
+      "r2_pooled": 0.19433803862612398,
+      "rmse_pooled": 0.6461228041510099,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 41.3
+    },
+    {
+      "dataset": "ehmi",
+      "model": "gp_rbf_white",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.6325493324523828,
+      "r2_median_user": -7.183296570201167,
+      "rmse_pooled": 0.4172770828174278,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 4.9
+    },
+    {
+      "dataset": "ehmi",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": -0.258856307218749,
+      "r2_pooled": -0.1528046247122683,
+      "rmse_pooled": 0.772887875784417,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 7.8
+    },
+    {
+      "dataset": "ehmi",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -1.2645461298331613,
+      "r2_median_user": -83.41709082083732,
+      "rmse_pooled": 1.035894671606137,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 12.3
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "ridge",
+      "protocol": "cold",
+      "r2_mean_fold": 0.09713657961780656,
+      "r2_pooled": 0.10135025243479134,
+      "rmse_pooled": 1.201988044871771,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "ridge",
+      "protocol": "warm_per_user",
+      "r2_pooled": -2.7251990460581395,
+      "r2_median_user": -21.280958115470817,
+      "rmse_pooled": 0.6736483342845332,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.4
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "knn_k5",
+      "protocol": "cold",
+      "r2_mean_fold": 0.25814438516452426,
+      "r2_pooled": 0.26033181690280627,
+      "rmse_pooled": 1.0904942720931856,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 7.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "knn_k5",
+      "protocol": "warm_per_user",
+      "r2_pooled": -11.73554699145009,
+      "r2_median_user": -73.27006526105622,
+      "rmse_pooled": 1.2455675922498093,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 62.9
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "knn_k10",
+      "protocol": "cold",
+      "r2_mean_fold": 0.18323876468880435,
+      "r2_pooled": 0.1777016263966914,
+      "rmse_pooled": 1.1497929341966646,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 7.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "knn_k10",
+      "protocol": "warm_per_user",
+      "r2_pooled": -7.843108165247564,
+      "r2_median_user": -52.289260521232464,
+      "rmse_pooled": 1.0379130375482364,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 60.5
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "svr_rbf_C1",
+      "protocol": "cold",
+      "r2_mean_fold": -0.046129410921438185,
+      "r2_pooled": -0.04103694683588088,
+      "rmse_pooled": 1.2937131463564808,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "svr_rbf_C1",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.637122570662306,
+      "r2_median_user": -2.242917022254849,
+      "rmse_pooled": 0.21025119693523037,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "svr_rbf_C10",
+      "protocol": "cold",
+      "r2_mean_fold": -0.08380078765935924,
+      "r2_pooled": -0.07798709289028927,
+      "rmse_pooled": 1.3164722235003314,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "svr_rbf_C10",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.8363758128510757,
+      "r2_median_user": -4.482945922250435,
+      "rmse_pooled": 0.47297619234042587,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "gp_rbf_white",
+      "protocol": "cold",
+      "r2_mean_fold": 0.4673462841868098,
+      "r2_pooled": 0.47542519461976807,
+      "rmse_pooled": 0.9183508533883833,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 40.8
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "gp_rbf_white",
+      "protocol": "warm_per_user",
+      "r2_pooled": -2.4605485903987923,
+      "r2_median_user": -15.491863616924931,
+      "rmse_pooled": 0.6492784290142126,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 5.8
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": 0.04653608750208704,
+      "r2_pooled": 0.0465420480675971,
+      "rmse_pooled": 1.23809991104085,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 1.2
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -107.25269462734789,
+      "r2_median_user": -114.84535843836898,
+      "rmse_pooled": 3.63143150071122,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 13.4
+    },
+    {
+      "dataset": "provoice",
+      "model": "ridge",
+      "protocol": "cold",
+      "r2_mean_fold": -0.06390955318306228,
+      "r2_pooled": 0.012931819002173106,
+      "rmse_pooled": 0.9825117477139749,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 0.0
+    },
+    {
+      "dataset": "provoice",
+      "model": "ridge",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.35120403993635674,
+      "r2_median_user": -0.6411512848495542,
+      "rmse_pooled": 0.8603366990800719,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "knn_k5",
+      "protocol": "cold",
+      "r2_mean_fold": -0.20955766412356666,
+      "r2_pooled": -0.10582205220051266,
+      "rmse_pooled": 1.039936445946333,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 0.0
+    },
+    {
+      "dataset": "provoice",
+      "model": "knn_k5",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.30325059971799107,
+      "r2_median_user": -0.6446143336778536,
+      "rmse_pooled": 0.8449323689484588,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "knn_k10",
+      "protocol": "cold",
+      "r2_mean_fold": -0.10640800865544393,
+      "r2_pooled": -0.02209546061887835,
+      "rmse_pooled": 0.9997925711781369,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "knn_k10",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.4154243339210242,
+      "r2_median_user": -1.417166031196522,
+      "rmse_pooled": 0.8805445028593805,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 21.9
+    },
+    {
+      "dataset": "provoice",
+      "model": "svr_rbf_C1",
+      "protocol": "cold",
+      "r2_mean_fold": -0.021672744060389947,
+      "r2_pooled": -0.003872847572878424,
+      "rmse_pooled": 0.9908399975950547,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "svr_rbf_C1",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.2818510176158009,
+      "r2_median_user": -0.8904221928213755,
+      "rmse_pooled": 0.8379666942887999,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "svr_rbf_C10",
+      "protocol": "cold",
+      "r2_mean_fold": -0.10723698312147531,
+      "r2_pooled": -0.06592830713663211,
+      "rmse_pooled": 1.0210057162040798,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 0.2
+    },
+    {
+      "dataset": "provoice",
+      "model": "svr_rbf_C10",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.521787839592927,
+      "r2_median_user": -0.7565623425550535,
+      "rmse_pooled": 0.9130299755190359,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 0.1
+    },
+    {
+      "dataset": "provoice",
+      "model": "gp_rbf_white",
+      "protocol": "cold",
+      "r2_mean_fold": -0.014587532164637507,
+      "r2_pooled": 0.061961196646725725,
+      "rmse_pooled": 0.9577994376310954,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 25.8
+    },
+    {
+      "dataset": "provoice",
+      "model": "gp_rbf_white",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.4484531629107622,
+      "r2_median_user": -0.766623233095152,
+      "rmse_pooled": 0.8907589805057696,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 2.5
+    },
+    {
+      "dataset": "provoice",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": -0.13004107769286435,
+      "r2_pooled": -0.02438003185044324,
+      "rmse_pooled": 1.0009093075856887,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 1.9
+    },
+    {
+      "dataset": "provoice",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -1.8356271666072406,
+      "r2_median_user": -1.8359642628601034,
+      "rmse_pooled": 1.2463285554370263,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 2.6
+    },
+    {
+      "dataset": "ehmi",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.16157375024339288,
+      "r2_pooled": 0.2277406496019918,
+      "rmse_pooled": 0.6325869484095826,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 63.1
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.5706477030381227,
+      "r2_pooled": 0.5964822989897345,
+      "rmse_pooled": 0.8054456031700589,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 59.4
+    },
+    {
+      "dataset": "provoice",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.02392545105787567,
+      "r2_pooled": 0.08458379329206867,
+      "rmse_pooled": 0.9461793689824513,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 38.6
+    }
+  ]
+}
+RESULTS_JSON_END

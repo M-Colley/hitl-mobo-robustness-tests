@@ -1,0 +1,121 @@
+[
+ {
+  "name": "NISQA_Corpus/NISQA_corpus_con.csv",
+  "method": 8,
+  "comp_size": 1379286,
+  "uncomp_size": 3674052,
+  "local_offset": 43
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_corpus_file.csv",
+  "method": 8,
+  "comp_size": 1377341,
+  "uncomp_size": 5724911,
+  "local_offset": 1379392
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_FOR/NISQA_TEST_FOR_con.csv",
+  "method": 8,
+  "comp_size": 8474,
+  "uncomp_size": 19877,
+  "local_offset": 137189335
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_FOR/NISQA_TEST_FOR_file.csv",
+  "method": 8,
+  "comp_size": 25661,
+  "uncomp_size": 89568,
+  "local_offset": 137208663
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_LIVETALK/NISQA_TEST_LIVETALK_con.csv",
+  "method": 8,
+  "comp_size": 7308,
+  "uncomp_size": 19469,
+  "local_offset": 423789570
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_LIVETALK/NISQA_TEST_LIVETALK_file.csv",
+  "method": 8,
+  "comp_size": 19801,
+  "uncomp_size": 69458,
+  "local_offset": 423805409
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_LIVETALK/NISQA_TEST_LIVETALK_listening_test_ratings.csv",
+  "method": 8,
+  "comp_size": 53743,
+  "uncomp_size": 325493,
+  "local_offset": 423825301
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_P501/NISQA_TEST_P501_con.csv",
+  "method": 8,
+  "comp_size": 8247,
+  "uncomp_size": 19734,
+  "local_offset": 525761970
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TEST_P501/NISQA_TEST_P501_file.csv",
+  "method": 8,
+  "comp_size": 22172,
+  "uncomp_size": 94463,
+  "local_offset": 525781176
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TRAIN_LIVE/NISQA_TRAIN_LIVE_con.csv",
+  "method": 8,
+  "comp_size": 103718,
+  "uncomp_size": 276821,
+  "local_offset": 1127090088
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TRAIN_LIVE/NISQA_TRAIN_LIVE_file.csv",
+  "method": 8,
+  "comp_size": 94673,
+  "uncomp_size": 444710,
+  "local_offset": 1127193890
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TRAIN_SIM/NISQA_TRAIN_SIM_con.csv",
+  "method": 8,
+  "comp_size": 1000809,
+  "uncomp_size": 2669182,
+  "local_offset": 7138648688
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_TRAIN_SIM/NISQA_TRAIN_SIM_file.csv",
+  "method": 8,
+  "comp_size": 1117486,
+  "uncomp_size": 4776883,
+  "local_offset": 7139649579
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_VAL_LIVE/NISQA_VAL_LIVE_con.csv",
+  "method": 8,
+  "comp_size": 21227,
+  "uncomp_size": 53839,
+  "local_offset": 13047822848
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_VAL_LIVE/NISQA_VAL_LIVE_file.csv",
+  "method": 8,
+  "comp_size": 19092,
+  "uncomp_size": 85969,
+  "local_offset": 13047844155
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_VAL_SIM/NISQA_VAL_SIM_con.csv",
+  "method": 8,
+  "comp_size": 251390,
+  "uncomp_size": 661264,
+  "local_offset": 14513087925
+ },
+ {
+  "name": "NISQA_Corpus/NISQA_VAL_SIM/NISQA_VAL_SIM_file.csv",
+  "method": 8,
+  "comp_size": 272831,
+  "uncomp_size": 1170612,
+  "local_offset": 14513339393
+ }
+]

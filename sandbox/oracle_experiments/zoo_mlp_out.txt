@@ -1,0 +1,91 @@
+done ehmi mlp_64_32 cold (9.2s)
+done ehmi mlp_64_32 warm_per_user (13.6s)
+done opticarvis mlp_64_32 cold (1.4s)
+done opticarvis mlp_64_32 warm_per_user (15.0s)
+done provoice mlp_64_32 cold (2.0s)
+done provoice mlp_64_32 warm_per_user (2.6s)
+RESULTS_JSON_BEGIN
+{
+  "experiment": "zoo",
+  "rows": [
+    {
+      "dataset": "ehmi",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": -0.258856307218749,
+      "r2_pooled": -0.1528046247122683,
+      "rmse_pooled": 0.772887875784417,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 9.2
+    },
+    {
+      "dataset": "ehmi",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -1.2645461298331613,
+      "r2_median_user": -83.41709082083732,
+      "rmse_pooled": 1.035894671606137,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7,
+      "fit_seconds_total": 13.6
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": 0.04653608750208704,
+      "r2_pooled": 0.0465420480675971,
+      "rmse_pooled": 1.23809991104085,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 1.4
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -107.25269462734789,
+      "r2_median_user": -114.84535843836898,
+      "rmse_pooled": 3.63143150071122,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7,
+      "fit_seconds_total": 15.0
+    },
+    {
+      "dataset": "provoice",
+      "model": "mlp_64_32",
+      "protocol": "cold",
+      "r2_mean_fold": -0.13004107769286435,
+      "r2_pooled": -0.02438003185044324,
+      "rmse_pooled": 1.0009093075856887,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 2.0
+    },
+    {
+      "dataset": "provoice",
+      "model": "mlp_64_32",
+      "protocol": "warm_per_user",
+      "r2_pooled": -1.8356271666072406,
+      "r2_median_user": -1.8359642628601034,
+      "rmse_pooled": 1.2463285554370263,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "fit_seconds_total": 2.6
+    }
+  ]
+}
+RESULTS_JSON_END

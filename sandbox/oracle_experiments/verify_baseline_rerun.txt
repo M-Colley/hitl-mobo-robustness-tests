@@ -1,0 +1,79 @@
+RESULTS_JSON_BEGIN
+{
+  "experiment": "baseline",
+  "rows": [
+    {
+      "dataset": "ehmi",
+      "model": "extra_trees",
+      "protocol": "cold",
+      "r2_mean_fold": 0.1518353678272169,
+      "r2_pooled": 0.2326458897216661,
+      "rmse_pooled": 0.6305747137983663,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37
+    },
+    {
+      "dataset": "ehmi",
+      "model": "extra_trees",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.6347618403765157,
+      "r2_median_user": -5.714611555131043,
+      "rmse_pooled": 0.4160189237243555,
+      "y_test_std": 0.6883748791189307,
+      "n_users": 37,
+      "n_test_rows": 221,
+      "train_frac": 0.7
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "extra_trees",
+      "protocol": "cold",
+      "r2_mean_fold": 0.6514006780902306,
+      "r2_pooled": 0.6600325274722585,
+      "rmse_pooled": 0.7393049313725726,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "extra_trees",
+      "protocol": "warm_per_user",
+      "r2_pooled": -5.971368647774338,
+      "r2_median_user": -42.629153019225136,
+      "rmse_pooled": 0.9215470711491022,
+      "y_test_std": 0.34902657754716865,
+      "n_users": 46,
+      "n_test_rows": 153,
+      "train_frac": 0.7
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees",
+      "protocol": "cold",
+      "r2_mean_fold": -0.008178955320106573,
+      "r2_pooled": 0.0671825877723441,
+      "rmse_pooled": 0.9551300255486094,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.32059281882409807,
+      "r2_median_user": -0.9015221067407877,
+      "rmse_pooled": 0.8505355036961896,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7
+    }
+  ]
+}
+RESULTS_JSON_END

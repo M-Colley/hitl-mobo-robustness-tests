@@ -1,0 +1,202 @@
+[
+  {
+    "name": "ehmi",
+    "data_dir": "https://github.com/M-Colley/ehmi-optimization-chi25-data",
+    "param_columns": [
+      "verticalPosition",
+      "verticalWidth",
+      "horizontalWidth",
+      "r",
+      "g",
+      "b",
+      "a",
+      "blinkFrequency",
+      "volume"
+    ],
+    "objective_map": {
+      "composite": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "multi_objective": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "trust": [
+        "Trust"
+      ],
+      "understanding": [
+        "Understanding"
+      ],
+      "perceived_safety": [
+        "PerceivedSafety"
+      ],
+      "aesthetics": [
+        "Aesthetics"
+      ],
+      "acceptance": [
+        "Acceptance"
+      ]
+    }
+  },
+  {
+    "name": "opticarvis",
+    "data_dir": "https://github.com/M-Colley/opticarvis-data",
+    "observation_glob": "data/S_*ObservationsPerEvaluation.csv",
+    "param_columns": [
+      "Trajectory",
+      "TrajectoryAlpha",
+      "TrajectorySize",
+      "EgoTrajectory",
+      "EgoTrajectoryAlpha",
+      "EgoTrajectorySize",
+      "PedestrianIntention",
+      "PedestrianIntentionSize",
+      "SemanticSegmentation",
+      "SemanticSegmentationAlpha",
+      "CarStatus",
+      "CarStatusAlpha",
+      "CoveredArea",
+      "CoveredAreaAlpha",
+      "CoveredAreaSize",
+      "OccludedCars"
+    ],
+    "objective_map": {
+      "composite": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "multi_objective": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ]
+    }
+  },
+  {
+    "name": "provoice",
+    "data_dir": "https://github.com/JSusak/ProVoiceData",
+    "param_columns": [
+      "InterventionLightingTransparency",
+      "AuditoryAlertVolume",
+      "InterventionSymbolTransparency",
+      "LevelOfAutonomy"
+    ],
+    "objective_map": {
+      "composite": [
+        "Predictability",
+        "Percieved Usefulness",
+        "-Mental Demand"
+      ],
+      "multi_objective": [
+        "Predictability",
+        "Percieved Usefulness",
+        "-Mental Demand"
+      ],
+      "predictability": [
+        "Predictability"
+      ],
+      "usefulness": [
+        "Percieved Usefulness"
+      ],
+      "mental_demand": [
+        "-Mental Demand"
+      ]
+    }
+  },
+  {
+    "name": "ashrae",
+    "data_dir": "external_datasets/ashrae",
+    "observation_glob": "ObservationsPerEvaluation.csv",
+    "param_columns": [
+      "AirTemperature",
+      "RadiantTemperature",
+      "RelativeHumidity",
+      "AirVelocity",
+      "MetabolicRate",
+      "ClothingInsulation"
+    ],
+    "objective_map": {
+      "composite": [
+        "ThermalComfort"
+      ],
+      "multi_objective": [
+        "ThermalComfort",
+        "-ThermalSensationAbs"
+      ],
+      "comfort": [
+        "ThermalComfort"
+      ],
+      "sensation_neutrality": [
+        "-ThermalSensationAbs"
+      ]
+    },
+    "_provenance": "ASHRAE Global Thermal Comfort Database II v2.1.0 (CC0, doi:10.6078/D1F671); converted by sandbox/external_datasets_eval/convert_ashrae.py; User_ID = factorized (building_id, subject_id); Group_ID = building_id. Weak-signal high-noise domain (cold R2 ~0.02, intra-rater SD ~0.98 on 1-6 scale)."
+  },
+  {
+    "name": "nisqa_sim",
+    "data_dir": "external_datasets/nisqa_sim",
+    "observation_glob": "ObservationsPerEvaluation.csv",
+    "param_columns": [
+      "bp_low",
+      "bp_high",
+      "arb_filter_on",
+      "tc_fer",
+      "tc_nburst",
+      "wbgn_snr",
+      "bgn_snr",
+      "p50_q",
+      "cl_th",
+      "asl_in_on",
+      "asl_in_level",
+      "asl_out_on",
+      "asl_out_level",
+      "codec1_id",
+      "bMode1",
+      "FER1",
+      "plc1_random",
+      "plc1_bursty",
+      "codec2_id",
+      "bMode2",
+      "FER2",
+      "plc2_random",
+      "plc2_bursty",
+      "codec3_id",
+      "bMode3",
+      "FER3",
+      "plc3_random",
+      "plc3_bursty"
+    ],
+    "objective_map": {
+      "composite": [
+        "mos",
+        "noi",
+        "col",
+        "dis",
+        "loud"
+      ],
+      "multi_objective": [
+        "mos",
+        "noi",
+        "col",
+        "dis",
+        "loud"
+      ],
+      "mos": [
+        "mos"
+      ]
+    },
+    "_provenance": "NISQA Corpus simulated subsets (Zenodo 4728081, non-commercial research; metadata only, audio never downloaded); converted by sandbox/external_datasets_eval/nisqa_convert.py. Ratings are ~5-vote crowd-panel MEANS (less noisy than one human); Group_ID = source speaker (content grouping, no rater IDs exist). Strongest oracle signal in the suite (cold R2 0.589). Codec ids/modes are ordinal-encoded."
+  }
+]

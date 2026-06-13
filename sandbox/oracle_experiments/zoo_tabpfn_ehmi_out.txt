@@ -1,0 +1,13 @@
+RESULTS_JSON_BEGIN
+{
+  "experiment": "zoo",
+  "rows": [
+    {
+      "dataset": "ehmi",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "error": "RuntimeError: mat1 and mat2 must have the same dtype, but got Float and Double"
+    }
+  ]
+}
+RESULTS_JSON_END

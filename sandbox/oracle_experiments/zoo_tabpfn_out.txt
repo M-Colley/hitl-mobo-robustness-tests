@@ -1,0 +1,52 @@
+tabpfn first-fold timing ehmi: 18.1s
+done ehmi tabpfn_ref cold (73.6s)
+tabpfn first-fold timing opticarvis: 16.4s
+done opticarvis tabpfn_ref cold (78.3s)
+tabpfn first-fold timing provoice: 10.2s
+done provoice tabpfn_ref cold (48.8s)
+RESULTS_JSON_BEGIN
+{
+  "experiment": "zoo",
+  "rows": [
+    {
+      "dataset": "ehmi",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.16157375024339288,
+      "r2_pooled": 0.2277406496019918,
+      "rmse_pooled": 0.6325869484095826,
+      "y_std": 0.7198444151765241,
+      "n_folds": 5,
+      "n_rows": 737,
+      "n_users": 37,
+      "fit_seconds_total": 73.6
+    },
+    {
+      "dataset": "opticarvis",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.5706477030381227,
+      "r2_pooled": 0.5964822989897345,
+      "rmse_pooled": 0.8054456031700589,
+      "y_std": 1.2679581508104838,
+      "n_folds": 5,
+      "n_rows": 626,
+      "n_users": 58,
+      "fit_seconds_total": 78.3
+    },
+    {
+      "dataset": "provoice",
+      "model": "tabpfn_ref",
+      "protocol": "cold",
+      "r2_mean_fold": 0.02392545105787567,
+      "r2_pooled": 0.08458379329206867,
+      "rmse_pooled": 0.9461793689824513,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "fit_seconds_total": 48.8
+    }
+  ]
+}
+RESULTS_JSON_END

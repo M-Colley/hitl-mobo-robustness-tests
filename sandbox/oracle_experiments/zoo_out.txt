@@ -1,0 +1,5 @@
+done ehmi ridge cold (0.1s)
+done ehmi ridge warm_per_user (0.3s)
+done ehmi knn_k5 cold (0.1s)
+done ehmi knn_k5 warm_per_user (0.2s)
+done ehmi knn_k10 cold (0.1s)

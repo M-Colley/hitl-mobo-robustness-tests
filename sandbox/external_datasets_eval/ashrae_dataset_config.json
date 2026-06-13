@@ -1,0 +1,29 @@
+[
+  {
+    "name": "ashrae",
+    "data_dir": "C:\\Users\\Mark\\Desktop\\hitl-mobo-robustness-tests\\external_datasets\\ashrae",
+    "param_columns": [
+      "AirTemperature",
+      "RadiantTemperature",
+      "RelativeHumidity",
+      "AirVelocity",
+      "MetabolicRate",
+      "ClothingInsulation"
+    ],
+    "objective_map": {
+      "composite": [
+        "ThermalComfort"
+      ],
+      "multi_objective": [
+        "ThermalComfort",
+        "-ThermalSensationAbs"
+      ],
+      "comfort": [
+        "ThermalComfort"
+      ],
+      "sensation_neutrality": [
+        "-ThermalSensationAbs"
+      ]
+    }
+  }
+]

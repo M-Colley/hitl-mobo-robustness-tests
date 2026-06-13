@@ -1,0 +1,269 @@
+[done] extra_trees_baseline | cold | r2=-0.008 rmse=0.955
+[done] ridge_sanity | cold | r2=-0.064 rmse=0.982
+[done] construct_avg_extra_trees | cold | r2=-0.008 rmse=0.955
+[done] extra_trees_nested_leaf_tuned | cold | r2=0.001 rmse=0.952
+[done] extra_trees_target=Predictability | cold | r2=-0.147 rmse=1.044
+[done] extra_trees_target=Percieved Usefulness | cold | r2=-0.083 rmse=0.916
+[done] extra_trees_target=-Mental Demand | cold | r2=-0.055 rmse=2.813
+[done] extra_trees_rescaled_composite | cold | r2=0.018 rmse=0.078
+[done] construct_avg_rescaled_composite | cold | r2=0.013 rmse=0.078
+[done] extra_trees_baseline | warm_per_user | r2=-0.321 rmse=0.851
+[done] extra_trees_session_groups | warm_per_user | r2=0.029 rmse=0.631
+[done] extra_trees_cond_feature | warm_per_user | r2=-0.608 rmse=0.939
+[done] construct_avg_session_groups | warm_per_user | r2=0.014 rmse=0.635
+[done] extra_trees_session_groups_iter | warm_per_user | r2=0.138 rmse=0.594
+[done] construct_avg_session_groups_iter | warm_per_user | r2=0.103 rmse=0.606
+[done] extra_trees_pooled_onehot | warm_pooled_onehot | r2=-0.378 rmse=0.869
+[done] extra_trees_pooled_onehot_cond | warm_pooled_onehot | r2=-0.566 rmse=0.926
+[done] extra_trees_pooled_session_onehot | warm_pooled_onehot | r2=-0.006 rmse=0.642
+[done] extra_trees_pooled_session_onehot_iter | warm_pooled_onehot | r2=0.124 rmse=0.599
+RESULTS_JSON_BEGIN
+{
+  "experiment": "provoice-probe",
+  "rows": [
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_baseline",
+      "protocol": "cold",
+      "r2_mean_fold": -0.008178955320106573,
+      "r2_pooled": 0.0671825877723441,
+      "rmse_pooled": 0.9551300255486094,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "deployed oracle, reference"
+    },
+    {
+      "dataset": "provoice",
+      "model": "ridge_sanity",
+      "protocol": "cold",
+      "r2_mean_fold": -0.06386350245598052,
+      "r2_pooled": 0.014832688283825002,
+      "rmse_pooled": 0.9815652444941216,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "fixed alpha, scaler inside pipeline (train-fold fit only)"
+    },
+    {
+      "dataset": "provoice",
+      "model": "construct_avg_extra_trees",
+      "protocol": "cold",
+      "r2_mean_fold": -0.008160843373957727,
+      "r2_pooled": 0.06690633641602162,
+      "rmse_pooled": 0.9552714446673983,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "F3: one ET per signed construct, predictions averaged into composite"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_nested_leaf_tuned",
+      "protocol": "cold",
+      "r2_mean_fold": 0.0008177510120156439,
+      "r2_pooled": 0.0740968677112015,
+      "rmse_pooled": 0.9515836082364068,
+      "y_std": 0.9889268666136944,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "min_samples_leaf in {2,8,32,64} selected by inner GroupKFold over training users only"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_target=Predictability",
+      "protocol": "cold",
+      "r2_mean_fold": -0.14684741802487208,
+      "r2_pooled": -0.010760904009435412,
+      "rmse_pooled": 1.044083575848653,
+      "y_std": 1.0385108696811092,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "diagnostic: single signed construct as target; rmse in construct units"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_target=Percieved Usefulness",
+      "protocol": "cold",
+      "r2_mean_fold": -0.08307870100806805,
+      "r2_pooled": 0.055659017021991386,
+      "rmse_pooled": 0.9160568548074434,
+      "y_std": 0.9426663618126137,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "diagnostic: single signed construct as target; rmse in construct units"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_target=-Mental Demand",
+      "protocol": "cold",
+      "r2_mean_fold": -0.054980092445217885,
+      "r2_pooled": 0.03806769380660746,
+      "rmse_pooled": 2.813211480809234,
+      "y_std": 2.868336674327296,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "diagnostic: single signed construct as target; rmse in construct units"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_rescaled_composite",
+      "protocol": "cold",
+      "r2_mean_fold": 0.018445407501240775,
+      "r2_pooled": 0.05897538017750814,
+      "rmse_pooled": 0.07775231049417523,
+      "y_std": 0.08015171335802136,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "F4: scale-normalized composite target; rmse NOT comparable to baseline/floor"
+    },
+    {
+      "dataset": "provoice",
+      "model": "construct_avg_rescaled_composite",
+      "protocol": "cold",
+      "r2_mean_fold": 0.012881704813727812,
+      "r2_pooled": 0.05308783588801591,
+      "rmse_pooled": 0.07799516088326891,
+      "y_std": 0.08015171335802136,
+      "n_folds": 5,
+      "n_rows": 532,
+      "n_users": 19,
+      "note": "F3+F4: per-construct models on rescaled constructs; rmse NOT comparable"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_baseline",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.32059281882409807,
+      "r2_median_user": -0.9015221067407877,
+      "rmse_pooled": 0.8505355036961896,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "note": "reference; merged user groups order cond2-rows before cond1-rows (D1)"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_session_groups",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.02921282257565838,
+      "r2_median_user": -1.2295409495701062,
+      "rmse_pooled": 0.6305283111959963,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1: groups = user x condition session (38 sessions), true early->late split"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_cond_feature",
+      "protocol": "warm_per_user",
+      "r2_pooled": -0.608499219412892,
+      "r2_median_user": -1.6998336288847145,
+      "rmse_pooled": 0.9386818239863006,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "note": "F2: merged groups + condition one-hot feature"
+    },
+    {
+      "dataset": "provoice",
+      "model": "construct_avg_session_groups",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.014079851449806613,
+      "r2_median_user": -1.349075961852809,
+      "rmse_pooled": 0.6354237552647262,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1+F3"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_session_groups_iter",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.13769874321113806,
+      "r2_median_user": -0.7443710165030029,
+      "rmse_pooled": 0.5942539612197681,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1 + iteration index as known-context feature"
+    },
+    {
+      "dataset": "provoice",
+      "model": "construct_avg_session_groups_iter",
+      "protocol": "warm_per_user",
+      "r2_pooled": 0.1029902067624554,
+      "r2_median_user": -0.925559365672634,
+      "rmse_pooled": 0.6060956514529816,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1+F3 + iteration feature"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_pooled_onehot",
+      "protocol": "warm_pooled_onehot",
+      "r2_pooled": -0.3776854811884771,
+      "rmse_pooled": 0.8687264049788457,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "note": "reference pooled warm, merged user groups"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_pooled_onehot_cond",
+      "protocol": "warm_pooled_onehot",
+      "r2_pooled": -0.5659785469001728,
+      "rmse_pooled": 0.9261917013130964,
+      "y_test_std": 0.7401299545141367,
+      "n_users": 19,
+      "n_test_rows": 152,
+      "train_frac": 0.7,
+      "note": "F2 pooled: user one-hot + condition feature"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_pooled_session_onehot",
+      "protocol": "warm_pooled_onehot",
+      "r2_pooled": -0.006464884290648287,
+      "rmse_pooled": 0.6420101427118975,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1 pooled: session groups, session one-hot"
+    },
+    {
+      "dataset": "provoice",
+      "model": "extra_trees_pooled_session_onehot_iter",
+      "protocol": "warm_pooled_onehot",
+      "r2_pooled": 0.12385546919730817,
+      "rmse_pooled": 0.5990050074874455,
+      "y_test_std": 0.6399448904043464,
+      "n_users": 38,
+      "n_test_rows": 133,
+      "train_frac": 0.7,
+      "note": "F1 pooled + iteration feature (one-hot appended after iteration by the harness)"
+    }
+  ]
+}
+RESULTS_JSON_END

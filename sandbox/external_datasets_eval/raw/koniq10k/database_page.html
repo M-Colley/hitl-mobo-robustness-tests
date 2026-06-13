@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>KonIQ-10k Database - Visual Quality Assessment Databases, MMSP Konstanz</title><meta property="og:site_name" content="Visual Quality Assessment Databases, MMSP Konstanz" />
+<meta property="og:title" content="KonIQ-10k Database" />
+<meta property="og:description" content="KonIQ-10k is,  at the time of publication,  the largest IQA dataset to date consisting of 10,073 quality scored images. This is the first in-the-wild database aiming for ecological validity, with..." />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/published/pdf_49.png" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/published/git-logo-black_8.png" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/published/7beea9f55b8eba9a9db7d195c5bacf88f23384fd_2.png" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/3632417985_4.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/2954406623_4.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/3707755654_5.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/9284536346_4.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/5869585652_5.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/indic-brightness-1_4.jpg" />
+<meta property="og:image" content="https://database.mmsp-kn.de/uploads/1/1/9/4/119489445/indic-brightness-2_4.jpg" />
+<meta property="og:url" content="https://database.mmsp-kn.de/koniq-10k-database.html" />
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<meta name="google-site-verification" content="afIeVr3dPkjThGzmWdkFclA419k_At1G1boOBvYcf10" />
+		<link id="wsite-base-style" rel="stylesheet" type="text/css" href="//cdn2.editmysite.com/css/sites.css?buildTime=1754595753" />
+<link rel="stylesheet" type="text/css" href="//cdn2.editmysite.com/css/old/fancybox.css?1754595753" />
+<link rel="stylesheet" type="text/css" href="//cdn2.editmysite.com/css/social-icons.css?buildtime=1754595753" media="screen,projection" />
+<link rel="stylesheet" type="text/css" href="/files/main_style.css?1755012629" title="wsite-theme-css" />
+<link href='//cdn2.editmysite.com/fonts/Montserrat/font.css?2' rel='stylesheet' type='text/css' />
+
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Molengo/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Molengo/font.css?2' rel='stylesheet' type='text/css' />
+<link href='//cdn2.editmysite.com/fonts/Roboto/font.css?2' rel='stylesheet' type='text/css' />
+<style type='text/css'>
+.wsite-elements.wsite-not-footer:not(.wsite-header-elements) div.paragraph, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) p, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-block .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-description, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .wsite-form-field label, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .wsite-form-field label, #wsite-content div.paragraph, #wsite-content p, #wsite-content .product-block .product-title, #wsite-content .product-description, #wsite-content .wsite-form-field label, #wsite-content .wsite-form-field label, .blog-sidebar div.paragraph, .blog-sidebar p, .blog-sidebar .wsite-form-field label, .blog-sidebar .wsite-form-field label {font-family:"Roboto" !important;}
+#wsite-content div.paragraph, #wsite-content p, #wsite-content .product-block .product-title, #wsite-content .product-description, #wsite-content .wsite-form-field label, #wsite-content .wsite-form-field label, .blog-sidebar div.paragraph, .blog-sidebar p, .blog-sidebar .wsite-form-field label, .blog-sidebar .wsite-form-field label {color:#626262 !important;}
+.wsite-elements.wsite-footer div.paragraph, .wsite-elements.wsite-footer p, .wsite-elements.wsite-footer .product-block .product-title, .wsite-elements.wsite-footer .product-description, .wsite-elements.wsite-footer .wsite-form-field label, .wsite-elements.wsite-footer .wsite-form-field label{}
+.wsite-elements.wsite-not-footer:not(.wsite-header-elements) h2, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-long .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-large .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-small .product-title, #wsite-content h2, #wsite-content .product-long .product-title, #wsite-content .product-large .product-title, #wsite-content .product-small .product-title, .blog-sidebar h2 {font-family:"Molengo" !important;}
+#wsite-content h2, #wsite-content .product-long .product-title, #wsite-content .product-large .product-title, #wsite-content .product-small .product-title, .blog-sidebar h2 {color:#2a2a2a !important;}
+.wsite-elements.wsite-footer h2, .wsite-elements.wsite-footer .product-long .product-title, .wsite-elements.wsite-footer .product-large .product-title, .wsite-elements.wsite-footer .product-small .product-title{font-family:"Roboto" !important;font-weight:700 !important;}
+#wsite-title {font-family:"Roboto" !important;color:#2a2a2a !important;text-transform:  uppercase !important;}
+.wsite-not-footer h2.wsite-content-title a, .wsite-not-footer .paragraph a, .wsite-not-footer blockquote a, #blogTable .blog-sidebar a, #blogTable .blog-comments a, #blogTable .blog-comments-bottom a, #wsite-com-store a, #wsite-com-product-gen a {color:#2a2a2a !important;}
+.wsite-menu-default a {font-family:"Roboto" !important;font-weight:700 !important;}
+.wsite-menu a {font-family:"Roboto" !important;font-weight:700 !important;}
+.wsite-image div, .wsite-caption {}
+.galleryCaptionInnerText {}
+.fancybox-title {}
+.wslide-caption-text {}
+.wsite-phone {}
+.wsite-headline,.wsite-header-section .wsite-content-title {font-family:"Molengo" !important;color:#2a2a2a !important;font-style:normal !important;text-transform:  none !important;letter-spacing: 0px !important;}
+.wsite-headline-paragraph,.wsite-header-section .paragraph {}
+.wsite-button-inner {font-family:"Roboto" !important;font-weight:700 !important;}
+.wsite-not-footer blockquote {}
+.wsite-footer blockquote {}
+.blog-header h2 a {}
+#wsite-content h2.wsite-product-title {}
+.wsite-product .wsite-product-price a {}
+.wsite-not-footer h2.wsite-content-title a:hover, .wsite-not-footer .paragraph a:hover, .wsite-not-footer blockquote a:hover, #blogTable .blog-sidebar a:hover, #blogTable .blog-comments a:hover, #blogTable .blog-comments-bottom a:hover, #wsite-com-store a:hover, #wsite-com-product-gen a:hover {color:#515151 !important;}
+@media screen and (min-width: 767px) {.wsite-elements.wsite-not-footer:not(.wsite-header-elements) div.paragraph, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) p, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-block .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-description, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .wsite-form-field label, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .wsite-form-field label, #wsite-content div.paragraph, #wsite-content p, #wsite-content .product-block .product-title, #wsite-content .product-description, #wsite-content .wsite-form-field label, #wsite-content .wsite-form-field label, .blog-sidebar div.paragraph, .blog-sidebar p, .blog-sidebar .wsite-form-field label, .blog-sidebar .wsite-form-field label {font-size:16px !important;line-height:23px !important;}
+#wsite-content div.paragraph, #wsite-content p, #wsite-content .product-block .product-title, #wsite-content .product-description, #wsite-content .wsite-form-field label, #wsite-content .wsite-form-field label, .blog-sidebar div.paragraph, .blog-sidebar p, .blog-sidebar .wsite-form-field label, .blog-sidebar .wsite-form-field label {}
+.wsite-elements.wsite-footer div.paragraph, .wsite-elements.wsite-footer p, .wsite-elements.wsite-footer .product-block .product-title, .wsite-elements.wsite-footer .product-description, .wsite-elements.wsite-footer .wsite-form-field label, .wsite-elements.wsite-footer .wsite-form-field label{}
+.wsite-elements.wsite-not-footer:not(.wsite-header-elements) h2, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-long .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-large .product-title, .wsite-elements.wsite-not-footer:not(.wsite-header-elements) .product-small .product-title, #wsite-content h2, #wsite-content .product-long .product-title, #wsite-content .product-large .product-title, #wsite-content .product-small .product-title, .blog-sidebar h2 {font-size:42px !important;line-height:54px !important;}
+#wsite-content h2, #wsite-content .product-long .product-title, #wsite-content .product-large .product-title, #wsite-content .product-small .product-title, .blog-sidebar h2 {}
+.wsite-elements.wsite-footer h2, .wsite-elements.wsite-footer .product-long .product-title, .wsite-elements.wsite-footer .product-large .product-title, .wsite-elements.wsite-footer .product-small .product-title{font-size:10px !important;}
+#wsite-title {font-size:16px !important;}
+.wsite-menu-default a {font-size:14px !important;}
+.wsite-menu a {}
+.wsite-image div, .wsite-caption {}
+.galleryCaptionInnerText {}
+.fancybox-title {}
+.wslide-caption-text {}
+.wsite-phone {}
+.wsite-headline,.wsite-header-section .wsite-content-title {font-size:70px !important;line-height:70px !important;}
+.wsite-headline-paragraph,.wsite-header-section .paragraph {}
+.wsite-button-inner {}
+.wsite-not-footer blockquote {}
+.wsite-footer blockquote {}
+.blog-header h2 a {}
+#wsite-content h2.wsite-product-title {}
+.wsite-product .wsite-product-price a {}
+}</style>
+
+		<script>
+var STATIC_BASE = '//cdn1.editmysite.com/';
+var ASSETS_BASE = '//cdn2.editmysite.com/';
+var STYLE_PREFIX = 'wsite';
+</script>
+<script src='https://cdn2.editmysite.com/js/jquery-1.8.3.min.js'></script>
+
+<script type="text/javascript" src="//cdn2.editmysite.com/js/lang/en/stl.js?buildTime=1754595753&"></script>
+<script src="//cdn2.editmysite.com/js/site/main.js?buildTime=1754595753"></script><script type="text/javascript">
+		function initCustomerAccountsModels() {
+					(function(){_W.setup_rpc({"url":"\/ajax\/api\/JsonRPC\/CustomerAccounts\/","actions":{"CustomerAccounts":[{"name":"login","len":2,"multiple":false,"standalone":false},{"name":"logout","len":0,"multiple":false,"standalone":false},{"name":"getSessionDetails","len":0,"multiple":false,"standalone":false},{"name":"getAccountDetails","len":0,"multiple":false,"standalone":false},{"name":"getOrders","len":0,"multiple":false,"standalone":false},{"name":"register","len":4,"multiple":false,"standalone":false},{"name":"emailExists","len":1,"multiple":false,"standalone":false},{"name":"passwordReset","len":1,"multiple":false,"standalone":false},{"name":"passwordUpdate","len":3,"multiple":false,"standalone":false},{"name":"validateSession","len":1,"multiple":false,"standalone":false}]},"namespace":"_W.CustomerAccounts.RPC"});
+_W.setup_model_rpc({"rpc_namespace":"_W.CustomerAccounts.RPC","model_namespace":"_W.CustomerAccounts.BackboneModelData","collection_namespace":"_W.CustomerAccounts.BackboneCollectionData","bootstrap_namespace":"_W.CustomerAccounts.BackboneBootstrap","models":{"CustomerAccounts":{"_class":"CustomerAccounts.Model.CustomerAccounts","defaults":null,"validation":null,"types":null,"idAttribute":null,"keydefs":null}},"collections":{"CustomerAccounts":{"_class":"CustomerAccounts.Collection.CustomerAccounts"}},"bootstrap":[]});
+})();
+		}
+		if(document.createEvent && document.addEventListener) {
+			var initEvt = document.createEvent('Event');
+			initEvt.initEvent('customerAccountsModelsInitialized', true, false);
+			document.dispatchEvent(initEvt);
+		} else if(document.documentElement.initCustomerAccountsModels === 0){
+			document.documentElement.initCustomerAccountsModels++
+		}
+		</script>
+		<script type="text/javascript"> _W = _W || {}; _W.securePrefix='database.mmsp-kn.de'; </script><script>_W = _W || {};
+			_W.customerLocale = "en_US";
+			_W.storeName = null;
+			_W.isCheckoutReskin = false;
+			_W.storeCountry = "DE";
+			_W.storeCurrency = "EUR";
+			_W.storeEuPrivacyPolicyUrl = "";
+			com_currentSite = "580143077436436019";
+			com_userID = "119489445";</script><script type="text/javascript">_W.configDomain = "www.weebly.com";</script><script>_W.relinquish && _W.relinquish()</script>
+<script type="text/javascript" src="//cdn2.editmysite.com/js/lang/en/stl.js?buildTime=1754595753&"></script><script> _W.themePlugins = [];</script><script type="text/javascript"> _W.recaptchaUrl = "https://www.google.com/recaptcha/api.js"; </script><script type="text/javascript"><!--
+	
+	
+	function initFlyouts(){
+		initPublishedFlyoutMenus(
+			[{"id":"594357320587646831","title":"Home","url":"index.html","target":"","nav_menu":false,"nonclickable":false},{"id":"223928317252567547","title":"VQA Databases","url":"vqa-databases.html","target":"","nav_menu":false,"nonclickable":true},{"id":"671850435221957026","title":"About","url":"about.html","target":"","nav_menu":false,"nonclickable":false},{"id":"863529861562802186","title":"Contact","url":"contact.html","target":"","nav_menu":false,"nonclickable":false}],
+			"420363696412939208",
+			'',
+			'active',
+			false,
+			{"navigation\/item":"<li {{#id}}id=\"{{id}}\"{{\/id}} class=\"wsite-menu-item-wrap\">\n\t<a\n\t\t{{^nonclickable}}\n\t\t\t{{^nav_menu}}\n\t\t\t\thref=\"{{url}}\"\n\t\t\t{{\/nav_menu}}\n\t\t{{\/nonclickable}}\n\t\t{{#target}}\n\t\t\ttarget=\"{{target}}\"\n\t\t{{\/target}}\n\t\t{{#membership_required}}\n\t\t\tdata-membership-required=\"{{.}}\"\n\t\t{{\/membership_required}}\n\t\tclass=\"wsite-menu-item\"\n\t\t>\n\t\t{{{title_html}}}\n\t<\/a>\n\t{{#has_children}}{{> navigation\/flyout\/list}}{{\/has_children}}\n<\/li>\n","navigation\/flyout\/list":"<div class=\"wsite-menu-wrap\" style=\"display:none\">\n\t<ul class=\"wsite-menu\">\n\t\t{{#children}}{{> navigation\/flyout\/item}}{{\/children}}\n\t<\/ul>\n<\/div>\n","navigation\/flyout\/item":"<li {{#id}}id=\"{{id}}\"{{\/id}}\n\tclass=\"wsite-menu-subitem-wrap {{#is_current}}wsite-nav-current{{\/is_current}}\"\n\t>\n\t<a\n\t\t{{^nonclickable}}\n\t\t\t{{^nav_menu}}\n\t\t\t\thref=\"{{url}}\"\n\t\t\t{{\/nav_menu}}\n\t\t{{\/nonclickable}}\n\t\t{{#target}}\n\t\t\ttarget=\"{{target}}\"\n\t\t{{\/target}}\n\t\tclass=\"wsite-menu-subitem\"\n\t\t>\n\t\t<span class=\"wsite-menu-title\">\n\t\t\t{{{title_html}}}\n\t\t<\/span>{{#has_children}}<span class=\"wsite-menu-arrow\">&gt;<\/span>{{\/has_children}}\n\t<\/a>\n\t{{#has_children}}{{> navigation\/flyout\/list}}{{\/has_children}}\n<\/li>\n"},
+			{}
+		)
+	}
+//-->
+</script>
+		
+		
+	</head>
+	<body class="header-page  wsite-page-koniq-10k-database  full-width-body-off header-overlay-on alt-nav-on  wsite-theme-light"><div class="wrapper">
+    <div class="birdseye-header">
+      <div class="nav-wrap">
+        <div class="container">
+          <div class="logo"><span class="wsite-logo">
+
+	<a href="/">
+		<img src="/uploads/1/1/9/4/119489445/vqa-logo-small-filled.png" alt="Visual Quality Assessment Databases, MMSP Konstanz" />
+	</a>
+
+</span></div>
+          <div class="nav desktop-nav"><ul class="wsite-menu-default">
+		<li id="pg594357320587646831" class="wsite-menu-item-wrap">
+			<a
+						href="/"
+				class="wsite-menu-item"
+				>
+				Home
+			</a>
+			
+		</li>
+		<li id="pg223928317252567547" class="wsite-menu-item-wrap">
+			<a
+				class="wsite-menu-item"
+				>
+				VQA Databases
+			</a>
+			<div class="wsite-menu-wrap" style="display:none">
+	<ul class="wsite-menu">
+		<li id="wsite-nav-874566532511736839"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konvid-150k-vqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonViD-150k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-466800874440527660"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konvid-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonViD-1k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-607272070814977073"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/vqacountry-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			VQA@Country Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-501690942261932392"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/koniq-image-defects-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonIQ++ Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-420363696412939208"
+	class="wsite-menu-subitem-wrap wsite-nav-current"
+	>
+	<a
+				href="/koniq-10k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonIQ-10k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-275974938902024680"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/kadid-10k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KADID-10k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-410235478684479395"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/iisa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			IISA Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-888140530441860767"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/uhd-iqa-benchmark-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			UHD-IQA Benchmark Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-594905171137024537"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/iqa-experts-300.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			IQA-Experts-300
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-696743086900351423"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konpatch-30k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonPatch-30k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-789882321108179294"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konx.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonX Cross-Resolution Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-505334265342148212"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/kosmo-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KoSMo-1k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-412635260143075554"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/studymb-20-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			StudyMB 2.0 Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-239403132940661167"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/picturewise-jnd-data.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			Picturewise JND Data
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-153970081518601364"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/cogvqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			CogVQA  Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-217799775749227525"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konjnd-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonJND-1k database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-775292214720144125"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konfig-iqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonFiG-IQA Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-357061064435421734"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/gfiqa-20k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			GFIQA-20k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-725769878722199760"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/feedback-study-dataset.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			Feedback study dataset
+		</span>
+	</a>
+	
+</li>
+
+	</ul>
+</div>
+
+		</li>
+		<li id="pg671850435221957026" class="wsite-menu-item-wrap">
+			<a
+						href="/about.html"
+				class="wsite-menu-item"
+				>
+				About
+			</a>
+			
+		</li>
+		<li id="pg863529861562802186" class="wsite-menu-item-wrap">
+			<a
+						href="/contact.html"
+				class="wsite-menu-item"
+				>
+				Contact
+			</a>
+			
+		</li>
+</ul>
+</div>
+          <a class="hamburger" aria-label="Menu" href="#"><span></span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner-wrap">
+      <div class="wsite-elements wsite-not-footer wsite-header-elements">
+	<div class="wsite-section-wrap">
+	<div  class="wsite-section wsite-header-section wsite-section-bg-gradient" style="height: auto;background: #ffffff;background: linear-gradient(0deg, #ffffff 0%, #8fcbff 100%);" >
+		<div class="wsite-section-content">
+			
+          <div class="container">
+            <div class="banner">
+				<div class="wsite-section-elements">
+					<div class="wsite-spacer" style="height:50px;"></div>
+
+<h2 class="wsite-content-title" style="text-align:left;"><font color="#2a2a2a">KonIQ-10k IQA Database</font></h2>
+				</div>
+			</div>
+          </div>
+      
+		</div>
+		<div class=""></div>
+	</div>
+</div>
+
+</div>
+
+    </div>
+
+    <div class="main-wrap">
+      <div id="wsite-content" class="wsite-elements wsite-not-footer">
+	<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-187"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -25px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:45.555555555556%; padding:0 25px;">
+					
+						
+
+<h2 class="wsite-content-title">&#8203;An ecologically valid image quality assessment database<br></h2>
+
+<div class="paragraph">KonIQ-10k is,&nbsp;<span style="color:rgb(98, 98, 98)">at the time of publication,&nbsp;</span>the largest IQA dataset to date consisting of 10,073 quality scored images. This is the first in-the-wild database aiming for ecological validity, with regard to the authenticity of distortions, the diversity of content, and quality-related indicators. Through the use of crowdsourcing, we obtained 1.2 million reliable quality ratings from 1,459 crowd workers, paving the way for more general IQA models.<br /><br />We introduce a novel, deep learning model (KonCept512), to show an excellent generalization beyond the test set (0.921 SROCC), to the current state-of-the-art database LIVE-in-the-Wild (0.825 SROCC). The model derives its core performance from the InceptionResNet architecture, being trained at a higher resolution than previous models (512x384). A correlation analysis shows that KonCept512 performs similar to having 9 subjective scores for each test image.<br /></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:54.444444444444%; padding:0 25px;">
+					
+						
+
+<h2 class="wsite-content-title" style="text-align:center;">&#8203;Cite us</h2>
+
+<div class="paragraph">KonIQ-10k is freely available to the research community. If you use our database in your research, you can cite it as follows:</div>
+
+<div><div id="940810739661392765" align="left" style="width: 100%; overflow-y: hidden;" class="wcustomhtml"><small>
+<pre>
+@article{koniq10k,
+author={V. {Hosu} and H. {Lin} and T. {Sziranyi} and D. <br>{Saupe}},
+journal={IEEE Transactions on Image Processing},
+title={KonIQ-10k: An Ecologically Valid Database for Deep <br>Learning of Blind Image Quality Assessment},
+year={2020},
+volume={29},
+pages={4041-4056}}
+</pre>
+</small></div>
+
+
+
+</div>
+
+<div class="wsite-spacer" style="height:29px;"></div>
+
+<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:18.31302296765%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:left">
+<a href='https://arxiv.org/pdf/1910.06180.pdf' target='_blank'>
+<img src="/uploads/1/1/9/4/119489445/published/pdf_49.png" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%"></div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:21.71632812093%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:17px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:left">
+<a href='https://github.com/subpic/koniq' target='_blank'>
+<img src="/uploads/1/1/9/4/119489445/published/git-logo-black_8.png" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%"></div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:59.970648911421%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:15px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:left">
+<a href='https://osf.io/hcsdy/' target='_blank'>
+<img src="/uploads/1/1/9/4/119489445/published/7beea9f55b8eba9a9db7d195c5bacf88f23384fd_2.png" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Alternative download</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-section-bg-color wsite-background-188" style="background-color: #f8f8f8;background-image: none;is_customized: 1;" >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:50%; padding:0 15px;">
+					
+						
+
+<h2 class="wsite-content-title" style="text-align:left;">Downloads</h2>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:50%; padding:0 15px;">
+					
+						
+
+<div style="text-align:right;"><div style="height: 5px; overflow: hidden;"></div>
+<a class="wsite-button wsite-button-small wsite-button-highlight" href="https://www.dropbox.com/sh/zi5zdos0xyeoa89/AADJLVbuKh8dFDkf3e_ODsKda?dl=0" target="_blank">
+<span class="wsite-button-inner">Browse all images (online gallery)</span>
+</a>
+<div style="height: 10px; overflow: hidden;"></div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+
+<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:22.072072072072%; padding:0 15px;">
+					
+						
+
+<div style="text-align:left;"><div style="height: 10px; overflow: hidden;"></div>
+<a class="wsite-button wsite-button-small wsite-button-normal" href="http://datasets.vqa.mmsp-kn.de/archives/koniq10k_1024x768.zip" target="_blank">
+<span class="wsite-button-inner">images Full (.zip)</span>
+</a>
+<div style="height: 10px; overflow: hidden;"></div></div>
+
+<div class="paragraph" style="text-align:left;">5 Gb @ 1024x768 px</div>
+
+<div style="text-align:left;"><div style="height: 10px; overflow: hidden;"></div>
+<a class="wsite-button wsite-button-small wsite-button-normal" href="http://datasets.vqa.mmsp-kn.de/archives/koniq10k_512x384.zip" target="_blank">
+<span class="wsite-button-inner">images small (.zip)</span>
+</a>
+<div style="height: 10px; overflow: hidden;"></div></div>
+
+<div class="paragraph" style="text-align:left;">767 Mb @ 512x384 px</div>
+
+<div style="text-align:left;"><div style="height: 10px; overflow: hidden;"></div>
+<a class="wsite-button wsite-button-small wsite-button-normal" href="http://datasets.vqa.mmsp-kn.de/archives/koniq10k_scores_and_distributions.zip" target="_blank">
+<span class="wsite-button-inner">SCORES (.zip)</span>
+</a>
+<div style="height: 10px; overflow: hidden;"></div></div>
+
+<div class="paragraph" style="text-align:left;">304 Kb download</div>
+
+<div style="text-align:left;"><div style="height: 10px; overflow: hidden;"></div>
+<a class="wsite-button wsite-button-small wsite-button-normal" href="http://datasets.vqa.mmsp-kn.de/archives/koniq10k_indicators.zip" target="_blank">
+<span class="wsite-button-inner"><span style="font-weight:700">indicators</span>&nbsp;(.zip)</span>
+</a>
+<div style="height: 10px; overflow: hidden;"></div></div>
+
+<div class="paragraph" style="text-align:left;">389 Kb download</div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:77.927927927928%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:50px;"></div>
+
+<h2 class="wsite-content-title"><font size="6">The scores file header</font></h2>
+
+<div class="paragraph" style="text-align:left;"><ul><li>image_name: the image file name</li><li>c1-c5: number of ratings for each&nbsp;ACR&nbsp;value&nbsp;</li><li>c_total: total number of judgments per image</li><li><span style="color:rgb(98, 98, 98)">MOS:&nbsp;</span><span style="color:rgb(98, 98, 98)"><span style="color:rgb(98, 98, 98)">Mean Opinion Scores of the 5-point ACR</span></span></li><li><span style="color:rgb(98, 98, 98)"><span style="color:rgb(98, 98, 98)">&#8203;SD</span></span>:&nbsp;<span style="color:rgb(98, 98, 98)"><span style="color:rgb(98, 98, 98)">&#8203;Standard Deviation of the MOS</span></span></li><li>MOS_zscore: ACR scores are first normalised for each user by&nbsp;<span style="color:rgb(98, 98, 98)">z-scoring the user ratings</span></li></ul><br />Users exhibiting unusual scoring behaviour are removed. See <a href="http://datasets.vqa.mmsp-kn.de/archives/papers/Hosu-IQA-experts.pdf" target="_blank">our paper</a> for more details on how we do reliability screening.</div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-189"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<h2 class="wsite-content-title">Example images, with indicators</h2>
+
+<div class="wsite-spacer" style="height:26px;"></div>
+
+<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:32px;"></div>
+
+<div class="paragraph" style="text-align:right;"><font size="5">Mean<br />Opinion&#8203;<br />Score</font></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/3632417985_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/3632417985_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">MOS: 1.13</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/2954406623_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/2954406623_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">MOS: 1.97</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/3707755654_5.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/3707755654_5.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">MOS: 2.71</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/9284536346_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/9284536346_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">MOS: 3.52</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/5869585652_5.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/5869585652_5.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">MOS: 4.31</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-190"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:61px;"></div>
+
+<div class="paragraph" style="text-align:right;"><font size="5">Brightness</font></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-brightness-1_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-brightness-1_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Brightness: 0.03</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-brightness-2_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-brightness-2_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Brightness: 0.20</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-brightness-3_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-brightness-3_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Brightness: 0.41</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666666%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-brightness-4_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-brightness-4_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Brightness: 0.60</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666666%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-brightness-5_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-brightness-5_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Brightness: 0.80</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-191"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:61px;"></div>
+
+<div class="paragraph" style="text-align:right;"><font size="5">Colorfulness</font></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-colorfulness-1_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-colorfulness-1_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Colorfulness: 0</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-colorfulness-2_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-colorfulness-2_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Colorfulness: 0.13</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-colorfulness-3_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-colorfulness-3_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Colorfulness: 0.24</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-colorfulness-4_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-colorfulness-4_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Colorfulness: 0.36</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-colorfulness-5_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-colorfulness-5_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Colorfulness: 0.48</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-192"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:61px;"></div>
+
+<div class="paragraph" style="text-align:right;"><font size="5">Contrast</font></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-contrast-1_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-contrast-1_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Contrast: 0.06</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-contrast-2_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-contrast-2_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Contrast: 0.14</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-contrast-3_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-contrast-3_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Contrast: 0.23</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-contrast-4_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-contrast-4_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Contrast: 0.31</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666666%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-contrast-5_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-contrast-5_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Contrast: 0.40</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+<div class="wsite-section-wrap">
+	<div class="wsite-section wsite-body-section wsite-background-193"  >
+		<div class="wsite-section-content">
+          <div class="container">
+			<div class="wsite-section-elements">
+				<div><div class="wsite-multicol"><div class="wsite-multicol-table-wrap" style="margin:0 -15px;">
+	<table class="wsite-multicol-table">
+		<tbody class="wsite-multicol-tbody">
+			<tr class="wsite-multicol-tr">
+				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div class="wsite-spacer" style="height:61px;"></div>
+
+<div class="paragraph" style="text-align:right;"><font size="5">Sharpness</font></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-sharpness-1_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-sharpness-1_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Sharpness: 5.58</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-sharpness-2_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-sharpness-2_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Sharpness: 10.19</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-sharpness-3_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-sharpness-3_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Sharpness: 15.27</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-sharpness-4_4.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-sharpness-4_4.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Sharpness: 20.54</div>
+</div></div>
+
+
+					
+				</td>				<td class="wsite-multicol-col" style="width:16.666666666667%; padding:0 15px;">
+					
+						
+
+<div><div class="wsite-image wsite-image-border-none " style="padding-top:10px;padding-bottom:10px;margin-left:0px;margin-right:0px;text-align:center">
+<a href='/uploads/1/1/9/4/119489445/indic-sharpness-5_3.jpg' rel='lightbox' onclick='if (!lightboxLoaded) return false'>
+<img src="/uploads/1/1/9/4/119489445/indic-sharpness-5_3.jpg" alt="Picture" style="width:auto;max-width:100%" />
+</a>
+<div style="display:block;font-size:90%">Sharpness: 25.63</div>
+</div></div>
+
+
+					
+				</td>			</tr>
+		</tbody>
+	</table>
+</div></div></div>
+			</div>
+		</div>
+      </div>
+
+	</div>
+</div>
+
+</div>
+
+    </div>
+
+    <div class="footer-wrap">
+        <div class="footer"><div class='wsite-elements wsite-footer'>
+<div class="paragraph" style="text-align:center;"><font size="3"><a href="/imprint-impressum.html">Imprint</a> |&nbsp;<a href="/privacy-policy.html">Privacy policy</a>&nbsp;| <a href="/about.html">About</a>&nbsp;| <a href="/contact.html">Contact</a><br />Copyright "VQA Group at Universit&auml;t Konstanz" &copy; 2019-2025</font></div></div></div>
+    </div><!-- end footer-wrap -->
+  </div><!-- /.wrapper -->
+
+  <div id="navMobile" class="nav mobile-nav">
+    <a class="hamburger" aria-label="Menu" href="#"><span></span></a>
+    <ul class="wsite-menu-default">
+    		<li id="pg594357320587646831" class="wsite-menu-item-wrap">
+    			<a
+    						href="/"
+    				class="wsite-menu-item"
+    				>
+    				Home
+    			</a>
+    			
+    		</li>
+    		<li id="pg223928317252567547" class="wsite-menu-item-wrap">
+    			<a
+    				class="wsite-menu-item"
+    				>
+    				VQA Databases
+    			</a>
+    			<div class="wsite-menu-wrap" style="display:none">
+	<ul class="wsite-menu">
+		<li id="wsite-nav-874566532511736839"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konvid-150k-vqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonViD-150k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-466800874440527660"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konvid-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonViD-1k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-607272070814977073"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/vqacountry-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			VQA@Country Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-501690942261932392"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/koniq-image-defects-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonIQ++ Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-420363696412939208"
+	class="wsite-menu-subitem-wrap wsite-nav-current"
+	>
+	<a
+				href="/koniq-10k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonIQ-10k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-275974938902024680"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/kadid-10k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KADID-10k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-410235478684479395"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/iisa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			IISA Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-888140530441860767"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/uhd-iqa-benchmark-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			UHD-IQA Benchmark Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-594905171137024537"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/iqa-experts-300.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			IQA-Experts-300
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-696743086900351423"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konpatch-30k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonPatch-30k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-789882321108179294"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konx.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonX Cross-Resolution Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-505334265342148212"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/kosmo-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KoSMo-1k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-412635260143075554"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/studymb-20-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			StudyMB 2.0 Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-239403132940661167"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/picturewise-jnd-data.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			Picturewise JND Data
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-153970081518601364"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/cogvqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			CogVQA  Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-217799775749227525"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konjnd-1k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonJND-1k database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-775292214720144125"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/konfig-iqa-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			KonFiG-IQA Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-357061064435421734"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/gfiqa-20k-database.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			GFIQA-20k Database
+		</span>
+	</a>
+	
+</li>
+<li id="wsite-nav-725769878722199760"
+	class="wsite-menu-subitem-wrap "
+	>
+	<a
+				href="/feedback-study-dataset.html"
+		class="wsite-menu-subitem"
+		>
+		<span class="wsite-menu-title">
+			Feedback study dataset
+		</span>
+	</a>
+	
+</li>
+
+	</ul>
+</div>
+
+    		</li>
+    		<li id="pg671850435221957026" class="wsite-menu-item-wrap">
+    			<a
+    						href="/about.html"
+    				class="wsite-menu-item"
+    				>
+    				About
+    			</a>
+    			
+    		</li>
+    		<li id="pg863529861562802186" class="wsite-menu-item-wrap">
+    			<a
+    						href="/contact.html"
+    				class="wsite-menu-item"
+    				>
+    				Contact
+    			</a>
+    			
+    		</li>
+    </ul>
+  </div>
+
+	<script type="text/javascript" src="/files/theme/plugins.js?1565969634"></script>
+  <script type="text/javascript" src="/files/theme/custom.js?1565969634"></script>
+    <div id="customer-accounts-app"></div>
+    <script src="//cdn2.editmysite.com/js/site/main-customer-accounts-site.js?buildTime=1754595753"></script>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-103856807-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-103856807-1');
+</script>
+
+<style>
+.main-wrap .container { padding: 20px 40px; }
+</style><script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-7870337-1']);
+	_gaq.push(['_setDomainName', 'none']);
+	_gaq.push(['_setAllowLinker', true]);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		// NOTE: keep the [1] if you replace this code. Otherwise cookie banner scripts won't be first on the page
+		var s = document.getElementsByTagName('script')[1]; s.parentNode.insertBefore(ga, s);
+	})();
+
+	_W.Analytics = _W.Analytics || {'trackers': {}};
+	_W.Analytics.trackers.wGA = '_gaq';
+</script>
+
+<script type="text/javascript" async=1>
+	// NOTE: keep the getElementsByTagName(o)**[1]** if you replace this code. Otherwise cookie banner scripts won't be first on the page
+	;(function(p,l,o,w,i,n,g){if(!p[i]){p.GlobalSnowplowNamespace=p.GlobalSnowplowNamespace||[];
+			p.GlobalSnowplowNamespace.push(i);p[i]=function(){(p[i].q=p[i].q||[]).push(arguments)
+			};p[i].q=p[i].q||[];n=l.createElement(o);g=l.getElementsByTagName(o)[1];n.async=1;
+			n.src=w;g.parentNode.insertBefore(n,g)}}(window,document,'script','//cdn2.editmysite.com/js/wsnbn/snowday262.js','snowday'));
+
+	var r = [99, 104, 101, 99, 107, 111, 117, 116, 46, 40, 119, 101, 101, 98, 108, 121, 124, 101, 100, 105, 116, 109, 121, 115, 105, 116, 101, 41, 46, 99, 111, 109];
+	var snPlObR = function(arr) {
+		var s = '';
+		for (var i = 0 ; i < arr.length ; i++){
+			s = s + String.fromCharCode(arr[i]);
+		}
+		return s;
+	};
+	var s = snPlObR(r);
+
+	var regEx = new RegExp(s);
+
+	_W.Analytics = _W.Analytics || {'trackers': {}};
+	_W.Analytics.trackers.wSP = 'snowday';
+	_W.Analytics.user_id = '119489445';
+	_W.Analytics.site_id = '580143077436436019';
+
+
+	(function(app_id, ec_hostname, discover_root_domain) {
+		var track = window[_W.Analytics.trackers.wSP];
+		if (!track) return;
+		track('newTracker', app_id, ec_hostname, {
+			appId: app_id,
+			post: true,
+			platform: 'web',
+			discoverRootDomain: discover_root_domain,
+			cookieName: '_snow_',
+			contexts: {
+				webPage: true,
+				performanceTiming: true,
+				gaCookies: true
+			},
+			crossDomainLinker: function (linkElement) {
+				return regEx.test(linkElement.href);
+			},
+			respectDoNotTrack: true
+		});
+		track('trackPageView', _W.Analytics.user_id+':'+_W.Analytics.site_id, _W.Analytics.spContexts);
+		track('crossDomainLinker', function (linkElement) {
+			return regEx.test(linkElement.href);
+		});
+	})(
+		'_wn',
+		'ec.editmysite.com',
+		true
+	);
+</script>
+
+
+
+
+
+<script>
+	(function(jQuery) {
+		try {
+			if (jQuery) {
+				jQuery('div.blog-social div.fb-like').attr('class', 'blog-social-item blog-fb-like');
+				var $commentFrame = jQuery('#commentArea iframe');
+				if ($commentFrame.length > 0) {
+					var frameHeight = jQuery($commentFrame[0].contentWindow.document).height() + 50;
+					$commentFrame.css('min-height', frameHeight + 'px');
+				}
+				if (jQuery('.product-button').length > 0){
+					jQuery(document).ready(function(){
+						jQuery('.product-button').parent().each(function(index, product){
+							if(jQuery(product).attr('target') == 'paypal'){
+								if (!jQuery(product).find('> [name="bn"]').length){
+									jQuery('<input>').attr({
+										type: 'hidden',
+										name: 'bn',
+										value: 'DragAndDropBuil_SP_EC'
+									}).appendTo(product);
+								}
+							}
+						});
+					});
+				}
+			}
+			else {
+				// Prototype
+				$$('div.blog-social div.fb-like').each(function(div) {
+					div.className = 'blog-social-item blog-fb-like';
+				});
+				$$('#commentArea iframe').each(function(iframe) {
+					iframe.style.minHeight = '410px';
+				});
+			}
+		}
+		catch(ex) {}
+	})(window._W && _W.jQuery);
+</script>
+
+<script>
+	window._W.isEUUser = true;
+	window._W.showCookieToAll = "";
+</script>
+
+<script>
+	(function(jQuery) {
+		try {
+			function forceShowCcLinks() {
+				var ccLinks = document.querySelector('.cc_links');
+				if (!ccLinks) {
+					return;
+				}
+
+				var ccLinksVisible = jQuery(ccLinks).is(':visible');
+				if (ccLinksVisible) {
+					return;
+				}
+
+
+				ccLinks.style.display = 'block';
+
+				var ccParent = ccLinks.parentElement;
+
+				var ccParentVisible = jQuery(ccParent).is(':visible');
+				if (ccParentVisible) {
+					return;
+				}
+
+				ccParent.style.display = 'block';
+
+				var ccGrandparent = ccParent.parentElement;
+				var ccGrandparentVisible = jQuery(ccGrandparent).is(':visible');
+				if (ccGrandparentVisible) {
+					return;
+				}
+				ccGrandparent.style.display = 'block';
+
+			}
+
+			function forceShowCcLinksForever() {
+				var tenSeconds = 10000;
+				forceShowCcLinks();
+				setTimeout(forceShowCcLinksForever, tenSeconds);
+			}
+
+			jQuery(document).ready(forceShowCcLinksForever);
+		}
+		catch(ex) {}
+	})(window._W && _W.jQuery);
+</script>
+
+
+	</body>
+</html>

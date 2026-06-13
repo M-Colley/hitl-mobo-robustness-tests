@@ -60,6 +60,14 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("output") / "noise_calibration.csv",
     )
+    parser.add_argument(
+        "--normalize-objective",
+        action="store_true",
+        default=False,
+        help="Calibrate the NORMALIZED composite (constructs rescaled to [0,1] "
+        "before averaging), matching simulations run with --normalize-objective. "
+        "Construct-level rows remain on the raw scale.",
+    )
     return parser.parse_args()
 
 
@@ -138,6 +146,7 @@ def drop_full_duplicates(
 def calibrate_dataset(
     dataset: bo_sim.DatasetConfig,
     close_pair_fraction: float,
+    normalize_objective: bool = False,
 ) -> list[dict[str, object]]:
     objective_columns = dataset.objective_map["composite"]
     df = bo_sim.load_observations(dataset, "composite")
@@ -150,7 +159,9 @@ def calibrate_dataset(
     # Value columns analyzed: the unweighted composite (what the simulation
     # perturbs for objective=composite) plus each raw construct.
     df = df.copy()
-    df["__composite"] = bo_sim.compute_objective(df, objective_columns, False, None)
+    df["__composite"] = bo_sim.compute_objective(
+        df, objective_columns, normalize_objective, None
+    )
     targets = [("composite", "__composite")] + [
         (base, base) for base in base_columns
     ]
@@ -238,7 +249,9 @@ def main() -> None:
 
     all_rows: list[dict[str, object]] = []
     for dataset in datasets:
-        all_rows.extend(calibrate_dataset(dataset, args.close_pair_fraction))
+        all_rows.extend(
+            calibrate_dataset(dataset, args.close_pair_fraction, args.normalize_objective)
+        )
 
     table = pd.DataFrame(all_rows)
     table["sd_as_pct_of_range"] = 100.0 * table.apply(

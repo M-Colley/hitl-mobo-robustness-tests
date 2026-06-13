@@ -11,6 +11,18 @@ import seaborn as sns
 from matplotlib.colors import ListedColormap
 from scipy.stats import t as student_t_dist
 
+from _plot_style import (
+    COLOR_BASELINE,
+    COLOR_JITTERED,
+    COLOR_ZERO_LINE,
+    DIVERGING_CMAP,
+    acquisition_palette,
+    annotate_direction,
+    order_acquisitions,
+    pretty_acq,
+    set_pub_style,
+)
+
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -39,7 +51,7 @@ def _sorted_unique(values: pd.Series) -> list:
 
 def plot_robustness_heatmaps(summary: pd.DataFrame, output_dir: Path) -> list[str]:
     paths: list[str] = []
-    sns.set_theme(style="whitegrid")
+    set_pub_style()
 
     for (objective, acquisition), data in summary.groupby(["objective", "acquisition"], dropna=False):
         datasets = _sorted_unique(data["dataset"])
@@ -47,7 +59,7 @@ def plot_robustness_heatmaps(summary: pd.DataFrame, output_dir: Path) -> list[st
         fig, axes = plt.subplots(
             len(datasets),
             len(error_models),
-            figsize=(4.8 * len(error_models), 3.8 * len(datasets)),
+            figsize=(4.8 * len(error_models), 3.9 * len(datasets)),
             squeeze=False,
         )
 
@@ -69,22 +81,26 @@ def plot_robustness_heatmaps(summary: pd.DataFrame, output_dir: Path) -> list[st
                     ax=ax,
                     annot=True,
                     fmt=".2f",
-                    cmap="RdYlGn_r",
+                    annot_kws={"fontsize": 8.5},
+                    cmap=DIVERGING_CMAP,
                     center=0,
                     vmin=-vmax,
                     vmax=vmax,
+                    linewidths=0.5,
+                    linecolor="white",
                     cbar=row_idx == 0 and col_idx == len(error_models) - 1,
-                    cbar_kws={"label": "Mean excess AUC regret"},
+                    cbar_kws={"label": "Mean excess AUC regret", "shrink": 0.8},
                     mask=pivot.isna(),
                 )
-                ax.set_title(f"{dataset} / {error_model}")
-                ax.set_xlabel("Jitter std")
-                ax.set_ylabel("Jitter iteration")
+                ax.set_title(f"{dataset} · {error_model}", pad=6)
+                ax.set_xlabel("Noise std (× response scale)")
+                ax.set_ylabel("Jitter onset")
 
-        fig.suptitle(f"Robustness loss heatmap: {objective} / {acquisition}", y=0.99)
+        fig.suptitle(f"Robustness loss · {pretty_acq(acquisition)}  ({objective})", y=1.0)
+        annotate_direction(fig, "Lower (blue) = more robust to noise")
         fig.tight_layout()
         path = output_dir / f"robustness_heatmap_{objective}_{acquisition}.png"
-        fig.savefig(path, dpi=220, bbox_inches="tight")
+        fig.savefig(path)
         plt.close(fig)
         paths.append(str(path))
     return paths
@@ -92,9 +108,13 @@ def plot_robustness_heatmaps(summary: pd.DataFrame, output_dir: Path) -> list[st
 
 def plot_rank_progression(rankings: pd.DataFrame, output_dir: Path, shortlist: list[str]) -> list[str]:
     paths: list[str] = []
+    set_pub_style()
     filtered = rankings[rankings["acquisition"].isin(shortlist)].copy()
     if filtered.empty:
         return paths
+
+    hue_order = order_acquisitions(filtered["acquisition"].unique().tolist())
+    palette = acquisition_palette(hue_order)
 
     for objective, data in filtered.groupby("objective", dropna=False):
         plot = sns.relplot(
@@ -102,6 +122,8 @@ def plot_rank_progression(rankings: pd.DataFrame, output_dir: Path, shortlist: l
             x="jitter_std",
             y="mean_rank",
             hue="acquisition",
+            hue_order=hue_order,
+            palette=palette,
             style="error_model",
             kind="line",
             col="jitter_iteration",
@@ -110,12 +132,17 @@ def plot_rank_progression(rankings: pd.DataFrame, output_dir: Path, shortlist: l
             dashes=False,
             height=3.4,
             aspect=1.2,
+            facet_kws={"margin_titles": True},
         )
-        plot.set_titles(row_template="{row_name}", col_template="jitter={col_name}")
-        plot.set_axis_labels("Jitter std", "Mean rank")
-        plot.fig.suptitle(f"Rank progression: {objective}", y=1.02)
+        plot.set_titles(row_template="{row_name}", col_template="jitter onset = {col_name}")
+        plot.set_axis_labels("Noise std (× response scale)", "Mean rank (1 = best)")
+        for ax in plot.axes.flat:
+            ax.invert_yaxis()  # best (rank 1) at the top
+        if plot.legend is not None:
+            plot.legend.set_title("Acquisition / error")
+        plot.fig.suptitle(f"Rank progression under noise  ({objective})", y=1.02)
         path = output_dir / f"rank_progression_{objective}.png"
-        plot.savefig(path, dpi=220, bbox_inches="tight")
+        plot.savefig(path)
         plt.close(plot.fig)
         paths.append(str(path))
     return paths
@@ -123,7 +150,7 @@ def plot_rank_progression(rankings: pd.DataFrame, output_dir: Path, shortlist: l
 
 def plot_winner_maps(rankings: pd.DataFrame, output_dir: Path) -> list[str]:
     paths: list[str] = []
-    sns.set_theme(style="white")
+    set_pub_style()
 
     for objective, data in rankings.groupby("objective", dropna=False):
         winners = (
@@ -131,17 +158,18 @@ def plot_winner_maps(rankings: pd.DataFrame, output_dir: Path) -> list[str]:
             .groupby(["dataset", "error_model", "jitter_iteration", "jitter_std"], as_index=False)
             .first()
         )
-        acquisitions = sorted(winners["acquisition"].unique().tolist())
+        acquisitions = order_acquisitions(winners["acquisition"].unique().tolist())
         cmap = ListedColormap(sns.color_palette("Set2", n_colors=max(3, len(acquisitions))))
         acq_to_code = {acq: idx for idx, acq in enumerate(acquisitions)}
         winners["winner_code"] = winners["acquisition"].map(acq_to_code)
+        winners["winner_label"] = winners["acquisition"].map(pretty_acq)
 
         datasets = _sorted_unique(winners["dataset"])
         error_models = _sorted_unique(winners["error_model"])
         fig, axes = plt.subplots(
             len(datasets),
             len(error_models),
-            figsize=(4.8 * len(error_models), 3.8 * len(datasets)),
+            figsize=(4.8 * len(error_models), 3.9 * len(datasets)),
             squeeze=False,
         )
 
@@ -158,7 +186,7 @@ def plot_winner_maps(rankings: pd.DataFrame, output_dir: Path) -> list[str]:
                 annot = subset.pivot_table(
                     index="jitter_iteration",
                     columns="jitter_std",
-                    values="acquisition",
+                    values="winner_label",
                     aggfunc="first",
                 )
                 sns.heatmap(
@@ -166,20 +194,34 @@ def plot_winner_maps(rankings: pd.DataFrame, output_dir: Path) -> list[str]:
                     ax=ax,
                     annot=annot,
                     fmt="",
+                    annot_kws={"fontsize": 8.5, "color": "#1a1a1a"},
                     cmap=cmap,
+                    vmin=0,
+                    vmax=max(2, len(acquisitions) - 1),
+                    linewidths=0.5,
+                    linecolor="white",
                     cbar=False,
                     mask=pivot.isna(),
                 )
-                ax.set_title(f"{dataset} / {error_model}")
-                ax.set_xlabel("Jitter std")
-                ax.set_ylabel("Jitter iteration")
+                ax.set_title(f"{dataset} · {error_model}", pad=6)
+                ax.set_xlabel("Noise std (× response scale)")
+                ax.set_ylabel("Jitter onset")
 
-        handles = [plt.Line2D([0], [0], marker="s", linestyle="", color=cmap(i), markersize=10, label=acq) for acq, i in acq_to_code.items()]
-        fig.legend(handles=handles, loc="upper center", ncol=min(5, len(handles)))
-        fig.suptitle(f"Winner map: {objective}", y=1.02)
+        handles = [
+            plt.Line2D([0], [0], marker="s", linestyle="", color=cmap(i), markersize=11, label=pretty_acq(acq))
+            for acq, i in acq_to_code.items()
+        ]
+        fig.legend(
+            handles=handles,
+            loc="upper center",
+            ncol=min(6, len(handles)),
+            frameon=False,
+            bbox_to_anchor=(0.5, 1.0),
+        )
+        fig.suptitle(f"Most robust acquisition per condition  ({objective})", y=1.05)
         fig.tight_layout()
         path = output_dir / f"winner_map_{objective}.png"
-        fig.savefig(path, dpi=220, bbox_inches="tight")
+        fig.savefig(path)
         plt.close(fig)
         paths.append(str(path))
     return paths
@@ -187,25 +229,36 @@ def plot_winner_maps(rankings: pd.DataFrame, output_dir: Path) -> list[str]:
 
 def plot_response_scatter(summary: pd.DataFrame, output_dir: Path) -> list[str]:
     paths: list[str] = []
+    set_pub_style()
     for objective, data in summary.groupby("objective", dropna=False):
+        hue_order = order_acquisitions(data["acquisition"].unique().tolist())
+        palette = acquisition_palette(hue_order)
         plot = sns.relplot(
             data=data,
             x="mean_response_l2_excess",
             y="mean_auc_simple_regret_excess_true",
             hue="acquisition",
+            hue_order=hue_order,
+            palette=palette,
             style="error_model",
             col="dataset",
             kind="scatter",
+            s=70,
+            alpha=0.85,
+            edgecolor="white",
+            linewidth=0.4,
             height=4.2,
             aspect=1.0,
         )
         for ax in plot.axes.flat:
-            ax.axhline(0.0, color="grey", linewidth=1, alpha=0.5)
-            ax.axvline(0.0, color="grey", linewidth=1, alpha=0.5)
+            ax.axhline(0.0, color=COLOR_ZERO_LINE, linewidth=1, alpha=0.6, zorder=0)
+            ax.axvline(0.0, color=COLOR_ZERO_LINE, linewidth=1, alpha=0.6, zorder=0)
+        plot.set_titles(col_template="{col_name}")
         plot.set_axis_labels("Mean response L2 excess", "Mean excess AUC regret")
-        plot.fig.suptitle(f"Response vs robustness: {objective}", y=1.02)
+        plot.fig.suptitle(f"Immediate response error vs. overall robustness  ({objective})", y=1.02)
+        annotate_direction(plot.fig, "Bottom-left = best (low error, robust)")
         path = output_dir / f"response_vs_robustness_{objective}.png"
-        plot.savefig(path, dpi=220, bbox_inches="tight")
+        plot.savefig(path)
         plt.close(plot.fig)
         paths.append(str(path))
     return paths
@@ -250,7 +303,7 @@ def plot_regret_trajectories(
     ]
 
     paths: list[str] = []
-    sns.set_theme(style="whitegrid")
+    set_pub_style()
 
     group_cols = ["objective", "error_model", "jitter_std", "jitter_iteration"]
     if "dataset" in df.columns:
@@ -274,8 +327,6 @@ def plot_regret_trajectories(
             squeeze=False,
         )
 
-        palette = sns.color_palette("Set2", 2)
-
         for col_idx, acq in enumerate(acquisitions):
             ax = axes[0, col_idx]
             acq_df = group_df[group_df["acquisition"] == acq]
@@ -288,8 +339,8 @@ def plot_regret_trajectories(
             )
 
             for sub, label, color in [
-                (base_df, "Baseline (no noise)", palette[0]),
-                (acq_df,  "Jittered",            palette[1]),
+                (base_df, "Baseline (no noise)", COLOR_BASELINE),
+                (acq_df,  "Jittered",            COLOR_JITTERED),
             ]:
                 if sub.empty:
                     continue
@@ -312,13 +363,20 @@ def plot_regret_trajectories(
                     color=color,
                 )
 
-            ax.axvline(x=jitter_iteration + 0.5, color="grey", linestyle="--", linewidth=1.0, alpha=0.7)
-            ax.set_title(acq, fontsize=10)
+            ax.axvline(
+                x=jitter_iteration + 0.5,
+                color=COLOR_ZERO_LINE,
+                linestyle="--",
+                linewidth=1.1,
+                alpha=0.7,
+                label="noise onset",
+            )
+            ax.set_title(pretty_acq(acq), fontsize=11)
             ax.set_xlabel("Iteration")
             if col_idx == 0:
                 ax.set_ylabel("Simple regret (true)")
             if col_idx == n_acq - 1:
-                ax.legend(fontsize=8)
+                ax.legend(fontsize=8.5, framealpha=0.9)
 
         title_parts = [f"{k}={v}" for k, v in meta.items()]
         fig.suptitle("Regret trajectory  |  " + "  ·  ".join(title_parts), fontsize=9, y=1.01)
@@ -366,7 +424,7 @@ def plot_effect_size_forest(
         df["dz_ci95_high"] = df["ci95_high"]
 
     paths: list[str] = []
-    sns.set_theme(style="whitegrid")
+    set_pub_style()
 
     group_cols = ["objective", "error_model", "jitter_iteration"]
     if "dataset" in df.columns:
@@ -386,11 +444,11 @@ def plot_effect_size_forest(
         if plot_df.empty:
             continue
 
-        fig, ax = plt.subplots(figsize=(6.0, max(2.5, 0.45 * len(plot_df))))
+        fig, ax = plt.subplots(figsize=(6.4, max(2.6, 0.5 * len(plot_df) + 1.0)))
         y_pos = np.arange(len(plot_df))
 
-        colors = ["#d62728" if v > 0 else "#2ca02c" for v in plot_df["cohens_dz"]]
-        ax.barh(y_pos, plot_df["cohens_dz"], color=colors, alpha=0.75, height=0.5)
+        colors = [COLOR_JITTERED if v > 0 else COLOR_BASELINE for v in plot_df["cohens_dz"]]
+        ax.barh(y_pos, plot_df["cohens_dz"], color=colors, alpha=0.85, height=0.55)
         ax.errorbar(
             plot_df["cohens_dz"],
             y_pos,
@@ -399,18 +457,19 @@ def plot_effect_size_forest(
                 plot_df["dz_ci95_high"] - plot_df["cohens_dz"],
             ],
             fmt="none",
-            color="black",
+            color=COLOR_ZERO_LINE,
             capsize=4,
             linewidth=1.2,
         )
-        ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
+        ax.axvline(0, color=COLOR_ZERO_LINE, linewidth=1.0, linestyle="--")
         ax.set_yticks(y_pos)
-        ax.set_yticklabels(plot_df["acquisition"], fontsize=9)
-        ax.set_xlabel("Cohen's dz  (jittered − baseline)")
+        ax.set_yticklabels([pretty_acq(a) for a in plot_df["acquisition"]])
+        ax.set_xlabel("Cohen's dz  (jittered − baseline; negative = noise helped)")
         ax.set_title(
-            "Effect sizes  |  " + "  ·  ".join(f"{k}={v}" for k, v in meta.items()),
-            fontsize=9,
+            "Effect of noise  ·  " + "  ·  ".join(f"{k}={v}" for k, v in meta.items()),
+            fontsize=10,
         )
+        annotate_direction(fig, "Left of 0 = more robust")
         fig.tight_layout()
 
         safe = lambda v: str(v).replace("/", "-").replace(".", "p")

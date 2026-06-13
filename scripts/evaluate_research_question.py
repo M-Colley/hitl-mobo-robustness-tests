@@ -44,6 +44,15 @@ from scipy.stats import friedmanchisquare, ttest_1samp, wilcoxon
 from scipy.stats import t as student_t
 from statsmodels.stats.multitest import multipletests
 
+from _plot_style import (
+    DIVERGING_CMAP,
+    SEQUENTIAL_CMAP,
+    annotate_direction,
+    order_acquisitions,
+    pretty_acq,
+    set_pub_style,
+)
+
 
 PRIMARY_METRIC = "auc_simple_regret_excess_true"
 POSTONSET_METRIC = "auc_simple_regret_excess_true_postonset_per_iter"
@@ -591,28 +600,35 @@ def plot_condition_heatmaps(rankings: pd.DataFrame, output_dir: Path) -> None:
     if rankings.empty:
         return
 
-    sns.set_theme(style="whitegrid")
-    acquisition_order = (
-        rankings.groupby("acquisition")["mean_rank"].mean().sort_values().index.tolist()
-    )
+    set_pub_style()
+    # Order acquisitions by overall mean rank (best at the top), but keep the
+    # canonical family grouping as the tie-breaker for a stable, readable layout.
+    by_rank = rankings.groupby("acquisition")["mean_rank"].mean().sort_values()
+    acquisition_order = order_acquisitions(by_rank.index.tolist())
+    pretty_labels = [pretty_acq(a) for a in acquisition_order]
 
     for (dataset, objective, oracle_model, error_model), group in rankings.groupby(
         ["dataset", "objective", "oracle_model", "error_model"],
         dropna=False,
     ):
         jitter_iterations = sorted(group["jitter_iteration"].unique().tolist())
+        n = len(jitter_iterations)
+        # Width scales with columns; height scales with the number of acquisitions
+        # so cells stay roughly square regardless of how many methods are present.
+        fig_h = max(4.5, 0.42 * len(acquisition_order) + 1.6)
         fig_rank, axes_rank = plt.subplots(
-            1,
-            len(jitter_iterations),
-            figsize=(4.5 * len(jitter_iterations), 7),
-            squeeze=False,
+            1, n, figsize=(4.7 * n, fig_h), squeeze=False,
         )
         fig_auc, axes_auc = plt.subplots(
-            1,
-            len(jitter_iterations),
-            figsize=(4.5 * len(jitter_iterations), 7),
-            squeeze=False,
+            1, n, figsize=(4.7 * n, fig_h), squeeze=False,
         )
+
+        # Symmetric colour limits for the diverging excess map so 0 sits in the
+        # exact middle and panels share one scale.
+        auc_absmax = float(
+            np.nanmax(np.abs(group["mean_auc_simple_regret_excess_true"].to_numpy(dtype=float)))
+        )
+        auc_absmax = 1.0 if not np.isfinite(auc_absmax) or auc_absmax == 0 else auc_absmax
 
         for idx, jitter_iteration in enumerate(jitter_iterations):
             subset = group[group["jitter_iteration"] == jitter_iteration]
@@ -629,20 +645,29 @@ def plot_condition_heatmaps(rankings: pd.DataFrame, output_dir: Path) -> None:
                 aggfunc="mean",
             ).reindex(acquisition_order)
 
+            last = idx == n - 1
             ax_rank = axes_rank[0, idx]
             sns.heatmap(
                 rank_pivot,
                 ax=ax_rank,
                 annot=True,
                 fmt=".2f",
-                cmap="YlGnBu_r",
-                cbar=idx == len(jitter_iterations) - 1,
-                cbar_kws={"label": "Mean rank"},
+                annot_kws={"fontsize": 8.5},
+                cmap=SEQUENTIAL_CMAP,
+                linewidths=0.5,
+                linecolor="white",
+                cbar=last,
+                cbar_kws={"label": "Mean rank (1 = best)", "shrink": 0.8},
                 mask=rank_pivot.isna(),
             )
-            ax_rank.set_title(f"jitter={jitter_iteration}")
-            ax_rank.set_xlabel("Jitter std")
-            ax_rank.set_ylabel("Acquisition" if idx == 0 else "")
+            ax_rank.set_title(f"jitter onset = {jitter_iteration}", pad=8)
+            ax_rank.set_xlabel("Noise std (× response scale)")
+            if idx == 0:
+                ax_rank.set_yticklabels(pretty_labels, rotation=0)
+                ax_rank.set_ylabel("Acquisition")
+            else:
+                ax_rank.set_yticklabels([])
+                ax_rank.set_ylabel("")
 
             ax_auc = axes_auc[0, idx]
             sns.heatmap(
@@ -650,39 +675,39 @@ def plot_condition_heatmaps(rankings: pd.DataFrame, output_dir: Path) -> None:
                 ax=ax_auc,
                 annot=True,
                 fmt=".2f",
-                cmap="RdYlGn_r",
+                annot_kws={"fontsize": 8.5},
+                cmap=DIVERGING_CMAP,
                 center=0,
-                cbar=idx == len(jitter_iterations) - 1,
-                cbar_kws={"label": "Mean excess AUC regret"},
+                vmin=-auc_absmax,
+                vmax=auc_absmax,
+                linewidths=0.5,
+                linecolor="white",
+                cbar=last,
+                cbar_kws={"label": "Mean excess AUC regret", "shrink": 0.8},
                 mask=auc_pivot.isna(),
             )
-            ax_auc.set_title(f"jitter={jitter_iteration}")
-            ax_auc.set_xlabel("Jitter std")
-            ax_auc.set_ylabel("Acquisition" if idx == 0 else "")
+            ax_auc.set_title(f"jitter onset = {jitter_iteration}", pad=8)
+            ax_auc.set_xlabel("Noise std (× response scale)")
+            if idx == 0:
+                ax_auc.set_yticklabels(pretty_labels, rotation=0)
+                ax_auc.set_ylabel("Acquisition")
+            else:
+                ax_auc.set_yticklabels([])
+                ax_auc.set_ylabel("")
 
         slice_name = f"{dataset}_{objective}_{oracle_model}_{error_model}"
-        fig_rank.suptitle(
-            f"Acquisition mean ranks: {dataset} / {objective} / {oracle_model} / {error_model}",
-            y=0.98,
-        )
+        subtitle = f"{dataset} · {objective} · oracle={oracle_model} · error={error_model}"
+
+        fig_rank.suptitle(f"Acquisition mean rank   ({subtitle})", y=1.0)
+        annotate_direction(fig_rank, "Lower rank = better (darker = better)")
         fig_rank.tight_layout()
-        fig_rank.savefig(
-            output_dir / f"mean_rank_{slice_name}.png",
-            dpi=200,
-            bbox_inches="tight",
-        )
+        fig_rank.savefig(output_dir / f"mean_rank_{slice_name}.png")
         plt.close(fig_rank)
 
-        fig_auc.suptitle(
-            f"Excess AUC simple regret: {dataset} / {objective} / {oracle_model} / {error_model}",
-            y=0.98,
-        )
+        fig_auc.suptitle(f"Excess AUC simple regret   ({subtitle})", y=1.0)
+        annotate_direction(fig_auc, "Lower (blue) = more robust to noise")
         fig_auc.tight_layout()
-        fig_auc.savefig(
-            output_dir / f"mean_excess_auc_{slice_name}.png",
-            dpi=200,
-            bbox_inches="tight",
-        )
+        fig_auc.savefig(output_dir / f"mean_excess_auc_{slice_name}.png")
         plt.close(fig_auc)
 
 

@@ -94,6 +94,10 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
+from botorch.acquisition.multi_objective.logei import (
+    qLogExpectedHypervolumeImprovement,
+    qLogNoisyExpectedHypervolumeImprovement,
+)
 from botorch.optim import optimize_acqf
 from botorch.models.transforms import Normalize, Standardize
 from botorch.utils.multi_objective import is_non_dominated
@@ -160,7 +164,11 @@ SINGLE_ACQUISITION_CHOICES = [
     "qnei",
     "greedy",
 ]
-MULTI_ACQUISITION_CHOICES = ["qehvi", "qnehvi"]
+# qlogehvi/qlognehvi are the numerically-stable log variants (Ament et al. 2023,
+# arXiv:2310.20708). They share qEHVI/qNEHVI's box-decomposition memory cost, so
+# at high objective counts they still need reduced sampling/concurrency, but they
+# avoid the vanishing-gradient pathologies BoTorch warns about for the plain ones.
+MULTI_ACQUISITION_CHOICES = ["qehvi", "qnehvi", "qlogehvi", "qlognehvi"]
 # Model-free floors: candidates are independent of observations, so they bound
 # what "no learning" achieves and anchor the robustness rankings.
 BASELINE_ACQUISITION_CHOICES = ["random", "sobol"]
@@ -1721,6 +1729,40 @@ def get_botorch_candidate(
             X_baseline=train_X,
             sampler=sampler,
             partitioning=partitioning,
+        )
+    elif acq_config.name == "qlogehvi":
+        if ref_point is None:
+            raise ValueError("ref_point required for qlogehvi.")
+        if not isinstance(gp_model, ModelListGP):
+            raise ValueError("qlogehvi requires a multi-objective ModelListGP.")
+        if isinstance(train_Y, list):
+            train_Y_stack = torch.cat(train_Y, dim=1)
+        else:
+            train_Y_stack = train_Y
+        partitioning = FastNondominatedPartitioning(
+            ref_point=torch.tensor(ref_point, dtype=torch.double),
+            Y=train_Y_stack,
+        )
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
+        acqf = qLogExpectedHypervolumeImprovement(
+            model=gp_model,
+            ref_point=ref_point.tolist(),
+            partitioning=partitioning,
+            sampler=sampler,
+        )
+    elif acq_config.name == "qlognehvi":
+        if ref_point is None:
+            raise ValueError("ref_point required for qlognehvi.")
+        if not isinstance(gp_model, ModelListGP):
+            raise ValueError("qlognehvi requires a multi-objective ModelListGP.")
+        # qLogNEHVI builds its own partitioning from X_baseline; it does not
+        # accept a precomputed `partitioning` argument.
+        sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
+        acqf = qLogNoisyExpectedHypervolumeImprovement(
+            model=gp_model,
+            ref_point=ref_point.tolist(),
+            X_baseline=train_X,
+            sampler=sampler,
         )
     else:
         raise ValueError(f"Unknown acquisition: {acq_config.name}")

@@ -294,6 +294,17 @@ def test_filter_acquisitions_includes_model_free_floors() -> None:
     ]
 
 
+def test_log_hypervolume_acquisitions_are_multi_objective() -> None:
+    # The numerically-stable log variants must be treated as multi-objective
+    # acquisitions (and excluded from single-objective runs), exactly like the
+    # plain qEHVI/qNEHVI they replace.
+    assert "qlogehvi" in bo_sim.MULTI_ACQUISITION_CHOICES
+    assert "qlognehvi" in bo_sim.MULTI_ACQUISITION_CHOICES
+    acqs = ["qlogehvi", "qlognehvi", "random"]
+    assert bo_sim.filter_acquisitions_for_objective(acqs, "multi_objective") == acqs
+    assert bo_sim.filter_acquisitions_for_objective(acqs, "composite") == ["random"]
+
+
 def test_estimate_oracle_optimum_anchored_on_known_points() -> None:
     class PeakOracle:
         def predict_many(self, X: np.ndarray) -> np.ndarray:

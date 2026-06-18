@@ -260,6 +260,13 @@ class DatasetConfig:
     param_columns: list[str]
     objective_map: dict[str, list[str]]
     observation_glob: str = "ObservationsPerEvaluation.csv"
+    # How the oracle target is built from repeated evaluations of a design:
+    #   "individual" — one training row per (participant, design) rating (default).
+    #   "mean"       — collapse to one row per design holding the mean rating, an
+    #                  "average human" surface BO can actually learn. The
+    #                  simulator's injected feedback noise then models the
+    #                  individual deviation that averaging removes.
+    oracle_target: str = "individual"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -752,6 +759,25 @@ def augment_oracle_data(
     return np.vstack(augmented_X), np.concatenate(augmented_y, axis=0)
 
 
+def aggregate_design_means(
+    df: pd.DataFrame,
+    param_columns: list[str],
+    objective_columns: list[str],
+) -> pd.DataFrame:
+    """Collapse repeated evaluations of the same design to their mean response.
+
+    Multiple participants rate the same design (identical ``param_columns``), so
+    raw rows ask the oracle to predict between-participant variance from design
+    parameters alone — an impossible regression that caps held-out R^2. Averaging
+    per design yields an "average human" target whose surface BO can learn; the
+    simulator's injected feedback noise models the individual deviation removed
+    here. Returns one row per unique design with the mean of each required
+    objective column.
+    """
+    required = list(dict.fromkeys(_objective_required_columns(objective_columns)))
+    return df.groupby(param_columns, as_index=False)[required].mean()
+
+
 def build_oracle(
     df: pd.DataFrame,
     objective: str,
@@ -765,7 +791,14 @@ def build_oracle(
     oracle_augment_repeats: int,
     oracle_augment_std: float,
     oracle_fast: bool,
+    oracle_target: str = "individual",
 ) -> OracleModel:
+    if oracle_target == "mean":
+        df = aggregate_design_means(df, param_columns, objective_columns)
+    elif oracle_target != "individual":
+        raise ValueError(
+            f"Unknown oracle_target '{oracle_target}' (expected 'individual' or 'mean')."
+        )
     X = df[param_columns].to_numpy(dtype=float)
     rng = np.random.default_rng(seed)
     low = np.min(X, axis=0)
@@ -1263,6 +1296,12 @@ def parse_dataset_configs(
         param_columns = entry.get("param_columns", PARAM_COLUMNS)
         objective_map = entry.get("objective_map", OBJECTIVE_MAP)
         observation_glob = entry.get("observation_glob", "ObservationsPerEvaluation.csv")
+        oracle_target = str(entry.get("oracle_target", "individual"))
+        if oracle_target not in ("individual", "mean"):
+            raise ValueError(
+                f"Dataset '{name}' oracle_target must be 'individual' or 'mean', "
+                f"got '{oracle_target}'."
+            )
 
         if not isinstance(objective_map, dict):
             raise ValueError(f"Dataset '{name}' objective_map must be a dict.")
@@ -1280,6 +1319,7 @@ def parse_dataset_configs(
                 param_columns=[str(col) for col in param_columns],
                 objective_map=cleaned_objective_map,
                 observation_glob=str(observation_glob),
+                oracle_target=oracle_target,
             )
         )
 
@@ -2191,6 +2231,7 @@ def run_single_seed(
             oracle_augment_repeats=args.oracle_augment_repeats,
             oracle_augment_std=args.oracle_augment_std,
             oracle_fast=args.oracle_fast,
+            oracle_target=dataset.oracle_target,
         )
 
         X_known = df[dataset.param_columns].to_numpy(dtype=float)

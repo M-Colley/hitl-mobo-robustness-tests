@@ -294,6 +294,49 @@ def test_filter_acquisitions_includes_model_free_floors() -> None:
     ]
 
 
+def test_aggregate_design_means_collapses_repeats() -> None:
+    params = bo_sim.PARAM_COLUMNS
+    objs = bo_sim.OBJECTIVE_MAP["composite"]
+    # Two distinct designs, each rated twice with different objective values.
+    data = {col: [0.0, 0.0, 1.0, 1.0] for col in params}
+    for obj in objs:
+        data[obj] = [2.0, 4.0, 10.0, 20.0]  # design A mean 3, design B mean 15
+    df = pd.DataFrame(data)
+    agg = bo_sim.aggregate_design_means(df, list(params), list(objs))
+    assert len(agg) == 2  # one row per unique design
+    a = agg[agg[params[0]] == 0.0]
+    b = agg[agg[params[0]] == 1.0]
+    for obj in objs:
+        assert float(a[obj].iloc[0]) == 3.0
+        assert float(b[obj].iloc[0]) == 15.0
+
+
+def test_dataset_config_oracle_target_default_and_parse(tmp_path: Path) -> None:
+    # Default is the original individual-row behavior.
+    cfg = bo_sim.DatasetConfig(
+        name="x", data_dirs=[tmp_path], param_columns=["a"],
+        objective_map={"composite": ["o"]},
+    )
+    assert cfg.oracle_target == "individual"
+
+    # A local (non-URL) data_dir resolves without cloning, so parsing is safe.
+    good = tmp_path / "good.json"
+    good.write_text(json.dumps([{
+        "name": "ehmi", "data_dir": str(tmp_path), "oracle_target": "mean",
+        "param_columns": ["a"], "objective_map": {"composite": ["o"]},
+    }]))
+    parsed = bo_sim.parse_dataset_configs(None, good, tmp_path / "cache")
+    assert parsed[0].oracle_target == "mean"
+
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps([{
+        "name": "ehmi", "data_dir": str(tmp_path), "oracle_target": "bogus",
+        "param_columns": ["a"], "objective_map": {"composite": ["o"]},
+    }]))
+    with pytest.raises(ValueError, match="oracle_target"):
+        bo_sim.parse_dataset_configs(None, bad, tmp_path / "cache")
+
+
 def test_log_hypervolume_acquisitions_are_multi_objective() -> None:
     # The numerically-stable log variants must be treated as multi-objective
     # acquisitions (and excluded from single-objective runs), exactly like the

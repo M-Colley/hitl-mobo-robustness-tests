@@ -29,6 +29,7 @@ from bo_sensor_error_simulation import (
     DATA_DIR,
     ORACLE_MODEL_CHOICES,
     _build_oracle_model,
+    aggregate_design_means,
     augment_oracle_data,
     compute_objective,
     compute_objective_matrix,
@@ -409,6 +410,13 @@ def main() -> None:
                 args.dedup,
                 context=f"{dataset.name}:{objective_name}",
             )
+            # "mean" oracle target: collapse repeated ratings of a design to its
+            # mean before model selection. The aggregated frame has no
+            # participant column, so cross-validation automatically becomes
+            # held-out-design KFold (the regime BO actually faces: predicting a
+            # new design's average rating). Keep this in sync with build_oracle.
+            if dataset.oracle_target == "mean":
+                df = aggregate_design_means(df, dataset.param_columns, objective_columns)
             evaluation = evaluate_models_for_objective(
                 df,
                 objective_name,
@@ -462,6 +470,7 @@ def main() -> None:
                 "duplicate_row_fraction": duplicate_fraction,
                 "deduplicated": bool(args.dedup),
                 "oracle_augmentation": args.oracle_augmentation,
+                "oracle_target": dataset.oracle_target,
             }
         results_payload["datasets"].append(dataset_entry)
 

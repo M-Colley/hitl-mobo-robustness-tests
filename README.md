@@ -258,6 +258,13 @@ That file defines:
 - data location (a Git URL cloned into `.dataset_cache/`, or a local path)
 - parameter columns
 - objective columns
+- `oracle_target` (optional, default `"individual"`) — set to `"mean"` to fit the
+  oracle on per-design *mean* ratings (an "average human" surface validated on
+  held-out designs) instead of individual participant rows. Use this when raw
+  ratings carry large between-participant variance the design parameters can't
+  explain; on `ehmi` it raises held-out R² from ~0.14 to ~0.55. The simulator's
+  injected feedback noise then represents the individual deviation that
+  averaging removes.
 - `observation_glob` — the filename pattern of the observation CSVs.
   This must match the per-participant files (for opticarvis:
   `data/S_*ObservationsPerEvaluation.csv`); matching only an aggregate export

@@ -23,18 +23,28 @@ read the result is reproduced here. Regenerate end-to-end with
 
 The "human" is a regression oracle fit on archival study data, so every result
 below describes robustness on **data-derived synthetic test functions, not human
-ground truth.** Cross-validated (group-k-fold, held-out participant) R² of the
-selected oracles:
+ground truth.** Cross-validated R² of the selected oracles:
 
-| dataset / objective | oracle | CV R² |
-|---|---|---|
-| opticarvis / composite | gradient_boosting | **0.52** (decent) |
-| ehmi / composite | extra_trees | 0.14 (weak) |
-| provoice / composite | extra_trees | −0.03 (≈ chance) |
+| dataset / objective | oracle | CV R² (individual) | CV R² (per-design mean) |
+|---|---|---|---|
+| opticarvis / composite | gradient_boosting | **0.52** (held-out participant) | — |
+| ehmi / composite | extra_trees | 0.14 (held-out participant) | **0.55** (held-out design) |
+| provoice / composite | extra_trees | −0.03 | −0.19 (no signal either way) |
 
-Only `opticarvis` has a meaningfully predictive oracle. Treat `ehmi` and
-especially `provoice` as synthetic surfaces with little human grounding. Full
-record in [`best_oracle_models.json`](best_oracle_models.json).
+**Oracle target.** Individual ratings ask the oracle to predict between-participant
+variance from design parameters alone, capping R². For **ehmi** the project now
+fits a **per-design *mean* ("average human") oracle** (`oracle_target: "mean"` in
+`datasets.json`), validated on held-out *designs* — the regime BO actually faces.
+That raises ehmi's R² from 0.14 → **0.55**. `opticarvis` already has a strong
+design→rating signal and keeps the individual-row oracle; `provoice` has ≈ 0 / negative
+R² for every model and target, so it must be read as a **pure synthetic function**.
+The simulator's injected feedback noise models the individual deviation that
+averaging removes. Full record in [`best_oracle_models.json`](best_oracle_models.json).
+
+> Note: the figures/tables in *this* snapshot were produced with the earlier
+> individual-row ehmi oracle and the composite objective only. Re-running
+> `run_full_pipeline.ps1` refreshes them with the mean ehmi oracle **and** the
+> multi-objective results (now feasible — see below).
 
 ## Headline findings
 
@@ -69,24 +79,25 @@ See [`evaluation_report.txt`](evaluation_report.txt),
 [`overall_rankings.csv`](overall_rankings.csv), and
 [`condition_rankings.csv`](condition_rankings.csv) for the full numbers.
 
-## Multi-objective (`multi_objective`) — excluded, and why
+## Multi-objective (`multi_objective`) — feasible, run by the driver
 
-The 5-objective Pareto variant (`ehmi`, `opticarvis`) is **computationally
-infeasible on commodity hardware** and is therefore not part of this snapshot:
+Not in *this* snapshot (which is composite-only), but the 5-objective Pareto
+variant **is feasible** and `run_full_pipeline.ps1` runs it. What we measured
+per run at 5 objectives:
 
-- Exact hypervolume box-decomposition blows up at 5 objectives: a single
-  `qEHVI`/`qNEHVI` run peaks at **~22 GB**, and 20 parallel workers OOM-crash the
-  process pool (`BrokenProcessPool`).
-- The numerically-stable log variants (`qLogEHVI`/`qLogNEHVI`, now implemented in
-  the simulator) do not reduce that cost — the box-decomposition dominates and is
-  independent of the MC-sample count. On this Windows box they were worse still
-  (~42–56 GB and pathologically slow, because the smooth-max path falls back to a
-  pure-Python implementation when the MSVC `cl` compiler is absent).
+| acquisition | sampling | peak RAM | per run |
+|---|---|---|---|
+| qEHVI | full (raw 512 / mc 256) | 22 GB | 414 s |
+| **qEHVI** | **reduced (raw 128 / mc 64)** | **6.1 GB** | **141 s** |
+| qLogEHVI | reduced, no MSVC `cl` on PATH | 56 GB | hours (broken) |
+| qLogEHVI | reduced, `cl` exposed via `vcvars64` | 7.5 GB | 559 s |
 
-`provoice` multi-objective has only 3 objectives and is tractable; it can be added
-on a high-RAM machine, or by switching to a scalarization-based MO method
-(e.g. ParEGO) that avoids hypervolume entirely. The single-objective `composite`
-study above answers the core research question on its own.
+The 22 GB at full sampling — not the box-decomposition — was the wall; **reduced
+sampling drops plain qEHVI/qNEHVI to ~6 GB**, so ~8 workers fit in 64 GB without
+the `BrokenProcessPool` OOM. The driver therefore runs multi-objective with plain
+`qEHVI/qNEHVI` at reduced sampling. (The numerically-stable `qLogEHVI/qLogNEHVI`
+are also implemented and become tractable if `cl` — already installed with VS
+2022 — is exposed via `vcvars64`; they are ~2–4× slower.)
 
 ## Reproducing
 

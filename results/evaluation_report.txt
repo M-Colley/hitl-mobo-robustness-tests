@@ -1,0 +1,131 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 19500
+- Paired baseline/jitter rows: 17280
+- Seeds per condition: min=20, median=20.0, max=20
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- FDR (Benjamini-Hochberg) correction is applied per test family
+  (Friedman omnibus and Wilcoxon pairwise are corrected separately).
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+   dataset objective      oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic      p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+      ehmi composite       extra_trees        bias                10        0.05       20              12            sobol  friedman  65.662103 8.088165e-10    5.131089e-09               NaN         False    0.298464
+      ehmi composite       extra_trees        bias                10        0.50       20              12            sobol  friedman  91.620326 8.020256e-15    9.624307e-14               NaN         False    0.416456
+      ehmi composite       extra_trees        bias                10        1.00       20              12            sobol  friedman 111.608955 8.737329e-19    3.596313e-17               NaN         False    0.507313
+      ehmi composite       extra_trees        bias                10        5.00       20              12            sobol  friedman 111.317990 9.989758e-19    3.596313e-17               NaN         False    0.505991
+      ehmi composite       extra_trees        bias                20        0.05       20              12            sobol  friedman  42.648138 1.250402e-05    3.601159e-05               NaN         False    0.193855
+      ehmi composite       extra_trees        bias                20        0.50       20              12            sobol  friedman  72.639658 3.836480e-11    3.452832e-10               NaN         False    0.330180
+      ehmi composite       extra_trees        bias                20        1.00       20              12            sobol  friedman  59.764987 1.025229e-08    4.613529e-08               NaN         False    0.271659
+      ehmi composite       extra_trees        bias                20        5.00       20              12            sobol  friedman  70.568169 9.525703e-11    7.620563e-10               NaN         False    0.320764
+      ehmi composite       extra_trees        bias                40        0.05       20              12           greedy  friedman  13.146774 2.838407e-01    3.523540e-01               NaN         False    0.059758
+      ehmi composite       extra_trees        bias                40        0.50       20              12            logei  friedman  25.485387 7.735641e-03    1.428118e-02               NaN         False    0.115843
+      ehmi composite       extra_trees        bias                40        1.00       20              12             qnei  friedman  19.926557 4.635811e-02    6.801078e-02               NaN         False    0.090575
+      ehmi composite       extra_trees        bias                40        5.00       20              12            sobol  friedman  28.586339 2.630470e-03    5.739207e-03               NaN         False    0.129938
+      ehmi composite       extra_trees    gaussian                10        0.05       20              12              qei  friedman  67.577497 3.518104e-10    2.533035e-09               NaN         False    0.307170
+      ehmi composite       extra_trees    gaussian                10        0.50       20              12            sobol  friedman 101.912219 7.462044e-17    1.343168e-15               NaN         False    0.463237
+      ehmi composite       extra_trees    gaussian                10        1.00       20              12            sobol  friedman 105.812928 1.252433e-17    3.005839e-16               NaN         False    0.480968
+      ehmi composite       extra_trees    gaussian                10        5.00       20              12            sobol  friedman  96.895181 7.340408e-16    1.057019e-14               NaN         False    0.440433
+      ehmi composite       extra_trees    gaussian                20        0.05       20              12             qnei  friedman  27.471976 3.897401e-03    7.584131e-03               NaN         False    0.124873
+      ehmi composite       extra_trees    gaussian                20        0.50       20              12            sobol  friedman  59.071160 1.378776e-08    5.515105e-08               NaN         False    0.268505
+      ehmi composite       extra_trees    gaussian                20        1.00       20              12            sobol  friedman  73.063510 3.183697e-11    3.274660e-10               NaN         False    0.332107
+      ehmi composite       extra_trees    gaussian                20        5.00       20              12            sobol  friedman  65.533562 8.551815e-10    5.131089e-09               NaN         False    0.297880
+      ehmi composite       extra_trees    gaussian                40        0.05       20              12           greedy  friedman  19.864797 4.722971e-02    6.801078e-02               NaN         False    0.090295
+      ehmi composite       extra_trees    gaussian                40        0.50       20              12           greedy  friedman  24.268041 1.164929e-02    2.045729e-02               NaN         False    0.110309
+      ehmi composite       extra_trees    gaussian                40        1.00       20              12           greedy  friedman  31.468634 9.276846e-04    2.087290e-03               NaN         False    0.143039
+      ehmi composite       extra_trees    gaussian                40        5.00       20              12            sobol  friedman  32.433724 6.495698e-04    1.508678e-03               NaN         False    0.147426
+opticarvis composite gradient_boosting        bias                10        0.05       20              12            logei  friedman  14.223571 2.208684e-01    2.839736e-01               NaN         False    0.064653
+opticarvis composite gradient_boosting        bias                10        0.50       20              12            sobol  friedman  26.301971 5.850637e-03    1.108542e-02               NaN         False    0.119554
+opticarvis composite gradient_boosting        bias                10        1.00       20              12            sobol  friedman  25.100658 8.812316e-03    1.586217e-02               NaN         False    0.114094
+opticarvis composite gradient_boosting        bias                10        5.00       20              12            sobol  friedman  42.219868 1.483742e-05    3.987852e-05               NaN         False    0.191908
+opticarvis composite gradient_boosting        bias                20        0.05       20              12            logei  friedman   9.947741 5.350939e-01    5.837388e-01               NaN         False    0.045217
+opticarvis composite gradient_boosting        bias                20        0.50       20              12              qpi  friedman  11.721759 3.849169e-01    4.619003e-01               NaN         False    0.053281
+opticarvis composite gradient_boosting        bias                20        1.00       20              12            sobol  friedman  22.261719 2.242229e-02    3.669101e-02               NaN         False    0.101190
+opticarvis composite gradient_boosting        bias                20        5.00       20              12            sobol  friedman  33.584731 4.227824e-04    1.014678e-03               NaN         False    0.152658
+opticarvis composite gradient_boosting        bias                40        0.05       20              12            logei  friedman   3.336125 9.854968e-01    9.854968e-01               NaN         False    0.015164
+opticarvis composite gradient_boosting        bias                40        0.50       20              12               pi  friedman   8.438950 6.735270e-01    7.028107e-01               NaN         False    0.038359
+opticarvis composite gradient_boosting        bias                40        1.00       20              12               ei  friedman  15.353963 1.668590e-01    2.184336e-01               NaN         False    0.069791
+opticarvis composite gradient_boosting        bias                40        5.00       20              12               ei  friedman  12.480341 3.286406e-01    4.010530e-01               NaN         False    0.056729
+opticarvis composite gradient_boosting    gaussian                10        0.05       20              12             qnei  friedman   6.982304 8.005147e-01    8.233866e-01               NaN         False    0.031738
+opticarvis composite gradient_boosting    gaussian                10        0.50       20              12           greedy  friedman  27.701693 3.595734e-03    7.191468e-03               NaN         False    0.125917
+opticarvis composite gradient_boosting    gaussian                10        1.00       20              12            sobol  friedman  28.090129 3.135999e-03    6.498959e-03               NaN         False    0.127682
+opticarvis composite gradient_boosting    gaussian                10        5.00       20              12            sobol  friedman  42.200179 1.495445e-05    3.987852e-05               NaN         False    0.191819
+opticarvis composite gradient_boosting    gaussian                20        0.05       20              12             qnei  friedman  20.809421 3.540013e-02    5.310019e-02               NaN         False    0.094588
+opticarvis composite gradient_boosting    gaussian                20        0.50       20              12            logei  friedman  17.576235 9.194872e-02    1.273136e-01               NaN         False    0.079892
+opticarvis composite gradient_boosting    gaussian                20        1.00       20              12            sobol  friedman  20.812142 3.537038e-02    5.310019e-02               NaN         False    0.094601
+opticarvis composite gradient_boosting    gaussian                20        5.00       20              12            sobol  friedman  28.069236 3.159216e-03    6.498959e-03               NaN         False    0.127587
+opticarvis composite gradient_boosting    gaussian                40        0.05       20              12              ucb  friedman   9.259571 5.979463e-01    6.425692e-01               NaN         False    0.042089
+opticarvis composite gradient_boosting    gaussian                40        0.50       20              12               pi  friedman  10.941302 4.481939e-01    5.204832e-01               NaN         False    0.049733
+opticarvis composite gradient_boosting    gaussian                40        1.00       20              12            logei  friedman  10.390367 4.956525e-01    5.576090e-01               NaN         False    0.047229
+opticarvis composite gradient_boosting    gaussian                40        5.00       20              12            sobol  friedman   8.683177 6.511103e-01    6.894109e-01               NaN         False    0.039469
+  provoice composite       extra_trees        bias                10        0.05       20              12              qei  friedman  16.466079 1.246907e-01    1.693912e-01               NaN         False    0.074846
+  provoice composite       extra_trees        bias                10        0.50       20              12            sobol  friedman  56.550661 4.025242e-08    1.449087e-07               NaN         False    0.257048
+  provoice composite       extra_trees        bias                10        1.00       20              12            sobol  friedman  62.684266 2.929680e-09    1.506692e-08               NaN         False    0.284928
+  provoice composite       extra_trees        bias                10        5.00       20              12            sobol  friedman  55.493117 6.294675e-08    2.158174e-07               NaN         False    0.252241
+  provoice composite       extra_trees        bias                20        0.05       20              12            sobol  friedman  22.902795 1.824136e-02    3.054366e-02               NaN         False    0.104104
+  provoice composite       extra_trees        bias                20        0.50       20              12            sobol  friedman  38.883630 5.544035e-05    1.376450e-04               NaN         False    0.176744
+  provoice composite       extra_trees        bias                20        1.00       20              12            sobol  friedman  45.008887 4.834745e-06    1.450424e-05               NaN         False    0.204586
+  provoice composite       extra_trees        bias                20        5.00       20              12            sobol  friedman  58.625512 1.667285e-08    6.318134e-08               NaN         False    0.266480
+  provoice composite       extra_trees        bias                40        0.05       20              12            logei  friedman  13.582880 2.569393e-01    3.245549e-01               NaN         False    0.061740
+  provoice composite       extra_trees        bias                40        0.50       20              12            sobol  friedman  10.547558 4.819073e-01    5.507512e-01               NaN         False    0.047943
+  provoice composite       extra_trees        bias                40        1.00       20              12            sobol  friedman  21.364815 2.978255e-02    4.765208e-02               NaN         False    0.097113
+  provoice composite       extra_trees        bias                40        5.00       20              12            sobol  friedman  21.044316 3.291482e-02    5.151885e-02               NaN         False    0.095656
+  provoice composite       extra_trees    gaussian                10        0.05       20              12            sobol  friedman  15.447345 1.629193e-01    2.172257e-01               NaN         False    0.070215
+  provoice composite       extra_trees    gaussian                10        0.50       20              12            sobol  friedman  60.037220 9.125718e-09    4.380345e-08               NaN         False    0.272896
+  provoice composite       extra_trees    gaussian                10        1.00       20              12            sobol  friedman  59.409315 1.193472e-08    5.054704e-08               NaN         False    0.270042
+  provoice composite       extra_trees    gaussian                10        5.00       20              12            sobol  friedman  64.442993 1.371392e-09    7.595400e-09               NaN         False    0.292923
+  provoice composite       extra_trees    gaussian                20        0.05       20              12            sobol  friedman  10.039574 5.268310e-01    5.835666e-01               NaN         False    0.045634
+  provoice composite       extra_trees    gaussian                20        0.50       20              12            sobol  friedman  39.620677 4.153145e-05    1.067952e-04               NaN         False    0.180094
+  provoice composite       extra_trees    gaussian                20        1.00       20              12            sobol  friedman  49.887544 6.557605e-07    2.052816e-06               NaN         False    0.226762
+  provoice composite       extra_trees    gaussian                20        5.00       20              12            sobol  friedman  53.988235 1.186213e-07    3.882152e-07               NaN         False    0.245401
+  provoice composite       extra_trees    gaussian                40        0.05       20              12              qpi  friedman   3.767956 9.762198e-01    9.854968e-01               NaN         False    0.017127
+  provoice composite       extra_trees    gaussian                40        0.50       20              12            sobol  friedman  11.628873 3.921758e-01    4.628961e-01               NaN         False    0.052859
+  provoice composite       extra_trees    gaussian                40        1.00       20              12            sobol  friedman  18.572581 6.921074e-02    9.770928e-02               NaN         False    0.084421
+  provoice composite       extra_trees    gaussian                40        5.00       20              12            sobol  friedman  23.157016 1.679517e-02    2.879173e-02               NaN         False    0.105259
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+ehmi / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.322538           10.989583                            0.000000                           15.732428              16          24
+      sobol              0.322538           10.481250                            0.000000                           15.674692              16          24
+        ucb              0.438068            2.772917                            0.008346                            4.487822               0          24
+        qei              0.446402            4.550000                            0.010355                            6.355114               1          24
+         ei              0.447064            4.287500                            0.014353                            5.869724               0          24
+
+opticarvis / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.401515            7.580208                            0.000000                          200.548262              10          24
+      sobol              0.401515            8.498958                            0.000000                          202.820628              10          24
+      logei              0.462784            6.543750                            0.007601                          191.208704               5          24
+     greedy              0.467330            8.236458                            0.017846                          199.082162               1          24
+       qnei              0.477746            5.316667                            0.001980                          187.405879               2          24
+
+provoice / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.285701           10.688542                            0.000000                           35.644378              21          24
+      sobol              0.285701           10.037500                            0.000000                           35.112645              21          24
+      logei              0.496117            5.832292                            0.034868                           29.131968               1          24
+       qnei              0.514678            5.566667                            0.054872                           28.712640               0          24
+       qucb              0.522822            7.093750                            0.035051                           31.085726               0          24
+

@@ -36,7 +36,9 @@ public static class Power { [DllImport("kernel32.dll")] public static extern uin
 '@
 [void][Power]::SetThreadExecutionState([uint32]"0x80000001")  # ES_CONTINUOUS | ES_SYSTEM_REQUIRED
 
-$PYTHON = "python"
+# Use $env:PYTHON if set (e.g. the venv/interpreter that actually has torch);
+# fall back to whatever "python" resolves to on PATH.
+$PYTHON = if ($env:PYTHON) { $env:PYTHON } else { "python" }
 $SEEDS = "7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26"
 $ORACLE = "output\best_oracle_models.json"
 

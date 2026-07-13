@@ -1,14 +1,17 @@
-numpy>=2.5.0
-pandas>=3.0.3
+--extra-index-url https://pypi.anaconda.org/lightgbm-packages/simple
+
+numpy>=2.5.1
+pandas>=3.0.4
 scikit-learn>=1.9.0
 scipy>=1.18.0
 matplotlib>=3.11.0
 seaborn>=0.13.2
-tqdm>=4.68.2
+tqdm>=4.68.3
 xgboost>=3.3.0
-lightgbm>=4.6.0
+# pip install --pre -r requirements.txt --- allows pre-releases
+lightgbm>=4.6.0a0
 catboost>=1.2.10
-tabpfn>=8.0.8
+tabpfn>=8.1.0
 statsmodels>=0.14.6
 botorch>=0.18.1
-torch>=2.12.1
+torch>=2.13.0

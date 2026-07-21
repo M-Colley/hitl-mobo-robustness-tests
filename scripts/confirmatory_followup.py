@@ -8,8 +8,9 @@ confirmatory tests would double-dip and invalidate the p-values. Therefore:
 
 - Everything labeled "confirmatory" (the condition-level and dataset-level
   paired tests, ``head_to_head_*.csv``, and the main LaTeX/CSV table) is
-  computed from the NEW seeds only, i.e. ``seed >= --seed-start`` (seeds in
-  ``range(seed_start, seed_start + num_new_seeds)``).
+  computed from EXACTLY the new-seed block, i.e. seeds in
+  ``range(seed_start, seed_start + num_new_seeds)``; the run aborts if any
+  other seed at or above ``--seed-start`` is present in the paired data.
 - The broad-screen logs are still copied next to the new runs so plots stay
   rich; analyses over the pooled (screening + new) seeds are written as
   clearly labeled ``exploratory_pooled_*`` outputs and figures, and must not
@@ -68,7 +69,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-root", type=Path, default=Path("output/confirmatory"))
     parser.add_argument("--objective", type=str, default="composite")
     parser.add_argument("--acquisitions", type=str, default="pi,logpi")
-    parser.add_argument("--seed-start", type=int, default=12)
+    # Default 27: the broad screens in this repo run seeds 7-26, so the
+    # confirmatory seed block must start above 26 or the seed filter would
+    # silently double-dip on screening seeds (review finding; the old default
+    # of 12 overlapped the screen).
+    parser.add_argument("--seed-start", type=int, default=27)
     parser.add_argument("--num-new-seeds", type=int, default=20)
     parser.add_argument("--oracle-model", type=str, default="auto")
     parser.add_argument("--oracle-selection-path", type=Path, default=Path("output/best_oracle_models.json"))
@@ -695,11 +700,23 @@ def main() -> None:
     exploratory_head_to_head = build_head_to_head_table(paired, reference, challenger)
     exploratory_condition_tests = summarize_condition_tests(exploratory_head_to_head, reference, challenger)
 
-    # Confirmatory analysis: new seeds only (seed >= args.seed_start).
-    confirmatory_paired = paired[paired["seed"] >= args.seed_start].copy()
+    # Confirmatory analysis: EXACTLY the requested new-seed block. An exact
+    # set (not >=) plus a disjointness check guards against screening seeds
+    # leaking into the confirmatory tests (double-dipping).
+    new_seeds = set(range(args.seed_start, args.seed_start + args.num_new_seeds))
+    screening_seeds = sorted(set(paired["seed"].unique()) - new_seeds)
+    overlap = [s for s in screening_seeds if s >= args.seed_start]
+    if overlap:
+        raise SystemExit(
+            f"ERROR: seeds {overlap} are outside the requested confirmatory block "
+            f"[{args.seed_start}, {args.seed_start + args.num_new_seeds - 1}] but >= --seed-start; "
+            "cannot separate screening from confirmatory data. Adjust --seed-start/--num-new-seeds."
+        )
+    confirmatory_paired = paired[paired["seed"].isin(new_seeds)].copy()
     if confirmatory_paired.empty:
         print(
-            f"WARNING: no runs with seed >= {args.seed_start} found; confirmatory "
+            f"WARNING: no runs with seeds in [{args.seed_start}, "
+            f"{args.seed_start + args.num_new_seeds - 1}] found; confirmatory "
             "tables will be empty. Run with --run-simulation to generate the new seeds."
         )
     head_to_head = build_head_to_head_table(confirmatory_paired, reference, challenger)

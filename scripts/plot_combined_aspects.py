@@ -412,21 +412,31 @@ def plot_effect_size_forest(
     if not required.issubset(df.columns):
         return []
 
-    # ci95_low/ci95_high bound mean_diff (raw metric units).  Rescale by
-    # std_diff so the error bars share the Cohen's dz scale of the bars
-    # (dz = mean_diff / std_diff).
-    if "std_diff" in df.columns:
-        scale = df["std_diff"].where(df["std_diff"] > 0)
-        df["dz_ci95_low"] = df["ci95_low"] / scale
-        df["dz_ci95_high"] = df["ci95_high"] / scale
-    else:
-        df["dz_ci95_low"] = df["ci95_low"]
-        df["dz_ci95_high"] = df["ci95_high"]
+    # Prefer the exact noncentral-t dz CIs written by the evaluation step.
+    # Rescaling the mean-diff CI by std_diff (the old behavior) is NOT a valid
+    # dz CI (it ignores the SD's sampling variability); it is kept only as a
+    # clearly-labeled fallback for legacy evaluation outputs.
+    approx_ci = not {"dz_ci95_low", "dz_ci95_high"}.issubset(df.columns)
+    if approx_ci:
+        if "std_diff" in df.columns:
+            scale = df["std_diff"].where(df["std_diff"] > 0)
+            df["dz_ci95_low"] = df["ci95_low"] / scale
+            df["dz_ci95_high"] = df["ci95_high"] / scale
+        else:
+            df["dz_ci95_low"] = df["ci95_low"]
+            df["dz_ci95_high"] = df["ci95_high"]
 
     paths: list[str] = []
     set_pub_style()
 
+    # Group by the FULL condition (including jitter_std): averaging dz or CI
+    # endpoints across noise levels is statistically meaningless and collapses
+    # the dose-response over noise, which is the research question (review fix).
     group_cols = ["objective", "error_model", "jitter_iteration"]
+    if "jitter_std" in df.columns:
+        group_cols.append("jitter_std")
+    if "oracle_model" in df.columns and df["oracle_model"].nunique() > 1:
+        group_cols.append("oracle_model")
     if "dataset" in df.columns:
         group_cols.insert(0, "dataset")
 
@@ -436,9 +446,8 @@ def plot_effect_size_forest(
         meta = dict(zip(group_cols, group_values))
 
         plot_df = (
-            group_df.groupby("acquisition")[["cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
-            .mean()
-            .reset_index()
+            group_df[["acquisition", "cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
+            .dropna(subset=["cohens_dz"])
             .sort_values("cohens_dz")
         )
         if plot_df.empty:
@@ -464,7 +473,10 @@ def plot_effect_size_forest(
         ax.axvline(0, color=COLOR_ZERO_LINE, linewidth=1.0, linestyle="--")
         ax.set_yticks(y_pos)
         ax.set_yticklabels([pretty_acq(a) for a in plot_df["acquisition"]])
-        ax.set_xlabel("Cohen's dz  (jittered − baseline; negative = noise helped)")
+        xlabel = "Cohen's dz  (jittered − baseline; negative = noise helped)"
+        if approx_ci:
+            xlabel += "  [approx. CI - legacy evaluation output]"
+        ax.set_xlabel(xlabel)
         ax.set_title(
             "Effect of noise  ·  " + "  ·  ".join(f"{k}={v}" for k, v in meta.items()),
             fontsize=10,

@@ -1,0 +1,3 @@
+comparison,n_pairs,mean_diff,dz,p_t,p_wilcoxon,error_model,jitter_std,family,p_t_bh,p_wilcoxon_bh
+q_regime vs always_ei,5,-0.08038621121121121,-0.26200601921020544,0.5894301853686367,0.8125,gaussian,0.3,primary,0.5894301853686367,0.8125
+q_pooled vs always_ei,5,-0.08038621121121121,-0.26200601921020544,0.5894301853686367,0.8125,gaussian,0.3,secondary,0.5894301853686367,0.8125

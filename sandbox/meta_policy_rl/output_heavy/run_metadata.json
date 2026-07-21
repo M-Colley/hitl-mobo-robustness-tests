@@ -1,0 +1,40 @@
+{
+  "conditions": [
+    {
+      "error_model": "gaussian",
+      "jitter_std": 2.5
+    },
+    {
+      "error_model": "ar1",
+      "jitter_std": 2.5
+    }
+  ],
+  "n_train": 200,
+  "n_eval": 40,
+  "gamma": 1.0,
+  "actions": [
+    "ei",
+    "exploit",
+    "replicate",
+    "probe"
+  ],
+  "state_names": [
+    "early/calm/progress",
+    "early/calm/stall",
+    "early/surprise/progress",
+    "early/surprise/stall",
+    "late/calm/progress",
+    "late/calm/stall",
+    "late/surprise/progress",
+    "late/surprise/stall",
+    "endgame/calm/progress",
+    "endgame/calm/stall",
+    "endgame/surprise/progress",
+    "endgame/surprise/stall"
+  ],
+  "total_queries": 20,
+  "initial_samples": 3,
+  "y_opt": 5.4000000000000234,
+  "composite_std": 0.7198444151765241,
+  "runtime_s": 1211.2
+}

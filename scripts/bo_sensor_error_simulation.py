@@ -839,8 +839,8 @@ def build_oracle(
             y_pred = models[-1].predict(X_aug_df)
             train_rmse = np.sqrt(np.mean((y - y_pred) ** 2))
             print(f"Oracle ({oracle_model}) for {target} trained on {len(X_aug)} samples:")
-            print(f"  R^2 score: {train_score:.4f}")
-            print(f"  RMSE: {train_rmse:.4f}")
+            print(f"  train R^2 (in-sample, optimistic; CV fidelity is in best_oracle_models.json): {train_score:.4f}")
+            print(f"  train RMSE: {train_rmse:.4f}")
 
         return OracleModel(
             model=models,
@@ -876,8 +876,8 @@ def build_oracle(
     y_pred = model.predict(X_aug_df)
     train_rmse = np.sqrt(np.mean((y_aug - y_pred) ** 2))
     print(f"Oracle ({oracle_model}) trained on {len(X_aug)} samples:")
-    print(f"  R^2 score: {train_score:.4f}")
-    print(f"  RMSE: {train_rmse:.4f}")
+    print(f"  train R^2 (in-sample, optimistic; CV fidelity is in best_oracle_models.json): {train_score:.4f}")
+    print(f"  train RMSE: {train_rmse:.4f}")
 
     return OracleModel(
         model=model,
@@ -1354,6 +1354,10 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
         print("No common objectives found to build a combined dataset.", file=sys.stderr)
         return None
 
+    if any(dataset.oracle_target != first.oracle_target for dataset in datasets[1:]):
+        print("Cannot combine datasets with different oracle_target settings.", file=sys.stderr)
+        return None
+
     combined_dirs: list[Path] = []
     for dataset in datasets:
         combined_dirs.extend(dataset.data_dirs)
@@ -1364,6 +1368,7 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
         param_columns=first.param_columns,
         objective_map=objective_map,
         observation_glob=first.observation_glob,
+        oracle_target=first.oracle_target,
     )
 
 
@@ -1623,24 +1628,37 @@ def apply_sensor_error(
         observed = true_value + spike + jitter
     elif config.error_model == "drift":
         # Systematic drift/fatigue: bias ramps linearly from 0 at onset to
-        # jitter_std at the final iteration (jitter_std doubles as the drift
-        # magnitude so the sweep stays a single swept factor).
+        # jitter_std at the final iteration, ON TOP of the ordinary gaussian
+        # rating inconsistency (real fatigue adds to noise rather than
+        # replacing it; a review found the earlier ramp-only variant made
+        # "drift" the only deterministic, jitter-free condition). Peak ramp
+        # = jitter_std keeps the sweep a single swept factor; note the
+        # drift condition therefore carries more total error energy than
+        # pure gaussian at the same nominal std.
         span = max(1, config.iterations - config.jitter_iteration)
         ramp = config.jitter_std * (iteration - config.jitter_iteration) / span
-        observed = true_value + np.full_like(true_value, ramp, dtype=float)
+        observed = true_value + np.full_like(true_value, ramp, dtype=float) + jitter
     elif config.error_model == "ar1":
         # Serially correlated rating error: e_t = rho * e_{t-1} + innovation,
-        # with stationary SD equal to jitter_std.
+        # with stationary SD equal to jitter_std. The FIRST post-onset error
+        # is a full stationary draw (reusing `jitter`, already N(0, std)),
+        # so early errors are not systematically smaller than the stationary
+        # SD (cold-start fix: e_0 = 0 gave first-step SD of only
+        # std*sqrt(1-rho^2), ~0.6x std at rho=0.8, exactly inside the
+        # response-step window the evaluation measures).
         rho = float(config.error_ar1_rho)
-        innovation = rng.normal(
-            0.0, config.jitter_std * np.sqrt(max(0.0, 1.0 - rho**2)), size=true_value.shape
-        )
-        prev = (
-            previous_error
-            if previous_error is not None
-            else np.zeros_like(true_value, dtype=float)
-        )
-        observed = true_value + rho * prev + innovation
+        if iteration == config.jitter_iteration + 1:
+            observed = true_value + jitter
+        else:
+            innovation = rng.normal(
+                0.0, config.jitter_std * np.sqrt(max(0.0, 1.0 - rho**2)), size=true_value.shape
+            )
+            prev = (
+                previous_error
+                if previous_error is not None
+                else np.zeros_like(true_value, dtype=float)
+            )
+            observed = true_value + rho * prev + innovation
     else:
         raise ValueError(f"Unknown error model: {config.error_model}")
 
@@ -1904,51 +1922,55 @@ def run_simulation(
         else:
             fit_start = time.perf_counter()
 
-            train_X = torch.tensor(np.vstack(X_list), dtype=torch.double)
-            if is_multi:
-                train_Y_array = np.vstack(y_observed_list)
-                train_Y_list = [
-                    torch.tensor(train_Y_array[:, idx].reshape(-1, 1), dtype=torch.double)
-                    for idx in range(train_Y_array.shape[1])
-                ]
-                gps = [
-                    SingleTaskGP(
+            # GP construction/fit lives INSIDE the fallback try: a fit failure
+            # (degenerate data, Cholesky errors) must degrade to the recorded
+            # random fallback like any acquisition failure, not crash a
+            # multi-hour sweep (review finding).
+            try:
+                train_X = torch.tensor(np.vstack(X_list), dtype=torch.double)
+                if is_multi:
+                    train_Y_array = np.vstack(y_observed_list)
+                    train_Y_list = [
+                        torch.tensor(train_Y_array[:, idx].reshape(-1, 1), dtype=torch.double)
+                        for idx in range(train_Y_array.shape[1])
+                    ]
+                    gps = [
+                        SingleTaskGP(
+                            train_X,
+                            train_Y_list[idx],
+                            input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
+                            outcome_transform=Standardize(m=1),
+                        )
+                        for idx in range(train_Y_array.shape[1])
+                    ]
+                    gp = ModelListGP(*gps)
+                    mll = SumMarginalLogLikelihood(gp.likelihood, gp)
+                    fit_gpytorch_mll(mll)
+                    best_f = None
+                    train_Y_for_acq: list[torch.Tensor] | torch.Tensor = train_Y_list
+                else:
+                    train_Y = torch.tensor(
+                        np.array(y_observed_list, dtype=float).reshape(-1, 1), dtype=torch.double
+                    )
+                    gp = SingleTaskGP(
                         train_X,
-                        train_Y_list[idx],
+                        train_Y,
                         input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
                         outcome_transform=Standardize(m=1),
                     )
-                    for idx in range(train_Y_array.shape[1])
-                ]
-                gp = ModelListGP(*gps)
-                mll = SumMarginalLogLikelihood(gp.likelihood, gp)
-                fit_gpytorch_mll(mll)
-                best_f = None
-                train_Y_for_acq: list[torch.Tensor] | torch.Tensor = train_Y_list
-            else:
-                train_Y = torch.tensor(
-                    np.array(y_observed_list, dtype=float).reshape(-1, 1), dtype=torch.double
-                )
-                gp = SingleTaskGP(
-                    train_X,
-                    train_Y,
-                    input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
-                    outcome_transform=Standardize(m=1),
-                )
-                mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-                fit_gpytorch_mll(mll)
-                if config.incumbent == "posterior_mean":
-                    # Max posterior mean over visited points: robust to noisy
-                    # observations (a single positive noise spike cannot
-                    # inflate best_f beyond achievable values).
-                    with torch.no_grad():
-                        posterior_mean = gp.posterior(train_X).mean.reshape(-1)
-                    best_f = posterior_mean.max().item()
-                else:
-                    best_f = train_Y.max().item()
-                train_Y_for_acq = train_Y
+                    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+                    fit_gpytorch_mll(mll)
+                    if config.incumbent == "posterior_mean":
+                        # Max posterior mean over visited points: robust to noisy
+                        # observations (a single positive noise spike cannot
+                        # inflate best_f beyond achievable values).
+                        with torch.no_grad():
+                            posterior_mean = gp.posterior(train_X).mean.reshape(-1)
+                        best_f = posterior_mean.max().item()
+                    else:
+                        best_f = train_Y.max().item()
+                    train_Y_for_acq = train_Y
 
-            try:
                 candidate_tensor = get_botorch_candidate(
                     gp_model=gp,
                     acq_config=acq,
@@ -1972,7 +1994,7 @@ def run_simulation(
                 acq_failed = True
                 print(
                     f"[acq-fallback] run={run_id} acq={acq.name} iteration={iteration}: "
-                    f"BoTorch optimization failed, falling back to random. Error: {e}",
+                    f"GP fit or acquisition optimization failed, falling back to random. Error: {e}",
                     file=sys.stderr,
                 )
                 candidate_np = sample_uniform(bounds, rng, size=1)[0]

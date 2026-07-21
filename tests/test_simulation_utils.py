@@ -207,17 +207,38 @@ def test_apply_sensor_error_uses_jitter_for_spike() -> None:
     assert np.allclose(observed, true_value + combined)
     assert np.allclose(error, combined)
 
-def test_apply_sensor_error_drift_ramps_linearly() -> None:
+def test_apply_sensor_error_drift_ramps_linearly_plus_jitter() -> None:
     config = _make_error_config("drift", jitter_std=1.0)
     # iterations=5, jitter_iteration=2 -> span = 3; at iteration 5 the ramp
-    # reaches the full jitter_std.
+    # reaches the full jitter_std. Drift adds the ramp ON TOP of the ordinary
+    # gaussian jitter (review fix: the old ramp-only variant made drift the
+    # only deterministic, jitter-free error model).
     true_value = np.array([1.0, 2.0])
     rng = np.random.default_rng(0)
+    expected_rng = np.random.default_rng(0)
+    jitter3 = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
     observed3, error3 = bo_sim.apply_sensor_error(true_value, 3, config, rng, true_value)
-    assert np.allclose(error3, 1.0 * (3 - 2) / 3)
+    assert np.allclose(error3, 1.0 * (3 - 2) / 3 + jitter3)
+    jitter5 = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
     observed5, error5 = bo_sim.apply_sensor_error(true_value, 5, config, rng, true_value)
-    assert np.allclose(error5, 1.0)
-    assert np.allclose(observed5, true_value + 1.0)
+    assert np.allclose(error5, 1.0 + jitter5)
+    assert np.allclose(observed5, true_value + error5)
+
+
+def test_apply_sensor_error_ar1_first_step_is_stationary_draw() -> None:
+    config = _make_error_config("ar1", jitter_std=0.5)
+    true_value = np.array([1.0, 2.0])
+    rng = np.random.default_rng(5)
+    expected_rng = np.random.default_rng(5)
+    jitter = expected_rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    # iteration == jitter_iteration + 1: the first post-onset error is a full
+    # stationary N(0, jitter_std) draw regardless of previous_error
+    # (cold-start fix: e_0 = 0 made the first error SD only std*sqrt(1-rho^2)).
+    observed, error = bo_sim.apply_sensor_error(
+        true_value, 3, config, rng, true_value, previous_error=np.array([0.3, -0.2])
+    )
+    assert np.allclose(error, jitter)
+    assert np.allclose(observed, true_value + jitter)
 
 
 def test_apply_sensor_error_ar1_is_serially_correlated() -> None:
@@ -232,8 +253,10 @@ def test_apply_sensor_error_ar1_is_serially_correlated() -> None:
         0.0, config.jitter_std * np.sqrt(1.0 - rho**2), size=true_value.shape
     )
     previous_error = np.array([0.3, -0.2])
+    # iteration 4 (past the stationary first post-onset step at iteration 3):
+    # the AR recursion applies.
     observed, error = bo_sim.apply_sensor_error(
-        true_value, 3, config, rng, true_value, previous_error=previous_error
+        true_value, 4, config, rng, true_value, previous_error=previous_error
     )
     assert np.allclose(error, rho * previous_error + innovation)
     assert np.allclose(observed, true_value + error)

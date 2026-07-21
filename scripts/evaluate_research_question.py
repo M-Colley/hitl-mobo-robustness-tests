@@ -469,7 +469,10 @@ def compute_condition_rankings(paired: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
             )
         else:
             diff = pivot.iloc[:, 0] - pivot.iloc[:, 1]
-            n = int(len(diff))
+            # zero_method="wilcox" discards zero differences, so the smallest
+            # attainable p must use the effective (nonzero) n, not the raw
+            # pair count (review fix: raw n overstated attainable power).
+            n = int(np.count_nonzero(diff.to_numpy(dtype=float)))
             # Exact two-sided Wilcoxon: the smallest attainable p is 2/2^n.
             min_attainable_p = 2.0 / (2.0**n) if n > 0 else float("nan")
             try:
@@ -495,20 +498,22 @@ def compute_condition_rankings(paired: pd.DataFrame) -> tuple[pd.DataFrame, pd.D
 
     tests = pd.DataFrame(test_rows)
     if not tests.empty:
-        # FDR correction is applied per test family: omnibus Friedman tests and
-        # pairwise Wilcoxon tests answer different hypotheses and must not share
-        # one correction pool.
+        # ONE FDR family for all condition-level omnibus tests: every row
+        # answers the same hypothesis ("do acquisitions differ in this
+        # condition"); which statistic a row uses (Friedman for k>2,
+        # Wilcoxon for k=2) is an artifact of how many acquisitions the
+        # condition happens to contain, not a different hypothesis, so
+        # splitting the correction by test_name under-corrects the combined
+        # table (review fix). test_name stays as a descriptive column.
         tests["p_value_fdr_bh"] = np.nan
         tests["p_value_rejected"] = False
-        for _, family_idx in tests.groupby("test_name").groups.items():
-            family = tests.loc[family_idx]
-            valid_mask = family["p_value"].notna()
-            if valid_mask.any():
-                reject, p_adj, _, _ = multipletests(
-                    family.loc[valid_mask, "p_value"], method="fdr_bh"
-                )
-                tests.loc[family.index[valid_mask], "p_value_fdr_bh"] = p_adj
-                tests.loc[family.index[valid_mask], "p_value_rejected"] = reject
+        valid_mask = tests["p_value"].notna()
+        if valid_mask.any():
+            reject, p_adj, _, _ = multipletests(
+                tests.loc[valid_mask, "p_value"], method="fdr_bh"
+            )
+            tests.loc[valid_mask, "p_value_fdr_bh"] = p_adj
+            tests.loc[valid_mask, "p_value_rejected"] = reject
 
     return pd.DataFrame(ranking_rows), tests
 
@@ -540,11 +545,39 @@ def compute_overall_rankings(rankings: pd.DataFrame) -> pd.DataFrame:
     return overall
 
 
+def _dz_noncentral_ci(dz: float, n: int, confidence: float = 0.95) -> tuple[float, float]:
+    """Confidence interval for Cohen's dz via noncentral-t inversion.
+
+    The naive interval (mean-diff CI divided by std_diff, i.e. dz +/-
+    t_crit/sqrt(n)) ignores the sampling variability of the SD and increasingly
+    understates uncertainty as |dz| grows (review fix). The exact interval
+    inverts the noncentral t: observed t = dz*sqrt(n) ~ nct(df=n-1,
+    nc=true_dz*sqrt(n)); the bounds are the nc values that place the observed
+    t at the (1-alpha/2) and (alpha/2) quantiles, rescaled by 1/sqrt(n).
+    """
+    from scipy.optimize import brentq
+    from scipy.stats import nct
+
+    t_obs = dz * math.sqrt(n)
+    df = n - 1
+    alpha = 1.0 - confidence
+    bracket = abs(t_obs) + 30.0
+    try:
+        nc_low = brentq(lambda nc: nct.cdf(t_obs, df, nc) - (1.0 - alpha / 2.0), -bracket, bracket)
+        nc_high = brentq(lambda nc: nct.cdf(t_obs, df, nc) - alpha / 2.0, -bracket, bracket)
+        return nc_low / math.sqrt(n), nc_high / math.sqrt(n)
+    except ValueError:
+        return float("nan"), float("nan")
+
+
 def compute_effect_sizes(paired: pd.DataFrame) -> pd.DataFrame:
     """Paired baseline-vs-jittered effect sizes (Cohen's dz) per condition.
 
     Written to the evaluation dir so plot_combined_aspects.plot_effect_size_forest
-    and the dashboard find it in the documented workflow.
+    and the dashboard find it in the documented workflow. ci95_low/high are
+    the t-based CI for the MEAN DIFFERENCE (raw units); dz_ci95_low/high are
+    the noncentral-t CI for Cohen's dz itself - plots of dz must use the
+    latter, never a rescaled mean-diff CI.
     """
     rows: list[dict[str, object]] = []
     for keys, group in paired.groupby(CONDITION_COLS + ["acquisition"], dropna=False):
@@ -561,6 +594,8 @@ def compute_effect_sizes(paired: pd.DataFrame) -> pd.DataFrame:
             "cohens_dz": float("nan"),
             "ci95_low": float("nan"),
             "ci95_high": float("nan"),
+            "dz_ci95_low": float("nan"),
+            "dz_ci95_high": float("nan"),
             "t_stat": float("nan"),
             "p_value_t": float("nan"),
             "wilcoxon_stat": float("nan"),
@@ -576,6 +611,9 @@ def compute_effect_sizes(paired: pd.DataFrame) -> pd.DataFrame:
             margin = float(student_t.ppf(0.975, df=n - 1)) * sem
             row["ci95_low"] = float(np.mean(diffs) - margin)
             row["ci95_high"] = float(np.mean(diffs) + margin)
+            dz_low, dz_high = _dz_noncentral_ci(float(row["cohens_dz"]), n)
+            row["dz_ci95_low"] = float(dz_low)
+            row["dz_ci95_high"] = float(dz_high)
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore", RuntimeWarning)
@@ -588,11 +626,13 @@ def compute_effect_sizes(paired: pd.DataFrame) -> pd.DataFrame:
 
     effect_sizes = pd.DataFrame(rows)
     if not effect_sizes.empty:
-        valid = effect_sizes["p_value_t"].notna()
-        effect_sizes["p_value_t_fdr_bh"] = np.nan
-        if valid.any():
-            _, p_adj, _, _ = multipletests(effect_sizes.loc[valid, "p_value_t"], method="fdr_bh")
-            effect_sizes.loc[valid, "p_value_t_fdr_bh"] = p_adj
+        for col in ("p_value_t", "p_value_wilcoxon"):
+            adj_col = f"{col}_fdr_bh"
+            effect_sizes[adj_col] = np.nan
+            valid = effect_sizes[col].notna()
+            if valid.any():
+                _, p_adj, _, _ = multipletests(effect_sizes.loc[valid, col], method="fdr_bh")
+                effect_sizes.loc[valid, adj_col] = p_adj
     return effect_sizes
 
 

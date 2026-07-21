@@ -219,3 +219,4 @@ __marimo__/
 # specific to these tests
 .dataset_cache/
 output/
+output-chi/

@@ -37,6 +37,24 @@ In practice, the workflow is:
 - `scripts/dashboard.py`
   - Optional Streamlit dashboard over the evaluation outputs (`pip install streamlit`).
 
+## One-Command Pipeline Drivers
+
+Instead of running the stages by hand (below), use a driver — both are
+resumable after any interruption and keep the machine awake while running:
+
+- `run_full_pipeline.ps1` — the default design (gaussian/bias errors, onsets
+  10/20/40). Splits the memory-safe multi-objective stage (reduced sampling,
+  8 workers) from the composite sweep (20 workers). ~12–16 h.
+- `run_chi_pipeline.ps1` — the publication design: fresh `output-chi\`
+  directory, extended human-plausible errors (`gaussian,bias,drift,ar1`,
+  onsets `0,10,20,40`, `--response-clip auto`). ~30–45 h. Stops after
+  evaluation; run `scripts/confirmatory_followup.py` (fresh seeds 27+) after
+  inspecting the screening rankings.
+
+Avoid `run_full_workflow.bat`: it runs the full-sampling multi-objective
+configuration that exceeds memory on this machine and is kept only for
+reference.
+
 ## Recommended Workflow
 
 ### 1. Install

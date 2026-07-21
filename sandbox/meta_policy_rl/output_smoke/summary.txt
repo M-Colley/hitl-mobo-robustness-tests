@@ -1,0 +1,22 @@
+Adaptive meta-policy experiment v2 - summary
+actions: ['ei', 'exploit', 'replicate', 'probe', 'drop_worst', 'rest']
+train episodes/condition=4, eval episodes/condition/policy=5
+transitions=68, pooled coverage min/median per (s,a)=0/0
+
+condition: gaussian jitter_std=0.3
+  q_regime      final inference regret: mean=0.3896  se=0.0986
+  q_pooled      final inference regret: mean=0.3896  se=0.0986
+  always_ei     final inference regret: mean=0.4700  se=0.0585
+  uniform_meta  final inference regret: mean=0.4162  se=0.1027
+  always_probe  final inference regret: mean=0.4964  se=0.0634
+
+Paired comparisons (negative mean diff favors the first policy; BH within test family):
+  [gaussian std=0.3] q_regime vs always_ei    mean diff=-0.0804  dz=-0.26  t p=0.5894 (BH 0.5894)  wilcoxon p=0.8125 (BH 0.8125)
+  [gaussian std=0.3] q_pooled vs always_ei    mean diff=-0.0804  dz=-0.26  t p=0.5894 (BH 0.5894)  wilcoxon p=0.8125 (BH 0.8125)
+
+Empirical mean reward per action in the exploratory log (per condition):
+  [gaussian_std0.3] ei=+0.1351  exploit=+0.0264  replicate=-0.0292  probe=-0.0519  drop_worst=+0.0163  rest=+0.0000
+
+Mean rest / drop_worst actions (and realized drops) per episode, learned policies:
+  q_pooled  gaussian std=0.3: rest=3.60 drop_worst=0.00 (realized drops=0.00)
+  q_regime  gaussian std=0.3: rest=3.60 drop_worst=0.00 (realized drops=0.00)

@@ -1,0 +1,13 @@
+state,state_name,chosen_action,Q_ei,Q_exploit,Q_replicate,Q_probe,Q_drop_worst,Q_rest,n_ei,n_exploit,n_replicate,n_probe,n_drop_worst,n_rest
+0,early/calm/progress,replicate,3.421914508169064,3.3812326434053976,3.5564997907455056,3.2986224513214255,3.5353969850836484,3.336300151396147,5,2,2,3,4,4
+1,early/calm/stall,exploit,0.0,3.549901577554659,0.0,0.0,0.0,0.0,0,2,0,0,0,0
+2,early/surprise/progress,rest,0.0,0.0,2.6831900311152177,3.031294371283824,0.0,4.1099646174640165,0,0,2,2,0,2
+3,early/surprise/stall,UNSEEN->ei,0.0,0.0,0.0,0.0,0.0,0.0,0,0,0,0,0,0
+4,late/calm/progress,probe,0.0,0.0,0.0,4.271610059540279,4.085742341564434,0.0,0,0,0,1,1,0
+5,late/calm/stall,probe,0.0,0.0,0.0,3.675500186138286,0.0,0.0,0,0,0,1,0,0
+6,late/surprise/progress,ei,4.675216295028601,0.0,3.703341269949318,0.0,3.7179685954633537,4.397217128392216,2,0,3,1,3,2
+7,late/surprise/stall,ei,2.3868794991926836,2.3475475893972417,0.0,1.5051521938531842,1.4566706339326532,2.330286548621256,2,3,0,3,3,3
+8,endgame/calm/progress,UNSEEN->ei,0.0,0.0,0.0,0.0,0.0,0.0,0,0,0,0,0,0
+9,endgame/calm/stall,UNSEEN->ei,0.0,0.0,0.0,0.0,0.0,0.0,0,0,0,0,0,0
+10,endgame/surprise/progress,exploit,0.0,0.0,0.0,0.0,0.0,0.0,0,1,0,2,0,0
+11,endgame/surprise/stall,replicate,0.0,0.0,0.0,0.0,0.0,0.0,0,0,1,2,4,2

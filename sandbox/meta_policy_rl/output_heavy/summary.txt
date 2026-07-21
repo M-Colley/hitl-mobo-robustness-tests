@@ -1,0 +1,17 @@
+Adaptive meta-policy experiment - summary
+train episodes/condition=200, eval episodes/condition/policy=40
+transitions=6800, coverage min/median per (s,a)=4/123
+
+condition: gaussian jitter_std=2.5
+  q_policy      final inference regret: mean=0.6979  se=0.0397
+  always_ei     final inference regret: mean=0.7690  se=0.0429
+  uniform_meta  final inference regret: mean=0.7524  se=0.0548
+  always_probe  final inference regret: mean=0.8564  se=0.0446
+  paired q_policy vs always_ei: mean diff=-0.0711 (negative favors q_policy), dz=-0.20, t p=0.2160, wilcoxon p=0.2887
+
+condition: ar1 jitter_std=2.5
+  q_policy      final inference regret: mean=0.7445  se=0.0471
+  always_ei     final inference regret: mean=0.7365  se=0.0473
+  uniform_meta  final inference regret: mean=0.7151  se=0.0442
+  always_probe  final inference regret: mean=0.6720  se=0.0371
+  paired q_policy vs always_ei: mean diff=+0.0079 (negative favors q_policy), dz=+0.02, t p=0.9045, wilcoxon p=0.5100

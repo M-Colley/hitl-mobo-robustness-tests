@@ -264,7 +264,7 @@ def page_forest_plot(eval_outputs: dict[str, pd.DataFrame]) -> None:
         return
 
     has_dataset = "dataset" in es.columns
-    cols = st.columns(4 if has_dataset else 3)
+    cols = st.columns(5 if has_dataset else 4)
     col_offset = 0
     if has_dataset:
         datasets = sorted(es["dataset"].dropna().unique())
@@ -281,30 +281,38 @@ def page_forest_plot(eval_outputs: dict[str, pd.DataFrame]) -> None:
     jitter_iterations = sorted(es["jitter_iteration"].dropna().astype(int).unique())
     jit_iter = cols[col_offset + 2].selectbox("Jitter iteration", jitter_iterations)
 
+    # jitter_std is part of the condition: averaging dz (or CI endpoints)
+    # across noise levels is meaningless, so it must be filtered, not pooled.
+    jitter_stds = sorted(es["jitter_std"].dropna().unique())
+    jit_std = cols[col_offset + 3].selectbox("Jitter std", jitter_stds)
+
     sub = es[
         (es["objective"] == objective)
         & (es["error_model"] == error_model)
         & (es["jitter_iteration"] == jit_iter)
+        & (es["jitter_std"] == jit_std)
     ]
     if sub.empty:
         st.info("No data for the selected filters.")
         return
 
-    # ci95_low/ci95_high bound mean_diff (raw metric units); rescale by
-    # std_diff so the error bars share the Cohen's dz scale of the bars.
+    # Prefer the exact noncentral-t dz CIs from the evaluation step; the old
+    # rescaled mean-diff CI is not a valid dz CI and is kept only as a
+    # legacy-output fallback.
     sub = sub.copy()
-    if "std_diff" in sub.columns:
-        scale = sub["std_diff"].where(sub["std_diff"] > 0)
-        sub["dz_ci95_low"] = sub["ci95_low"] / scale
-        sub["dz_ci95_high"] = sub["ci95_high"] / scale
-    else:
-        sub["dz_ci95_low"] = sub["ci95_low"]
-        sub["dz_ci95_high"] = sub["ci95_high"]
+    if not {"dz_ci95_low", "dz_ci95_high"}.issubset(sub.columns):
+        st.caption("Legacy evaluation output: dz CIs are approximate (rescaled mean-diff CI).")
+        if "std_diff" in sub.columns:
+            scale = sub["std_diff"].where(sub["std_diff"] > 0)
+            sub["dz_ci95_low"] = sub["ci95_low"] / scale
+            sub["dz_ci95_high"] = sub["ci95_high"] / scale
+        else:
+            sub["dz_ci95_low"] = sub["ci95_low"]
+            sub["dz_ci95_high"] = sub["ci95_high"]
 
     plot_df = (
-        sub.groupby("acquisition")[["cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
-        .mean()
-        .reset_index()
+        sub[["acquisition", "cohens_dz", "dz_ci95_low", "dz_ci95_high"]]
+        .dropna(subset=["cohens_dz"])
         .sort_values("cohens_dz")
     )
 

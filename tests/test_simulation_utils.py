@@ -875,3 +875,87 @@ def test_compute_hypervolume_dominated_point_ignored() -> None:
         [np.array([2.0, 2.0]), np.array([1.0, 1.0])], ref
     )
     assert np.isclose(hv_single, hv_with_dominated)
+
+
+# ---------------------------------------------------------------------------
+# BoTorch acquisition construction regression tests (review finding: the
+# qnehvi arm silently ran as the random fallback for months because a
+# TypeError in construction was only ever caught by the fallback handler).
+# Every acquisition must construct AND yield a candidate on tiny data.
+# ---------------------------------------------------------------------------
+
+def _tiny_single_objective_model():
+    from botorch.models import SingleTaskGP
+    from botorch.models.transforms import Normalize, Standardize
+
+    torch.manual_seed(0)
+    train_X = torch.rand(6, 2, dtype=torch.double)
+    train_Y = (train_X.sum(dim=1, keepdim=True) + 0.05 * torch.randn(6, 1, dtype=torch.double))
+    bounds_tensor = torch.tensor([[0.0, 0.0], [1.0, 1.0]], dtype=torch.double)
+    gp = SingleTaskGP(
+        train_X, train_Y,
+        input_transform=Normalize(d=2, bounds=bounds_tensor),
+        outcome_transform=Standardize(m=1),
+    )
+    return gp, train_X, train_Y, bounds_tensor
+
+
+def _tiny_multi_objective_model():
+    from botorch.models import ModelListGP, SingleTaskGP
+    from botorch.models.transforms import Normalize, Standardize
+
+    torch.manual_seed(0)
+    train_X = torch.rand(6, 2, dtype=torch.double)
+    train_Y_list = [
+        train_X.sum(dim=1, keepdim=True) + 0.05 * torch.randn(6, 1, dtype=torch.double),
+        (1.0 - train_X).sum(dim=1, keepdim=True) + 0.05 * torch.randn(6, 1, dtype=torch.double),
+    ]
+    bounds_tensor = torch.tensor([[0.0, 0.0], [1.0, 1.0]], dtype=torch.double)
+    gps = [
+        SingleTaskGP(
+            train_X, y,
+            input_transform=Normalize(d=2, bounds=bounds_tensor),
+            outcome_transform=Standardize(m=1),
+        )
+        for y in train_Y_list
+    ]
+    return ModelListGP(*gps), train_X, train_Y_list, bounds_tensor
+
+
+def _candidate_for(acq_name: str) -> torch.Tensor:
+    multi = acq_name in {"qehvi", "qnehvi", "qlogehvi", "qlognehvi"}
+    if multi:
+        gp, train_X, train_Y, bounds_tensor = _tiny_multi_objective_model()
+        best_f = None
+        ref_point = np.array([-1.0, -1.0])
+    else:
+        gp, train_X, train_Y, bounds_tensor = _tiny_single_objective_model()
+        best_f = float(train_Y.max())
+        ref_point = None
+    bounds = bo_sim.Bounds(low=np.zeros(2), high=np.ones(2))
+    return bo_sim.get_botorch_candidate(
+        gp_model=gp,
+        acq_config=bo_sim.AcquisitionConfig(name=acq_name),
+        bounds=bounds,
+        bounds_tensor=bounds_tensor,
+        best_f=best_f,
+        num_restarts=2,
+        raw_samples=8,
+        maxiter=5,
+        mc_samples=8,
+        candidate_pool=16,
+        rng=np.random.default_rng(0),
+        train_X=train_X,
+        train_Y=train_Y,
+        ref_point=ref_point,
+    )
+
+
+@pytest.mark.parametrize(
+    "acq_name",
+    ["ei", "logei", "pi", "logpi", "ucb", "greedy", "qei", "qucb", "qehvi", "qnehvi", "qlogehvi", "qlognehvi"],
+)
+def test_botorch_acquisition_constructs_and_yields_candidate(acq_name: str) -> None:
+    candidate = _candidate_for(acq_name)
+    assert candidate.shape[-1] == 2
+    assert torch.isfinite(candidate).all()

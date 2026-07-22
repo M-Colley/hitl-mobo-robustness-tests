@@ -80,6 +80,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--error-models", type=str, default="gaussian,bias")
     parser.add_argument("--jitter-iterations", type=str, default="10,20,40")
     parser.add_argument("--jitter-stds", type=str, default="0.05,0.5,1,5")
+    # Must match the screening sweep's setting or the confirmatory runs test
+    # a different response-generating process than the screen did.
+    parser.add_argument("--response-clip", type=str, default="none")
+    parser.add_argument("--n-jobs", type=int, default=None)
     parser.add_argument("--run-simulation", action="store_true", default=False)
     parser.add_argument("--parallel", action="store_true", default=False)
     return parser.parse_args()
@@ -142,11 +146,16 @@ def run_simulation(args: argparse.Namespace, raw_dir: Path, acquisitions: list[s
         args.jitter_iterations,
         "--jitter-stds",
         args.jitter_stds,
+        "--response-clip",
+        args.response_clip,
         "--output-dir",
         str(raw_dir),
+        "--resume",
     ]
     if args.parallel:
         command.append("--parallel")
+    if args.n_jobs is not None:
+        command.extend(["--n-jobs", str(args.n_jobs)])
     subprocess.run(command, check=True)
 
 

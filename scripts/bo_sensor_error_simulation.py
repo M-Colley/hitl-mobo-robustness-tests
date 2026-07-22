@@ -1772,21 +1772,19 @@ def get_botorch_candidate(
             raise ValueError("ref_point required for qnehvi.")
         if not isinstance(gp_model, ModelListGP):
             raise ValueError("qnehvi requires a multi-objective ModelListGP.")
-        if isinstance(train_Y, list):
-            train_Y_stack = torch.cat(train_Y, dim=1)
-        else:
-            train_Y_stack = train_Y
-        partitioning = FastNondominatedPartitioning(
-            ref_point=torch.tensor(ref_point, dtype=torch.double),
-            Y=train_Y_stack,
-        )
+        # qNEHVI builds its own partitioning from X_baseline; it does not
+        # accept a precomputed `partitioning` argument. Passing one raised
+        # TypeError on EVERY call, so the qnehvi arm silently ran as the
+        # random fallback in all pre-fix sweeps (caught via the
+        # acq_opt_failed audit). prune_baseline=True is the
+        # botorch-recommended setting and bounds memory as X_baseline grows.
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
         acqf = qNoisyExpectedHypervolumeImprovement(
             model=gp_model,
             ref_point=ref_point.tolist(),
             X_baseline=train_X,
             sampler=sampler,
-            partitioning=partitioning,
+            prune_baseline=True,
         )
     elif acq_config.name == "qlogehvi":
         if ref_point is None:

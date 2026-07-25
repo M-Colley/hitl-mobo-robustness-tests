@@ -1812,13 +1812,18 @@ def get_botorch_candidate(
         if not isinstance(gp_model, ModelListGP):
             raise ValueError("qlognehvi requires a multi-objective ModelListGP.")
         # qLogNEHVI builds its own partitioning from X_baseline; it does not
-        # accept a precomputed `partitioning` argument.
+        # accept a precomputed `partitioning` argument. prune_baseline=True
+        # mirrors the qnehvi branch: it is the botorch-recommended setting, it
+        # bounds memory as X_baseline grows, and — critically — it must match
+        # qnehvi's setting or the two arms are not comparable (the acquisitions
+        # would differ in baseline handling, not just in log-space smoothing).
         sampler = SobolQMCNormalSampler(sample_shape=torch.Size([mc_samples]))
         acqf = qLogNoisyExpectedHypervolumeImprovement(
             model=gp_model,
             ref_point=ref_point.tolist(),
             X_baseline=train_X,
             sampler=sampler,
+            prune_baseline=True,
         )
     else:
         raise ValueError(f"Unknown acquisition: {acq_config.name}")

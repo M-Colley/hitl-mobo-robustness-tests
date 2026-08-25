@@ -5,20 +5,20 @@ description = "Simulation tooling for HITL Bayesian optimization sensor-error ro
 requires-python = ">=3.13"
 # Floors match requirements.txt; exact pins live in requirements-eval.txt.
 dependencies = [
-  "numpy>=2.4.6",
-  "pandas>=3.0.3",
+  "numpy>=2.5.2",
+  "pandas>=3.0.5",
   "scikit-learn>=1.9.0",
   "scipy>=1.17.1",
-  "matplotlib>=3.11.0",
+  "matplotlib>=3.11.1",
   "seaborn>=0.13.2",
-  "tqdm>=4.68.2",
-  "xgboost>=3.2.0",
-  "lightgbm>=4.6.0",
+  "tqdm>=4.68.3",
+  "xgboost>=3.4.0",
+  "lightgbm>=4.7.0",
   "catboost>=1.2.10",
-  "tabpfn>=8.0.8",
+  "tabpfn>=8.2.0",
   "statsmodels>=0.14.6",
   "botorch>=0.18.1",
-  "torch>=2.12.0",
+  "torch>=2.13.0",
 ]
 
 [project.optional-dependencies]

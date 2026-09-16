@@ -460,45 +460,15 @@ where $g_i = g(x_i)$ over a fixed Sobol design. It involves no surrogate, no
 sequence and no acquisition function; at $m = 256$ it costs about $0.2$ seconds
 per landscape.
 
-\begin{table}[t]
-\centering
-\caption{Predicting the cost from one noisy choice. Fitted on landscape
-$\times$ condition cell means, predictors $z$-scored, every model also carrying
-onset and error-process indicators; the interaction models add
-$(\log\sigma_e)^2$ as well. Intervals and $p$-values from a 2000-replicate
-bootstrap over landscapes.}
-\label{tab:mediation}
-% Eight numeric columns with math headers overrun the text width at normal
-% size. Set here rather than in tables/mediation.tex, which is generated and
-% would lose the fix on the next rebuild.
-\small
-\setlength{\tabcolsep}{3.2pt}
-\input{tables/mediation}
-\end{table}
-
-With onset and error-process indicators in every model, $\frag(\sigma_e)$
-explains $R^2 = 0.52$ of the variation in excess regret across
-landscape-by-condition cells ($0.48$ on its own), nearly as much as the primary
-landscape descriptors together with the error magnitude ($R^2 = 0.53$;
-Table~\ref{tab:mediation}). Jointly they reach $R^2 = 0.70$, and in that additive model the error magnitude
-collapses to
-$\beta = -0.07$ with $p = 0.44$. That null belongs to the additive specification: with the magnitude-by-$\optz$
-interaction Section~\ref{sec:currency} found, and a quadratic in the magnitude,
-the descriptor model reaches $R^2 = 0.78$ with no $\frag$ term; $\frag$ still adds to it,
-keeping $\beta = +0.31$ $[0.18, 0.45]$ at $R^2 = 0.79$, but the magnitude is
-significant again beside it ($-0.38$ $[-0.60, -0.08]$). \textbf{One noisy
-choice predicts, on its own, two thirds of what the best descriptor model
-explains, and stays informative beside it; it does not make the error magnitude
-redundant.} Dimension and ruggedness are not detectably different from zero
-here (intervals $[-0.26, 0.12]$ and $[-0.34, 0.15]$), though the fixed-$\optz$
-ladder of Appendix~\ref{sec:manipulation} shows dimension does raise the cost.
-
-Equation~\ref{eq:frag} needs the objective at a quasi-random design (here 256
-points) and an estimate of rater noise; computed instead on a GP fitted to the first ten trials of a clean run, it tracks
-the exact value (Spearman $0.94$) and predicts the measured cost as well
-($0.85$ against $0.84$; Appendix~\ref{app:pilot}). Its residuals are positive
-in $\optz$ ($+0.42$) and tail weight ($+0.20$): on tall, heavy-tailed landscapes
-fifty noisy choices cost more than one predicts.
+With onset and error-process indicators in every model, $\frag(\sigma_e)$ explains
+$R^2 = 0.52$ of the variation in excess regret across landscape-by-condition cells,
+nearly as much as the primary landscape descriptors and the error magnitude together
+($0.53$), and it stays informative beside them ($\beta = +0.31$ $[0.18, 0.45]$ in the
+interaction model) without making the magnitude redundant. Computed on a GP fitted to
+the first ten trials of a clean run rather than on the exact objective, it tracks the
+exact value at Spearman $0.94$ and predicts the measured cost as well. Its residuals
+are positive in $\optz$ and tail weight: on tall, heavy-tailed landscapes fifty noisy
+choices cost more than one predicts (Appendix~\ref{app:mediation}).
 
 \section{Which acquisition function?}
 \label{sec:acq}
@@ -776,6 +746,52 @@ among the proposed designs, and are responsible for everything reported here.
 
 \clearpage
 \appendix
+\section{Predicting the cost from one noisy choice}
+\label{app:mediation}
+
+The regression behind Section~\ref{sec:mediation}, whose predictor is
+Equation~\ref{eq:frag}.
+
+\begin{table}[t]
+\centering
+\caption{Predicting the cost from one noisy choice. Fitted on landscape
+$\times$ condition cell means, predictors $z$-scored, every model also carrying
+onset and error-process indicators; the interaction models add
+$(\log\sigma_e)^2$ as well. Intervals and $p$-values from a 2000-replicate
+bootstrap over landscapes.}
+\label{tab:mediation}
+% Eight numeric columns with math headers overrun the text width at normal
+% size. Set here rather than in tables/mediation.tex, which is generated and
+% would lose the fix on the next rebuild.
+\small
+\setlength{\tabcolsep}{3.2pt}
+\input{tables/mediation}
+\end{table}
+
+With onset and error-process indicators in every model, $\frag(\sigma_e)$
+explains $R^2 = 0.52$ of the variation in excess regret across
+landscape-by-condition cells ($0.48$ on its own), nearly as much as the primary
+landscape descriptors together with the error magnitude ($R^2 = 0.53$;
+Table~\ref{tab:mediation}). Jointly they reach $R^2 = 0.70$, and in that additive model the error magnitude
+collapses to
+$\beta = -0.07$ with $p = 0.44$. That null belongs to the additive specification: with the magnitude-by-$\optz$
+interaction Section~\ref{sec:currency} found, and a quadratic in the magnitude,
+the descriptor model reaches $R^2 = 0.78$ with no $\frag$ term; $\frag$ still adds to it,
+keeping $\beta = +0.31$ $[0.18, 0.45]$ at $R^2 = 0.79$, but the magnitude is
+significant again beside it ($-0.38$ $[-0.60, -0.08]$). \textbf{One noisy
+choice predicts, on its own, two thirds of what the best descriptor model
+explains, and stays informative beside it; it does not make the error magnitude
+redundant.} Dimension and ruggedness are not detectably different from zero
+here (intervals $[-0.26, 0.12]$ and $[-0.34, 0.15]$), though the fixed-$\optz$
+ladder of Appendix~\ref{sec:manipulation} shows dimension does raise the cost.
+
+Equation~\ref{eq:frag} needs the objective at a quasi-random design (here 256
+points) and an estimate of rater noise; computed instead on a GP fitted to the first ten trials of a clean run, it tracks
+the exact value (Spearman $0.94$) and predicts the measured cost as well
+($0.85$ against $0.84$; Appendix~\ref{app:pilot}). Its residuals are positive
+in $\optz$ ($+0.42$) and tail weight ($+0.20$): on tall, heavy-tailed landscapes
+fifty noisy choices cost more than one predicts.
+
 \section{What the fitted-oracle design would have concluded}
 \label{sec:fitted}
 

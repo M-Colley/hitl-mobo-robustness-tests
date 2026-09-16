@@ -141,7 +141,7 @@ property of a problem decides whether feedback error hurts''.
     modelling the fault explicitly, recovers $22$--$38\%$, and four confirmation
     trials cut false improvement claims from $15.7\%$ to $0.5\%$.
   \item A matched run of the fitted-oracle design, which reports about a third
-    of the cost, a gap that better oracles do not close (Section~\ref{sec:fitted}).
+    of the cost, a gap that better oracles do not close (Appendix~\ref{sec:fitted}).
   \item An input-error arm, in which the person applies the wrong design rather
     than the wrong rating: a slip of $15\%$ of the range costs about as much as
     one-SD rating noise, and up to half of a small slip's cost is the record
@@ -589,51 +589,6 @@ $-0.013$. Its utility is the surrogate's posterior, the surrogate was fitted on
 corrupted ratings, and so it is confident about designs it should not be. We did
 not find a rule that beats simply fixing $k$ at about a third of the budget.
 
-\section{What the fitted-oracle design would have concluded}
-\label{sec:fitted}
-
-The introduction argued that fitting a regression oracle to archival ratings
-entangles the cost of feedback error with the cost of the oracle being wrong. To
-measure this rather than argue it, we run the data-driven simulator on the three
-archival datasets at the same error magnitudes, expressed in each dataset's own
-$\sigma_f$ so that ``$1\sigma$'' means the same thing in both arms.
-
-\begin{table}[h]
-\centering
-\caption{The same experiment, run against exact functions and against oracles
-fitted to ratings, under \textsc{gaussian} error. Percentages are post-onset
-excess as a fraction of the gap between the optimum and a same-budget model-free
-floor (the floor gap), the one normaliser computable in both arms. The fitted
-design reports roughly a third of the cost.}
-\label{tab:fitted}
-\input{tables/fitted_companion}
-\end{table}
-
-The fitted arm has no verified optimum, so Table~\ref{tab:fitted}'s denominator
-uses the best value any arm reached, which is attainable by construction and so
-inflates the fitted fraction: the bias works against the result below. Three design
-spaces against twenty also widen the intervals.
-
-\textbf{The fitted design understates the cost of feedback error by roughly
-threefold.} At $1\sigma$ from the first rating, the known-function arm puts the
-loss at $99\%$ of the floor gap (cluster-bootstrap interval $[55, 155]$) and the
-fitted arm at $33\%$ ($[5, 75]$): a ratio of $3.0$, interval $[1.1, 17]$. At
-$0.05\sigma$ the fitted arm reports $1\%$ ($[-4, 3]$), indistinguishable from
-no effect, where the exact functions report $10\%$ ($[4, 18]$). The direction holds in every cell (twofold at the late onset above $0.05\sigma$),
-though the intervals overlap at the larger magnitudes.
-
-\textbf{Oracle fidelity does not explain it.} Turning off the deployed jitter
-augmentation improves the companion's oracles by up to $0.29$ held-out $R^2$
-(\texttt{opticarvis}, $0.52$ to $0.81$). Rerunning the companion arm without it shifts the fraction destroyed by $+0.016$
-(median $+0.006$) over the $2{,}400$ shared cells, and the augmentation-free arm
-is the worse of the two in $52.6\%$ of them. If the gap were fidelity, it would close as the oracle
-improved. Nor can the optimum estimate be the cause: it cancels in the excess, a difference
-of two regrets, and enters only the denominator, which biases the other way. The three fitted design spaces sit at the low end of the
-twenty-landscape spread (per-landscape fractions at $1\sigma$ run from $0.11$
-to $4.8$; the fitted three are $0.05$, $0.19$ and $0.75$), and with three
-design spaces the arm cannot say whether that is a property of human
-objectives or of these studies.
-
 \section{When the error is in the design, not the rating}
 \label{sec:inputerror}
 
@@ -745,6 +700,14 @@ standard process, neither qKG nor replication recovers the cost
 rule, and with that landscape excluded post hoc all four claims clear their
 thresholds (Appendix~\ref{sec:confirmatory}).
 
+\paragraph{The fitted-oracle design reports about a third of the cost.} Run on
+three archival datasets at matched magnitudes, the data-driven design recovers
+$29$--$38\%$ of the cost the analytic arm measures. The gap is not the oracles'
+fidelity --- improving them by up to $0.29$ held-out $R^2$ moves the measured
+cost by a median of $+0.006$ --- nor the optimum estimate, which cancels in a
+difference of two regrets; the three fitted design spaces simply sit at the low
+end of the twenty-landscape spread (Appendix~\ref{sec:fitted}).
+
 \section{Discussion}
 \label{sec:discussion}
 
@@ -769,7 +732,7 @@ Two things remain unexplained: why the onset effect grows with the budget
 \textsc{gain} allows when $\optz$ is not causal (Appendix~\ref{sec:manipulation}).
 
 \paragraph{Limitations.} The landscapes are analytic, not people: they remove
-the surrogate-human confound at the cost of realism, and Section~\ref{sec:fitted}
+the surrogate-human confound at the cost of realism, and Appendix~\ref{sec:fitted}
 cannot say which design's answer is closer to a person. The rater-noise anchor runs through a fitted oracle's $\sigma_f$;  extra-trial counts are censored at the
 budget and depend on the tolerance (Appendix~\ref{app:extra}). The multi-objective
 arm is six problems at five seeds under \textsc{gaussian} error, too few to separate
@@ -813,6 +776,51 @@ among the proposed designs, and are responsible for everything reported here.
 
 \clearpage
 \appendix
+\section{What the fitted-oracle design would have concluded}
+\label{sec:fitted}
+
+The introduction argued that fitting a regression oracle to archival ratings
+entangles the cost of feedback error with the cost of the oracle being wrong. To
+measure this rather than argue it, we run the data-driven simulator on the three
+archival datasets at the same error magnitudes, expressed in each dataset's own
+$\sigma_f$ so that ``$1\sigma$'' means the same thing in both arms.
+
+\begin{table}[h]
+\centering
+\caption{The same experiment, run against exact functions and against oracles
+fitted to ratings, under \textsc{gaussian} error. Percentages are post-onset
+excess as a fraction of the gap between the optimum and a same-budget model-free
+floor (the floor gap), the one normaliser computable in both arms. The fitted
+design reports roughly a third of the cost.}
+\label{tab:fitted}
+\input{tables/fitted_companion}
+\end{table}
+
+The fitted arm has no verified optimum, so Table~\ref{tab:fitted}'s denominator
+uses the best value any arm reached, which is attainable by construction and so
+inflates the fitted fraction: the bias works against the result below. Three design
+spaces against twenty also widen the intervals.
+
+\textbf{The fitted design understates the cost of feedback error by roughly
+threefold.} At $1\sigma$ from the first rating, the known-function arm puts the
+loss at $99\%$ of the floor gap (cluster-bootstrap interval $[55, 155]$) and the
+fitted arm at $33\%$ ($[5, 75]$): a ratio of $3.0$, interval $[1.1, 17]$. At
+$0.05\sigma$ the fitted arm reports $1\%$ ($[-4, 3]$), indistinguishable from
+no effect, where the exact functions report $10\%$ ($[4, 18]$). The direction holds in every cell (twofold at the late onset above $0.05\sigma$),
+though the intervals overlap at the larger magnitudes.
+
+\textbf{Oracle fidelity does not explain it.} Turning off the deployed jitter
+augmentation improves the companion's oracles by up to $0.29$ held-out $R^2$
+(\texttt{opticarvis}, $0.52$ to $0.81$). Rerunning the companion arm without it shifts the fraction destroyed by $+0.016$
+(median $+0.006$) over the $2{,}400$ shared cells, and the augmentation-free arm
+is the worse of the two in $52.6\%$ of them. If the gap were fidelity, it would close as the oracle
+improved. Nor can the optimum estimate be the cause: it cancels in the excess, a difference
+of two regrets, and enters only the denominator, which biases the other way. The three fitted design spaces sit at the low end of the
+twenty-landscape spread (per-landscape fractions at $1\sigma$ run from $0.11$
+to $4.8$; the fitted three are $0.05$, $0.19$ and $0.75$), and with three
+design spaces the arm cannot say whether that is a property of human
+objectives or of these studies.
+
 \section{Ablations}
 
 \subsection{Does the surrogate know it is being lied to?}

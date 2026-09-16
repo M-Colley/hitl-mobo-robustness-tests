@@ -1,0 +1,55 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 400
+- Paired baseline/jitter rows: 320
+- Seeds per condition: min=5, median=5.0, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 5 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg) correction is applied per test family
+  (Friedman omnibus and Wilcoxon pairwise are corrected separately).
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+ dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+schwefel     value        exact    misclick                 0        0.01        5               8               ei  friedman   5.194737 0.636212        0.654905               NaN          True    0.148421
+schwefel     value        exact    misclick                 0        0.05        5               8             qucb  friedman   5.041451 0.654905        0.654905               NaN          True    0.144041
+schwefel     value        exact    misclick                 0        0.15        5               8           random  friedman   5.760766 0.567945        0.654905               NaN          True    0.164593
+schwefel     value        exact    misclick                 0        0.40        5               8            sobol  friedman  10.800000 0.147584        0.393557               NaN          True    0.308571
+schwefel     value        exact    misclick                20        0.01        5               8               pi  friedman   7.533333 0.375534        0.600854               NaN          True    0.215238
+schwefel     value        exact    misclick                20        0.05        5               8            logei  friedman  16.710983 0.019358        0.154864               NaN          True    0.477457
+schwefel     value        exact    misclick                20        0.15        5               8            logei  friedman   8.034301 0.329579        0.600854               NaN          True    0.229551
+schwefel     value        exact    misclick                20        0.40        5               8            logei  friedman  12.084399 0.097817        0.391269               NaN          True    0.345269
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+schwefel / value
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+      logei              0.373214              4.0375                            0.038071                          103.538677               3           8
+      sobol              0.375000              4.9750                           -0.021961                          110.656204               1           8
+     random              0.421429              5.2500                            0.022269                          115.802078               1           8
+       qnei              0.475000              3.9750                            0.028419                          105.777520               0           8
+       qucb              0.571429              5.8375                            0.196129                          121.779158               1           8
+

@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+shekel,value,exact,misclick,0,0.01,5,8,qnei,3.4,friedman,5.968421052631554,0.5434414862494414,0.17052631578947297,,True,0.5434414862494414,False
+shekel,value,exact,misclick,0,0.05,5,8,logei,2.4,friedman,13.857868020304569,0.053767830093154646,0.39593908629441626,,True,0.0716904401242062,False
+shekel,value,exact,misclick,0,0.15,5,8,random,2.8,friedman,15.466666666666669,0.03046158718392908,0.44190476190476197,,True,0.048738539494286526,True
+shekel,value,exact,misclick,0,0.4,5,8,sobol,1.0,friedman,21.933333333333337,0.0026085141823618966,0.6266666666666668,,True,0.020868113458895172,True
+shekel,value,exact,misclick,20,0.01,5,8,logei,3.7,friedman,6.999999999999989,0.42887985755305547,0.1999999999999997,,True,0.4901484086320634,False
+shekel,value,exact,misclick,20,0.05,5,8,logei,2.2,friedman,15.887640449438205,0.026162953832410175,0.453932584269663,,True,0.048738539494286526,True
+shekel,value,exact,misclick,20,0.15,5,8,sobol,2.1,friedman,18.288135593220325,0.01073546630280573,0.522518159806295,,True,0.02862791014081528,True
+shekel,value,exact,misclick,20,0.4,5,8,sobol,1.4,friedman,18.421052631578956,0.010208052013685954,0.5263157894736844,,True,0.02862791014081528,True

@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+weber_fechner,value,exact,gaussian,0,0.05,aei,auc_simple_regret_excess_true,5,-0.672653689196081,-0.004703353063263194,1.4910357647780819,-0.45113182734164353,-2.524019118355241,1.178711739963079,-1.3542041579717714,0.4998007313343512,-1.008761432749613,0.3701559223822996,4.0,0.4375,0.3701559223822996,0.4375
+weber_fechner,value,exact,gaussian,0,0.25,aei,auc_simple_regret_excess_true,5,1.9286171660182885,0.3055245709163863,3.7589259704891,0.5130766557148617,-2.7387058834511717,6.595940215487749,-0.4545261129790546,1.428076141141553,1.1472742798466866,0.3152241402075411,4.0,0.4375,0.3701559223822996,0.4375
+weber_fechner,value,exact,gaussian,0,1.0,aei,auc_simple_regret_excess_true,5,7.758073059597672,5.620317256097119,6.741653401288141,1.1507671186589512,-0.6127952571497666,16.12894137634511,-0.05060321341755444,2.2807409144579665,2.573193503592982,0.061769915473009675,0.0,0.0625,0.12353983094601935,0.125
+weber_fechner,value,exact,gaussian,0,5.0,aei,auc_simple_regret_excess_true,5,24.895088104692515,26.525060237189653,14.581214287142405,1.7073398425153659,6.790119274253431,43.000056935131596,0.24130250657819424,3.1128045856224986,3.8177279485581432,0.018814920057793744,0.0,0.0625,0.07525968023117498,0.125
+weber_fechner,value,exact,gaussian,20,0.05,aei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,gaussian,20,0.25,aei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,gaussian,20,1.0,aei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,gaussian,20,5.0,aei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

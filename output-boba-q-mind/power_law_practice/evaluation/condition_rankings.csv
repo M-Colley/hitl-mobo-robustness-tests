@@ -1,0 +1,13 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,gaussian,0,0.25,logei,5,2,1.0,0.0,1.0,1.9065403818302034,1.6136737674873234,0.03890898738428987,9.003850214251267,0.0,True
+power_law_practice,value,exact,gaussian,0,0.25,pi,5,2,2.0,1.0,2.0,8.33873656621756,5.946412684014776,0.17017829726974615,16.833015078976125,0.0,False
+power_law_practice,value,exact,gaussian,0,1.0,logei,5,2,1.4,0.3999999999999999,1.2,16.297265195598957,17.256626767410253,0.3325972488897746,23.394575028020018,0.0,True
+power_law_practice,value,exact,gaussian,0,1.0,pi,5,2,1.6,0.6000000000000001,1.8,22.744588530086702,19.496535269246905,0.46417527612421844,31.238867042845264,0.0,False
+power_law_practice,value,exact,gaussian,0,5.0,pi,5,2,1.4,0.3999999999999999,1.4,21.78295026519492,20.42902869413873,0.4445500054121413,30.277228777953486,0.0,True
+power_law_practice,value,exact,gaussian,0,5.0,logei,5,2,1.6,0.6000000000000001,1.6,25.198338503750787,16.51166637146016,0.5142518061989957,32.29564833617185,0.0,False
+power_law_practice,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.097309832421063,-0.12223900843924337,True
+power_law_practice,value,exact,gaussian,20,0.25,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,8.494278512758564,-0.1861268065011992,True
+power_law_practice,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.097309832421063,-0.1360087208580043,True
+power_law_practice,value,exact,gaussian,20,1.0,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,8.494278512758564,-0.3193445446381785,True
+power_law_practice,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.097309832421063,-0.3702596753350533,True
+power_law_practice,value,exact,gaussian,20,5.0,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,8.494278512758564,-0.40976920576580583,True

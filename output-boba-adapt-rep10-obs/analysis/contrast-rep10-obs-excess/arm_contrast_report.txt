@@ -1,0 +1,41 @@
+ARM CONTRAST: rep10-obs vs output-boba-incumbent
+========================================================================
+
+Paired on dataset, acquisition, error_model, jitter_std, jitter_iteration, seed; 800 cells, 20 benchmarks, 1 acquisitions, 5 seeds.
+Positive delta = the treatment arm suffers MORE from feedback error.
+
+OVERALL: output-boba-incumbent 0.4814 -> rep10-obs 0.4230  (+12.1% of the measured cost)
+
+      error      SD  onset       ref       trt     delta    share      dz    p(FDR)
+   gaussian    0.05      0    0.0925   -0.0599   -0.1524  +164.8%   -0.18    0.9133
+   gaussian    0.05     20    0.0240   -0.0674   -0.0914  +380.2%   -0.22    0.9133
+   gaussian    0.25      0    0.2380    0.1803   -0.0577   +24.3%   -0.11    0.6147
+   gaussian    0.25     20    0.1080    0.0380   -0.0700   +64.8%   -0.21    0.9133
+   gaussian       1      0    0.8461    0.6166   -0.2294   +27.1%   -0.24    0.9133
+   gaussian       1     20    0.2108    0.5149   +0.3041  -144.3%    0.30    0.2828
+   gaussian       5      0    1.7161    1.2066   -0.5095   +29.7%   -0.32    0.8609
+   gaussian       5     20    0.6154    0.9551   +0.3397   -55.2%    0.34    0.2828
+
+Per benchmark (mean over every shared cell):
+
+  benchmark               opt_z       ref       trt     delta    share
+  ackley                  20.10    2.5014    0.9467   -1.5548   +62.2%
+  shekel                  56.77    3.5334    2.6793   -0.8542   +24.2%
+  hicks_law                5.40    0.3343    0.3058   -0.0285    +8.5%
+  levy_10                  2.62    0.0932    0.0696   -0.0236   +25.3%
+  schwefel                 4.33    0.1580    0.1377   -0.0202   +12.8%
+  power_law_practice       1.72    0.0772    0.0668   -0.0104   +13.5%
+  stevens                  3.06    0.1334    0.1282   -0.0051    +3.9%
+  steering_law             1.29    0.0453    0.0425   -0.0028    +6.2%
+  powell                   0.76    0.0062    0.0073   +0.0010   -16.7%
+  rosenbrock               1.03    0.0074    0.0095   +0.0021   -28.9%
+  weber_fechner            2.15    0.0718    0.0796   +0.0078   -10.9%
+  moving_peaks             2.96    0.2195    0.2287   +0.0092    -4.2%
+  branin                   1.25    0.0133    0.0240   +0.0107   -80.4%
+  hartmann_3               3.05    0.2213    0.2701   +0.0488   -22.1%
+  eggholder                3.21    0.1455    0.2029   +0.0574   -39.4%
+  griewank                 2.75    0.2742    0.3376   +0.0634   -23.1%
+  rastrigin                3.64    0.1156    0.2257   +0.1102   -95.3%
+  yerkes_dodson            3.54    0.2498    0.5421   +0.2923  -117.0%
+  hartmann_6               7.97    0.8919    1.2097   +0.3177   -35.6%
+  michalewicz              8.05    0.5348    0.9469   +0.4121   -77.1%

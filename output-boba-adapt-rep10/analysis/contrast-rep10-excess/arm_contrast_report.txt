@@ -1,0 +1,41 @@
+ARM CONTRAST: rep10 vs output-boba
+========================================================================
+
+Paired on dataset, acquisition, error_model, jitter_std, jitter_iteration, seed; 1,600 cells, 20 benchmarks, 2 acquisitions, 5 seeds.
+Positive delta = the treatment arm suffers MORE from feedback error.
+
+OVERALL: output-boba 0.4354 -> rep10 0.3014  (+30.8% of the measured cost)
+
+      error      SD  onset       ref       trt     delta    share      dz    p(FDR)
+   gaussian    0.05      0    0.1221   -0.0370   -0.1591  +130.3%   -0.23    0.8014
+   gaussian    0.05     20   -0.0188   -0.0285   -0.0097    +nan%   -0.07    0.8313
+   gaussian    0.25      0    0.3393   -0.0182   -0.3575  +105.4%   -0.29    0.1686
+   gaussian    0.25     20    0.0555   -0.0251   -0.0806  +145.3%   -0.29    0.5082
+   gaussian       1      0    0.7602    0.4310   -0.3292   +43.3%   -0.50  0.005661
+   gaussian       1     20    0.0477    0.1871   +0.1394  -292.1%    0.27    0.1403
+   gaussian       5      0    1.6389    1.1142   -0.5247   +32.0%   -0.41   0.08594
+   gaussian       5     20    0.5386    0.7873   +0.2487   -46.2%    0.33    0.1517
+
+Per benchmark (mean over every shared cell):
+
+  benchmark               opt_z       ref       trt     delta    share
+  shekel                  56.77    3.0732    1.5337   -1.5395   +50.1%
+  ackley                  20.10    2.0890    0.9926   -1.0964   +52.5%
+  eggholder                3.21    0.1063    0.0339   -0.0724   +68.1%
+  hicks_law                5.40    0.2990    0.2427   -0.0564   +18.8%
+  levy_10                  2.62    0.1082    0.0655   -0.0427   +39.5%
+  yerkes_dodson            3.54    0.2714    0.2305   -0.0408   +15.0%
+  moving_peaks             2.96    0.2017    0.1701   -0.0316   +15.7%
+  stevens                  3.06    0.1485    0.1292   -0.0193   +13.0%
+  rastrigin                3.64    0.2497    0.2461   -0.0037    +1.5%
+  weber_fechner            2.15    0.0962    0.0963   +0.0000    -0.1%
+  rosenbrock               1.03    0.0079    0.0089   +0.0010   -12.3%
+  power_law_practice       1.72    0.0756    0.0768   +0.0012    -1.6%
+  powell                   0.76    0.0049    0.0070   +0.0021   -42.3%
+  steering_law             1.29    0.0403    0.0430   +0.0027    -6.7%
+  michalewicz              8.05    0.4319    0.4378   +0.0059    -1.4%
+  branin                   1.25    0.0184    0.0248   +0.0064   -34.8%
+  griewank                 2.75    0.2573    0.2925   +0.0352   -13.7%
+  hartmann_6               7.97    0.9457    0.9848   +0.0391    -4.1%
+  hartmann_3               3.05    0.1937    0.2453   +0.0515   -26.6%
+  schwefel                 4.33    0.0897    0.1657   +0.0760   -84.7%

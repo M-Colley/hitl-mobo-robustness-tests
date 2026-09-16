@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+power_law_practice,value,exact,slip,0,0.01,5,8,logei,3.2,friedman,6.866666666666674,0.4428934041543757,0.19619047619047641,,True,0.5061638904621437,False
+power_law_practice,value,exact,slip,0,0.05,5,8,logei,2.4,friedman,9.466666666666669,0.22086385862860194,0.27047619047619054,,True,0.4417277172572039,False
+power_law_practice,value,exact,slip,0,0.15,5,8,sobol,3.2,friedman,7.666666666666657,0.36290217321356666,0.21904761904761877,,True,0.4838695642847555,False
+power_law_practice,value,exact,slip,0,0.4,5,8,sobol,1.6,friedman,23.53333333333333,0.0013756583046661336,0.6723809523809523,,True,0.011005266437329068,True
+power_law_practice,value,exact,slip,20,0.01,5,8,random,3.0,friedman,8.277777777777732,0.3087382641683541,0.23650793650793522,,True,0.4838695642847555,False
+power_law_practice,value,exact,slip,20,0.05,5,8,sobol,2.8,friedman,13.954545454545475,0.05199573771335224,0.3987012987012993,,True,0.1386553005689393,False
+power_law_practice,value,exact,slip,20,0.15,5,8,sobol,3.6,friedman,3.319999999999982,0.8539069502239687,0.09485714285714235,,True,0.8539069502239687,False
+power_law_practice,value,exact,slip,20,0.4,5,8,random,1.7,friedman,17.831578947368413,0.012753438307319028,0.5094736842105261,,True,0.051013753229276114,False

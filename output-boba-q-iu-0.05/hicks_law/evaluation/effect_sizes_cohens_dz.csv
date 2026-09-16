@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+hicks_law,value,exact,slip,0,0.05,logei,auc_simple_regret_excess_true,5,0.9792159258663062,-0.32947830769937525,4.134161169064247,0.23685963991770267,-4.154023160532754,6.112455012265366,-0.6675861086949063,1.1138586441110938,0.5296342559821059,0.6243983414426418,7.0,1.0,0.6243983414426418,1.0
+hicks_law,value,exact,slip,0,0.05,qnei,auc_simple_regret_excess_true,5,24.030149937078143,32.65388937511007,17.579078316028387,1.36697439450894,2.2028412704612457,45.85745860369504,0.0676750160720893,2.597410563622245,3.0566476696236053,0.03778197272522771,1.0,0.125,0.07556394545045542,0.25
+hicks_law,value,exact,slip,20,0.05,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+hicks_law,value,exact,slip,20,0.05,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

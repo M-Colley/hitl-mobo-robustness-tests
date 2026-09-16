@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+eggholder,value,exact,misclick,0,0.01,5,8,ucb,3.0,friedman,10.6105263157895,0.15653297488205628,0.30315789473684285,,True,0.362631558247494,False
+eggholder,value,exact,misclick,0,0.05,5,8,qnei,3.2,friedman,7.443037974683544,0.3842514008702962,0.21265822784810126,,True,0.5123352011603949,False
+eggholder,value,exact,misclick,0,0.15,5,8,random,2.8,friedman,9.377990430622019,0.22664472390468374,0.26794258373205765,,True,0.362631558247494,False
+eggholder,value,exact,misclick,0,0.4,5,8,sobol,2.5,friedman,10.90930787589498,0.14262418255107523,0.31169451073985655,,True,0.362631558247494,False
+eggholder,value,exact,misclick,20,0.01,5,8,ei,4.2,friedman,5.000000000000001,0.6599632296942823,0.14285714285714288,,True,0.7542436910791798,False
+eggholder,value,exact,misclick,20,0.05,5,8,qnei,3.5,friedman,3.876582278481,0.7938780023077054,0.11075949367088571,,True,0.7938780023077054,False
+eggholder,value,exact,misclick,20,0.15,5,8,sobol,2.8,friedman,9.99999999999999,0.18857346751345075,0.2857142857142854,,True,0.362631558247494,False
+eggholder,value,exact,misclick,20,0.4,5,8,sobol,3.2,friedman,11.433915211970064,0.12077988387362873,0.32668329177057326,,True,0.362631558247494,False

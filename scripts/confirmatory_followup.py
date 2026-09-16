@@ -85,6 +85,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--response-clip", type=str, default="none")
     parser.add_argument("--n-jobs", type=int, default=None)
     parser.add_argument("--run-simulation", action="store_true", default=False)
+    parser.add_argument(
+        "--simulation-script",
+        type=str,
+        default="scripts/bo_sensor_error_simulation.py",
+        help="Which simulator generates the fresh confirmatory seeds. Point it at "
+        "scripts/bo_synthetic_error_simulation.py to confirm a hypothesis from the "
+        "known-function arm; the oracle and response-clip flags are then dropped, "
+        "since an analytic benchmark has neither.",
+    )
+    parser.add_argument(
+        "--functions",
+        type=str,
+        default="all",
+        help="Benchmarks to confirm on; only used with the synthetic simulator.",
+    )
+    parser.add_argument(
+        "--error-bias-mode",
+        type=str,
+        default=None,
+        choices=[None, "scaled", "fixed"],
+        help="Passed through to the synthetic simulator; must match the screening sweep.",
+    )
+    parser.add_argument(
+        "--allow-mixed-iterations",
+        action="store_true",
+        default=False,
+        help="Pass through to the evaluation step. Off by default because mixing run "
+        "lengths silently corrupts baseline/jittered pairing.",
+    )
     parser.add_argument("--parallel", action="store_true", default=False)
     return parser.parse_args()
 
@@ -127,39 +156,53 @@ def copy_existing_logs(base_input_dir: Path, raw_dir: Path, objective: str, acqu
 
 
 def run_simulation(args: argparse.Namespace, raw_dir: Path, acquisitions: list[str], seeds: list[int]) -> None:
+    """Generate the fresh confirmatory seeds.
+
+    Two simulators produce the same log schema: the data-driven one, whose human
+    is a fitted regression oracle, and the known-function one, whose human is an
+    analytic benchmark. They take different flags -- the synthetic driver has no
+    oracle to select and no response scale to clip to, and it names benchmarks
+    rather than objectives -- so the flag set is chosen from the script.
+    """
+    script = args.simulation_script
+    synthetic = "synthetic" in Path(script).name
     command = [
         sys.executable,
-        "scripts/bo_sensor_error_simulation.py",
-        "--objective",
-        args.objective,
+        script,
         "--acq-list",
         ",".join(acquisitions),
         "--seeds",
         ",".join(str(seed) for seed in seeds),
-        "--oracle-model",
-        args.oracle_model,
-        "--oracle-selection-path",
-        str(args.oracle_selection_path),
         "--error-models",
         args.error_models,
         "--jitter-iterations",
         args.jitter_iterations,
         "--jitter-stds",
         args.jitter_stds,
-        "--response-clip",
-        args.response_clip,
         "--output-dir",
         str(raw_dir),
         "--resume",
     ]
-    if args.parallel:
-        command.append("--parallel")
+    if synthetic:
+        command.extend(["--functions", args.functions])
+        if args.error_bias_mode:
+            command.extend(["--error-bias-mode", args.error_bias_mode])
+        command.extend(["--flat-output"])
+    else:
+        command.extend([
+            "--objective", args.objective,
+            "--oracle-model", args.oracle_model,
+            "--oracle-selection-path", str(args.oracle_selection_path),
+            "--response-clip", args.response_clip,
+        ])
+        if args.parallel:
+            command.append("--parallel")
     if args.n_jobs is not None:
         command.extend(["--n-jobs", str(args.n_jobs)])
     subprocess.run(command, check=True)
 
 
-def run_evaluation(raw_dir: Path, evaluation_dir: Path) -> None:
+def run_evaluation(raw_dir: Path, evaluation_dir: Path, allow_mixed_iterations: bool = False) -> None:
     command = [
         sys.executable,
         "scripts/evaluate_research_question.py",
@@ -168,6 +211,12 @@ def run_evaluation(raw_dir: Path, evaluation_dir: Path) -> None:
         "--output-dir",
         str(evaluation_dir),
     ]
+    if allow_mixed_iterations:
+        # The screening logs copied in and the fresh confirmatory ones must
+        # normally share a run length; the evaluator refuses to mix them because
+        # a stale run silently corrupts the baseline/jittered pairing. Opt out
+        # only deliberately.
+        command.append("--allow-mixed-iterations")
     subprocess.run(command, check=True)
 
 
@@ -640,14 +689,14 @@ def plot_paired_points(seed_df: pd.DataFrame, output_dir: Path, reference: str, 
     return paths
 
 
-def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests: pd.DataFrame, dataset_tests: pd.DataFrame, reference: str, challenger: str, copied_count: int, new_seed_count: int, run_simulation_flag: bool, seed_start: int) -> None:
+def write_summary(output_root: Path, base_overall: pd.DataFrame, condition_tests: pd.DataFrame, dataset_tests: pd.DataFrame, reference: str, challenger: str, copied_count: int, new_seed_count: int, run_simulation_flag: bool, seed_start: int, objective: str = "composite") -> None:
     path = output_root / "confirmatory_summary.txt"
     with path.open("w", encoding="utf-8") as handle:
         handle.write("CONFIRMATORY FOLLOW-UP SUMMARY\n")
         handle.write("=" * 80 + "\n\n")
         handle.write("Design\n")
         handle.write(f"- Broad-screen results were narrowed to {reference} vs {challenger}.\n")
-        handle.write("- Objective kept: composite.\n")
+        handle.write(f"- Objective kept: {objective}.\n")
         handle.write("- Error sweep kept: same jitter iterations, jitter stds, and error models.\n")
         handle.write(
             f"- Existing broad-screen logs reused for exploratory pooled outputs only: {copied_count} files.\n"
@@ -698,7 +747,7 @@ def main() -> None:
     if args.run_simulation:
         run_simulation(args, paths["raw"], acquisitions, seeds)
 
-    run_evaluation(paths["raw"], paths["evaluation"])
+    run_evaluation(paths["raw"], paths["evaluation"], args.allow_mixed_iterations)
 
     base_overall = pd.read_csv(args.base_evaluation_dir / "overall_rankings.csv")
     condition_summary = pd.read_csv(paths["evaluation"] / "condition_summary.csv")
@@ -754,7 +803,7 @@ def main() -> None:
         for figure_path in figure_paths:
             handle.write(Path(figure_path).name + "\n")
 
-    write_summary(args.output_root, base_overall, condition_tests, dataset_tests, reference, challenger, len(copied), len(seeds), args.run_simulation, args.seed_start)
+    write_summary(args.output_root, base_overall, condition_tests, dataset_tests, reference, challenger, len(copied), len(seeds), args.run_simulation, args.seed_start, args.objective)
     print(f"Confirmatory outputs saved to {args.output_root}")
 
 

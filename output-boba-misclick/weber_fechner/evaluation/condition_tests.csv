@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+weber_fechner,value,exact,misclick,0,0.01,5,8,logei,4.1,friedman,4.333333333333371,0.7406825308266042,0.1238095238095249,,True,0.7406825308266042,False
+weber_fechner,value,exact,misclick,0,0.05,5,8,ucb,2.7,friedman,14.643454038997197,0.04085129014274977,0.4183844011142056,,True,0.16340516057099908,False
+weber_fechner,value,exact,misclick,0,0.15,5,8,sobol,1.6,friedman,10.871980676328503,0.14430146461684637,0.3106280193236715,,True,0.3239289861588607,False
+weber_fechner,value,exact,misclick,0,0.4,5,8,sobol,1.6,friedman,18.599999999999994,0.009537157461011962,0.5314285714285713,,True,0.0762972596880957,False
+weber_fechner,value,exact,misclick,20,0.01,5,8,ei,4.4,friedman,7.00000000000003,0.4288798575530519,0.20000000000000087,,True,0.5034740419939058,False
+weber_fechner,value,exact,misclick,20,0.05,5,8,ei,4.4,friedman,7.00000000000003,0.4288798575530519,0.20000000000000087,,True,0.5034740419939058,False
+weber_fechner,value,exact,misclick,20,0.15,5,8,random,3.1,friedman,10.499999999999954,0.16196449307943034,0.29999999999999866,,True,0.3239289861588607,False
+weber_fechner,value,exact,misclick,20,0.4,5,8,ei,4.2,friedman,6.888888888888875,0.44053978674466754,0.19682539682539643,,True,0.5034740419939058,False

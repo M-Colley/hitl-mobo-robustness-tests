@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+stevens,value,exact,misclick,0,0.01,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,0,0.01,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,0,0.05,logei,auc_simple_regret_excess_true,5,6.781312105121397,0.0,9.502163625793502,0.7136597907779246,-5.0171823740677395,18.579806584310532,-0.3163921598995961,1.6796236867824579,1.595791804987717,0.18576782079608264,0.0,0.5,0.278651731194124,0.5
+stevens,value,exact,misclick,0,0.05,qnei,auc_simple_regret_excess_true,5,3.012970948829198,0.0,6.275188367945636,0.48014031964678394,-4.778704529595933,10.80464642725433,-0.478432458647749,1.3885619566065184,1.0736263934686867,0.34344269832202384,0.0,0.5,0.34344269832202384,0.5
+stevens,value,exact,misclick,0,0.15,logei,auc_simple_regret_excess_true,5,13.536041459294228,12.106995606717454,14.182455345457473,0.9544215814245249,-4.073802749292845,31.145885667881302,-0.16492082220510973,2.0031102048820104,2.134151535258088,0.09974120273724166,0.0,0.0625,0.19948240547448332,0.125
+stevens,value,exact,misclick,0,0.15,qnei,auc_simple_regret_excess_true,5,18.560886598041993,1.942502918275883,35.07275903773462,0.5292109063353818,-24.987695616788773,62.10946881287276,-0.4429495387773814,1.4476252293958156,1.183351561000188,0.3021935357479043,0.0,0.125,0.34344269832202384,0.1875
+stevens,value,exact,misclick,0,0.4,logei,auc_simple_regret_excess_true,5,38.11049897220994,52.80415966299806,23.408168198250586,1.628085489195098,9.045419256543916,67.17557868787597,0.2020453747739269,2.99130390234122,3.6405098270212384,0.021954756237866448,0.0,0.0625,0.06586426871359935,0.125
+stevens,value,exact,misclick,0,0.4,qnei,auc_simple_regret_excess_true,5,24.936481463761925,28.118852637240558,10.862401638283652,2.29566925383014,11.44902841547553,38.42393451204832,0.5158511671602719,4.034272780604655,5.133272505420413,0.006823008963442901,0.0,0.0625,0.04093805378065741,0.125
+stevens,value,exact,misclick,20,0.01,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.01,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.05,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.05,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.15,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.15,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.4,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.4,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

@@ -1,0 +1,48 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 200
+- Paired baseline/jitter rows: 160
+- Seeds per condition: min=10, median=10.0, max=10
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- FDR (Benjamini-Hochberg) correction is applied per test family
+  (Friedman omnibus and Wilcoxon pairwise are corrected separately).
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+   ehmi composite  extra_trees    gaussian                 0    0.018236       10               2            logei  wilcoxon       18.0 0.375000        0.742188          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                 0    0.091178       10               2             qnei  wilcoxon        2.0 0.005859        0.046875          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                 0    0.364713       10               2            logei  wilcoxon       24.0 0.769531        0.769531          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                 0    1.823566       10               2            logei  wilcoxon       24.0 0.769531        0.769531          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                20    0.018236       10               2            logei  wilcoxon       21.0 0.556641        0.742188          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                20    0.091178       10               2             qnei  wilcoxon       14.0 0.193359        0.515625          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                20    0.364713       10               2             qnei  wilcoxon       12.0 0.130859        0.515625          0.001953         False         NaN
+   ehmi composite  extra_trees    gaussian                20    1.823566       10               2             qnei  wilcoxon       21.0 0.556641        0.742188          0.001953         False         NaN
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+ehmi / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+       qnei                0.3875                 1.5                            0.030135                            7.332039               8           8
+      logei                0.6125                 1.5                            0.047997                            7.406938               4           8
+

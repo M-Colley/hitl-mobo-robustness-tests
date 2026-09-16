@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,slip,0,0.01,logei,5,2,1.2,0.19999999999999996,1.2,-0.6405392830282616,-0.6266205706618768,-0.01307223026588289,6.132898809256534,0.0,True
+power_law_practice,value,exact,slip,0,0.01,qnei,5,2,1.8,0.8,1.8,-0.2657741943104875,0.21847544970667165,-0.005423963149193621,6.356731114036975,0.0,False
+power_law_practice,value,exact,slip,0,0.05,logei,5,2,1.0,0.0,1.0,-0.7713461226979631,-0.39045179436814426,-0.015741757606080875,6.002091969586833,0.0,True
+power_law_practice,value,exact,slip,0,0.05,qnei,5,2,2.0,1.0,2.0,1.9288442918677646,2.6714919011154095,0.03936416922179112,8.551349600215227,0.0,False
+power_law_practice,value,exact,slip,0,0.15,logei,5,2,1.4,0.3999999999999999,1.4,2.8526589328982266,0.6524391663817148,0.058217529242820955,9.626097025183022,0.0,True
+power_law_practice,value,exact,slip,0,0.15,qnei,5,2,1.6,0.6000000000000001,1.6,1.7014001065296938,0.06271989390250887,0.03472245115366722,8.323905414877157,0.0,False
+power_law_practice,value,exact,slip,0,0.4,logei,5,2,1.4,0.3999999999999999,1.4,11.599122731655177,12.849598649271602,0.2367167904419424,18.372560823939974,0.0,True
+power_law_practice,value,exact,slip,0,0.4,qnei,5,2,1.6,0.6000000000000001,1.6,8.69448146387912,6.570715617886892,0.17743839722202284,15.316986772226581,0.0,False
+power_law_practice,value,exact,slip,20,0.01,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.773438092284796,-0.3650903569907043,True
+power_law_practice,value,exact,slip,20,0.01,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.622505308347462,-0.0026095274318179706,True
+power_law_practice,value,exact,slip,20,0.05,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.773438092284796,-0.3161070130857854,True
+power_law_practice,value,exact,slip,20,0.05,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.622505308347462,0.024650545418061488,True
+power_law_practice,value,exact,slip,20,0.15,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.773438092284796,-0.24260723124541425,True
+power_law_practice,value,exact,slip,20,0.15,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.622505308347462,0.10963474485399301,True
+power_law_practice,value,exact,slip,20,0.4,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.773438092284796,-0.5743668625508024,True
+power_law_practice,value,exact,slip,20,0.4,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,6.622505308347462,0.1080933322837417,True

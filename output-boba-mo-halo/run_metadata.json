@@ -1,0 +1,240 @@
+{
+  "args": {
+    "functions": "branincurrin,zdt1,dtlz2,vehiclesafety",
+    "multi_objective": true,
+    "mo_stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_mo_stats.json",
+    "boba_root": null,
+    "stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_landscape_stats.json",
+    "iterations": 50,
+    "initial_samples": 5,
+    "candidate_pool": 1000,
+    "acq": "all",
+    "acq_list": "qlognehvi",
+    "seed": 7,
+    "seeds": "7,8,9,10,11,12,13,14,15,16",
+    "num_seeds": 5,
+    "error_models": "gaussian",
+    "jitter_stds": "1",
+    "jitter_iterations": "0,20",
+    "single_error": false,
+    "error_bias_mode": "scaled",
+    "error_bias": 0.2,
+    "error_spike_prob": 0.1,
+    "error_spike_std_mode": "scaled",
+    "error_spike_std": 0.5,
+    "error_ar1_rho": 0.8,
+    "dropout_strategy": "hold_last",
+    "response_clip": "none",
+    "response_round": null,
+    "input_error": "none",
+    "input_error_scale": 0.0,
+    "input_error_from_sweep": false,
+    "input_error_recorded": "proposed",
+    "replicate_first": 0,
+    "final_rerate": "0,0",
+    "input_noise_model": "none",
+    "likelihood": "gaussian",
+    "inference_rule": null,
+    "incumbent": "posterior_mean",
+    "input_uncertain_acq": 0,
+    "input_uncertain_scale": -1.0,
+    "min_distance": 0.0,
+    "noise_schedule": "none",
+    "missing_handling": "drop",
+    "rater_assign": "none",
+    "rater_offset_ratio": 0.0,
+    "rater_model": "none",
+    "response_ceiling": null,
+    "ceiling_mode": "fixed",
+    "error_cross_corr": 0.85,
+    "mo_halo_model": "none",
+    "observation_noise": "learned",
+    "xi": 0.01,
+    "kappa": 2.0,
+    "acq_num_restarts": 10,
+    "acq_raw_samples": 512,
+    "acq_maxiter": 200,
+    "acq_mc_samples": 256,
+    "baseline_run": true,
+    "output_dir": "output-boba-mo-halo",
+    "per_function_dirs": true,
+    "n_jobs": 6,
+    "resume": true,
+    "dry_run": false
+  },
+  "functions": [
+    "branincurrin",
+    "zdt1",
+    "dtlz2",
+    "vehiclesafety"
+  ],
+  "acquisitions": [
+    "qlognehvi"
+  ],
+  "error_models": [
+    "gaussian"
+  ],
+  "jitter_stds": [
+    1.0
+  ],
+  "jitter_iterations": [
+    0,
+    20
+  ],
+  "seeds": [
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "total_runs": 120,
+  "completed_summary_rows": 160,
+  "runtime_sec": 4141.299640400044,
+  "n_workers": 6,
+  "failures": [],
+  "git_commit": "77c6b899c8f4166cdf39b329dcae3d90cc7e00ce",
+  "boba_root": null,
+  "boba_commit": null,
+  "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "landscape_stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_landscape_stats.json",
+  "landscape_stats": {
+    "branincurrin": {
+      "name": "branincurrin",
+      "botorch_name": "BraninCurrin",
+      "dim": 2,
+      "num_objectives": 2,
+      "n_samples": 32768,
+      "seed": 20260906,
+      "mean": [
+        -54.30719827974678,
+        -7.598175935296594
+      ],
+      "std": [
+        51.25207215977303,
+        2.6498240069133705
+      ],
+      "ref_point_raw": [
+        -18.0,
+        -6.0
+      ],
+      "ref_point": [
+        0.7084044946819485,
+        0.6031253136536485
+      ],
+      "max_hv_raw": 59.36011874867746,
+      "max_hv": 0.43708540178519006,
+      "hv_scale": 135.80897121302297,
+      "sampled_hv": 0.4277456584097754,
+      "scaling_check_relative_error": 2.980859077259245e-16
+    },
+    "zdt1": {
+      "name": "zdt1",
+      "botorch_name": "ZDT1",
+      "dim": 6,
+      "num_objectives": 2,
+      "n_samples": 32768,
+      "seed": 20260906,
+      "mean": [
+        -0.4999999995343387,
+        -3.9456257380041238
+      ],
+      "std": [
+        0.28867953952862074,
+        1.137414200067233
+      ],
+      "ref_point_raw": [
+        -11.0,
+        -11.0
+      ],
+      "ref_point": [
+        -36.37251194736873,
+        -6.202115519200385
+      ],
+      "max_hv_raw": 120.66666666666667,
+      "max_hv": 367.4960420062929,
+      "hv_scale": 0.3283482075287233,
+      "sampled_hv": 353.2645797164697,
+      "scaling_check_relative_error": 1.678442960697159e-16
+    },
+    "dtlz2": {
+      "name": "dtlz2",
+      "botorch_name": "DTLZ2",
+      "dim": 6,
+      "num_objectives": 2,
+      "n_samples": 32768,
+      "seed": 20260906,
+      "mean": [
+        -0.9018780124272642,
+        -0.9018780090557809
+      ],
+      "std": [
+        0.4516471256085311,
+        0.45164324974801506
+      ],
+      "ref_point_raw": [
+        -1.1,
+        -1.1
+      ],
+      "ref_point": [
+        -0.43866544551965064,
+        -0.4386692174736526
+      ],
+      "max_hv_raw": 0.4246018366025519,
+      "max_hv": 2.0815511825872632,
+      "hv_scale": 0.20398337554918694,
+      "sampled_hv": 1.808851724777879,
+      "scaling_check_relative_error": 0.0
+    },
+    "vehiclesafety": {
+      "name": "vehiclesafety",
+      "botorch_name": "VehicleSafety",
+      "dim": 5,
+      "num_objectives": 3,
+      "n_samples": 32768,
+      "seed": 20260906,
+      "mean": [
+        -1683.1333449800443,
+        -9.533966665620337,
+        -0.11889999998528575
+      ],
+      "std": [
+        6.091022764689861,
+        0.9630594702033235,
+        0.029789826869097407
+      ],
+      "ref_point_raw": [
+        -1864.72022,
+        -11.81993945,
+        -0.2903999384
+      ],
+      "ref_point": [
+        -29.812214144499517,
+        -2.3736569288883502,
+        -5.756996815332968
+      ],
+      "max_hv_raw": 246.81607081187002,
+      "max_hv": 1412.4143659519918,
+      "hv_scale": 0.17474763551099376,
+      "sampled_hv": 1276.786497223111,
+      "scaling_check_relative_error": 1.9695608916827029e-16
+    }
+  },
+  "multi_objective": true,
+  "package_versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.9.0",
+    "botorch": "0.18.2.dev23+geea35f51a",
+    "torch": "2.13.0+cu126",
+    "gpytorch": "1.15.2",
+    "tqdm": "4.70.0"
+  }
+}

@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+yerkes_dodson,value,logei,0.29999999999999993,1.45,0.8303993794068995,125.7167638101858,0.0,2,2
+yerkes_dodson,value,qnei,0.7000000000000001,1.55,0.9782963932428898,123.06096172351612,0.0,0,2

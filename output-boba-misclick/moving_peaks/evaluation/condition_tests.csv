@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+moving_peaks,value,exact,misclick,0,0.01,5,8,qnei,3.4,friedman,9.726315789473698,0.20462063999770574,0.2778947368421057,,True,0.46445881390036253,False
+moving_peaks,value,exact,misclick,0,0.05,5,8,qucb,2.7,friedman,14.034653465346535,0.05056842943052369,0.400990099009901,,True,0.31551379084761216,False
+moving_peaks,value,exact,misclick,0,0.15,5,8,sobol,3.4,friedman,5.5598086124401895,0.5919799658230602,0.15885167464114827,,True,0.7563202495162356,False
+moving_peaks,value,exact,misclick,0,0.4,5,8,ucb,2.0,friedman,12.73333333333332,0.07887844771190304,0.3638095238095234,,True,0.31551379084761216,False
+moving_peaks,value,exact,misclick,20,0.01,5,8,qnei,3.7,friedman,8.600000000000023,0.2826636410752292,0.24571428571428636,,True,0.46445881390036253,False
+moving_peaks,value,exact,misclick,20,0.05,5,8,qnei,3.8,friedman,2.079999999999984,0.9552800496818297,0.05942857142857098,,True,0.9552800496818297,False
+moving_peaks,value,exact,misclick,20,0.15,5,8,sobol,3.4,friedman,4.985111662531015,0.6617802183267061,0.1424317617866004,,True,0.7563202495162356,False
+moving_peaks,value,exact,misclick,20,0.4,5,8,sobol,2.5,friedman,8.50357995226729,0.2902867586877266,0.24295942720763683,,True,0.46445881390036253,False

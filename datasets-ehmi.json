@@ -1,0 +1,49 @@
+[
+  {
+    "name": "ehmi",
+    "data_dir": "https://github.com/M-Colley/ehmi-optimization-chi25-data",
+    "oracle_target": "mean",
+    "param_columns": [
+      "verticalPosition",
+      "verticalWidth",
+      "horizontalWidth",
+      "r",
+      "g",
+      "b",
+      "a",
+      "blinkFrequency",
+      "volume"
+    ],
+    "objective_map": {
+      "composite": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "multi_objective": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "trust": [
+        "Trust"
+      ],
+      "understanding": [
+        "Understanding"
+      ],
+      "perceived_safety": [
+        "PerceivedSafety"
+      ],
+      "aesthetics": [
+        "Aesthetics"
+      ],
+      "acceptance": [
+        "Acceptance"
+      ]
+    }
+  }
+]

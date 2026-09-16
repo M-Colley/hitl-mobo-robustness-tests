@@ -29,8 +29,10 @@ if "PYTORCH_CUDA_ALLOC_CONF" in os.environ and "PYTORCH_ALLOC_CONF" not in os.en
 
 import argparse
 import dataclasses
+import functools
 import importlib.metadata
 import json
+import math
 import re
 import subprocess
 import time
@@ -78,12 +80,21 @@ from botorch.fit import fit_gpytorch_mll
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.mlls.sum_marginal_log_likelihood import SumMarginalLogLikelihood
 from botorch.acquisition.analytic import (
+    AnalyticAcquisitionFunction,
     ExpectedImprovement,
     LogExpectedImprovement,
     LogProbabilityOfImprovement,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
+    _log_ei_helper,
+    _scaled_improvement,
 )
+from botorch.acquisition.acquisition import AcquisitionFunction, OneShotAcquisitionFunction
+try:
+    from botorch.acquisition.thompson_sampling import PathwiseThompsonSampling
+except ImportError:  # older BoTorch: build_thompson_sampling draws the Matheron path itself
+    PathwiseThompsonSampling = None
+from botorch.acquisition.knowledge_gradient import qKnowledgeGradient
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -104,9 +115,83 @@ from botorch.utils.multi_objective import is_non_dominated
 from botorch.utils.multi_objective.box_decompositions import FastNondominatedPartitioning
 from botorch.utils.multi_objective.hypervolume import Hypervolume
 from botorch.sampling.normal import SobolQMCNormalSampler
+from botorch.sampling.qmc import NormalQMCEngine
+from botorch.utils.transforms import t_batch_mode_transform
 
 torch.set_default_dtype(torch.float64)
 torch.set_num_threads(1)
+
+
+class _DefaultDtype:
+    """Temporarily swap torch's process-wide default dtype and restore it."""
+
+    def __init__(self, dtype: torch.dtype) -> None:
+        self.dtype = dtype
+        self._previous: torch.dtype | None = None
+
+    def __enter__(self) -> "_DefaultDtype":
+        self._previous = torch.get_default_dtype()
+        torch.set_default_dtype(self.dtype)
+        return self
+
+    def __exit__(self, *exc_info: object) -> bool:
+        if self._previous is not None:
+            torch.set_default_dtype(self._previous)
+        return False
+
+
+class TabPFNFloat32Regressor:
+    """TabPFN under a float64 default dtype.
+
+    This module sets torch's default dtype to float64 so BoTorch runs in double
+    precision, but TabPFN's shipped checkpoints are float32 and it builds its
+    internal tensors from the *default* dtype. Calling it in this process
+    therefore raised ``RuntimeError: mat1 and mat2 must have the same dtype, but
+    got Float and Double`` for every fit/predict, which is why the tabpfn oracle
+    had never actually run. The adapter pins the default dtype to float32 for the
+    duration of each TabPFN call and restores it afterwards, so BoTorch keeps its
+    double precision.
+
+    Kept as a module-level class (not a closure or a decorator) so instances
+    survive the pickling that Windows' 'spawn' multiprocessing does.
+    """
+
+    def __init__(self, **kwargs: object) -> None:
+        if TabPFNRegressor is None:
+            raise ImportError(
+                "tabpfn is required for oracle-model=tabpfn. Install it via requirements.txt."
+            )
+        self.kwargs = dict(kwargs)
+        with _DefaultDtype(torch.float32):
+            self.model = TabPFNRegressor(**self.kwargs)
+
+    def fit(self, X: object, y: object) -> "TabPFNFloat32Regressor":
+        with _DefaultDtype(torch.float32):
+            self.model.fit(X, y)
+        return self
+
+    def predict(self, X: object) -> np.ndarray:
+        with _DefaultDtype(torch.float32):
+            preds = self.model.predict(X)
+        return np.asarray(preds, dtype=float)
+
+    def score(self, X: object, y: object) -> float:
+        y_true = np.asarray(y, dtype=float)
+        y_pred = self.predict(X)
+        ss_res = float(np.sum((y_true - y_pred) ** 2))
+        ss_tot = float(np.sum((y_true - np.mean(y_true)) ** 2))
+        return 1.0 - ss_res / ss_tot if ss_tot > 0 else 0.0
+
+    def get_params(self, deep: bool = True) -> dict[str, object]:
+        return dict(self.kwargs)
+
+    def __getattr__(self, name: str) -> object:
+        # Only reached for attributes this wrapper does not define itself.
+        # Guarding the private names keeps unpickling (which sets __dict__
+        # before any attribute exists) from recursing.
+        if name.startswith("_") or name in {"kwargs", "model"}:
+            raise AttributeError(name)
+        return getattr(self.__dict__["model"], name)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent
@@ -152,6 +237,20 @@ OBJECTIVE_MAP = {
     "acceptance": ["Acceptance"],
 }
 
+# Robust-BO baselines. Everything else in this list is a standard acquisition
+# that happens to be run under noise; these two are the answers the literature
+# actually gives to noisy observations, and without them the study can say which
+# ordinary choice survives noise best but not how much a method built for the
+# problem would recover.
+#   qkg     the knowledge gradient, which values a candidate by the improvement
+#           in the posterior MAXIMUM rather than in the observed one, and so does
+#           not depend on any single noisy observation being right.
+#   replei  the practical answer nobody writes papers about: spend half the
+#           budget re-asking about the incumbent, averaging the rater's noise
+#           down instead of modelling it. Compared at a fixed number of
+#           EVALUATIONS, so it buys its replication with half the designs.
+ROBUST_ACQUISITION_CHOICES = ["qkg", "replei"]
+
 SINGLE_ACQUISITION_CHOICES = [
     "logei",
     "logpi",
@@ -172,15 +271,60 @@ MULTI_ACQUISITION_CHOICES = ["qehvi", "qnehvi", "qlogehvi", "qlognehvi"]
 # Model-free floors: candidates are independent of observations, so they bound
 # what "no learning" achieves and anchor the robustness rankings.
 BASELINE_ACQUISITION_CHOICES = ["random", "sobol"]
+# Acquisition-side follow-ups, single-objective only. They are APPENDED to the
+# end of ACQUISITION_CHOICES rather than added to SINGLE_ACQUISITION_CHOICES:
+# that list precedes qkg/replei, the hypervolume family and the floors in the
+# composed order, so growing it would move their indices and with them the
+# noise every existing arm receives (see the note on ERROR_MODEL_CHOICES). Like
+# qkg and replei they are opt-in and stay out of every "all" expansion.
+#   ts   Thompson sampling: maximise one posterior sample path per iteration.
+#   aei  augmented expected improvement (Huang, Allen, Notz & Zeng 2006): EI
+#        against the posterior mean at the lower-confidence-bound incumbent,
+#        discounted where the model is already about as sure as a rating is.
+EXTENSION_ACQUISITION_CHOICES = ["ts", "aei"]
+# Acquisitions whose values are logs, so an average over them has to be taken
+# in log space. replei optimises LogEI on its model-based trials.
+LOG_VALUED_ACQUISITIONS = frozenset({"logei", "logpi", "replei", "aei"})
+# Every name a run may USE. The robust baselines belong here: they are real
+# acquisitions and --acq-list qkg,replei must validate.
 ACQUISITION_CHOICES = (
+    SINGLE_ACQUISITION_CHOICES
+    + ROBUST_ACQUISITION_CHOICES
+    + MULTI_ACQUISITION_CHOICES
+    + BASELINE_ACQUISITION_CHOICES
+    + EXTENSION_ACQUISITION_CHOICES
+)
+# What "all" EXPANDS to, which is NOT the same thing. qkg and replei were added
+# after the main sweeps ran; folding them into "all" would silently redefine the
+# design of every later arm that asks for it -- in particular the confirmatory
+# arm, whose whole purpose is to replicate the exploratory design on fresh seeds.
+# They are opt-in, and their own arm names them explicitly.
+DEFAULT_ACQUISITION_CHOICES = (
     SINGLE_ACQUISITION_CHOICES + MULTI_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES
 )
+# ORDER IS LOAD-BEARING. Every run's noise stream is seeded from
+# ERROR_MODEL_CHOICES.index(error_model), so a name inserted anywhere but the
+# end silently changes the noise every existing model receives: a rerun of a
+# published sweep would stop reproducing it and a resumed arm would mix two
+# streams. That happened once -- "none" was prepended -- and the full suite
+# passed, because nothing pinned the order; tests/test_error_model_labels.py now
+# does. Append new models; never insert.
+#
+# "none" (no response error, which is how the input-error arm runs) is kept OUT
+# of this list for the same reason, and so that "--error-models all" keeps its
+# meaning. It is handled explicitly where it is used, and run_error_label()
+# keeps it reserved for the clean baseline.
 ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
 
 DEFAULT_ERROR_MODELS = "gaussian,bias"
 DEFAULT_JITTER_ITERATIONS = "10,20,40"
 DEFAULT_JITTER_STDS = "0.05,0.5,1,5"
-INCUMBENT_CHOICES = ["posterior_mean", "observed_max"]
+# "lcb" (appended): the best lower confidence bound over the visited designs,
+# posterior mean minus one latent SD. A design fitted to a single lucky rating
+# still carries a wide band there, so it cannot raise the bar the way its
+# posterior mean alone would.
+INCUMBENT_CHOICES = ["posterior_mean", "observed_max", "lcb"]
+OBSERVATION_NOISE_CHOICES = ["learned", "known"]
 ORACLE_MODEL_CHOICES = [
     "xgboost",
     "lightgbm",
@@ -247,10 +391,274 @@ class SimulationConfig:
     response_clip_high: np.ndarray | None = None
     response_round: float | None = None
 
+    # --- INPUT error: the person acts on the wrong design ---------------------
+    # Every error model above corrupts the reported VALUE: the optimizer is told
+    # the wrong number about the design it proposed -- a wrong value at the right
+    # location. This is the other corruption, and it is not a special case of
+    # that one. The optimizer proposes x, the person actually experiences
+    # x' != x (slider overshoot, wrong option pressed, wrong config applied) and
+    # rates x' HONESTLY. A right value at the wrong location.
+    #
+    # It matters because the damage is set by the landscape's local geometry
+    # rather than by a noise parameter: the same slip costs nothing on a plateau
+    # and everything beside a narrow optimum. It is also the corruption a fitted
+    # oracle cannot measure cleanly -- scoring it needs the objective AT THE
+    # POINT ACTUALLY TOUCHED, so with a surrogate you get its error at a second
+    # location on top of the slip's cost.
+    #
+    #   "none"      no input error.
+    #   "slip"      x' = clip(x + delta), delta ~ N(0, s) per coordinate, s a
+    #               FRACTION OF EACH COORDINATE'S RANGE. Pointer or slider
+    #               imprecision: every trial, usually small.
+    #   "misclick"  with probability p the trial lands on a uniformly random
+    #               different design; otherwise exact. A discrete wrong press:
+    #               rare, large.
+    #
+    # input_error_scale carries s for "slip" and p for "misclick"; both are
+    # dimensionless in [0, 1], which is why one swept grid serves both. It is
+    # NOT in landscape standard deviations, so it is not comparable with
+    # jitter_std and results from the two must never be pooled.
+    input_error_model: str = "none"
+    input_error_scale: float = 0.0
+    # Which design is written down. "proposed" is the real case -- nobody logs a
+    # slip they did not notice, so the surrogate trains on (x, f(x')). "actual"
+    # is the counterfactual where the slip is detected and logged, (x', f(x'));
+    # the contrast separates the cost of going to the wrong place from the cost
+    # of mislabelling it.
+    input_error_recorded: str = "proposed"
+
     # Incumbent definition for improvement-based acquisitions.
     # "posterior_mean" avoids the noisy-max pitfall where a single positive
     # noise spike inflates best_f beyond any achievable value.
     incumbent: str = "posterior_mean"
+
+    # How the surrogate learns about observation noise.
+    #   "learned" (default, and what every result to date used) fits the noise as
+    #     a free hyperparameter under BoTorch's default prior.
+    #   "known" passes the TRUE injected variance as train_Yvar.
+    # The contrast matters because "learned" confounds two things a study of
+    # noisy feedback needs to keep apart: the information the error destroys, and
+    # the surrogate's failure to realise the error is there. Only the first is a
+    # property of the problem. Single-objective only.
+    observation_noise: str = "learned"
+
+    # --- process adaptations (the follow-up arms of docs/adaptations-proposal.md)
+    # replicate_first: for the first N model-based proposals, rate each design
+    #   twice -- the second rating is a fresh draw of the error process on the
+    #   same recorded design, so two evaluations buy one design in that window
+    #   and single ratings follow. Works with any acquisition; 0 disables it.
+    #   The onset effect says early error is the expensive one, so this is
+    #   replication spent where it should matter, against replei's uniform
+    #   every-second-trial schedule.
+    replicate_first: int = 0
+    # final_rerate_top / final_rerate_reps: the last top x reps trials re-rate
+    #   the top designs (by mean observation when the window opens), reps times
+    #   each, and the deployed design is chosen by mean observation. This is
+    #   "re-evaluate before you deploy" at a fixed evaluation budget.
+    final_rerate_top: int = 0
+    final_rerate_reps: int = 0
+    # input_noise_model: "nigp" is a first-order noisy-input GP (McHutchon &
+    #   Rasmussen, 2011): each training point's observation variance is inflated
+    #   by the squared gradient of the posterior mean times the slip variance, so
+    #   a recorded design that may have slipped is trusted less where the
+    #   objective is steep. input_error_scale is the assumed slip SD, a fraction
+    #   of each coordinate's range, as in the slip arm. Single-objective only.
+    input_noise_model: str = "none"
+    # inference_rule: how the deployed design is picked each iteration.
+    #   "best_observed" (default, every result to date): the single highest
+    #   observation. "best_mean": the design with the highest mean over its
+    #   ratings, which is the point of replicating. The synthetic driver switches
+    #   to best_mean whenever either replication option is on.
+    inference_rule: str = "best_observed"
+    # likelihood: "student_t" replaces the surrogate with an outlier-robust
+    #   Student-t variational GP (scripts/robust_gp.py), for misclicks and gross
+    #   sensor faults that a Gaussian likelihood bends through. Single-objective,
+    #   learned noise only.
+    likelihood: str = "gaussian"
+
+    # --- acquisition-side follow-ups (equal-trial: none of them adds a rating)
+    # input_uncertain_acq / input_uncertain_scale: average the acquisition over
+    #   K fixed QMC normal perturbations of the design, SD scale x (high - low)
+    #   per coordinate, so the optimiser prefers designs whose neighbourhood is
+    #   good -- the acquisition-side answer to a slip. 0 disables it. A negative
+    #   scale borrows the run's own input_error_scale, which is zero in the clean
+    #   run; an explicit scale >= 0 applies to the clean run too, which is what
+    #   prices the wrapper.
+    input_uncertain_acq: int = 0
+    input_uncertain_scale: float = -1.0
+    # min_distance: a model-based proposal whose RMS distance (unit box) to a
+    #   logged design is below this is treated as a near-repeat and redirected to
+    #   the best screened pool point at least this far from every logged design.
+    #   0 disables it.
+    min_distance: float = 0.0
+
+    # --- error-process extensions (equal-trial: none of them adds a rating) ---
+    # noise_schedule: "none", a preset (front10, front20, U, back10) or a custom
+    #   "1-10:2,11-:0.75". Effort e_t sets the gaussian error SD at trial t to
+    #   jitter_std / sqrt(e_t), at a mean effort of 1 over the run.
+    noise_schedule: str = "none"
+    # missing_handling: what the surrogate gets for a rating lost to the
+    #   missing_mcar / missing_low input processes, "drop" or "impute_low".
+    missing_handling: str = "drop"
+    # rater_assign / rater_offset_ratio: relay raters. "block:K" hands over every
+    #   K trials, "roundrobin:R" cycles R raters, and rater r adds a fixed offset
+    #   b_r ~ N(0, (ratio x jitter_std)^2) to noisy ratings after the onset.
+    #   rater_model "backfit" estimates the offsets inside the scalar GP fit.
+    rater_assign: str = "none"
+    rater_offset_ratio: float = 0.0
+    rater_model: str = "none"
+    # response_ceiling: noisy ratings are capped at this quantile of the
+    #   landscape (0 = off). ceiling_mode "anchored" raises the cap to 0.5 above
+    #   the true value of the best-rated design so far.
+    response_ceiling: float = 0.0
+    ceiling_mode: str = "fixed"
+
+    # --- multi-objective halo error (equal-trial: neither adds a rating) -----
+    # error_cross_corr: rho in [0, 1]. A rater's overall impression of a design
+    #   leaks into every objective's rating, so one trial's gaussian errors share
+    #   a factor: e_j = sqrt(1 - rho) eps_j + sqrt(rho) z, eps drawn as in the
+    #   standard run and z ONE extra N(0, jitter_std^2) draw after it. Each e_j
+    #   keeps SD jitter_std; only the correlation between objectives is new.
+    #   0 disables it and draws nothing.
+    error_cross_corr: float = 0.0
+    # mo_halo_model: "backfit" estimates the shared factor from the fitted
+    #   ModelListGP's standardised residuals, refits on the corrected ratings and
+    #   deploys the Pareto set of the corrected ratings (fit_mo_halo_backfit).
+    mo_halo_model: str = "none"
+
+
+INPUT_NOISE_MODEL_CHOICES = ["none", "nigp"]
+INFERENCE_RULE_CHOICES = ["best_observed", "best_mean"]
+# relevance_pursuit (appended): Ament et al.'s robust GP, which gives each
+# training point its own outlier variance and selects how many are non-zero.
+LIKELIHOOD_CHOICES = ["gaussian", "student_t", "relevance_pursuit"]
+MISSING_HANDLING_CHOICES = ["drop", "impute_low"]
+RATER_MODEL_CHOICES = ["none", "backfit"]
+CEILING_MODE_CHOICES = ["fixed", "anchored"]
+MO_HALO_MODEL_CHOICES = ["none", "backfit"]
+
+
+def _design_key(x: np.ndarray) -> tuple:
+    return tuple(np.round(np.asarray(x, dtype=float), 10).tolist())
+
+
+def _mean_by_design(X_list: list[np.ndarray], observed: list[float]) -> dict[tuple, tuple[float, int]]:
+    """Mean observation per distinct recorded design, with the first index it appeared at."""
+    sums: dict[tuple, list] = {}
+    for idx, (x, y) in enumerate(zip(X_list, observed)):
+        # A lost or imputed rating (NaN) is no rating of the design.
+        if np.isnan(y):
+            continue
+        key = _design_key(x)
+        if key not in sums:
+            sums[key] = [0.0, 0, idx]
+        sums[key][0] += float(y)
+        sums[key][1] += 1
+    return {key: (s / n, first) for key, (s, n, first) in sums.items()}
+
+
+def _best_mean_index(X_list: list[np.ndarray], observed: list[float]) -> int:
+    """Index of (the first rating of) the design with the highest mean observation."""
+    means = _mean_by_design(X_list, observed)
+    if not means:
+        return 0  # nothing rated yet: the first design, as _nan_argmax does
+    best = max(means.values(), key=lambda pair: pair[0])
+    return int(best[1])
+
+
+def _nan_argmax(values: list[float]) -> int:
+    """argmax ignoring NaN (a lost or imputed rating); 0 when nothing is rated yet."""
+    arr = np.asarray(values, dtype=float)
+    if arr.size == 0 or np.isnan(arr).all():
+        return 0
+    return int(np.nanargmax(arr))
+
+
+def _rerate_schedule(X_list: list[np.ndarray], observed: list[float], top: int, reps: int) -> list[np.ndarray]:
+    """The top designs by mean observation, each repeated reps times, round-robin."""
+    means = _mean_by_design(X_list, observed)
+    ranked = sorted(means.values(), key=lambda pair: pair[0], reverse=True)[:top]
+    designs = [np.array(X_list[first], dtype=float) for _, first in ranked]
+    return [designs[i % len(designs)] for i in range(reps * len(designs))]
+
+
+def _refit_with_input_noise(
+    gp: "SingleTaskGP", train_X: torch.Tensor, train_Y: torch.Tensor, bounds: "Bounds",
+    config: SimulationConfig,
+) -> tuple["SingleTaskGP", ExactMarginalLogLikelihood]:
+    """Refit with per-point observation variance inflated for input noise.
+
+    First-order noisy-input GP (McHutchon & Rasmussen, 2011): if the recorded
+    design is x and the evaluated one x + delta with delta ~ N(0, S), then to
+    first order f(x + delta) ~ f(x) + grad f(x)^T delta, so the observation at x
+    carries extra variance grad^T S grad. The gradient comes from the posterior
+    mean of a first (ordinary) fit; the second fit takes the inflated variance
+    as fixed per-point noise, the same path the known-noise arm uses.
+    """
+    gp.eval()
+    slip_sd = config.input_error_scale * (np.asarray(bounds.high, dtype=float) - np.asarray(bounds.low, dtype=float))
+    slip_var = torch.tensor(slip_sd ** 2, dtype=torch.double)
+    X_req = train_X.clone().requires_grad_(True)
+    mean_sum = gp.posterior(X_req).mean.sum()
+    grad = torch.autograd.grad(mean_sum, X_req)[0]
+    inflation = (grad.detach() ** 2 * slip_var).sum(dim=-1, keepdim=True)
+    # The fitted noise lives in standardised units; bring it back to Y's.
+    noise_var = gp.likelihood.noise.detach().reshape(-1)[0] * gp.outcome_transform.stdvs.detach().reshape(-1)[0] ** 2
+    train_Yvar = noise_var + inflation + 1e-6
+    refit = SingleTaskGP(
+        train_X,
+        train_Y,
+        train_Yvar=train_Yvar,
+        input_transform=Normalize(d=train_X.shape[-1], bounds=bounds.tensor),
+        outcome_transform=Standardize(m=1),
+    )
+    mll = ExactMarginalLogLikelihood(refit.likelihood, refit)
+    fit_gpytorch_mll(mll)
+    return refit, mll
+
+
+def adaptation_fields(args: "argparse.Namespace") -> dict:
+    """SimulationConfig fields for the process adaptations, from the CLI.
+
+    Shared by both drivers so the two cannot drift. The inference rule
+    defaults to best_mean whenever any replication is on, which is what the
+    replication is for; an explicit --inference-rule overrides that.
+    """
+    top, reps = (int(v) for v in str(getattr(args, "final_rerate", "0,0")).split(","))
+    if (top > 0) != (reps > 0):
+        raise ValueError("--final-rerate needs both TOP and REPS positive, or both zero.")
+    replicate_first = int(getattr(args, "replicate_first", 0) or 0)
+    rule = getattr(args, "inference_rule", None)
+    if rule is None:
+        rule = "best_mean" if (replicate_first or top) else "best_observed"
+    # Any negative scale means "the run's own input_error_scale"; normalising it
+    # to -1 keeps one filename per run.
+    iu_scale = getattr(args, "input_uncertain_scale", -1.0)
+    iu_scale = -1.0 if iu_scale is None or float(iu_scale) < 0 else float(iu_scale)
+    return {
+        "replicate_first": replicate_first,
+        "final_rerate_top": top,
+        "final_rerate_reps": reps,
+        "input_noise_model": getattr(args, "input_noise_model", "none") or "none",
+        "inference_rule": rule,
+        "likelihood": getattr(args, "likelihood", "gaussian") or "gaussian",
+        # The acquisition-side follow-ups. Read with getattr defaults because the
+        # fitted-oracle driver has no such flags and must keep running with them off.
+        "input_uncertain_acq": int(getattr(args, "input_uncertain_acq", 0) or 0),
+        "input_uncertain_scale": iu_scale,
+        "min_distance": float(getattr(args, "min_distance", 0.0) or 0.0),
+        # The error-process extensions, likewise off for a driver without the flags.
+        "noise_schedule": str(getattr(args, "noise_schedule", "none") or "none").strip(),
+        "missing_handling": getattr(args, "missing_handling", "drop") or "drop",
+        "rater_assign": str(getattr(args, "rater_assign", "none") or "none").strip(),
+        "rater_offset_ratio": float(getattr(args, "rater_offset_ratio", 0.0) or 0.0),
+        "rater_model": getattr(args, "rater_model", "none") or "none",
+        "response_ceiling": float(getattr(args, "response_ceiling", None) or 0.0),
+        "ceiling_mode": getattr(args, "ceiling_mode", "fixed") or "fixed",
+        # The multi-objective halo error and its remedy, likewise.
+        "error_cross_corr": float(getattr(args, "error_cross_corr", 0.0) or 0.0),
+        "mo_halo_model": getattr(args, "mo_halo_model", "none") or "none",
+    }
 
 
 @dataclasses.dataclass
@@ -443,6 +851,81 @@ def parse_args() -> argparse.Namespace:
         help="Incumbent (best_f) definition for improvement-based acquisitions. "
         "'posterior_mean' is robust to noisy observations; 'observed_max' is the "
         "classic noise-naive choice.",
+    )
+    parser.add_argument(
+        "--input-error",
+        type=str,
+        default="none",
+        choices=INPUT_ERROR_CHOICES,
+        help="Corrupt the DESIGN rather than the rating: the optimizer proposes "
+        "x, the person acts on x' != x and rates x' honestly. 'slip' adds "
+        "gaussian positional error every trial (pointer/slider imprecision); "
+        "'misclick' jumps to a uniformly random design with probability p (a "
+        "wrong press). Magnitude comes from --input-error-scale, or from the "
+        "swept --jitter-stds grid when --input-error-from-sweep is set. "
+        "Single-objective only.",
+    )
+    parser.add_argument(
+        "--input-error-scale",
+        type=float,
+        default=0.0,
+        help="Slip SD as a FRACTION OF EACH COORDINATE'S RANGE, or the misclick "
+        "probability. Dimensionless in [0,1] -- NOT landscape standard "
+        "deviations, so it is not comparable with --jitter-stds and results "
+        "from the two must not be pooled.",
+    )
+    parser.add_argument(
+        "--input-error-from-sweep",
+        action="store_true",
+        default=False,
+        help="Take the input-error magnitude from the swept --jitter-stds grid "
+        "instead of --input-error-scale, so one sweep covers the grid. The "
+        "recorded jitter_std column then means a box fraction (or a "
+        "probability), not landscape SDs.",
+    )
+    parser.add_argument(
+        "--input-error-recorded",
+        type=str,
+        default="proposed",
+        choices=INPUT_ERROR_RECORDED_CHOICES,
+        help="Which design is written down. 'proposed' (default) is the real "
+        "case -- an unnoticed slip means the surrogate trains on (x, f(x')). "
+        "'actual' is the counterfactual where the slip is detected and logged, "
+        "separating the cost of going to the wrong place from the cost of "
+        "mislabelling it.",
+    )
+    parser.add_argument(
+        "--observation-noise",
+        type=str,
+        default="learned",
+        choices=OBSERVATION_NOISE_CHOICES,
+        help="'learned' (default) fits the GP's observation noise as a free "
+        "hyperparameter, as every result to date does. 'known' passes the true "
+        "injected variance as train_Yvar, which separates the information cost of "
+        "the error from the surrogate's failure to model it. Single-objective only.",
+    )
+    parser.add_argument(
+        "--replicate-first", type=int, default=0,
+        help="Rate each of the first N model-based proposals twice (0 = off). Any acquisition.",
+    )
+    parser.add_argument(
+        "--final-rerate", type=str, default="0,0",
+        help="TOP,REPS: spend the last TOP x REPS trials re-rating the TOP best designs "
+        "REPS times each, and deploy by mean observation. '0,0' = off.",
+    )
+    parser.add_argument(
+        "--input-noise-model", type=str, default="none", choices=INPUT_NOISE_MODEL_CHOICES,
+        help="'nigp': first-order noisy-input GP, inflating each point's observation "
+        "variance by the squared posterior-mean gradient times the slip variance.",
+    )
+    parser.add_argument(
+        "--likelihood", type=str, default="gaussian", choices=LIKELIHOOD_CHOICES,
+        help="'student_t': outlier-robust Student-t variational GP surrogate (scripts/robust_gp.py).",
+    )
+    parser.add_argument(
+        "--inference-rule", type=str, default=None, choices=INFERENCE_RULE_CHOICES,
+        help="How the deployed design is picked: best single observation (default) or "
+        "best mean over a design's ratings (the default once any replication is on).",
     )
     parser.add_argument(
         "--min-oracle-r2",
@@ -958,7 +1441,7 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
         if TabPFNRegressor is None:
             raise ImportError("tabpfn is required for oracle-model=tabpfn. Install it via requirements.txt.")
         estimators = max(2, int(round(8 * tree_scale)))
-        return TabPFNRegressor(
+        return TabPFNFloat32Regressor(
             n_estimators=estimators,
             device="cpu",
             n_preprocessing_jobs=1,
@@ -1052,7 +1535,7 @@ def parse_seed_list(seed_arg: str | None, seed: int, num_seeds: int | None) -> l
 def parse_acquisition_list(acq_arg: str, acq_list: str | None) -> list[str]:
     raw = acq_list or acq_arg
     if raw == "all":
-        return ACQUISITION_CHOICES
+        return list(DEFAULT_ACQUISITION_CHOICES)
     values = [v.strip() for v in raw.split(",") if v.strip()]
     if not values:
         raise ValueError("At least one acquisition must be specified.")
@@ -1073,7 +1556,8 @@ def filter_acquisitions_for_objective(acquisitions: list[str], objective: str) -
                 f"{', '.join(allowed)}."
             )
         return filtered
-    allowed = SINGLE_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES
+    # ts and aei are single-objective; the multi-objective branch above drops them.
+    allowed = SINGLE_ACQUISITION_CHOICES + BASELINE_ACQUISITION_CHOICES + EXTENSION_ACQUISITION_CHOICES
     filtered = [a for a in acquisitions if a in allowed]
     if not filtered:
         raise ValueError(
@@ -1597,6 +2081,704 @@ def _postprocess_response(observed: np.ndarray, config: SimulationConfig) -> np.
     return observed
 
 
+def known_noise_variance(
+    iteration: int, config: SimulationConfig, apply_error: bool
+) -> float:
+    """The variance of the error actually injected at this iteration.
+
+    Mirrors ``apply_sensor_error`` exactly, so ``observation_noise="known"`` hands
+    the GP the truth rather than an approximation of it:
+
+      * before the onset (and on every iteration of a baseline run) the
+        observation is exact;
+      * ``gaussian`` / ``bias`` / ``drift`` all add N(0, jitter_std^2) -- the bias
+        offset and the drift ramp move the MEAN, not the variance, and a GP's
+        homoskedastic noise term models the variance;
+      * ``ar1`` is stationary with SD ``jitter_std`` by construction;
+      * ``spike`` adds an independent spike with probability p, so the marginal
+        variance is ``std^2 + p * spike_std^2``;
+      * ``dropout`` replaces the observation with the previous one, which is not
+        additive noise at all and has no honest variance to declare;
+      * a noise schedule divides the variance by the trial's effort e_t, and a
+        rater offset moves the mean, like ``bias``, so it declares nothing;
+      * a halo cross-correlation leaves each objective's variance at
+        ``jitter_std^2`` -- it adds covariance between objectives, not variance.
+
+    A small floor keeps the exact observations strictly positive, which BoTorch
+    requires of ``train_Yvar``. 1e-6 rather than something smaller: on a
+    standardised objective that is still numerically noise-free, but it leaves a
+    nugget large enough that the Cholesky factorisation survives the
+    near-duplicate designs BO piles up around an optimum.
+    """
+    floor = 1e-6
+    if not apply_error or iteration <= config.jitter_iteration:
+        return floor
+    if config.single_error and iteration != config.jitter_iteration + 1:
+        return floor
+    if config.error_model == "none":
+        # The input-error arm: the rating itself is exact, so there is no
+        # observation noise to declare however large the positional slip was.
+        return floor
+    variance = float(config.jitter_std) ** 2
+    if config.noise_schedule != "none":
+        variance = variance / noise_effort(iteration, config)
+    if config.error_model == "spike":
+        variance += float(config.error_spike_prob) * float(config.error_spike_std) ** 2
+    elif config.error_model == "dropout":
+        raise ValueError(
+            "observation_noise='known' is not defined for the dropout error model: "
+            "holding the previous value is not additive noise."
+        )
+    return max(variance, floor)
+
+
+# missing_mcar / missing_low (appended): the rating is LOST rather than the
+# design moved -- the person skips the question, the sensor drops the sample.
+# input_error_scale is the loss probability. See draw_missing_rating.
+MISSING_INPUT_ERROR_CHOICES = ["missing_mcar", "missing_low"]
+INPUT_ERROR_CHOICES = ["none", "slip", "misclick"] + MISSING_INPUT_ERROR_CHOICES
+INPUT_ERROR_RECORDED_CHOICES = ["proposed", "actual"]
+
+
+# ---------------------------------------------------------------------------
+# Error-process extensions: effort schedules, missing ratings, relay raters and
+# a rating-scale ceiling, with their remedies (relevance pursuit, imputation,
+# offset backfitting). Each changes what a rating says; none adds a trial.
+# ---------------------------------------------------------------------------
+
+# Presets, written for the standard T = 50: only there do they average 1.
+# back10 depends on T and is built in noise_schedule_efforts.
+NOISE_SCHEDULE_PRESETS = {
+    "front10": "1-10:2,11-:0.75",
+    "front20": "1-20:1.5,21-:0.6667",
+    "U": "1-20:1.6667,21-40:0.3333,41-:1",
+}
+_SCHEDULE_SEGMENT = re.compile(r"(?P<start>\d+)-(?P<end>\d*):(?P<effort>[^,:]+)")
+
+
+@functools.lru_cache(maxsize=None)
+def noise_schedule_efforts(spec: str, iterations: int) -> tuple[float, ...]:
+    """Effort e_t for trials 1..T; the gaussian error SD at trial t is jitter_std / sqrt(e_t).
+
+    A preset, or "a-b:effort" segments ("a-:effort" runs to T) covering every
+    trial exactly once. A schedule only moves effort between trials, so it must
+    average 1 over the run (within 1e-3); otherwise it would change how much
+    error there is as well as when.
+    """
+    spec = str(spec).strip()
+    T = int(iterations)
+    if spec == "none":
+        return (1.0,) * T
+    hint = " The presets are written for T = 50." if spec in NOISE_SCHEDULE_PRESETS else ""
+    if spec == "back10":
+        if T <= 10:
+            raise ValueError(f"--noise-schedule back10 needs more than 10 trials; this run has {T}.")
+        custom = f"1-{T - 10}:0.75,{T - 9}-:2"
+    else:
+        custom = NOISE_SCHEDULE_PRESETS.get(spec, spec)
+    efforts: list[float | None] = [None] * T
+    for raw in custom.split(","):
+        segment = raw.strip()
+        match = _SCHEDULE_SEGMENT.fullmatch(segment)
+        if match is None:
+            raise ValueError(
+                f"--noise-schedule segment {segment!r} is not 'a-b:effort' or 'a-:effort'. Use a "
+                f"preset ({', '.join([*NOISE_SCHEDULE_PRESETS, 'back10'])}) or e.g. '1-10:2,11-:0.75'."
+            )
+        start = int(match["start"])
+        end = int(match["end"]) if match["end"] else T
+        try:
+            effort = float(match["effort"])
+        except ValueError:
+            raise ValueError(f"--noise-schedule segment {segment!r}: the effort is not a number.") from None
+        if not 1 <= start <= end <= T:
+            raise ValueError(f"--noise-schedule segment {segment!r} covers trials outside 1..{T}.{hint}")
+        if not (math.isfinite(effort) and effort > 0):
+            raise ValueError(f"--noise-schedule segment {segment!r}: the effort must be positive.")
+        for t in range(start, end + 1):
+            if efforts[t - 1] is not None:
+                raise ValueError(f"--noise-schedule {spec!r} gives trial {t} two efforts.")
+            efforts[t - 1] = effort
+    gaps = [t for t, e in enumerate(efforts, start=1) if e is None]
+    if gaps:
+        raise ValueError(f"--noise-schedule {spec!r} gives no effort to trial(s) {gaps[:5]} of 1..{T}.")
+    mean = sum(efforts) / T
+    if abs(mean - 1.0) > 1e-3:
+        raise ValueError(
+            f"--noise-schedule {spec!r} has mean effort {mean:.5f} over trials 1..{T}. A schedule "
+            f"redistributes effort, so it must average 1 (within 1e-3).{hint}"
+        )
+    return tuple(float(e) for e in efforts)
+
+
+def noise_effort(iteration: int, config: SimulationConfig) -> float:
+    """The run's effort e_t at trial ``iteration`` (1-based)."""
+    return noise_schedule_efforts(config.noise_schedule, config.iterations)[iteration - 1]
+
+
+def noise_schedule_name(spec: str) -> str:
+    """Filename-safe schedule name: the preset, or the custom spec with ':' -> '@' and ',' -> '+'.
+
+    A colon is not a legal filename character on Windows.
+    """
+    spec = str(spec).strip()
+    if spec in NOISE_SCHEDULE_PRESETS or spec == "back10":
+        return spec
+    return spec.replace(" ", "").replace(":", "@").replace(",", "+")
+
+
+LANDSCAPE_SAMPLE_POINTS = 4096
+LANDSCAPE_SAMPLE_SEED = 20_260_914
+_LANDSCAPE_VALUES: dict[tuple, np.ndarray] = {}
+
+
+def landscape_values(oracle: object, bounds: Bounds) -> np.ndarray:
+    """The oracle at 4096 scrambled-Sobol points of the box, sorted, computed once per process.
+
+    The Sobol seed is fixed, so a quantile is a property of the landscape alone
+    and is shared by every seed, acquisition and condition. The engine has its
+    own generator: neither the run rng nor torch's global one is touched.
+    Analytic oracles are cached by name; any other oracle on the object itself.
+    """
+    low = np.asarray(bounds.low, dtype=float)
+    high = np.asarray(bounds.high, dtype=float)
+    name = getattr(oracle, "name", None)
+    if isinstance(name, str):
+        cache, key = _LANDSCAPE_VALUES, (type(oracle).__name__, name, tuple(low), tuple(high))
+    else:
+        cache, key = oracle.__dict__.setdefault("_landscape_values", {}), (tuple(low), tuple(high))
+    if key not in cache:
+        engine = torch.quasirandom.SobolEngine(dimension=len(low), scramble=True, seed=LANDSCAPE_SAMPLE_SEED)
+        X = low + engine.draw(LANDSCAPE_SAMPLE_POINTS).to(torch.double).cpu().numpy() * (high - low)
+        if hasattr(oracle, "predict_many"):
+            values = np.asarray(oracle.predict_many(X), dtype=float).reshape(len(X), -1)[:, 0]
+        else:
+            values = np.array([float(np.asarray(oracle.predict(x), dtype=float).reshape(-1)[0]) for x in X])
+        cache[key] = np.sort(values)
+    return cache[key]
+
+
+def landscape_quantile(oracle: object, bounds: Bounds, q: float) -> float:
+    """The q-quantile of the oracle over its box (see landscape_values)."""
+    return float(np.quantile(landscape_values(oracle, bounds), float(q)))
+
+
+MISSING_LOW_QUANTILE = 0.4
+IMPUTE_LOW_QUANTILE = 0.2
+IMPUTE_LOW_MIN_RATINGS = 5
+
+
+def draw_missing_rating(
+    true_value: np.ndarray,
+    iteration: int,
+    config: SimulationConfig,
+    rng: np.random.Generator,
+    low_threshold: float | None,
+) -> bool:
+    """Whether this trial's rating is lost.
+
+    Onset as for the other channels: every rating up to t0 arrives.
+    missing_mcar loses a rating with probability p = input_error_scale;
+    missing_low loses it with the same p only when the design's true value is
+    below the landscape's 40th percentile -- people skip what they dislike, so
+    the loss is informative. One uniform is drawn per post-onset trial whatever
+    the design, so a verdict never shifts the stream for the trials after it.
+    """
+    if config.input_error_model not in MISSING_INPUT_ERROR_CHOICES or iteration <= config.jitter_iteration:
+        return False
+    if config.single_error and iteration != config.jitter_iteration + 1:
+        return False
+    if rng.random() >= float(config.input_error_scale):
+        return False
+    if config.input_error_model == "missing_low":
+        return float(true_value[0]) < float(low_threshold)
+    return True
+
+
+def impute_low_value(observed: list[float]) -> float | None:
+    """The 20th percentile of the ratings received so far (their minimum below five); None if none."""
+    values = np.asarray([v for v in observed if not np.isnan(v)], dtype=float)
+    if values.size == 0:
+        return None
+    if values.size < IMPUTE_LOW_MIN_RATINGS:
+        return float(values.min())
+    return float(np.quantile(values, IMPUTE_LOW_QUANTILE))
+
+
+def _missing_training_rows(observed: list[float], imputed: list[float]) -> tuple[list[int], list[float]]:
+    """GP training rows and targets: each received rating, else its imputed value, else nothing."""
+    rows: list[int] = []
+    targets: list[float] = []
+    for index, (rating, stand_in) in enumerate(zip(observed, imputed)):
+        if not np.isnan(rating):
+            rows.append(index)
+            targets.append(float(rating))
+        elif not np.isnan(stand_in):
+            rows.append(index)
+            targets.append(float(stand_in))
+    return rows, targets
+
+
+RATER_KINDS = ("none", "block", "roundrobin")
+# Mixed into the rater-offset seed. The offsets must never come from jitter_rng:
+# drawing them there would shift the rating noise away from the standard run's.
+RATER_SEED_TAG = 52_617_465
+BACKFIT_ROUNDS = 3
+
+
+def parse_rater_assign(spec: str) -> tuple[str, int]:
+    """("none", 0), ("block", K) or ("roundrobin", R) from "none", "block:K", "roundrobin:R"."""
+    text = str(spec).strip()
+    if text == "none":
+        return "none", 0
+    kind, sep, raw = text.partition(":")
+    if kind not in RATER_KINDS[1:] or not sep:
+        raise ValueError(f"--rater-assign must be 'none', 'block:K' or 'roundrobin:R'; got {text!r}.")
+    try:
+        count = int(raw)
+    except ValueError:
+        raise ValueError(f"--rater-assign {text!r}: {raw!r} is not a whole number.") from None
+    if count < 1:
+        raise ValueError(f"--rater-assign {text!r}: the count must be at least 1.")
+    return kind, count
+
+
+def rater_index(iteration: int, kind: str, count: int) -> int:
+    """r(t) = (t - 1) // K for block hand-overs, (t - 1) % R for a round robin."""
+    return (iteration - 1) // count if kind == "block" else (iteration - 1) % count
+
+
+def rater_suffix(spec: str, ratio: float) -> str:
+    """rater-<kind><count>-tau<ratio>; the colon of the flag is not legal in a Windows filename."""
+    kind, count = parse_rater_assign(spec)
+    return f"rater-{kind}{count}-tau{float(ratio):g}"
+
+
+def draw_rater_offsets(
+    seed: int, spec: str, ratio: float, jitter_std: float, iterations: int
+) -> np.ndarray:
+    """b_r ~ N(0, (ratio x jitter_std)^2) for every rater the run can meet.
+
+    From a generator of its own, seeded by (seed, a fixed tag, the assignment,
+    ratio), so the standard normals behind the offsets are shared across error
+    magnitudes and acquisitions and the rating noise stays the standard run's.
+    """
+    kind, count = parse_rater_assign(spec)
+    raters = math.ceil(int(iterations) / count) if kind == "block" else count
+    rng = np.random.default_rng(
+        np.random.SeedSequence(
+            [int(seed), RATER_SEED_TAG, RATER_KINDS.index(kind), count, int(round(float(ratio) * 1_000_000))]
+        )
+    )
+    return rng.standard_normal(raters) * (float(ratio) * float(jitter_std))
+
+
+def fit_backfit_gp(
+    train_X: torch.Tensor,
+    train_Y: torch.Tensor,
+    rater_ids: list[int],
+    fit_gp: callable,
+) -> tuple[object, object, dict[int, float]]:
+    """Per-rater offsets estimated inside the GP fit, by backfitting.
+
+    From b = 0, BACKFIT_ROUNDS rounds of: fit the GP on y - b[r]; set
+    b_r = sum over rater r of (y - mu(x)) / (n_r + 1), the +1 shrinking a rater
+    seen only a few times towards zero; centre b to an n-weighted mean of zero,
+    because an offset every rater shares is the GP's constant mean. A final fit
+    on y - b[r] is the model returned. b restarts at zero on every call, so the
+    estimates depend on the current data alone.
+
+    fit_gp(train_X, train_Y) -> (model, mll). Returns (model, mll, {rater: b_r}).
+    """
+    ids = np.asarray(rater_ids, dtype=int)
+    raters, index = np.unique(ids, return_inverse=True)
+    counts = np.bincount(index, minlength=len(raters)).astype(float)
+    y = train_Y.detach().reshape(-1).cpu().numpy().astype(float)
+    offsets = np.zeros(len(raters))
+    for _ in range(BACKFIT_ROUNDS):
+        model, _ = fit_gp(train_X, train_Y - torch.as_tensor(offsets[index], dtype=train_Y.dtype).reshape(-1, 1))
+        with torch.no_grad():
+            mu = model.posterior(train_X).mean.reshape(-1).cpu().numpy().astype(float)
+        offsets = np.bincount(index, weights=y - mu, minlength=len(raters)) / (counts + 1.0)
+        offsets = offsets - np.sum(counts * offsets) / np.sum(counts)
+    model, mll = fit_gp(train_X, train_Y - torch.as_tensor(offsets[index], dtype=train_Y.dtype).reshape(-1, 1))
+    return model, mll, {int(r): float(b) for r, b in zip(raters, offsets)}
+
+
+def _fit_gaussian_gp(
+    train_X: torch.Tensor, train_Y: torch.Tensor, train_Yvar: torch.Tensor | None, bounds_tensor: torch.Tensor
+) -> tuple[SingleTaskGP, ExactMarginalLogLikelihood]:
+    """The sweep's standard surrogate, as run_simulation builds it inline."""
+    gp = SingleTaskGP(
+        train_X,
+        train_Y,
+        train_Yvar=train_Yvar,
+        input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
+        outcome_transform=Standardize(m=1),
+    )
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    fit_gpytorch_mll(mll)
+    return gp, mll
+
+
+def fit_relevance_pursuit_gp(
+    train_X: torch.Tensor, train_Y: torch.Tensor, bounds_tensor: torch.Tensor
+) -> tuple[SingleTaskGP, ExactMarginalLogLikelihood]:
+    """Robust GP via Relevance Pursuit (Ament et al., 2024, arXiv:2410.24222).
+
+    Every training point carries its own outlier variance; the fit decides how
+    many are non-zero. Same input normalisation and outcome standardisation as
+    the standard surrogate, fitted as BoTorch documents it: an
+    ExactMarginalLogLikelihood through fit_gpytorch_mll, which dispatches to the
+    model's custom_fit (backward relevance pursuit over the outlier support,
+    then Bayesian model selection of its size).
+    """
+    from botorch.models.robust_relevance_pursuit_model import RobustRelevancePursuitSingleTaskGP
+
+    gp = RobustRelevancePursuitSingleTaskGP(
+        train_X,
+        train_Y,
+        input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
+        outcome_transform=Standardize(m=1),
+    )
+    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+    fit_gpytorch_mll(mll)
+    return gp, mll
+
+
+def _fit_model_list_gp(
+    train_X: torch.Tensor, train_Y_list: list[torch.Tensor], bounds_tensor: torch.Tensor
+) -> tuple[ModelListGP, SumMarginalLogLikelihood]:
+    """The multi-objective surrogate: one standard GP per objective, fitted jointly."""
+    gps = [
+        SingleTaskGP(
+            train_X,
+            train_Y,
+            input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
+            outcome_transform=Standardize(m=1),
+        )
+        for train_Y in train_Y_list
+    ]
+    gp = ModelListGP(*gps)
+    mll = SumMarginalLogLikelihood(gp.likelihood, gp)
+    fit_gpytorch_mll(mll)
+    return gp, mll
+
+
+HALO_RHO_MAX = 0.95
+# The correlation of two points is +-1 whatever the data, so it estimates nothing.
+HALO_MIN_ROWS = 3
+
+
+def halo_shared_factor(residuals: np.ndarray) -> tuple[float, np.ndarray]:
+    """rho_hat and the estimated shared factor z_t, from standardised residuals (n trials x m objectives).
+
+    If r_tj = sqrt(1 - rho) eps_tj + sqrt(rho) z_t with eps and z independent
+    N(0, 1), r_t has covariance (1 - rho) I + rho 11^T, which maps 1 to
+    (1 + (m - 1) rho) 1, so E[z_t | r_t] = sqrt(rho) m mean_j(r_tj) / (1 + (m - 1) rho).
+    rho_hat is the mean off-diagonal correlation of the residual columns (pairs
+    involving a constant column have none and are skipped), clipped to
+    [0, 0.95]: a negative mean is no shared factor, and the cap keeps some of
+    each residual for the objective's own error. Below three trials rho_hat is 0.
+    """
+    R = np.asarray(residuals, dtype=float)
+    n, m = R.shape
+    rho_hat = 0.0
+    if n >= HALO_MIN_ROWS and m >= 2:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            corr = np.corrcoef(R, rowvar=False)
+        off_diagonal = corr[~np.eye(m, dtype=bool)]
+        off_diagonal = off_diagonal[np.isfinite(off_diagonal)]
+        if off_diagonal.size:
+            rho_hat = float(np.clip(off_diagonal.mean(), 0.0, HALO_RHO_MAX))
+    shared = math.sqrt(rho_hat) * m * R.mean(axis=1) / (1.0 + (m - 1) * rho_hat)
+    return rho_hat, shared
+
+
+def fit_mo_halo_backfit(
+    gp: ModelListGP,
+    train_X: torch.Tensor,
+    train_Y_list: list[torch.Tensor],
+    fit_models: callable,
+) -> tuple[ModelListGP, list[torch.Tensor], np.ndarray, float]:
+    """Remove a per-trial factor shared by every objective's rating, then refit.
+
+    From the fitted ModelListGP: r_tj = (y_tj - mu_j(x_t)) / sigma_nj, with
+    mu_j the posterior mean at the trial's design and sigma_nj the learned
+    noise SD of objective j in output units; rho_hat and z_t from
+    halo_shared_factor; y_tj <- y_tj - sigma_nj sqrt(rho_hat) z_t; and
+    fit_models(train_X, corrected) -> (model, mll) refits. One pass, from the
+    current data alone, so earlier estimates never carry over.
+
+    Returns (model, corrected targets, the (n, m) correction subtracted, rho_hat).
+    """
+    Y = torch.cat([y.detach() for y in train_Y_list], dim=1).cpu().numpy().astype(float)
+    with torch.no_grad():
+        mu = np.column_stack(
+            [model.posterior(train_X).mean.reshape(-1).cpu().numpy().astype(float) for model in gp.models]
+        )
+    sigma = np.array([observation_noise_sd(model) for model in gp.models], dtype=float)
+    rho_hat, shared = halo_shared_factor((Y - mu) / sigma[None, :])
+    correction = sigma[None, :] * math.sqrt(rho_hat) * shared[:, None]
+    if rho_hat == 0.0:
+        # Nothing to remove: the corrected targets are the ratings themselves, and
+        # a second fit on them could only move to another optimum of the same fit.
+        # Exact zeros: sqrt(0) * z is -0.0 wherever z < 0, which reads oddly in a log.
+        return gp, list(train_Y_list), np.zeros_like(correction), rho_hat
+    corrected = [
+        y - torch.as_tensor(correction[:, [j]], dtype=y.dtype) for j, y in enumerate(train_Y_list)
+    ]
+    model, _ = fit_models(train_X, corrected)
+    return model, corrected, correction, rho_hat
+
+
+CEILING_ANCHOR_MARGIN = 0.5
+
+
+def response_ceiling_value(base: float, mode: str, observed: list[float], true: list[float]) -> float:
+    """The cap on this trial's rating.
+
+    fixed: the landscape quantile. anchored: at least 0.5 above the true value
+    of the design with the highest rating among the EARLIER trials -- the person
+    rates relative to the best design seen so far, which moves the top of the
+    scale. The value is the one the person experienced (objective_true).
+    """
+    if mode == "anchored":
+        ratings = np.asarray(observed, dtype=float)
+        if ratings.size and not np.isnan(ratings).all():
+            return max(float(base), float(true[int(np.nanargmax(ratings))]) + CEILING_ANCHOR_MARGIN)
+    return float(base)
+
+
+def validate_error_extensions(
+    acquisition: str,
+    settings: dict,
+    *,
+    is_multi: bool,
+    noisy: bool = True,
+) -> None:
+    """Reject combinations the error-process extensions cannot run.
+
+    ``settings`` holds SimulationConfig field names: run_simulation passes its
+    config's fields, the synthetic driver the CLI's. Checks on the noisy
+    process -- the response model a schedule or a rater needs, a missing rate
+    being a probability -- apply only when ``noisy``, since a clean twin never
+    draws them. Called per run and once before a sweep starts.
+    """
+    get = settings.get
+    iterations = int(get("iterations"))
+    error_model = str(get("error_model", "none"))
+    input_error = str(get("input_error_model", "none"))
+    likelihood = str(get("likelihood", "gaussian"))
+    observation_noise = str(get("observation_noise", "learned"))
+    input_noise_model = str(get("input_noise_model", "none"))
+    missing_handling = str(get("missing_handling", "drop"))
+    rater_model = str(get("rater_model", "none"))
+    ceiling_mode = str(get("ceiling_mode", "fixed"))
+    for value, choices, flag in (
+        (likelihood, LIKELIHOOD_CHOICES, "--likelihood"),
+        (input_error, INPUT_ERROR_CHOICES, "--input-error"),
+        (missing_handling, MISSING_HANDLING_CHOICES, "--missing-handling"),
+        (rater_model, RATER_MODEL_CHOICES, "--rater-model"),
+        (ceiling_mode, CEILING_MODE_CHOICES, "--ceiling-mode"),
+        (str(get("mo_halo_model", "none")), MO_HALO_MODEL_CHOICES, "--mo-halo-model"),
+    ):
+        if value not in choices:
+            raise ValueError(f"{flag} {value!r} is not one of {choices}.")
+
+    # (2) relevance pursuit: the restrictions of the Student-t surrogate.
+    if likelihood == "relevance_pursuit" and (
+        is_multi or observation_noise == "known" or input_noise_model != "none"
+    ):
+        raise ValueError(
+            "likelihood='relevance_pursuit' is single-objective with learned noise and no "
+            "input-noise model, like student_t: it fits its own per-point noise."
+        )
+
+    # (1) the effort schedule
+    schedule = str(get("noise_schedule", "none"))
+    if schedule != "none":
+        noise_schedule_efforts(schedule, iterations)  # raises on a malformed or unbalanced schedule
+        if noisy and error_model != "gaussian":
+            raise ValueError(
+                f"--noise-schedule rescales the gaussian rating error, and this run's response error "
+                f"is {error_model!r}. Use --error-models gaussian, without --input-error-from-sweep."
+            )
+
+    # (3) missing ratings
+    missing = input_error in MISSING_INPUT_ERROR_CHOICES
+    if missing_handling != "drop" and not missing:
+        raise ValueError(
+            "--missing-handling acts only on a lost rating; pass --input-error missing_mcar or missing_low."
+        )
+    if missing:
+        if is_multi:
+            raise ValueError(f"{input_error} is single-objective only, like every input-error process.")
+        if int(get("replicate_first", 0) or 0) or int(get("final_rerate_top", 0) or 0) or acquisition == "replei":
+            raise ValueError(
+                f"{input_error} cannot run with replication, re-rating or replei: each re-rates a design "
+                "whose ratings may be lost, and none has a rule for a lost repeat."
+            )
+        if input_noise_model != "none":
+            raise ValueError(f"{input_error} cannot run with the noisy-input GP: a lost rating is not a slip.")
+        if str(get("input_error_recorded", "proposed")) != "proposed":
+            raise ValueError(
+                f"{input_error} never moves the design, so there is no 'actual' design to record; "
+                "drop --input-error-recorded."
+            )
+        if missing_handling == "impute_low" and observation_noise == "known":
+            raise ValueError(
+                "--missing-handling impute_low with --observation-noise known: an imputed value has no "
+                "injected variance to declare."
+            )
+        rate = float(get("input_error_scale", 0.0))
+        if noisy and not 0.0 <= rate <= 1.0:
+            raise ValueError(f"The {input_error} rate is a probability and must lie in [0, 1]; got {rate:g}.")
+
+    # (4) relay raters
+    kind, _ = parse_rater_assign(str(get("rater_assign", "none")))
+    ratio = float(get("rater_offset_ratio", 0.0))
+    if not (math.isfinite(ratio) and ratio >= 0.0):
+        raise ValueError(f"--rater-offset-ratio must be a non-negative number; got {ratio:g}.")
+    if kind == "none":
+        if ratio != 0.0:
+            raise ValueError("--rater-offset-ratio needs --rater-assign block:K or roundrobin:R.")
+        if rater_model != "none":
+            raise ValueError("--rater-model backfit estimates per-rater offsets and needs --rater-assign.")
+    else:
+        if is_multi:
+            raise ValueError("Relay raters are single-objective only; backfitting works on the scalar GP.")
+        if ratio == 0.0 and rater_model == "none":
+            raise ValueError(
+                "--rater-assign with --rater-offset-ratio 0 and no --rater-model would do nothing."
+            )
+        if noisy and error_model != "gaussian":
+            raise ValueError(
+                f"Rater offsets are added to the gaussian rating error, and this run's response error is "
+                f"{error_model!r}. Use --error-models gaussian, without --input-error-from-sweep."
+            )
+    if rater_model == "backfit" and (likelihood != "gaussian" or input_noise_model != "none"):
+        raise ValueError(
+            "--rater-model backfit refits the standard Gaussian GP; it cannot run with another "
+            "--likelihood or with --input-noise-model."
+        )
+
+    # (5) the rating-scale ceiling
+    ceiling = float(get("response_ceiling", 0.0))
+    if not 0.0 <= ceiling < 1.0:
+        raise ValueError(
+            f"--response-ceiling is a quantile of the landscape and must lie in (0, 1); got {ceiling:g}."
+        )
+    if ceiling > 0.0 and is_multi:
+        raise ValueError("--response-ceiling is single-objective only.")
+    if ceiling == 0.0 and ceiling_mode != "fixed":
+        raise ValueError("--ceiling-mode needs --response-ceiling.")
+
+    # (6) the multi-objective halo error and its backfit
+    cross_corr = float(get("error_cross_corr", 0.0))
+    if not (math.isfinite(cross_corr) and 0.0 <= cross_corr <= 1.0):
+        raise ValueError(
+            f"--error-cross-corr is the correlation of one trial's rating errors across objectives and "
+            f"must lie in [0, 1]; got {cross_corr:g}."
+        )
+    if cross_corr > 0.0:
+        if not is_multi:
+            raise ValueError(
+                "--error-cross-corr correlates the rating errors of a design's objectives, so it is "
+                "multi-objective only; pass --multi-objective."
+            )
+        if noisy and error_model != "gaussian":
+            raise ValueError(
+                f"--error-cross-corr shares a factor across the gaussian rating errors, and this run's "
+                f"response error is {error_model!r}. Use --error-models gaussian."
+            )
+    if str(get("mo_halo_model", "none")) != "none":
+        if not is_multi:
+            raise ValueError(
+                "--mo-halo-model backfit removes a factor shared across a ModelListGP's objectives, so it is "
+                "multi-objective only; pass --multi-objective."
+            )
+        if acquisition in BASELINE_ACQUISITION_CHOICES:
+            raise ValueError(
+                f"--mo-halo-model backfit acts inside the surrogate fit, and '{acquisition}' fits no "
+                "surrogate, so its runs would be the standard arm's. Name the hypervolume acquisitions "
+                "with --acq-list."
+            )
+
+
+def run_error_label(error_model: str, input_error_model: str) -> str:
+    """What corrupted a run, as it is written down.
+
+    "none" is reserved for the clean baseline: the evaluator recognises a
+    baseline by it, so a corrupted run labelled "none" is filed as a baseline
+    and never paired. A run is therefore labelled by whatever was actually
+    applied -- the response model, the input model, or both joined by "+" --
+    and asking for a label when nothing was applied is an error, not a default.
+    """
+    response = str(error_model)
+    inp = str(input_error_model)
+    if inp == "none":
+        if response == "none":
+            raise ValueError(
+                "A jittered run with no corruption: both the response error and the "
+                "input error are 'none'. That is a baseline, and 'none' is its label."
+            )
+        return response
+    if response == "none":
+        return inp
+    return f"{response}+{inp}"
+
+
+def apply_input_error(
+    candidate: np.ndarray,
+    iteration: int,
+    config: SimulationConfig,
+    rng: np.random.Generator,
+    bounds: "Bounds",
+) -> tuple[np.ndarray, bool]:
+    """Where the person actually went, given where the optimizer sent them.
+
+    Returns the design to EVALUATE and whether a slip occurred. Onset follows
+    the same convention as the response models: exact for ``t <= t0``, so the
+    first corrupted trial is ``t0 + 1``.
+
+    The slip is clipped back into the box rather than resampled or reflected.
+    A resample would make the error distribution depend on how close the
+    proposal sits to a wall in a way that is hard to state; clipping is what a
+    real bounded control does when you overshoot it -- the slider stops.
+    """
+    # A missing-rating process loses the rating, never the design; see draw_missing_rating.
+    if (
+        config.input_error_model == "none"
+        or config.input_error_model in MISSING_INPUT_ERROR_CHOICES
+        or iteration <= config.jitter_iteration
+    ):
+        return candidate, False
+    if config.single_error and iteration != config.jitter_iteration + 1:
+        return candidate, False
+
+    scale = float(config.input_error_scale)
+    if scale <= 0.0:
+        return candidate, False
+
+    low = np.asarray(bounds.low, dtype=float)
+    high = np.asarray(bounds.high, dtype=float)
+
+    if config.input_error_model == "slip":
+        step = rng.normal(0.0, scale * (high - low), size=candidate.shape)
+        return np.clip(candidate + step, low, high), True
+
+    if config.input_error_model == "misclick":
+        if rng.random() >= scale:
+            return candidate, False
+        return low + rng.random(candidate.shape) * (high - low), True
+
+    raise ValueError(
+        f"Unknown input error model: {config.input_error_model!r}. "
+        f"Expected one of {INPUT_ERROR_CHOICES}."
+    )
+
+
 def apply_sensor_error(
     true_value: np.ndarray,
     iteration: int,
@@ -1604,13 +2786,33 @@ def apply_sensor_error(
     rng: np.random.Generator,
     previous_observed: np.ndarray,
     previous_error: np.ndarray | None = None,
+    rater_offset: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
+    # rater_offset: the relay rater's fixed offset, added after the error and
+    # before the response instrument; None (the default) adds nothing.
     if iteration <= config.jitter_iteration:
         return true_value, np.zeros_like(true_value, dtype=float)
     if config.single_error and iteration != config.jitter_iteration + 1:
         return true_value, np.zeros_like(true_value, dtype=float)
+    # "none" is not a no-op arm: it is how the INPUT-error arm runs, where the
+    # design is corrupted and the rating of it is honest. Return before drawing
+    # so the response channel consumes no randomness and the input channel gets
+    # a clean stream from the shared jitter_rng.
+    if config.error_model == "none":
+        return true_value, np.zeros_like(true_value, dtype=float)
 
     jitter = rng.normal(0.0, config.jitter_std, size=true_value.shape)
+    if config.error_cross_corr > 0 and config.error_model == "gaussian":
+        # Halo error: the standard per-objective draw first, then ONE shared
+        # draw, so rho = 0 consumes exactly the standard stream and rho > 0 keeps
+        # every eps_j the standard run's.
+        halo_rho = float(config.error_cross_corr)
+        shared = rng.normal(0.0, config.jitter_std)
+        jitter = math.sqrt(1.0 - halo_rho) * jitter + math.sqrt(halo_rho) * shared
+    if config.noise_schedule != "none":
+        # The standard run's draw, rescaled to SD jitter_std / sqrt(e_t): the
+        # schedule moves error between trials without touching the stream.
+        jitter = jitter / math.sqrt(noise_effort(iteration, config))
 
     if config.error_model == "gaussian":
         observed = true_value + jitter
@@ -1662,6 +2864,8 @@ def apply_sensor_error(
     else:
         raise ValueError(f"Unknown error model: {config.error_model}")
 
+    if rater_offset is not None:
+        observed = observed + rater_offset
     observed = _postprocess_response(observed, config)
     return observed, observed - true_value
 
@@ -1672,7 +2876,8 @@ def screen_candidate_pool(
     rng: np.random.Generator,
     candidate_pool: int,
     num_restarts: int,
-) -> tuple[torch.Tensor, torch.Tensor]:
+    return_pool: bool = False,
+) -> tuple[torch.Tensor, ...]:
     if candidate_pool < 1:
         raise ValueError("candidate_pool must be >= 1.")
     if num_restarts < 1:
@@ -1688,7 +2893,334 @@ def screen_candidate_pool(
     top_indices = torch.topk(acq_values, k=top_k).indices
     initial_conditions = candidate_tensor[top_indices].unsqueeze(1)
     best_candidate = initial_conditions[0].detach()
+    if return_pool:
+        # The whole screened pool and its values, for the min-distance redirect.
+        # The draw is the same either way, so asking for them changes nothing else.
+        return best_candidate, initial_conditions, candidate_tensor, acq_values.detach()
     return best_candidate, initial_conditions
+
+
+# ---------------------------------------------------------------------------
+# Acquisition-side follow-ups: the lcb incumbent, Thompson sampling, augmented
+# EI, the input-uncertain wrapper and the min-distance redirect. Each changes
+# which design is proposed; none changes how many designs are rated.
+# ---------------------------------------------------------------------------
+
+
+def _posterior_mean_and_lcb(model: object, train_X: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Latent posterior mean, and mean - 1 x latent SD, at the visited designs.
+
+    Latent (no observation noise): the band is the model's uncertainty about f,
+    which is what an incumbent should be discounted by, not the rater's noise.
+    """
+    with torch.no_grad():
+        posterior = model.posterior(train_X)
+        mean = posterior.mean.reshape(-1)
+        sd = posterior.variance.clamp_min(0.0).sqrt().reshape(-1)
+    return mean, mean - sd
+
+
+def observation_noise_sd(model: object) -> float:
+    """The surrogate's observation-noise SD in the model's OUTPUT units.
+
+    The likelihood lives in standardised units (Standardize outcome transform),
+    so its variance is scaled back by stdvs^2 -- the conversion
+    _refit_with_input_noise uses. A fixed per-point noise (the nigp refit) is
+    summarised by its mean variance, and a Student-t likelihood by its variance
+    scale^2 * nu / (nu - 2), finite because robust_gp keeps nu > 2.
+    """
+    likelihood = model.likelihood
+    noise = getattr(likelihood, "noise", None)
+    if noise is None:
+        # The relevance-pursuit likelihood has no single noise: it keeps the
+        # inlier noise in a base module and adds a variance per outlier. A new
+        # rating is an inlier's until shown otherwise, so the base noise applies.
+        noise = likelihood.noise_covar.base_noise.noise
+    variance = noise.detach().reshape(-1).to(torch.double).mean()
+    deg_free = getattr(likelihood, "deg_free", None)
+    if deg_free is not None:
+        nu = float(deg_free.detach().reshape(-1)[0])
+        variance = variance * nu / (nu - 2.0)
+    stdvs = getattr(getattr(model, "outcome_transform", None), "stdvs", None)
+    if stdvs is not None:
+        variance = variance * stdvs.detach().reshape(-1)[0].to(torch.double) ** 2
+    return float(variance.sqrt())
+
+
+class LogAugmentedExpectedImprovement(AnalyticAcquisitionFunction):
+    r"""Log augmented expected improvement (Huang, Allen, Notz & Zeng, 2006).
+
+    ``log AEI(x) = LogEI(x; best_f) + log(1 - sigma_n / sqrt(sigma(x)^2 + sigma_n^2))``
+
+    with sigma(x) the LATENT posterior SD and sigma_n the observation-noise SD,
+    both in output units. The factor is near 1 where the model is unsure and
+    falls to 0 as sigma(x) drops below sigma_n: another noisy rating of a design
+    the model already pins down buys almost nothing. Log-valued like LogEI.
+    """
+
+    _log: bool = True
+
+    def __init__(
+        self,
+        model: object,
+        best_f: float | torch.Tensor,
+        noise_sd: float | torch.Tensor,
+        maximize: bool = True,
+    ) -> None:
+        super().__init__(model=model)
+        self.register_buffer("best_f", torch.as_tensor(best_f))
+        self.register_buffer("noise_sd", torch.as_tensor(noise_sd))
+        self.maximize = maximize
+
+    @staticmethod
+    def log_penalty(sigma: torch.Tensor, noise_sd: torch.Tensor) -> torch.Tensor:
+        """log(1 - s_n / t) with t = sqrt(s^2 + s_n^2), without the cancellation.
+
+        1 - s_n / t = s^2 / (t (t + s_n)), which stays accurate for s << s_n --
+        exactly where the discount does its work.
+        """
+        total = torch.sqrt(sigma**2 + noise_sd**2)
+        return 2.0 * sigma.log() - total.log() - (total + noise_sd).log()
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        mean, sigma = self._mean_and_sigma(X)  # latent posterior
+        u = _scaled_improvement(mean, sigma, self.best_f, self.maximize)
+        log_ei = _log_ei_helper(u) + sigma.log()
+        return (log_ei + self.log_penalty(sigma, self.noise_sd)).squeeze(-1)
+
+
+def build_augmented_ei(
+    model: object, train_X: torch.Tensor, noise_sd: float | None = None
+) -> LogAugmentedExpectedImprovement:
+    """AEI with its own threshold: the posterior mean at the visited design with
+    the best mean - 1 latent SD.
+
+    The method defines the threshold, so --incumbent and xi do not apply to it.
+    noise_sd overrides the model's own estimate (the known-noise arm passes the
+    variance of the rating about to be taken).
+    """
+    mean, lcb = _posterior_mean_and_lcb(model, train_X)
+    threshold = float(mean[int(torch.argmax(lcb))])
+    sd = observation_noise_sd(model) if noise_sd is None else float(noise_sd)
+    return LogAugmentedExpectedImprovement(model=model, best_f=threshold, noise_sd=sd)
+
+
+class _MatheronThompsonSampling(AcquisitionFunction):
+    """One Matheron posterior path as an acquisition, for BoTorch releases that
+    lack PathwiseThompsonSampling. Draws and evaluates the path the same way."""
+
+    def __init__(self, model: object) -> None:
+        super().__init__(model=model)
+        self.batch_size: int | None = None
+        self.path = None
+
+    def redraw(self, batch_size: int) -> None:
+        from botorch.sampling.pathwise import draw_matheron_paths
+
+        self.path = draw_matheron_paths(self.model, sample_shape=torch.Size([batch_size]))
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        if self.path is None:
+            self.batch_size = int(X.shape[-2])
+            self.redraw(self.batch_size)
+        # Each point is evaluated as its own n = 1 input, as the pathwise
+        # acquisition does; a path is deterministic, so this is just its value.
+        values = self.path(X.unsqueeze(-2))
+        return values.reshape(*X.shape[:-1]).sum(-1)
+
+
+def build_thompson_sampling(model: object, rng: np.random.Generator) -> AcquisitionFunction:
+    """Thompson sampling: one posterior sample path, drawn now.
+
+    The path's random features come from torch's global generator. Seeding it
+    from the run rng makes the draw a function of the run seed alone, and
+    fork_rng keeps the draw from shifting that generator for the rest of the run.
+    """
+    acqf = (
+        PathwiseThompsonSampling(model=model)
+        if PathwiseThompsonSampling is not None
+        else _MatheronThompsonSampling(model)
+    )
+    path_seed = int(rng.integers(0, 2**31 - 1))
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(path_seed)
+        # Draw eagerly: left alone, the path is drawn lazily on the first call,
+        # outside the seeded block. The batch-size check needs batch_size set too.
+        acqf.batch_size = 1
+        acqf.redraw(batch_size=1)
+    return acqf
+
+
+class InputUncertainAcquisition(AcquisitionFunction):
+    """An acquisition averaged over K fixed perturbations of the design.
+
+    The value at x is the average of base(clip(x + delta_k)) over the K deltas:
+    arithmetic for acquisitions on their natural scale, log-mean-exp for
+    log-valued ones, so it is the acquisition that is averaged and not its log.
+    The deltas are fixed for the object's lifetime, which keeps the averaged
+    surface deterministic for the gradient optimiser.
+    """
+
+    def __init__(
+        self,
+        base: object,
+        perturbations: torch.Tensor,
+        bounds_tensor: torch.Tensor,
+        log_space: bool,
+    ) -> None:
+        super().__init__(model=base.model)
+        self.base = base
+        self.register_buffer("perturbations", perturbations.to(torch.double))
+        self.register_buffer("low", bounds_tensor[0].to(torch.double))
+        self.register_buffer("high", bounds_tensor[1].to(torch.double))
+        self.log_space = bool(log_space)
+
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        # One base call per perturbation rather than one call on a K-times larger
+        # batch: peak memory stays that of the unwrapped acquisition, which
+        # matters for qnei's joint posteriors over a 1000-point screening pool.
+        values = torch.stack(
+            [
+                self.base(torch.minimum(torch.maximum(X + delta, self.low), self.high))
+                for delta in self.perturbations
+            ],
+            dim=-1,
+        )
+        if self.log_space:
+            return torch.logsumexp(values, dim=-1) - math.log(values.shape[-1])
+        return values.mean(dim=-1)
+
+
+def draw_input_perturbations(
+    rng: np.random.Generator, bounds: Bounds, count: int, scale: float
+) -> torch.Tensor:
+    """K QMC normal perturbations in raw input units, SD scale x (high - low).
+
+    The scrambled-Sobol seed comes from the run rng, so the deltas are fixed by
+    the run seed; they are redrawn once per model-based iteration.
+    """
+    engine = NormalQMCEngine(d=len(bounds.low), seed=int(rng.integers(0, 2**31 - 1)))
+    z = engine.draw(int(count)).to(torch.double)
+    span = torch.as_tensor(
+        np.asarray(bounds.high, dtype=float) - np.asarray(bounds.low, dtype=float),
+        dtype=torch.double,
+    )
+    return z * (float(scale) * span)
+
+
+def input_uncertain_effective_scale(config: SimulationConfig, apply_error: bool) -> float:
+    """The perturbation SD (fraction of each range) the wrapper uses in a run; 0 = off.
+
+    An explicit input_uncertain_scale >= 0 is used as given, in the clean run
+    too. The default borrows the arm's slip SD, which exists only where a slip
+    can happen -- a corrupted run of an input-error arm -- and is 0 elsewhere.
+    It applies from the first trial even when slips have a later onset: the
+    optimiser is not told when slips start.
+    """
+    if config.input_uncertain_acq <= 0:
+        return 0.0
+    if config.input_uncertain_scale >= 0:
+        return float(config.input_uncertain_scale)
+    if apply_error and config.input_error_model != "none":
+        return float(config.input_error_scale)
+    return 0.0
+
+
+def validate_acquisition_extensions(
+    acquisition: str,
+    *,
+    is_multi: bool,
+    input_error_model: str = "none",
+    input_uncertain_acq: int = 0,
+    input_uncertain_scale: float = -1.0,
+    min_distance: float = 0.0,
+) -> None:
+    """Reject combinations the acquisition-side follow-ups cannot run.
+
+    Called per run by run_simulation and once up front by the synthetic driver,
+    so a bad combination fails before a sweep starts instead of in every worker.
+    """
+    if acquisition in EXTENSION_ACQUISITION_CHOICES and is_multi:
+        raise ValueError(
+            f"Acquisition '{acquisition}' is single-objective only; the hypervolume "
+            "family is the multi-objective counterpart."
+        )
+    if input_uncertain_acq < 0:
+        raise ValueError("input_uncertain_acq must be >= 0 (0 = off).")
+    if input_uncertain_acq > 0:
+        if is_multi:
+            raise ValueError(
+                "The input-uncertain acquisition is single-objective only, like the "
+                "input-error arm it answers."
+            )
+        if acquisition == "qkg":
+            raise ValueError(
+                "The input-uncertain acquisition cannot wrap qkg: a one-shot acquisition "
+                "is optimised jointly with its fantasy points and has no screening pool."
+            )
+        if input_uncertain_scale < 0 and input_error_model in ("misclick", *MISSING_INPUT_ERROR_CHOICES):
+            raise ValueError(
+                f"The {input_error_model} arm's input_error_scale is a probability, not a slip SD, so "
+                "the input-uncertain acquisition cannot borrow it; pass an explicit "
+                "--input-uncertain-scale."
+            )
+        if input_uncertain_scale < 0 and input_error_model == "none":
+            raise ValueError(
+                "The input-uncertain acquisition borrows its scale from the input-error arm "
+                "by default, and none is set, so it would do nothing; pass "
+                "--input-uncertain-scale or run it with --input-error slip."
+            )
+    if not 0.0 <= min_distance < 1.0:
+        raise ValueError(
+            "min_distance is an RMS distance in the unit box, whose largest value is 1; "
+            "it must lie in [0, 1)."
+        )
+    if min_distance > 0 and acquisition == "qkg":
+        raise ValueError(
+            "min_distance redirects to a screened pool point, and qkg (a one-shot "
+            "acquisition) is optimised without a screening pool."
+        )
+
+
+def _rms_unit_distance(points: np.ndarray, logged: np.ndarray, bounds: Bounds) -> np.ndarray:
+    """RMS distance from each point to its nearest logged design, in the unit box.
+
+    RMS over coordinates rather than Euclidean, so one threshold means the same
+    thing at every dimension (two random designs sit ~0.41 apart at any d).
+    """
+    low = np.asarray(bounds.low, dtype=float)
+    span = np.asarray(bounds.high, dtype=float) - low
+    p = (np.atleast_2d(np.asarray(points, dtype=float)) - low) / span
+    q = (np.atleast_2d(np.asarray(logged, dtype=float)) - low) / span
+    diff = p[:, None, :] - q[None, :, :]
+    return np.sqrt(np.mean(diff**2, axis=-1)).min(axis=1)
+
+
+def _min_distance_redirect(
+    candidate: torch.Tensor,
+    pool: torch.Tensor,
+    pool_values: torch.Tensor,
+    logged_X: np.ndarray,
+    bounds: Bounds,
+    min_distance: float,
+) -> tuple[torch.Tensor, bool]:
+    """Swap a near-repeat proposal for the best screened point far from the log.
+
+    Returns (design, redirected). The candidate is kept when it is already at
+    least min_distance from every logged design, or when no pool point is.
+    """
+    nearest = _rms_unit_distance(candidate.detach().cpu().numpy().reshape(1, -1), logged_X, bounds)
+    if nearest[0] >= min_distance:
+        return candidate, False
+    far = _rms_unit_distance(pool.detach().cpu().numpy(), logged_X, bounds) >= min_distance
+    if not far.any():
+        return candidate, False
+    # NaN would win np.argmax; an acquisition value that is NaN is no value.
+    values = np.nan_to_num(pool_values.detach().cpu().numpy().astype(float), nan=-np.inf)
+    eligible = np.flatnonzero(far)
+    best = int(eligible[np.argmax(values[eligible])])
+    return pool[best].reshape(candidate.shape).clone(), True
 
 
 def get_botorch_candidate(
@@ -1706,7 +3238,18 @@ def get_botorch_candidate(
     train_X: torch.Tensor,
     train_Y: torch.Tensor | list[torch.Tensor],
     ref_point: np.ndarray | None,
+    input_uncertain_acq: int = 0,
+    input_uncertain_scale: float = 0.0,
+    min_distance: float = 0.0,
+    logged_X: np.ndarray | None = None,
+    noise_sd: float | None = None,
+    diagnostics: dict | None = None,
 ) -> torch.Tensor:
+    # The keyword extras are the acquisition-side follow-ups. At their defaults
+    # this consumes the same randomness and returns the same candidate as before
+    # they existed. input_uncertain_scale is the EFFECTIVE scale (see
+    # input_uncertain_effective_scale); noise_sd overrides aei's model-derived
+    # noise; diagnostics, when given, receives "min_distance_redirect".
     if acq_config.name == "logei":
         if best_f is None:
             raise ValueError("best_f required for logei.")
@@ -1747,6 +3290,15 @@ def get_botorch_candidate(
             X_baseline=train_X,
             sampler=sampler,
         )
+    elif acq_config.name == "qkg":
+        # num_fantasies is the cost knob: the acquisition optimises an inner
+        # problem per fantasy, so 8 keeps a 50-iteration run affordable at the
+        # price of a coarser estimate.
+        acqf = qKnowledgeGradient(model=gp_model, num_fantasies=8)
+    elif acq_config.name == "replei":
+        if best_f is None:
+            raise ValueError("best_f required for replei.")
+        acqf = LogExpectedImprovement(model=gp_model, best_f=best_f + acq_config.xi)
     elif acq_config.name == "qehvi":
         if ref_point is None:
             raise ValueError("ref_point required for qehvi.")
@@ -1825,16 +3377,57 @@ def get_botorch_candidate(
             sampler=sampler,
             prune_baseline=True,
         )
+    elif acq_config.name == "ts":
+        acqf = build_thompson_sampling(gp_model, rng)
+    elif acq_config.name == "aei":
+        acqf = build_augmented_ei(gp_model, train_X, noise_sd=noise_sd)
     else:
         raise ValueError(f"Unknown acquisition: {acq_config.name}")
 
-    fallback_candidate, batch_initial_conditions = screen_candidate_pool(
+    if isinstance(acqf, OneShotAcquisitionFunction):
+        if input_uncertain_acq > 0 or min_distance > 0:
+            raise ValueError(
+                f"{acq_config.name} is a one-shot acquisition with no screening pool; it "
+                "supports neither the input-uncertain wrapper nor the min-distance redirect."
+            )
+        # One-shot acquisitions (the knowledge gradient) are optimised jointly
+        # over the candidate AND its fantasy points, so they expect a q-batch of
+        # q + num_fantasies rows. The candidate screen evaluates single points
+        # and would hand them a q-batch of 1, which they reject outright --
+        # which, because the acquisition call sits inside the fallback handler,
+        # would quietly degrade every iteration to random sampling. optimize_acqf
+        # knows how to augment the batch, so let it generate its own restarts.
+        candidate, _ = optimize_acqf(
+            acq_function=acqf,
+            bounds=bounds_tensor,
+            q=1,
+            num_restarts=int(num_restarts),
+            raw_samples=int(raw_samples),
+            options={"batch_limit": 5, "maxiter": int(maxiter)},
+        )
+        if candidate.numel() == 0:
+            raise RuntimeError(f"{acq_config.name}: optimize_acqf returned no candidate.")
+        return candidate.detach()
+
+    if input_uncertain_acq > 0 and input_uncertain_scale > 0:
+        # Wrapped before screening, so the pool, the restarts and the optimiser
+        # all see the averaged surface.
+        acqf = InputUncertainAcquisition(
+            base=acqf,
+            perturbations=draw_input_perturbations(rng, bounds, input_uncertain_acq, input_uncertain_scale),
+            bounds_tensor=bounds_tensor,
+            log_space=acq_config.name in LOG_VALUED_ACQUISITIONS,
+        )
+
+    screened = screen_candidate_pool(
         acqf=acqf,
         bounds=bounds,
         rng=rng,
         candidate_pool=candidate_pool,
         num_restarts=num_restarts,
+        return_pool=min_distance > 0,
     )
+    fallback_candidate, batch_initial_conditions = screened[0], screened[1]
 
     candidate, _ = optimize_acqf(
         acq_function=acqf,
@@ -1845,9 +3438,16 @@ def get_botorch_candidate(
         options={"batch_limit": 5, "maxiter": int(maxiter)},
         batch_initial_conditions=batch_initial_conditions,
     )
-    if candidate.numel() == 0:
-        return fallback_candidate
-    return candidate.detach()
+    chosen = fallback_candidate if candidate.numel() == 0 else candidate.detach()
+    if min_distance > 0:
+        if logged_X is None:
+            raise ValueError("min_distance needs logged_X, the designs logged so far.")
+        chosen, redirected = _min_distance_redirect(
+            chosen, screened[2], screened[3], logged_X, bounds, min_distance
+        )
+        if diagnostics is not None:
+            diagnostics["min_distance_redirect"] = redirected
+    return chosen
 
 
 def _compute_hypervolume(values: list[np.ndarray], ref_point: np.ndarray) -> float:
@@ -1876,8 +3476,15 @@ def run_simulation(
     y_observed_list: list[np.ndarray] = []
     y_true_list: list[np.ndarray] = []
     error_magnitudes: list[np.ndarray] = []
+    noise_variances: list[float] = []
     fit_times: list[float] = []
     acq_failures: list[bool] = []
+    input_error_l2s: list[float] = []
+    input_error_flags: list[bool] = []
+    # The objective at the design that was WRITTEN DOWN, which is the one that
+    # would actually be deployed. Identical to y_true unless an unnoticed input
+    # slip moved the evaluation somewhere else.
+    y_deployed_list: list[np.ndarray] = []
 
     # Regret tracking (computed on true objective)
     best_true_so_far = -np.inf
@@ -1900,6 +3507,63 @@ def run_simulation(
     previous_error: np.ndarray | None = None
 
     is_multi = config.objective == "multi_objective"
+    if acq.name == "replei" and is_multi:
+        raise ValueError("replei ranks a scalar incumbent and has no multi-objective form.")
+    if is_multi and (config.replicate_first or config.final_rerate_top or config.input_noise_model != "none"):
+        raise NotImplementedError("The process adaptations are single-objective only.")
+    if config.input_noise_model != "none" and config.observation_noise == "known":
+        raise ValueError("input_noise_model and observation_noise='known' both set train_Yvar; pick one.")
+    if config.likelihood == "student_t" and (
+        is_multi or config.observation_noise == "known" or config.input_noise_model != "none"
+    ):
+        raise ValueError("likelihood='student_t' is single-objective with learned noise and no input-noise model.")
+    if config.final_rerate_top and config.final_rerate_top * config.final_rerate_reps >= config.iterations - config.initial_samples:
+        raise ValueError("final_rerate_top x final_rerate_reps must leave at least one model-based trial.")
+    validate_acquisition_extensions(
+        acq.name,
+        is_multi=is_multi,
+        input_error_model=config.input_error_model,
+        input_uncertain_acq=config.input_uncertain_acq,
+        input_uncertain_scale=config.input_uncertain_scale,
+        min_distance=config.min_distance,
+    )
+    validate_error_extensions(acq.name, vars(config), is_multi=is_multi, noisy=apply_error)
+    input_uncertain_scale = input_uncertain_effective_scale(config, apply_error)
+    # --- error-process extension state. All of it is inert at the defaults.
+    missing_on = apply_error and config.input_error_model in MISSING_INPUT_ERROR_CHOICES
+    low_threshold = (
+        landscape_quantile(oracle, bounds, MISSING_LOW_QUANTILE)
+        if missing_on and config.input_error_model == "missing_low"
+        else None
+    )
+    missing_flags: list[bool] = []
+    imputed_values: list[float] = []
+    rater_kind, rater_count = parse_rater_assign(config.rater_assign)
+    # Offsets exist only where they act: noisy runs. The clean twin still knows
+    # who rated what, which is all a backfit needs.
+    rater_offsets = (
+        draw_rater_offsets(
+            config.seed, config.rater_assign, config.rater_offset_ratio, config.jitter_std, config.iterations
+        )
+        if apply_error and rater_kind != "none"
+        else None
+    )
+    rater_ids: list[int] = []
+    rater_estimates: dict[int, float] = {}
+    ceiling_on = apply_error and config.response_ceiling > 0
+    ceiling_base = landscape_quantile(oracle, bounds, config.response_ceiling) if ceiling_on else None
+    ceiling_values: list[float] = []
+    min_distance_redirects: list[bool] = []
+    # Halo backfit state: the latest fit's correction (trials it saw x objectives)
+    # and the rho_hat each trial's fit estimated (NaN where none ran).
+    halo_corrections: np.ndarray | None = None
+    halo_rho_hats: list[float] = []
+    # Replication state: the design due a second rating, how many have had one,
+    # and the end-of-run re-rating schedule once its window opens.
+    replication_pending: np.ndarray | None = None
+    replicated = 0
+    rerate_schedule: list[np.ndarray] = []
+    rerate_window = config.final_rerate_top * config.final_rerate_reps
     objective_true_scalar: list[float] = []
     objective_observed_scalar: list[float] = []
     hv_ref_point = config.ref_point if config.ref_point is not None else None
@@ -1912,6 +3576,8 @@ def run_simulation(
 
     for iteration in range(1, config.iterations + 1):
         acq_failed = False
+        redirected = False
+        halo_rho = np.nan
         if iteration <= config.initial_samples:
             candidate_np = sample_uniform(bounds, rng, size=1)[0]
             fit_time = 0.0
@@ -1921,6 +3587,34 @@ def run_simulation(
         elif acq.name == "sobol":
             draw = sobol_engine.draw(1).to(torch.double).cpu().numpy()[0]
             candidate_np = bounds.low + draw * (bounds.high - bounds.low)
+            fit_time = 0.0
+        elif rerate_window and iteration > config.iterations - rerate_window:
+            # Re-evaluate before deploying: the last trials go to the designs
+            # that currently look best, so the final pick rests on more than
+            # one rating each.
+            if not rerate_schedule:
+                rerate_schedule = _rerate_schedule(
+                    X_list, objective_observed_scalar, config.final_rerate_top, config.final_rerate_reps
+                )
+            candidate_np = rerate_schedule.pop(0)
+            fit_time = 0.0
+        elif replication_pending is not None:
+            # The second rating of a design proposed one trial ago.
+            candidate_np = replication_pending
+            replication_pending = None
+            fit_time = 0.0
+        elif acq.name == "replei" and (iteration - config.initial_samples) % 2 == 0:
+            # Re-ask about the design that currently looks best. The oracle
+            # returns the same true value and the error model draws fresh noise,
+            # which is exactly what replicating a rating does: no new
+            # information about the landscape, one more sample of the rater.
+            best_index = int(np.argmax(np.asarray(objective_observed_scalar, dtype=float)))
+            candidate_np = np.array(X_list[best_index], dtype=float)
+            fit_time = 0.0
+        elif missing_on and len(_missing_training_rows(objective_observed_scalar, imputed_values)[0]) < 2:
+            # Lost ratings can leave too few to fit a surrogate on; the initial
+            # design is extended the way it was drawn, which is not a failure.
+            candidate_np = sample_uniform(bounds, rng, size=1)[0]
             fit_time = 0.0
         else:
             fit_start = time.perf_counter()
@@ -1937,32 +3631,76 @@ def run_simulation(
                         torch.tensor(train_Y_array[:, idx].reshape(-1, 1), dtype=torch.double)
                         for idx in range(train_Y_array.shape[1])
                     ]
-                    gps = [
-                        SingleTaskGP(
+                    gp, mll = _fit_model_list_gp(train_X, train_Y_list, bounds_tensor)
+                    if config.mo_halo_model == "backfit":
+                        # The corrected ratings are the targets from here on, so the
+                        # refit model and the hypervolume partitioning both read them.
+                        gp, train_Y_list, halo_corrections, halo_rho = fit_mo_halo_backfit(
+                            gp,
                             train_X,
-                            train_Y_list[idx],
-                            input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
-                            outcome_transform=Standardize(m=1),
+                            train_Y_list,
+                            lambda X, Ys: _fit_model_list_gp(X, Ys, bounds_tensor),
                         )
-                        for idx in range(train_Y_array.shape[1])
-                    ]
-                    gp = ModelListGP(*gps)
-                    mll = SumMarginalLogLikelihood(gp.likelihood, gp)
-                    fit_gpytorch_mll(mll)
                     best_f = None
                     train_Y_for_acq: list[torch.Tensor] | torch.Tensor = train_Y_list
                 else:
                     train_Y = torch.tensor(
                         np.array(y_observed_list, dtype=float).reshape(-1, 1), dtype=torch.double
                     )
-                    gp = SingleTaskGP(
-                        train_X,
-                        train_Y,
-                        input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
-                        outcome_transform=Standardize(m=1),
-                    )
-                    mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
-                    fit_gpytorch_mll(mll)
+                    train_Yvar = None
+                    if config.observation_noise == "known":
+                        assert len(noise_variances) == train_Y.shape[0], (
+                            "noise schedule out of step with the training targets"
+                        )
+                        train_Yvar = torch.tensor(
+                            np.asarray(noise_variances, dtype=float).reshape(-1, 1),
+                            dtype=torch.double,
+                        )
+                    train_rows = None
+                    if missing_on:
+                        # A lost rating trains nothing under "drop"; under
+                        # "impute_low" its imputed value stands in for it.
+                        train_rows, targets = _missing_training_rows(objective_observed_scalar, imputed_values)
+                        row_index = torch.as_tensor(train_rows, dtype=torch.long)
+                        train_X = train_X[row_index]
+                        train_Y = torch.tensor(np.asarray(targets, dtype=float).reshape(-1, 1), dtype=torch.double)
+                        if train_Yvar is not None:
+                            train_Yvar = train_Yvar[row_index]
+                    if config.likelihood == "student_t":
+                        scripts_dir = str(Path(__file__).resolve().parent)
+                        if scripts_dir not in sys.path:
+                            sys.path.insert(0, scripts_dir)
+                        from robust_gp import build_robust_gp
+
+                        gp = build_robust_gp(train_X, train_Y, bounds=bounds_tensor)
+                        mll = None
+                    elif config.likelihood == "relevance_pursuit":
+                        gp, mll = fit_relevance_pursuit_gp(train_X, train_Y, bounds_tensor)
+                    elif config.rater_model == "backfit":
+                        fit_ids = rater_ids if train_rows is None else [rater_ids[i] for i in train_rows]
+                        gp, mll, rater_estimates = fit_backfit_gp(
+                            train_X,
+                            train_Y,
+                            fit_ids,
+                            lambda X, Y: _fit_gaussian_gp(X, Y, train_Yvar, bounds_tensor),
+                        )
+                        # The corrected ratings are the targets from here on, so
+                        # observed_max and the acquisitions read them too.
+                        train_Y = train_Y - torch.tensor(
+                            [rater_estimates[r] for r in fit_ids], dtype=torch.double
+                        ).reshape(-1, 1)
+                    else:
+                        gp = SingleTaskGP(
+                            train_X,
+                            train_Y,
+                            train_Yvar=train_Yvar,
+                            input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
+                            outcome_transform=Standardize(m=1),
+                        )
+                        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+                        fit_gpytorch_mll(mll)
+                    if config.input_noise_model == "nigp":
+                        gp, mll = _refit_with_input_noise(gp, train_X, train_Y, bounds, config)
                     if config.incumbent == "posterior_mean":
                         # Max posterior mean over visited points: robust to noisy
                         # observations (a single positive noise spike cannot
@@ -1970,10 +3708,19 @@ def run_simulation(
                         with torch.no_grad():
                             posterior_mean = gp.posterior(train_X).mean.reshape(-1)
                         best_f = posterior_mean.max().item()
+                    elif config.incumbent == "lcb":
+                        # Best mean - 1 latent SD over the visited designs.
+                        best_f = _posterior_mean_and_lcb(gp, train_X)[1].max().item()
                     else:
                         best_f = train_Y.max().item()
                     train_Y_for_acq = train_Y
 
+                aei_noise_sd = None
+                if acq.name == "aei" and config.observation_noise == "known":
+                    # The model is told each rating's variance, so the discount
+                    # uses the variance the rating about to be taken will carry.
+                    aei_noise_sd = float(np.sqrt(known_noise_variance(iteration, config, apply_error)))
+                candidate_info: dict = {}
                 candidate_tensor = get_botorch_candidate(
                     gp_model=gp,
                     acq_config=acq,
@@ -1989,8 +3736,15 @@ def run_simulation(
                     train_X=train_X,
                     train_Y=train_Y_for_acq,
                     ref_point=hv_ref_point,
+                    input_uncertain_acq=config.input_uncertain_acq,
+                    input_uncertain_scale=input_uncertain_scale,
+                    min_distance=config.min_distance,
+                    logged_X=np.vstack(X_list) if config.min_distance > 0 else None,
+                    noise_sd=aei_noise_sd,
+                    diagnostics=candidate_info,
                 )
                 candidate_np = candidate_tensor.cpu().numpy().flatten()
+                redirected = bool(candidate_info.get("min_distance_redirect", False))
             except Exception as e:
                 # Recorded per-iteration (acq_opt_failed column) so downstream
                 # analysis can detect contaminated runs; never silently absorbed.
@@ -2003,11 +3757,56 @@ def run_simulation(
                 candidate_np = sample_uniform(bounds, rng, size=1)[0]
 
             fit_time = time.perf_counter() - fit_start
+            if config.replicate_first and replicated < config.replicate_first and not acq_failed:
+                replication_pending = np.array(candidate_np, dtype=float)
+                replicated += 1
 
-        true_value = oracle.predict(candidate_np)
+        # Where the person actually went. The objective is evaluated THERE --
+        # that is what really happened and what the run really achieved -- while
+        # what gets written down is governed by input_error_recorded. With the
+        # default "proposed" the surrogate trains on (x, f(x')), which is the
+        # honest model of an unnoticed slip.
+        if apply_error and config.input_error_model != "none":
+            if jitter_rng is None:
+                raise ValueError("jitter_rng must be provided when apply_error is True.")
+            if is_multi:
+                raise NotImplementedError(
+                    "Input error is single-objective only. The deployed-versus-"
+                    "evaluated distinction is defined per point, and carrying it "
+                    "through a Pareto set means deciding what the non-dominated "
+                    "set of MISRECORDED points means -- a question this arm does "
+                    "not answer."
+                )
+            actual_np, slipped = apply_input_error(
+                candidate=candidate_np,
+                iteration=iteration,
+                config=config,
+                rng=jitter_rng,
+                bounds=bounds,
+            )
+        else:
+            actual_np, slipped = candidate_np, False
+        recorded_np = actual_np if config.input_error_recorded == "actual" else candidate_np
+        input_error_l2 = float(np.linalg.norm(actual_np - candidate_np))
+
+        true_value = oracle.predict(actual_np)
+        # What deploying the recorded design would actually get you. Only a
+        # second oracle call when a slip has separated the two.
+        deployed_value = (
+            true_value if input_error_l2 == 0.0 else oracle.predict(recorded_np)
+        )
+        y_deployed_list.append(deployed_value)
 
         if previous_observed is None:
             previous_observed = true_value
+
+        rater = rater_index(iteration, rater_kind, rater_count) if rater_kind != "none" else 0
+        # Decided before the rating is drawn, in the input channel's place in the stream.
+        missing = (
+            draw_missing_rating(true_value, iteration, config, jitter_rng, low_threshold)
+            if missing_on
+            else False
+        )
 
         if apply_error:
             if jitter_rng is None:
@@ -2019,18 +3818,49 @@ def run_simulation(
                 rng=jitter_rng,
                 previous_observed=previous_observed,
                 previous_error=previous_error,
+                rater_offset=None if rater_offsets is None else float(rater_offsets[rater]),
             )
         else:
             observed_value, error_magnitude = true_value, np.zeros_like(true_value, dtype=float)
 
-        X_list.append(candidate_np)
+        if ceiling_on:
+            # On every trial of a noisy run, onset or not: the top of the scale is
+            # there from the first rating. It consumes no randomness.
+            ceiling = response_ceiling_value(
+                ceiling_base, config.ceiling_mode, objective_observed_scalar, objective_true_scalar
+            )
+            observed_value = np.minimum(observed_value, ceiling)
+            error_magnitude = observed_value - true_value
+            ceiling_values.append(ceiling)
+
+        # The error process runs whether or not its rating reaches the log, so
+        # the stateful models (ar1, dropout) carry the value that was drawn.
+        previous_observed = observed_value
+        previous_error = error_magnitude
+        if missing_on:
+            imputed = (
+                impute_low_value(objective_observed_scalar)
+                if missing and config.missing_handling == "impute_low"
+                else None
+            )
+            missing_flags.append(bool(missing))
+            imputed_values.append(np.nan if imputed is None else imputed)
+            if missing:
+                observed_value = np.full_like(true_value, np.nan, dtype=float)
+                error_magnitude = np.full_like(true_value, np.nan, dtype=float)
+
+        X_list.append(recorded_np)
+        input_error_l2s.append(input_error_l2)
+        input_error_flags.append(bool(slipped))
+        noise_variances.append(known_noise_variance(iteration, config, apply_error))
         y_true_list.append(true_value)
         y_observed_list.append(observed_value)
         error_magnitudes.append(error_magnitude)
         fit_times.append(fit_time)
         acq_failures.append(acq_failed)
-        previous_observed = observed_value
-        previous_error = error_magnitude
+        min_distance_redirects.append(redirected)
+        rater_ids.append(rater)
+        halo_rho_hats.append(halo_rho)
 
         # Regret values are intentionally NOT clamped at zero: y_opt is a
         # sampling-based estimate that BO can legitimately exceed, and clamping
@@ -2046,7 +3876,12 @@ def run_simulation(
             r_t = y_opt - hv_true
             # Inference incumbent: Pareto set as identified from OBSERVED
             # values, scored by the TRUE values of those same points.
-            obs_t = torch.tensor(np.vstack(y_observed_list), dtype=torch.double)
+            obs_matrix = np.vstack(y_observed_list)
+            if halo_corrections is not None:
+                # Deploy the Pareto set of the corrected ratings, under the latest
+                # estimates (zero for a trial no fit has seen yet).
+                obs_matrix[: len(halo_corrections)] -= halo_corrections
+            obs_t = torch.tensor(obs_matrix, dtype=torch.double)
             nd_mask = is_non_dominated(obs_t)
             inferred_true = [y_true_list[i] for i in range(len(y_true_list)) if bool(nd_mask[i])]
             inference_value = _compute_hypervolume(inferred_true, hv_ref_point)
@@ -2058,9 +3893,27 @@ def run_simulation(
             best_true_so_far = max(best_true_so_far, scalar_true)
             r_t = y_opt - scalar_true
             # Inference incumbent: the point the experimenter would pick
-            # (highest OBSERVED value so far), scored by its TRUE value.
-            best_obs_idx = int(np.argmax(objective_observed_scalar))
-            inference_value = float(objective_true_scalar[best_obs_idx])
+            # (highest OBSERVED value so far), scored by its TRUE value. With
+            # replication on, the pick is by mean over a design's ratings.
+            ratings = objective_observed_scalar
+            if config.rater_model == "backfit":
+                # Deploy on the corrected ratings, under the latest offset estimates
+                # (zero for a rater no fit has seen yet).
+                ratings = [y - rater_estimates.get(r, 0.0) for y, r in zip(ratings, rater_ids)]
+            if config.inference_rule == "best_mean":
+                best_obs_idx = _best_mean_index(X_list, ratings)
+            elif missing_on:
+                # A lost or imputed rating is never the one deployed.
+                best_obs_idx = _nan_argmax(ratings)
+            else:
+                best_obs_idx = int(np.argmax(ratings))
+            # Scored by the DEPLOYED design, not the evaluated one. They differ
+            # only under an unnoticed input slip, and there the difference is
+            # the whole point: the experimenter deploys what the log says, and
+            # the log says x while the rating came from x'. Scoring f(x') here
+            # would credit them with a design they never wrote down and would
+            # hide most of what a misclick costs.
+            inference_value = float(y_deployed_list[best_obs_idx][0])
         cum_regret += r_t
         s_t = y_opt - best_true_so_far
 
@@ -2077,6 +3930,13 @@ def run_simulation(
 
     results["objective_true"] = objective_true_scalar
     results["objective_observed"] = objective_observed_scalar
+    if config.input_error_model != "none":
+        # objective_true is the objective WHERE THE PERSON WENT; this is the
+        # objective at the design that was logged. Under the default
+        # "proposed" recording they come apart exactly when a slip happened.
+        results["objective_true_deployed"] = [float(v[0]) for v in y_deployed_list]
+        results["input_error_l2"] = input_error_l2s
+        results["input_error_applied"] = input_error_flags
     if is_multi:
         for idx, column in enumerate(config.objective_columns):
             output_name = _objective_output_name(column)
@@ -2101,13 +3961,47 @@ def run_simulation(
     results["acquisition"] = acq.name
     results["fit_time_sec"] = fit_times
     results["acq_opt_failed"] = acq_failures
+    if config.min_distance > 0:
+        # Only when the redirect is on, so default logs keep their schema.
+        results["min_distance_redirect"] = min_distance_redirects
+    # The error-process extensions log only where they act, so default logs --
+    # and the clean twin of a run they leave alone -- keep their schema.
+    if apply_error and config.noise_schedule != "none":
+        results["noise_effort"] = [noise_effort(t, config) for t in range(1, config.iterations + 1)]
+    if missing_on:
+        results["missing"] = missing_flags
+        if config.missing_handling == "impute_low":
+            results["imputed_value"] = imputed_values
+    if rater_kind != "none" and (apply_error or config.rater_model != "none"):
+        results["rater_id"] = rater_ids
+    if ceiling_on:
+        results["ceiling_value"] = ceiling_values
+    if config.mo_halo_model != "none":
+        # Only where the remedy runs, so default logs keep their schema. The
+        # corrections are the final fit's (0 for a trial it did not see), so
+        # objective_observed_<obj> - halo_correction_<obj> replays the last
+        # deployed Pareto set.
+        results["halo_rho_hat"] = halo_rho_hats
+        final_corrections = np.zeros((config.iterations, len(config.objective_columns)))
+        if halo_corrections is not None:
+            final_corrections[: len(halo_corrections)] = halo_corrections
+        for idx, column in enumerate(config.objective_columns):
+            results[f"halo_correction_{_objective_output_name(column)}"] = final_corrections[:, idx]
     results["seed"] = config.seed
     results["run_id"] = run_id
-    results["error_model"] = config.error_model if apply_error else "none"
+    # Label a corrupted run by what corrupted it -- never "none", the baseline
+    # marker every downstream stage keys on. See run_error_label().
+    results["error_model"] = (
+        run_error_label(config.error_model, config.input_error_model)
+        if apply_error
+        else "none"
+    )
     results["jitter_std"] = config.jitter_std if apply_error else 0.0
     results["jitter_iteration"] = config.jitter_iteration
     results["oracle_model"] = oracle_model
     results["objective"] = config.objective
+    results["observation_noise"] = config.observation_noise
+    results["known_noise_var"] = noise_variances
     # Authoritative schema marker so downstream consumers do not have to
     # infer parameter columns from a hand-maintained reserved-column set.
     results["param_columns"] = ",".join(config.param_columns)
@@ -2321,6 +4215,8 @@ def run_single_seed(
             response_clip_high=clip_high,
             response_round=args.response_round,
             incumbent=args.incumbent,
+            observation_noise=args.observation_noise,
+            **adaptation_fields(args),
         )
 
         for acq in acquisitions:

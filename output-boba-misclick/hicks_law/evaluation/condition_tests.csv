@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+hicks_law,value,exact,misclick,0,0.01,5,8,qucb,3.7,friedman,7.999999999999973,0.3325939025993105,0.22857142857142781,,True,0.5675051993829248,False
+hicks_law,value,exact,misclick,0,0.05,5,8,ucb,2.6,friedman,11.230769230769248,0.12886494204552684,0.32087912087912135,,True,0.30068486477289597,False
+hicks_law,value,exact,misclick,0,0.15,5,8,sobol,2.5,friedman,15.980487804878043,0.025295226031577033,0.4565853658536584,,True,0.08853329111051962,False
+hicks_law,value,exact,misclick,0,0.4,5,8,random,1.2,friedman,22.0,0.002540413970043582,0.6285714285714286,,True,0.017782897790305074,True
+hicks_law,value,exact,misclick,20,0.01,5,8,ei,4.5,friedman,,,,,True,,False
+hicks_law,value,exact,misclick,20,0.05,5,8,ei,4.4,friedman,7.00000000000003,0.4288798575530519,0.20000000000000087,,True,0.5675051993829248,False
+hicks_law,value,exact,misclick,20,0.15,5,8,ei,4.3,friedman,6.466666666666697,0.4864330280425069,0.18476190476190563,,True,0.5675051993829248,False
+hicks_law,value,exact,misclick,20,0.4,5,8,sobol,3.8,friedman,1.6896551724137854,0.9750090758250843,0.048275862068965295,,True,0.9750090758250843,False

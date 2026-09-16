@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+moving_peaks,value,qnei,0.45,1.55,0.2845554721978736,62.33637236397235,-0.0023008818311346458,4,8
+moving_peaks,value,logei,0.55,1.45,0.35634575136195695,60.11586783919491,-0.060117752032093935,4,8

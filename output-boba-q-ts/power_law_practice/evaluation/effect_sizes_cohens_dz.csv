@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+power_law_practice,value,exact,gaussian,0,0.05,ts,auc_simple_regret_excess_true,5,0.4141025090602707,0.009825484795189077,0.6597156618133956,0.6276984662180144,-0.4050426772645924,1.233247695385134,-0.3741020714893031,1.56961291998727,1.4035764398358355,0.23311290598071097,5.0,0.625,0.23311290598071097,0.625
+power_law_practice,value,exact,gaussian,0,0.25,ts,auc_simple_regret_excess_true,5,2.9488781154448644,0.5658846249531315,3.945339807383056,0.7474332400789718,-1.949908284062849,7.847664514952578,-0.29427998138923844,1.7236919426961317,1.6713115334595015,0.16997927736869525,1.0,0.125,0.22663903649159367,0.16666666666666666
+power_law_practice,value,exact,gaussian,0,1.0,ts,auc_simple_regret_excess_true,5,11.449728715117576,11.807653317216307,6.331102211854229,1.8084890011220058,3.5886270297099596,19.31083040052519,0.29050606152845254,3.268958786123875,4.0439043430694985,0.015553767395731586,0.0,0.0625,0.031107534791463172,0.125
+power_law_practice,value,exact,gaussian,0,5.0,ts,auc_simple_regret_excess_true,5,16.330908008356225,16.814749011449912,7.858363088078485,2.0781564589616632,6.573461477075815,26.088354539636633,0.4173746983990696,3.6902529961196064,4.6468991101185315,0.009683881482118429,0.0,0.0625,0.031107534791463172,0.125
+power_law_practice,value,exact,gaussian,20,0.05,ts,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+power_law_practice,value,exact,gaussian,20,0.25,ts,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+power_law_practice,value,exact,gaussian,20,1.0,ts,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+power_law_practice,value,exact,gaussian,20,5.0,ts,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

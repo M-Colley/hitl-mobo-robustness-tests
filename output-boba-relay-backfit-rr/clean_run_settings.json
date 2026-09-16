@@ -1,0 +1,6 @@
+{
+  "rater_model": [
+    "backfit",
+    "roundrobin:5"
+  ]
+}

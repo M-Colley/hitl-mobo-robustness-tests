@@ -1,0 +1,55 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 400
+- Paired baseline/jitter rows: 320
+- Seeds per condition: min=5, median=5.0, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 5 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg) correction is applied per test family
+  (Friedman omnibus and Wilcoxon pairwise are corrected separately).
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+   dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+rosenbrock     value        exact        slip                 0        0.01        5               8             qucb  friedman   6.933333 0.435854        0.697367               NaN          True    0.198095
+rosenbrock     value        exact        slip                 0        0.05        5               8           random  friedman   9.266667 0.234073        0.697367               NaN          True    0.264762
+rosenbrock     value        exact        slip                 0        0.15        5               8              ucb  friedman   7.800000 0.350560        0.697367               NaN          True    0.222857
+rosenbrock     value        exact        slip                 0        0.40        5               8               ei  friedman   8.200000 0.315289        0.697367               NaN          True    0.234286
+rosenbrock     value        exact        slip                20        0.01        5               8              ucb  friedman   5.037221 0.655421        0.817032               NaN          True    0.143921
+rosenbrock     value        exact        slip                20        0.05        5               8              ucb  friedman   8.071605 0.326322        0.697367               NaN          True    0.230617
+rosenbrock     value        exact        slip                20        0.15        5               8            logei  friedman   0.783715 0.997607        0.997607               NaN          True    0.022392
+rosenbrock     value        exact        slip                20        0.40        5               8           random  friedman   4.548223 0.714903        0.817032               NaN          True    0.129949
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+rosenbrock / value
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.396429              5.1125                            0.011251                            4.038264               2           8
+       qucb              0.439286              4.8375                            0.006979                            3.277137               1           8
+        ucb              0.466071              5.2875                            0.019505                            3.876173               3           8
+       qnei              0.478571              3.4250                            0.012337                            3.210290               0           8
+      sobol              0.521429              5.1875                            0.012312                            3.363034               1           8
+

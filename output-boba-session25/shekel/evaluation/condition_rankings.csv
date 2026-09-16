@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+shekel,value,exact,gaussian,0,0.7071,qnei,5,2,1.4,0.3999999999999999,1.2,65.00766224905018,47.38357548186377,2.7086525937104255,1277.9868291488624,0.0,True
+shekel,value,exact,gaussian,0,0.7071,logei,5,2,1.6,0.6000000000000001,1.8,57.73155379363406,53.60378818674167,2.405481408068084,1269.1693612007189,0.0,False
+shekel,value,exact,gaussian,0,3.5355,logei,5,2,1.4,0.3999999999999999,1.0,80.84071736089786,76.23377745690959,3.368363223370743,1292.2785247679826,0.0,True
+shekel,value,exact,gaussian,0,3.5355,qnei,5,2,1.6,0.6000000000000001,2.0,91.83831239449282,70.3641875379144,3.8265963497705355,1304.8174792943053,0.0,False

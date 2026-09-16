@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+hartmann_6,value,exact,slip,0,0.01,5,8,ucb,2.2,friedman,24.80000000000001,0.0008232904260395055,0.7085714285714289,,True,0.0062924812707669635,True
+hartmann_6,value,exact,slip,0,0.05,5,8,sobol,1.4,friedman,21.46666666666667,0.003137497751962254,0.6133333333333334,,True,0.008366660671899345,True
+hartmann_6,value,exact,slip,0,0.15,5,8,random,1.6,friedman,14.066666666666663,0.050008247170249986,0.4019047619047618,,True,0.050008247170249986,False
+hartmann_6,value,exact,slip,0,0.4,5,8,random,1.2,friedman,23.19999999999999,0.0015731203176917409,0.6628571428571425,,True,0.0062924812707669635,True
+hartmann_6,value,exact,slip,20,0.01,5,8,random,2.3,friedman,17.926014319809063,0.012308307629241219,0.5121718377088303,,True,0.016411076838988292,True
+hartmann_6,value,exact,slip,20,0.05,5,8,random,1.9,friedman,16.5560859188544,0.020494120860386975,0.4730310262529829,,True,0.02342185241187083,True
+hartmann_6,value,exact,slip,20,0.15,5,8,random,1.9,friedman,17.926014319809063,0.012308307629241219,0.5121718377088303,,True,0.016411076838988292,True
+hartmann_6,value,exact,slip,20,0.4,5,8,random,2.2,friedman,19.80000000000001,0.006018271711675432,0.5657142857142861,,True,0.012036543423350863,True

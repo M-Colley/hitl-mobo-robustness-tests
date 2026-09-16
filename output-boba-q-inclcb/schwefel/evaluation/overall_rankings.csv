@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+schwefel,value,logei,0.19999999999999996,1.2249999999999999,0.12658372230830914,105.01212160848307,-7.179089584040487,8,8
+schwefel,value,logpi,0.8,1.7750000000000001,0.6332728304841908,130.6143859536019,1.3312965893889048,0,8

@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,gaussian,0,0.05,logei,5,2,1.3,0.30000000000000004,1.5,-0.508580478079784,0.0,-0.01037919343019969,10.988376553109209,0.0,True
+stevens,value,exact,gaussian,0,0.05,qnei,5,2,1.7,0.7,1.5,-0.20320598776456897,0.0,-0.004147060974787131,11.244789446716274,0.0,False
+stevens,value,exact,gaussian,0,0.25,logei,5,2,1.4,0.3999999999999999,1.4,0.5953472924673179,0.2761895027289363,0.01214994474423097,12.092304323656311,0.0,True
+stevens,value,exact,gaussian,0,0.25,qnei,5,2,1.6,0.6000000000000001,1.6,0.5236628452963092,0.7695492209028671,0.01068699684278181,11.971658279777152,0.0,False
+stevens,value,exact,gaussian,0,1.0,qnei,5,2,1.2,0.19999999999999996,1.2,16.00562864171592,16.16490924203853,0.32664548248399833,27.453624076196764,0.0,True
+stevens,value,exact,gaussian,0,1.0,logei,5,2,1.8,0.8,1.8,24.988440282351455,29.367248051333753,0.5099681690275808,36.485397313540446,0.0,False
+stevens,value,exact,gaussian,0,5.0,qnei,5,2,1.0,0.0,1.0,22.447936306267806,20.479035432719137,0.45812114910750623,33.89593174074865,0.0,True
+stevens,value,exact,gaussian,0,5.0,logei,5,2,2.0,1.0,2.0,52.85634348619883,54.076180974119936,1.0787008874734454,64.35330051738781,0.0,False
+stevens,value,exact,gaussian,20,0.05,logei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,11.496957031188995,-0.020700728485629427,True
+stevens,value,exact,gaussian,20,0.05,qnei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,11.447995434480841,0.0,True
+stevens,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,11.496957031188995,-0.00992513486235041,True
+stevens,value,exact,gaussian,20,0.25,qnei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,11.447995434480841,0.0,True
+stevens,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,11.496957031188995,-0.003618592827934808,True
+stevens,value,exact,gaussian,20,1.0,qnei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,11.447995434480841,0.0,True
+stevens,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,11.496957031188995,-0.21303199017742475,True
+stevens,value,exact,gaussian,20,5.0,qnei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,11.447995434480841,-0.09512267227273048,True

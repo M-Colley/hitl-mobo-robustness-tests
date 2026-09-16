@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+rosenbrock,value,exact,slip,0,0.01,5,8,qucb,3.2,friedman,6.933333333333337,0.43585406948330174,0.1980952380952382,,True,0.6973665111732827,False
+rosenbrock,value,exact,slip,0,0.05,5,8,random,2.4,friedman,9.266666666666652,0.23407329660171242,0.2647619047619043,,True,0.6973665111732827,False
+rosenbrock,value,exact,slip,0,0.15,5,8,ucb,3.0,friedman,7.800000000000011,0.3505597915979889,0.22285714285714317,,True,0.6973665111732827,False
+rosenbrock,value,exact,slip,0,0.4,5,8,ei,3.0,friedman,8.199999999999989,0.3152890614332814,0.23428571428571396,,True,0.6973665111732827,False
+rosenbrock,value,exact,slip,20,0.01,5,8,ucb,3.0,friedman,5.037220843672467,0.6554208458011591,0.14392059553349904,,True,0.8170318376999796,False
+rosenbrock,value,exact,slip,20,0.05,5,8,ucb,3.1,friedman,8.071604938271603,0.32632224562971385,0.23061728395061723,,True,0.6973665111732827,False
+rosenbrock,value,exact,slip,20,0.15,5,8,logei,4.1,friedman,0.7837150127226321,0.9976066164615716,0.022391857506360916,,True,0.9976066164615716,False
+rosenbrock,value,exact,slip,20,0.4,5,8,random,2.9,friedman,4.5482233502537905,0.7149028579874821,0.12994923857867974,,True,0.8170318376999796,False

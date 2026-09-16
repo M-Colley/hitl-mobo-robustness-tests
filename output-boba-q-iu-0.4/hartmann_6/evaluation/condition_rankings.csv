@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hartmann_6,value,exact,slip,0,0.4,qnei,5,2,1.4,0.3999999999999999,1.4,51.61692665105329,47.68252239600463,1.053406666348026,267.89523893995977,0.0,True
+hartmann_6,value,exact,slip,0,0.4,logei,5,2,1.6,0.6000000000000001,1.6,99.00999018097897,129.4755615221928,2.0206120445097753,294.03841857748625,0.0,False
+hartmann_6,value,exact,slip,20,0.4,logei,5,2,1.4,0.3999999999999999,1.2,11.230439432364232,9.145829172045325,0.38421397077850905,206.25886782887147,0.009932201863925582,True
+hartmann_6,value,exact,slip,20,0.4,qnei,5,2,1.6,0.6000000000000001,1.8,34.89328453801751,37.584534232898875,1.2032167082075003,251.17159682692403,0.009163578962519158,False

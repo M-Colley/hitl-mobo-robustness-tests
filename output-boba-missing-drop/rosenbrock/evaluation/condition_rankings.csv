@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+rosenbrock,value,exact,missing_low,0,0.15,ucb,5,2,1.0,0.0,1.4,-0.20376076040616917,0.0,-0.004158382865432024,2.7228019446103033,0.0,True
+rosenbrock,value,exact,missing_low,0,0.15,logei,5,2,2.0,1.0,1.6,0.2929421079817619,0.015315095928732259,0.005978410366974734,2.8674444524419416,0.0,False
+rosenbrock,value,exact,missing_low,0,0.3,logei,5,2,1.4,0.3999999999999999,1.2,-0.08130128159827006,0.0,-0.0016592098285361234,2.49320106286191,0.0,True
+rosenbrock,value,exact,missing_low,0,0.3,ucb,5,2,1.6,0.6000000000000001,1.8,-0.17531093669941053,-0.03580523122786028,-0.0035777742183553175,2.7512517683170623,0.0,False
+rosenbrock,value,exact,missing_mcar,0,0.15,ucb,5,2,1.4,0.3999999999999999,1.8,-0.16872852481712053,0.0,-0.0034434392819820484,2.7578341801993522,0.0,True
+rosenbrock,value,exact,missing_mcar,0,0.15,logei,5,2,1.6,0.6000000000000001,1.2,-0.03659352541070211,0.030321888328410207,-0.0007468066410347377,2.537908819049478,0.0,False
+rosenbrock,value,exact,missing_mcar,0,0.3,ucb,5,2,1.2,0.19999999999999996,1.8,-0.11386573626285815,0.0,-0.0023237905359766984,2.8126969687536145,0.0,True
+rosenbrock,value,exact,missing_mcar,0,0.3,logei,5,2,1.8,0.8,1.2,0.004378635653705443,-0.02384506110992657,8.935991130011033e-05,2.5788809801138854,0.0,False

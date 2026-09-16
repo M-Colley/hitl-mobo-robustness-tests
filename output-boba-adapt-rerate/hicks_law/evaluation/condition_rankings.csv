@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,gaussian,0,0.05,qnei,5,2,1.4,0.3999999999999999,1.4,-0.15272092995575975,-0.11558478697872943,-0.003116753672566508,26.982791159459527,0.0,True
+hicks_law,value,exact,gaussian,0,0.05,logei,5,2,1.6,0.6000000000000001,1.6,-0.24910969516467035,0.032658030361147894,-0.00508387132989121,26.85216854898072,0.0,False
+hicks_law,value,exact,gaussian,0,0.25,qnei,5,2,1.4,0.3999999999999999,1.4,-1.406873212840022,-0.7952454754954594,-0.028711698221224935,25.728638876575264,0.0,True
+hicks_law,value,exact,gaussian,0,0.25,logei,5,2,1.6,0.6000000000000001,1.6,0.1434547050767243,0.810771938511369,0.0029276470423821644,27.24473294922211,0.0,False
+hicks_law,value,exact,gaussian,0,1.0,qnei,5,2,1.2,0.19999999999999996,1.2,12.253168289623648,10.905725377288821,0.2500646589719112,39.38868037903894,0.0,True
+hicks_law,value,exact,gaussian,0,1.0,logei,5,2,1.8,0.8,1.8,42.6976567821992,52.24584045764416,0.8713807506571266,69.7989350263446,0.0,False
+hicks_law,value,exact,gaussian,0,5.0,qnei,5,2,1.2,0.19999999999999996,1.2,74.06453339886744,82.9652830476369,1.511521089772805,101.20004548828274,0.0,True
+hicks_law,value,exact,gaussian,0,5.0,logei,5,2,1.8,0.8,1.8,107.35165195293382,118.1757106551704,2.1908500398557926,134.45293019707918,0.0,False
+hicks_law,value,exact,gaussian,20,0.05,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.10127824414539,0.4312560926900204,True
+hicks_law,value,exact,gaussian,20,0.05,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.135512089415283,0.0,True
+hicks_law,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.10127824414539,0.4318650029692265,True
+hicks_law,value,exact,gaussian,20,0.25,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.135512089415283,0.0,True
+hicks_law,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.10127824414539,0.4487737344783035,True
+hicks_law,value,exact,gaussian,20,1.0,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.135512089415283,0.0,True
+hicks_law,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.10127824414539,-2.2510119996337834,True
+hicks_law,value,exact,gaussian,20,5.0,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.135512089415283,5.098557942096704,True

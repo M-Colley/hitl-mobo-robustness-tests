@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,slip,0,0.4,qnei,5,2,1.4,0.3999999999999999,1.4,9.961226698226369,10.653993680759001,0.20329034078013,15.160358832400098,0.0,True
+power_law_practice,value,exact,slip,0,0.4,logei,5,2,1.6,0.6000000000000001,1.6,10.674452618122197,11.275632307895933,0.21784597179841217,15.862075500985572,0.0,False
+power_law_practice,value,exact,slip,20,0.4,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,5.187622882863374,-0.01790808359730618,True
+power_law_practice,value,exact,slip,20,0.4,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,5.199132134173728,0.10970271261861445,True

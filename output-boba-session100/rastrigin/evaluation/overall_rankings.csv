@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+rastrigin,value,logei,0.29999999999999993,1.4,0.48999168350573347,161.85507783198943,0.0,2,2
+rastrigin,value,qnei,0.7000000000000001,1.6,0.8306184036579017,181.2402708036584,0.0,0,2

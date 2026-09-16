@@ -1,0 +1,162 @@
+\begin{thebibliography}{23}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Ament et~al.(2023)Ament, Daulton, Eriksson, Balandat, and
+  Bakshy]{ament2023unexpected}
+Sebastian Ament, Samuel Daulton, David Eriksson, Maximilian Balandat, and Eytan
+  Bakshy.
+\newblock Unexpected improvements to expected improvement for {B}ayesian
+  optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
+
+\bibitem[Balandat et~al.(2020)Balandat, Karrer, Jiang, Daulton, Letham, Wilson,
+  and Bakshy]{balandat2020botorch}
+Maximilian Balandat, Brian Karrer, Daniel~R. Jiang, Samuel Daulton, Benjamin
+  Letham, Andrew~Gordon Wilson, and Eytan Bakshy.
+\newblock {B}o{T}orch: A framework for efficient {M}onte-{C}arlo {B}ayesian
+  optimization.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2020.
+
+\bibitem[Benjamini \& Hochberg(1995)Benjamini and
+  Hochberg]{benjamini1995controlling}
+Yoav Benjamini and Yosef Hochberg.
+\newblock Controlling the false discovery rate: A practical and powerful
+  approach to multiple testing.
+\newblock \emph{Journal of the Royal Statistical Society, Series B},
+  57\penalty0 (1):\penalty0 289--300, 1995.
+
+\bibitem[Branke(1999)]{branke1999memory}
+J{\"u}rgen Branke.
+\newblock Memory enhanced evolutionary algorithms for changing optimization
+  problems.
+\newblock In \emph{Proceedings of the 1999 Congress on Evolutionary Computation
+  (CEC)}, volume~3, pp.\  1875--1882, 1999.
+
+\bibitem[Brochu et~al.(2010)Brochu, Cora, and de~Freitas]{brochu2010tutorial}
+Eric Brochu, Vlad~M. Cora, and Nando de~Freitas.
+\newblock A tutorial on {B}ayesian optimization of expensive cost functions,
+  with application to active user modeling and hierarchical reinforcement
+  learning.
+\newblock \emph{arXiv preprint arXiv:1012.2599}, 2010.
+
+\bibitem[Chu \& Ghahramani(2005)Chu and Ghahramani]{chu2005preference}
+Wei Chu and Zoubin Ghahramani.
+\newblock Preference learning with {G}aussian processes.
+\newblock In \emph{International Conference on Machine Learning}, 2005.
+
+\bibitem[Daulton et~al.(2021)Daulton, Balandat, and
+  Bakshy]{daulton2021parallel}
+Samuel Daulton, Maximilian Balandat, and Eytan Bakshy.
+\newblock Parallel {B}ayesian optimization of multiple noisy objectives with
+  expected hypervolume improvement.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem[Eggensperger et~al.(2021)Eggensperger, M{\"u}ller, Mallik, Feurer,
+  Sass, Klein, Awad, Lindauer, and Hutter]{eggensperger2021hpobench}
+Katharina Eggensperger, Philipp M{\"u}ller, Neeratyoy Mallik, Matthias Feurer,
+  Ren{\'e} Sass, Aaron Klein, Noor Awad, Marius Lindauer, and Frank Hutter.
+\newblock {HPOB}ench: A collection of reproducible multi-fidelity benchmark
+  problems for {HPO}.
+\newblock In \emph{Proceedings of the Neural Information Processing Systems
+  Track on Datasets and Benchmarks}, 2021.
+
+\bibitem[Frazier(2018)]{frazier2018tutorial}
+Peter~I. Frazier.
+\newblock A tutorial on {B}ayesian optimization.
+\newblock \emph{arXiv preprint arXiv:1807.02811}, 2018.
+
+\bibitem[Frazier et~al.(2009)Frazier, Powell, and
+  Dayanik]{frazier2009knowledge}
+Peter~I. Frazier, Warren~B. Powell, and Savas Dayanik.
+\newblock The knowledge-gradient policy for correlated normal beliefs.
+\newblock \emph{INFORMS Journal on Computing}, 21\penalty0 (4):\penalty0
+  599--613, 2009.
+
+\bibitem[Gonz{\'a}lez et~al.(2017)Gonz{\'a}lez, Dai, Damianou, and
+  Lawrence]{gonzalez2017preferential}
+Javier Gonz{\'a}lez, Zhenwen Dai, Andreas Damianou, and Neil~D. Lawrence.
+\newblock Preferential {B}ayesian optimization.
+\newblock In \emph{International Conference on Machine Learning}, 2017.
+
+\bibitem[Huang et~al.(2006)Huang, Allen, Notz, and Zeng]{huang2006global}
+Deng Huang, Theodore~T. Allen, William~I. Notz, and Ning Zeng.
+\newblock Global optimization of stochastic black-box systems via sequential
+  kriging meta-models.
+\newblock \emph{Journal of Global Optimization}, 34\penalty0 (3):\penalty0
+  441--466, 2006.
+
+\bibitem[Jones et~al.(1998)Jones, Schonlau, and Welch]{jones1998efficient}
+Donald~R. Jones, Matthias Schonlau, and William~J. Welch.
+\newblock Efficient global optimization of expensive black-box functions.
+\newblock \emph{Journal of Global Optimization}, 13\penalty0 (4):\penalty0
+  455--492, 1998.
+
+\bibitem[Jones \& Forrest(1995)Jones and Forrest]{jones1995fitness}
+Terry Jones and Stephanie Forrest.
+\newblock Fitness distance correlation as a measure of problem difficulty for
+  genetic algorithms.
+\newblock In \emph{International Conference on Genetic Algorithms}, 1995.
+
+\bibitem[Kersting et~al.(2007)Kersting, Plagemann, Pfaff, and
+  Burgard]{kersting2007most}
+Kristian Kersting, Christian Plagemann, Patrick Pfaff, and Wolfram Burgard.
+\newblock Most likely heteroscedastic {G}aussian process regression.
+\newblock In \emph{International Conference on Machine Learning}, 2007.
+
+\bibitem[Letham et~al.(2019)Letham, Karrer, Ottoni, and
+  Bakshy]{letham2019constrained}
+Benjamin Letham, Brian Karrer, Guilherme Ottoni, and Eytan Bakshy.
+\newblock Constrained {B}ayesian optimization with noisy experiments.
+\newblock \emph{Bayesian Analysis}, 14\penalty0 (2):\penalty0 495--519, 2019.
+
+\bibitem[Malan \& Engelbrecht(2013)Malan and Engelbrecht]{malan2013survey}
+Katherine~M. Malan and Andries~P. Engelbrecht.
+\newblock A survey of techniques for characterising fitness landscapes and some
+  possible ways forward.
+\newblock \emph{Information Sciences}, 241:\penalty0 148--163, 2013.
+
+\bibitem[Picheny et~al.(2013)Picheny, Wagner, and
+  Ginsbourger]{picheny2013benchmark}
+Victor Picheny, Tobias Wagner, and David Ginsbourger.
+\newblock A benchmark of kriging-based infill criteria for noisy optimization.
+\newblock \emph{Structural and Multidisciplinary Optimization}, 48\penalty0
+  (3):\penalty0 607--626, 2013.
+
+\bibitem[Shahriari et~al.(2016)Shahriari, Swersky, Wang, Adams, and
+  de~Freitas]{shahriari2016taking}
+Bobak Shahriari, Kevin Swersky, Ziyu Wang, Ryan~P. Adams, and Nando de~Freitas.
+\newblock Taking the human out of the loop: A review of {B}ayesian
+  optimization.
+\newblock \emph{Proceedings of the IEEE}, 104\penalty0 (1):\penalty0 148--175,
+  2016.
+
+\bibitem[Snoek et~al.(2012)Snoek, Larochelle, and Adams]{snoek2012practical}
+Jasper Snoek, Hugo Larochelle, and Ryan~P. Adams.
+\newblock Practical {B}ayesian optimization of machine learning algorithms.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2012.
+
+\bibitem[Srinivas et~al.(2010)Srinivas, Krause, Kakade, and
+  Seeger]{srinivas2010gaussian}
+Niranjan Srinivas, Andreas Krause, Sham~M. Kakade, and Matthias Seeger.
+\newblock {G}aussian process optimization in the bandit setting: No regret and
+  experimental design.
+\newblock In \emph{International Conference on Machine Learning}, 2010.
+
+\bibitem[Weinberger(1990)]{weinberger1990correlated}
+Edward Weinberger.
+\newblock Correlated and uncorrelated fitness landscapes and how to tell the
+  difference.
+\newblock \emph{Biological Cybernetics}, 63\penalty0 (5):\penalty0 325--336,
+  1990.
+
+\bibitem[Yerkes \& Dodson(1908)Yerkes and Dodson]{yerkes1908relation}
+Robert~M. Yerkes and John~D. Dodson.
+\newblock The relation of strength of stimulus to rapidity of habit-formation.
+\newblock \emph{Journal of Comparative Neurology and Psychology}, 18\penalty0
+  (5):\penalty0 459--482, 1908.
+
+\end{thebibliography}

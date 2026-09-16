@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,missing_low,0,0.15,logei,5,2,1.5,0.5,1.4,0.16561995312958153,0.0,0.0033799990434608463,11.662576984318575,0.0,True
+stevens,value,exact,missing_low,0,0.15,ucb,5,2,1.5,0.5,1.6,1.3017577710207902,0.0,0.02656648512287326,12.411612023226438,0.0,True
+stevens,value,exact,missing_low,0,0.3,ucb,5,2,1.3,0.30000000000000004,1.4,-0.38732360267657134,0.0,-0.007904563319930025,10.722530649529073,0.0,True
+stevens,value,exact,missing_low,0,0.3,logei,5,2,1.7,0.7,1.6,0.1606666597443242,0.0,0.003278911423353556,11.657623690933317,0.0,False
+stevens,value,exact,missing_mcar,0,0.15,ucb,5,2,1.4,0.3999999999999999,1.4,0.3566348392079018,0.0,0.00727826202465105,11.466489091413548,0.0,True
+stevens,value,exact,missing_mcar,0,0.15,logei,5,2,1.6,0.6000000000000001,1.6,0.2920393838458025,0.1180334472578437,0.005959987425424529,11.788996415034795,0.0,False
+stevens,value,exact,missing_mcar,0,0.3,logei,5,2,1.3,0.30000000000000004,1.2,1.571937504189885,0.0,0.03208035722836499,13.068894535378877,0.0,True
+stevens,value,exact,missing_mcar,0,0.3,ucb,5,2,1.7,0.7,1.8,3.7326938158711043,0.9694321259466596,0.076177424813696,14.842548068076752,0.0,False

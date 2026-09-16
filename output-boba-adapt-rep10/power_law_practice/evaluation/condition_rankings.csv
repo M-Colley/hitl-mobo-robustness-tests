@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,gaussian,0,0.05,logei,5,2,1.1,0.10000000000000009,1.1,-2.0647839399372856,-1.359088118779738,-0.04213844775382215,6.580450232237842,0.0,True
+power_law_practice,value,exact,gaussian,0,0.05,qnei,5,2,1.9,0.8999999999999999,1.9,-0.3427786740432648,0.0,-0.006995483143740105,7.463736294993166,0.0,False
+power_law_practice,value,exact,gaussian,0,0.25,qnei,5,2,1.2,0.19999999999999996,1.2,1.3043946350436237,0.9632464369747264,0.02662029867435966,9.110909604080053,0.0,True
+power_law_practice,value,exact,gaussian,0,0.25,logei,5,2,1.8,0.8,1.8,6.027594839398006,3.8312687422267535,0.12301213957955115,14.672829011573134,0.0,False
+power_law_practice,value,exact,gaussian,0,1.0,qnei,5,2,1.4,0.3999999999999999,1.4,5.380589312732715,4.556072480024992,0.10980794515781049,13.187104281769146,0.0,True
+power_law_practice,value,exact,gaussian,0,1.0,logei,5,2,1.6,0.6000000000000001,1.6,11.079305133693254,17.256626767410253,0.22610826803455622,19.724539305868383,0.0,False
+power_law_practice,value,exact,gaussian,0,5.0,qnei,5,2,1.0,0.0,1.0,13.763778432339802,14.946647241402564,0.28089343739468986,21.570293401376233,0.0,True
+power_law_practice,value,exact,gaussian,0,5.0,logei,5,2,2.0,1.0,2.0,25.07564837578862,23.103549932817316,0.5117479260365024,33.72088254796374,0.0,False
+power_law_practice,value,exact,gaussian,20,0.05,logei,5,2,1.5,0.5,1.8,0.0,0.0,0.0,8.645234172175128,-0.2011852007686162,True
+power_law_practice,value,exact,gaussian,20,0.05,qnei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,7.806514969036431,0.020629455011942355,True
+power_law_practice,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.8,0.0,0.0,0.0,8.645234172175128,-0.5022878482569653,True
+power_law_practice,value,exact,gaussian,20,0.25,qnei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,7.806514969036431,0.02371254512890475,True
+power_law_practice,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.8,0.0,0.0,0.0,8.645234172175128,-0.5022878482569653,True
+power_law_practice,value,exact,gaussian,20,1.0,qnei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,7.806514969036431,-0.012919761557116605,True
+power_law_practice,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.8,0.0,0.0,0.0,8.645234172175128,-0.4683835745781867,True
+power_law_practice,value,exact,gaussian,20,5.0,qnei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,7.806514969036431,-0.22286407327556884,True

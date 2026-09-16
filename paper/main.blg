@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: iclr2026_conference.bst
+Database file #1: references.bib
+I was expecting a `{' or a `('---line 19 of file references.bib
+ : % One correction was made: eggensperger2021hpobench was an @article 
+ :                                                                     and is a
+I'm skipping whatever remains of this entry
+You've used 23 entries,
+            2773 wiz_defined-function locations,
+            719 strings with 9282 characters,
+and the built_in function-call counts, 11370 in all, are:
+= -- 955
+> -- 756
+< -- 10
++ -- 254
+- -- 231
+* -- 955
+:= -- 1743
+add.period$ -- 69
+call.type$ -- 23
+change.case$ -- 146
+chr.to.int$ -- 23
+cite$ -- 46
+duplicate$ -- 517
+empty$ -- 931
+format.name$ -- 264
+if$ -- 2366
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 23
+newline$ -- 123
+num.names$ -- 92
+pop$ -- 312
+preamble$ -- 1
+purify$ -- 123
+quote$ -- 0
+skip$ -- 381
+stack$ -- 0
+substring$ -- 336
+swap$ -- 46
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 253
+warning$ -- 0
+while$ -- 92
+width$ -- 0
+write$ -- 295
+(There was 1 error message)

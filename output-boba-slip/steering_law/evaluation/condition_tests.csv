@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+steering_law,value,exact,slip,0,0.01,5,8,sobol,2.6,friedman,6.333333333333343,0.5014108736205692,0.18095238095238123,,True,0.5730409984235078,False
+steering_law,value,exact,slip,0,0.05,5,8,sobol,2.8,friedman,9.73333333333332,0.20419556854719384,0.27809523809523773,,True,0.4083911370943877,False
+steering_law,value,exact,slip,0,0.15,5,8,sobol,1.8,friedman,18.53333333333333,0.009781991676583331,0.5295238095238095,,True,0.07825593341266665,False
+steering_law,value,exact,slip,0,0.4,5,8,sobol,3.4,friedman,4.0,0.779777408475716,0.11428571428571428,,True,0.779777408475716,False
+steering_law,value,exact,slip,20,0.01,5,8,random,3.3,friedman,8.428571428571436,0.29632277672762997,0.24081632653061247,,True,0.47411644276420795,False
+steering_law,value,exact,slip,20,0.05,5,8,random,1.7,friedman,16.0753768844221,0.024436558181374093,0.45929648241205995,,True,0.09774623272549637,False
+steering_law,value,exact,slip,20,0.15,5,8,random,2.9,friedman,7.321428571428582,0.3961972899464067,0.20918367346938804,,True,0.5282630532618756,False
+steering_law,value,exact,slip,20,0.4,5,8,random,1.5,friedman,11.889447236180889,0.10425357302278473,0.3396984924623111,,True,0.2780095280607593,False

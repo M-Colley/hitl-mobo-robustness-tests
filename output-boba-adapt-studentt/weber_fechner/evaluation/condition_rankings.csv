@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+weber_fechner,value,exact,misclick,0,0.01,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.002682521181522,0.0,True
+weber_fechner,value,exact,misclick,0,0.01,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,6.926333029905112,0.0,True
+weber_fechner,value,exact,misclick,0,0.05,logei,5,2,1.4,0.3999999999999999,1.4,0.12754054829922196,0.0,0.0026028683326371816,7.130223069480744,0.0,True
+weber_fechner,value,exact,misclick,0,0.05,qnei,5,2,1.6,0.6000000000000001,1.6,0.2293294413986347,0.2311996721481986,0.004680192681604791,7.155662471303747,0.0,False
+weber_fechner,value,exact,misclick,0,0.15,logei,5,2,1.4,0.3999999999999999,1.4,8.212992261605288,1.6643649640634948,0.1676120869715365,15.21567478278681,0.0,True
+weber_fechner,value,exact,misclick,0,0.15,qnei,5,2,1.6,0.6000000000000001,1.6,8.325211518774083,0.902455147607939,0.1699022758933486,15.251544548679195,0.0,False
+weber_fechner,value,exact,misclick,0,0.4,qnei,5,2,1.2,0.19999999999999996,1.2,10.30912510290915,4.654338370752481,0.2103903082226357,17.235458132814262,0.0,True
+weber_fechner,value,exact,misclick,0,0.4,logei,5,2,1.8,0.8,1.8,24.163423198096094,30.291468776660327,0.49313108567543046,31.166105719277613,0.0,False
+weber_fechner,value,exact,misclick,20,0.01,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.002682521181522,0.0,True
+weber_fechner,value,exact,misclick,20,0.01,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,6.926333029905112,0.0,True
+weber_fechner,value,exact,misclick,20,0.05,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.002682521181522,0.0,True
+weber_fechner,value,exact,misclick,20,0.05,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,6.926333029905112,-0.0024115186576227354,True
+weber_fechner,value,exact,misclick,20,0.15,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.002682521181522,0.02253304690359361,True
+weber_fechner,value,exact,misclick,20,0.15,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,6.926333029905112,0.0,True
+weber_fechner,value,exact,misclick,20,0.4,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,7.002682521181522,0.2,True
+weber_fechner,value,exact,misclick,20,0.4,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,6.926333029905112,0.12660379623548612,True

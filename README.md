@@ -13,6 +13,17 @@ data-derived synthetic test functions; report the oracle's cross-validated
 fidelity (written to `output/best_oracle_models.json` and echoed into
 `run_metadata.json`) alongside any claims.
 
+There are two arms:
+
+- the **data-driven arm** (everything below unless stated otherwise), where the
+  human is a regression oracle fitted to archival ratings, and
+- the **known-function arm** (`run_boba_pipeline.ps1`), where the human is one of
+  20 analytic benchmark functions with a published optimum. That arm exists
+  because the fitted oracle is the weakest link in the data-driven one: its
+  held-out R^2 is 0.55 at best, so a measured cost of feedback error is always
+  entangled with the surrogate human's own mis-specification. See
+  [Known-Function Arm](#known-function-arm-the-boba-suite).
+
 In practice, the workflow is:
 
 1. Choose or benchmark the oracle model.
@@ -36,6 +47,24 @@ In practice, the workflow is:
   - Extra legacy plots and paired final-outcome tests. Useful, but not the main workflow anymore.
 - `scripts/dashboard.py`
   - Optional Streamlit dashboard over the evaluation outputs (`pip install streamlit`).
+- `scripts/boba_benchmarks.py`
+  - The 20 analytic benchmarks of the known-function arm, vectorised over numpy,
+    with their boxes, verified optima and landscape descriptors. Run it to
+    regenerate `boba_landscape_stats.json`.
+- `scripts/bo_synthetic_error_simulation.py`
+  - The known-function arm's simulator. Same core, same log schema and same
+    filenames as `bo_sensor_error_simulation.py`, with an exact analytic oracle
+    in place of the fitted one.
+- `scripts/analyse_boba_robustness.py`
+  - Cross-benchmark synthesis for that arm: the model-free floor check, the
+    headroom screen, the "what makes an error big" contrast, the
+    landscape-descriptor regression, the one-shot-fragility mediator, and
+    acquisition rankings blocked on benchmark.
+- `scripts/diagnose_gp_noise.py`
+  - Refits the surrogate from the sweep's own logs and compares the noise it
+    learns with the noise that was injected. The GP is fitted without
+    `train_Yvar`, so this is the check that a measured cost of noise is the cost
+    of the information loss and not of a mis-fitted hyperparameter.
 
 ## One-Command Pipeline Drivers
 
@@ -50,6 +79,12 @@ resumable after any interruption and keep the machine awake while running:
   onsets `0,10,20,40`, `--response-clip auto`). ~30–45 h. Stops after
   evaluation; run `scripts/confirmatory_followup.py` (fresh seeds 27+) after
   inspecting the screening rankings.
+
+- `run_boba_pipeline.ps1` — the known-function arm. Fresh `output-boba\`
+  directory; 20 benchmarks x 12 acquisitions x 20 seeds x (1 baseline + 4 error
+  models x 4 magnitudes x 2 onsets) = 158,400 runs, ~17 h on 24 workers. Runs the
+  correctness gate first, then the sweep, then a per-benchmark evaluation and the
+  cross-benchmark synthesis.
 
 Avoid `run_full_workflow.bat`: it runs the full-sampling multi-objective
 configuration that exceeds memory on this machine and is kept only for
@@ -266,6 +301,68 @@ Notes:
   work, and passing both a singular and its plural variant is an error
   instead of being silently ignored.
 
+## Known-Function Arm: the BOBA Suite
+
+The fitted oracle has two problems that no amount of care in the BO code can fix:
+it is only an approximate stand-in for a person (cross-validated R^2 0.55 on eHMI,
+near zero on ProVoice), and the optimum it is scored against is a random-search
+estimate that BO can legitimately exceed -- which is why regret in the
+data-driven arm is deliberately not clamped at zero.
+
+This arm replaces it with the 20 analytic benchmarks of the BOBA project
+(`schwefel`, `powell`, `eggholder`, `ackley`, `shekel`, `griewank`,
+`hartmann_3`, `hartmann_6`, `branin`, `rosenbrock`, `rastrigin`, `michalewicz`,
+`yerkes_dodson`, `stevens`, `hicks_law`, `weber_fechner`, `moving_peaks`,
+`power_law_practice`, `steering_law`, `levy_10`). Each is exact, each has a
+verified optimum, and each landscape's geometry is measured up front, so
+"which landscapes does feedback error actually damage" becomes answerable.
+
+```bash
+python scripts/boba_benchmarks.py --output boba_landscape_stats.json
+python scripts/bo_synthetic_error_simulation.py --functions all --acq all --error-models gaussian,bias,drift,ar1 --jitter-stds 0.05,0.25,1.0,5.0 --jitter-iterations 0,20 --error-bias-mode scaled --seeds 7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26 --output-dir output-boba --n-jobs 24 --resume
+python scripts/evaluate_research_question.py --input-dir output-boba/ackley --output-dir output-boba/ackley/evaluation
+python scripts/analyse_boba_robustness.py --input-dir output-boba --output-dir output-boba/analysis
+```
+
+(the evaluation step runs once per benchmark directory; `run_boba_pipeline.ps1`
+loops it for you.)
+
+Things worth knowing about this arm:
+
+- **Error magnitudes are in landscape standard deviations.** Raw outputs span
+  eight orders of magnitude across the suite (`hartmann_6` tops out at 3.3,
+  `powell` reaches -6e4), so every objective is standardised to zero mean and
+  unit variance over its own box before any error is injected. The transform is
+  affine, so the optimisation problem is untouched.
+- **`opt_z` is the second scale, and it is left in.** It records how many
+  landscape SDs the optimum sits above an average random design, and it ranges
+  from 1.25 (`branin`) to 56.8 (`shekel`). The same nominal error is therefore
+  trivial on one benchmark and catastrophic on another; `analyse_boba_robustness.py`
+  uses that 45x lever arm to test which of the two scales fragility actually
+  follows, rather than assuming one.
+- **`random` and `sobol` are a hard internal control.** They pick candidates
+  without looking at any observation, so their excess regret must be exactly
+  zero. The analysis fails loudly if it is not, and excludes them from the
+  robustness ranking -- a method that ignores its data wins any such ranking
+  while learning nothing.
+- **`bias` scales with the swept magnitude** (`--error-bias-mode scaled`), so it
+  is a systematic error of the same size as the `gaussian` random one. Pass
+  `--error-bias-mode fixed` to reproduce the data-driven arm's constant 0.2
+  offset instead.
+- **`typing` is excluded** from the default suite. It is BOBA's 21st function and
+  the only one fitted to real people, but it is a Monte-Carlo simulation with no
+  published optimum, which is exactly the uncertainty this arm removes. Run it
+  explicitly with `--functions typing --boba-root <path to BOBA>` as a labelled
+  side arm.
+- **One correction to BOBA's own table.** BOBA records
+  `power_law_practice`'s optimum as -0.216422, which is the supremum under its
+  original `n_max=200`; the shipped `n_max=30` gives `-4*31**-0.55 =
+  -0.6050775778` at the all-ones corner. The vendored registry uses the corrected
+  value, and `tests/test_boba_benchmarks.py` asserts both the correction and the
+  provenance of BOBA's constant.
+- **The vendored functions are checked against BOBA's own implementations** to
+  1e-9 relative on random points, so the copies cannot silently drift.
+
 ## Datasets
 
 By default, the scripts read `datasets.json` from the repo root.
@@ -312,7 +409,14 @@ python scripts/bo_sensor_error_simulation.py --acq all --oracle-model auto --ora
 python scripts/evaluate_research_question.py --input-dir output --output-dir output/evaluation
 ```
 
-(tabpfn is excluded as an oracle candidate: the oracle is queried hundreds of
-thousands of times per run, which is intractable for TabPFN on CPU.)
+(tabpfn is benchmarked as an oracle candidate but not deployed as one. The
+binding cost is not `--oracle-opt-samples`: it is the single-row
+`oracle.predict` that `run_simulation` issues once per BO iteration, which an
+in-context model pays in full every call -- measured at 28.3 s per single-row
+predict at the production 1-thread setting, against 43,400 rows/s for
+extra_trees. That is a ~750x slowdown of the whole sweep. Until the
+`TabPFNFloat32Regressor` adapter was added, the tabpfn path also crashed
+outright under this module's float64 default dtype, so it had never actually
+run here.)
 
 Then open `output/evaluation/evaluation_report.txt`.

@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+weber_fechner,value,exact,misclick,0,0.01,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,0,0.01,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,0,0.05,logei,auc_simple_regret_excess_true,5,0.12754054829922196,0.0,0.1772310970278474,0.7196284988247981,-0.09252092424241432,0.34760202084085823,-0.3124620334718342,1.6873780639437959,1.609138241918376,0.18287037393690042,0.0,0.5,0.18287037393690042,0.5
+weber_fechner,value,exact,misclick,0,0.05,qnei,auc_simple_regret_excess_true,5,0.2293294413986347,0.2311996721481986,0.22886645085480897,1.002022972533093,-0.054845791024452695,0.5135046738217222,-0.1365227973320719,2.0694066649007152,2.2405914816004002,0.08856382949184524,0.0,0.25,0.18287037393690042,0.3
+weber_fechner,value,exact,misclick,0,0.15,logei,auc_simple_regret_excess_true,5,8.212992261605288,1.6643649640634948,11.229257918117971,0.7313922541892945,-5.729973021866348,22.155957545076923,-0.3047443063976688,1.7027037982381792,1.635442798584068,0.1772962564687196,0.0,0.0625,0.18287037393690042,0.125
+weber_fechner,value,exact,misclick,0,0.15,qnei,auc_simple_regret_excess_true,5,8.325211518774081,0.902455147607939,10.988435013055172,0.7576339586923014,-5.318732633538236,21.969155671086398,-0.28766078739320694,1.7370920095743527,1.6941210336982537,0.16549136350426666,0.0,0.125,0.18287037393690042,0.1875
+weber_fechner,value,exact,misclick,0,0.4,logei,auc_simple_regret_excess_true,5,24.16342319809609,30.291468776660327,14.718351712612005,1.6417207354401444,5.888175763645048,42.43867063254713,0.20884570158490973,3.012150260921951,3.670999164515111,0.021372355099523285,0.0,0.0625,0.12823413059713973,0.125
+weber_fechner,value,exact,misclick,0,0.4,qnei,auc_simple_regret_excess_true,5,10.309125102909151,4.654338370752481,11.112427820011721,0.9277113219438916,-3.488776453837339,24.10702665965564,-0.1810627067398818,1.9662202318538815,2.074425579362734,0.10669403354896943,0.0,0.0625,0.18287037393690042,0.125
+weber_fechner,value,exact,misclick,20,0.01,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.01,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.05,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.05,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.15,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.15,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.4,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,misclick,20,0.4,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

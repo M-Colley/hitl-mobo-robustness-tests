@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+branin,value,exact,gaussian,0,0.25,qnei,5,2,1.4,0.3999999999999999,1.4,-0.35303283200449337,0.0425702006988411,-0.007204751673561089,3.0450607250200417,0.0,True
+branin,value,exact,gaussian,0,0.25,logei,5,2,1.6,0.6000000000000001,1.6,1.2967407604262238,1.1367069598547914,0.026464097151555586,4.769222163893664,0.0,False
+branin,value,exact,gaussian,0,1.0,qnei,5,2,1.2,0.19999999999999996,1.1,0.19262754928717926,0.6027896783183421,0.003931174475248556,3.5907211063117144,0.0,True
+branin,value,exact,gaussian,0,1.0,logei,5,2,1.8,0.8,1.9,2.345418068870779,1.691918636124119,0.04786567487491385,5.817899472338219,0.0,False

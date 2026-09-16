@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+eggholder,value,exact,slip,0,0.15,qnei,5,2,1.4,0.3999999999999999,1.4,-6.800626716404878,-3.2556630783240763,-0.1387883003347934,55.60615158783486,0.0,True
+eggholder,value,exact,slip,0,0.15,logei,5,2,1.6,0.6000000000000001,1.6,12.149856607221526,15.495133313891529,0.24795625729023524,73.0972004010474,0.0,False
+eggholder,value,exact,slip,20,0.15,qnei,5,2,1.2,0.19999999999999996,1.4,-7.263524828951883,-6.2188278119802405,-0.24874561174130866,55.143253475287835,-121.08846601568936,True
+eggholder,value,exact,slip,20,0.15,logei,5,2,1.8,0.8,1.6,-4.928924302371729,-0.6709799298152461,-0.17058529546748757,56.018419491454154,42.673186062732036,False

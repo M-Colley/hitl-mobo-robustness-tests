@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+rosenbrock,value,exact,slip,0,0.4,qnei,5,2,1.4,0.3999999999999999,1.4,4.38593474293386,3.279002733710156,0.08950887230477264,7.59661195429138,0.0,True
+rosenbrock,value,exact,slip,0,0.4,logei,5,2,1.6,0.6000000000000001,1.6,7.3733078707104385,8.10871415754107,0.15047567083082528,10.38118730522637,0.0,False
+rosenbrock,value,exact,slip,20,0.4,qnei,5,2,1.2,0.19999999999999996,1.4,0.3808387703360544,0.22832884180491808,0.013132371390898411,3.5915159816935747,3.110962967057376,True
+rosenbrock,value,exact,slip,20,0.4,logei,5,2,1.8,0.8,1.6,0.37323942577698904,0.22963322107467277,0.012870325026792723,3.38111886029292,0.4541374343792951,False

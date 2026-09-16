@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+schwefel,value,exact,missing_low,0,0.15,5,2,logei,1.2,wilcoxon,1.0,0.125,,0.0625,True,0.5,False
+schwefel,value,exact,missing_low,0,0.3,5,2,logei,1.4,wilcoxon,3.0,0.3125,,0.0625,True,0.5833333333333334,False
+schwefel,value,exact,missing_mcar,0,0.15,5,2,logei,1.2,wilcoxon,4.0,0.4375,,0.0625,True,0.5833333333333334,False
+schwefel,value,exact,missing_mcar,0,0.3,5,2,ucb,1.4,wilcoxon,6.0,0.8125,,0.0625,True,0.8125,False

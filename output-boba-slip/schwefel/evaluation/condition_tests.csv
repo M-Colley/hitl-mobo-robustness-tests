@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+schwefel,value,exact,slip,0,0.01,5,8,sobol,3.6,friedman,3.1999999999999886,0.8659047417360995,0.09142857142857111,,True,0.8659047417360995,False
+schwefel,value,exact,slip,0,0.05,5,8,qucb,3.2,friedman,6.866666666666674,0.4428934041543757,0.19619047619047641,,True,0.5061638904621437,False
+schwefel,value,exact,slip,0,0.15,5,8,qnei,2.6,friedman,10.199999999999989,0.17752012827952285,0.2914285714285711,,True,0.23669350437269712,False
+schwefel,value,exact,slip,0,0.4,5,8,sobol,2.4,friedman,11.599999999999994,0.11450438780489805,0.33142857142857124,,True,0.18320702048783688,False
+schwefel,value,exact,slip,20,0.01,5,8,logei,1.6,friedman,16.854368932038835,0.018359762042558014,0.4815533980582524,,True,0.07564445547044292,False
+schwefel,value,exact,slip,20,0.05,5,8,sobol,2.6,friedman,15.343434343434346,0.03184059107417603,0.4383838383838385,,True,0.08490824286446941,False
+schwefel,value,exact,slip,20,0.15,5,8,logei,2.7,friedman,11.740157480314966,0.10943428625094123,0.3354330708661419,,True,0.18320702048783688,False
+schwefel,value,exact,slip,20,0.4,5,8,logei,2.1,friedman,16.7742782152231,0.01891111386761073,0.4792650918635171,,True,0.07564445547044292,False

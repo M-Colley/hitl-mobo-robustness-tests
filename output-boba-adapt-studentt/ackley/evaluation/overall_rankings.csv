@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+ackley,value,qnei,0.475,1.4,2.3424391271534133,581.7136731636939,0.4071471638872835,5,8
+ackley,value,logei,0.525,1.6,2.0129075243155192,640.7950796202522,1.661480592305555,5,8

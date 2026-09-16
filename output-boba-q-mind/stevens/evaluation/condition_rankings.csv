@@ -1,0 +1,13 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,gaussian,0,0.25,logei,5,2,1.0,0.0,1.0,0.6123936593280837,-0.17500187666586164,0.012497829782205788,13.074951935562613,0.0,True
+stevens,value,exact,gaussian,0,0.25,pi,5,2,2.0,1.0,2.0,10.622854763068943,9.320018747603218,0.21679295434834578,24.599008620530544,0.0,False
+stevens,value,exact,gaussian,0,1.0,logei,5,2,1.4,0.3999999999999999,1.4,23.317850909841408,25.302745548038367,0.4758745083641103,35.78040918607594,0.0,True
+stevens,value,exact,gaussian,0,1.0,pi,5,2,1.6,0.6000000000000001,1.6,34.66951656453405,33.07834439373964,0.7075411543782458,48.64567042199565,0.0,False
+stevens,value,exact,gaussian,0,5.0,logei,5,2,1.4,0.3999999999999999,1.4,51.14517955486614,48.08991435602988,1.0437791745891047,63.607737831100664,0.0,True
+stevens,value,exact,gaussian,0,5.0,pi,5,2,1.6,0.6000000000000001,1.6,44.88769026782369,46.94276959650117,0.9160753115882387,58.8638441252853,0.0,False
+stevens,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,12.46255827623453,0.006182413821992428,True
+stevens,value,exact,gaussian,20,0.25,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,13.976153857461606,-0.08266973404883457,True
+stevens,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,12.46255827623453,-0.0104530377550623,True
+stevens,value,exact,gaussian,20,1.0,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,13.976153857461606,-0.13429874494800767,True
+stevens,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,12.46255827623453,-0.3906487033624479,True
+stevens,value,exact,gaussian,20,5.0,pi,5,2,1.5,0.5,1.6,0.0,0.0,0.0,13.976153857461606,-0.43816067810271997,True

@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+power_law_practice,value,qnei,0.29999999999999993,1.2999999999999998,0.1808777529386693,15.48551520234226,0.0,2,2
+power_law_practice,value,logei,0.7000000000000001,1.7000000000000002,0.3423167362317562,23.546958167640852,0.0,0,2

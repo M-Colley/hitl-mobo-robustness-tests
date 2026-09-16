@@ -1,0 +1,164 @@
+KNOWN-FUNCTION ROBUSTNESS: CROSS-BENCHMARK SYNTHESIS
+========================================================================
+
+Runs analysed      : 6,400
+Benchmarks         : 20
+Acquisitions       : 8
+Seeds              : 5
+Error models       : ['slip']
+Error magnitudes   : [np.float64(0.01), np.float64(0.05), np.float64(0.15), np.float64(0.4)] (landscape SDs)
+Onsets             : [np.int64(0), np.int64(20)]
+
+1. FLOOR CHECK (model-free acquisitions must be noise-invariant)
+------------------------------------------------------------------------
+  not asserted: this arm corrupts the DESIGN, so a model-free floor evaluates
+  the wrong points too. Its excess regret is the geometric cost of the error
+  with no learning to corrupt (largest |excess AUC| = 3.425e+02).
+
+1b. HEADROOM (could this benchmark have shown an effect at all?)
+------------------------------------------------------------------------
+  benchmark             headroom   (noise-free advantage of the best
+                                    learner over the model-free floor)
+  shekel                   0.191
+  powell                   0.195
+  rosenbrock               0.208
+  michalewicz              0.237
+  schwefel                 0.252
+  rastrigin                0.274
+  moving_peaks             0.293
+  branin                   0.302
+  levy_10                  0.327
+  eggholder                0.347
+  ackley                   0.444
+  hartmann_3               0.578
+  griewank                 0.624
+  yerkes_dodson            0.676
+  hartmann_6               0.678
+  steering_law             0.687
+  weber_fechner            0.741
+  power_law_practice       0.798
+  stevens                  0.811
+  hicks_law                0.848
+
+1c. CONTROL: a constant bias from iteration 1 should cost nothing
+------------------------------------------------------------------------
+  The GP standardises its targets and the incumbent is a posterior mean, so
+  an offset present in every observation is algebraically invisible. At
+  onset 0 the bias arm should therefore match the gaussian arm up to its
+  noise draw.
+
+  not computed: this arm does not run both the gaussian and bias models
+  at onset 0.
+
+1d. WHERE THE ERROR HELPED
+------------------------------------------------------------------------
+  On a multimodal landscape, noise after convergence is an escape mechanism,
+  so a negative excess regret is a real regime rather than sampling noise.
+  Cells with mean excess < 0 and dz < -0.2:
+
+  benchmark            error           SD  onset      mean      dz
+  yerkes_dodson        slip          0.01      0   -0.2039   -0.35
+  rosenbrock           slip          0.01     20   -0.0005   -0.30
+  moving_peaks         slip          0.01      0   -0.0470   -0.24
+
+2. WHAT MAKES AN ERROR 'BIG'?
+------------------------------------------------------------------------
+  Power law E[excess] = A * sigma_e^b_c * opt_z^b_z on landscape x magnitude
+  cell means: quasi-Poisson estimating equations, which keep cells whose mean
+  excess is <= 0, with intervals from resampling benchmarks. SPREAD predicts
+  b_z = 0; GAIN predicts b_c + b_z - 1 = 0 (the 'gain gap'). log-OLS refits
+  log(excess) on the positive cells only, as a check on the estimator.
+
+  error model  onset    b_c    b_z          95% CI gain gap          95% CI              verdict              log-OLS
+  slip             0   0.51   1.02 [  0.91,  1.83]    +0.53 [ +0.37, +1.49]              neither              neither
+  slip            20   0.39   1.32 [  1.19,  2.37]    +0.71 [ +0.56, +1.81]              neither              neither
+
+  Verdict across conditions: {'neither': 2}
+  Cells with mean excess <= 0 (kept here, dropped by log-OLS): 20 of 160
+
+3. WHICH LANDSCAPES ARE FRAGILE (z-scored predictors, FDR over descriptors)
+------------------------------------------------------------------------
+  Fitted on benchmark x condition cell means; 95% CIs and p-values from a
+  2000-replicate bootstrap that resamples BENCHMARKS, not rows.
+
+  [primary]  R^2 = 0.676 over 160 cells in 20 benchmarks
+  term                  beta               95% CI    p(FDR)
+  log_noise           0.3851 [   0.133,   0.699]    0.0025
+  dim                -0.0339 [  -0.814,   0.339]     0.946
+  log_opt_z           1.2023 [   0.210,   1.536]    0.0025
+  ruggedness         -0.0014 [  -0.638,   0.639]     0.946
+  log_tail_ratio      0.3646 [   0.006,   0.809]   0.07833
+
+  [sensitivity]  R^2 = 0.741 over 160 cells in 20 benchmarks
+  term                  beta               95% CI    p(FDR)
+  log_noise           0.3851 [   0.133,   0.699]    0.0035
+  dim                -0.0091 [  -0.403,   0.430]     0.895
+  log_opt_z           2.2140 [  -0.104,   3.153]     0.259
+  ruggedness          0.0935 [  -0.275,   0.626]    0.6874
+  log_tail_ratio      0.2296 [  -0.075,   0.659]    0.3465
+  log_sparsity        0.9465 [  -0.199,   1.547]    0.3465
+  skew               -0.2177 [  -1.211,   0.842]     0.895
+
+3b. DOES IT REDUCE TO ONE-SHOT SELECTION LOSS?
+------------------------------------------------------------------------
+  frag_at_c is the expected loss from one noisy greedy pick on this
+  landscape at this error size -- no GP, no sequence. Compare the variance
+  it explains with that of the full descriptor set.
+
+  mediator_only      R^2 = 0.122   beta(frag_at_c) = -0.4127
+  descriptors_only   R^2 = 0.801   beta(frag_at_c) =      -
+  both               R^2 = 0.837   beta(frag_at_c) = +0.3606
+
+4. ACQUISITION ROBUSTNESS, POOLED OVER CONDITIONS
+------------------------------------------------------------------------
+  acquisition   mean rank   fragility   abs. loss
+  qucb              2.875      0.0561      0.2849
+  ucb               3.325      0.0630      0.2865
+  qnei              3.431      0.0743      0.2717
+  logei             3.538      0.0731      0.2685
+  ei                3.644      0.0767      0.2715
+  pi                4.188      0.0860      0.3019
+
+  Mean rank is over benchmarks within each condition, then averaged over
+  conditions. Lower is more robust. 'abs. loss' is the deployment number:
+  the post-onset per-iteration regret under noise as a fraction of the
+  achievable gain -- 0 is perfect, 1 is no better than an average random
+  design. random and sobol are EXCLUDED from the ranking: they ignore every
+  observation, so their excess regret is exactly zero and they would win a
+  robustness ranking while learning nothing. See floor_reference.csv for
+  what they achieve in absolute terms.
+
+5. LANDSCAPE DESCRIPTORS
+------------------------------------------------------------------------
+  benchmark              d    opt_z  sparsity  rugged    skew   tail  frag@1
+  powell                 4     0.76   0.71843   0.132   -2.33   2.52   0.185
+  rosenbrock             4     1.03   0.48615   0.130   -1.06   1.13   0.181
+  branin                 2     1.25   0.23907   0.130   -1.09   1.14   0.303
+  steering_law           4     1.29   0.79437   0.121   -3.33   1.44   0.430
+  levy_4d                4     1.53   0.26144   0.218   -0.97   1.02   0.441
+  power_law_practice     4     1.72   0.18433   0.128   -2.02   1.72   0.631
+  levy_7d                7     2.07   0.08876   0.212   -0.69   1.00   0.643
+  weber_fechner          4     2.15   0.06973   0.147   -0.71   1.01   0.639
+  levy_10               11     2.62   0.03241   0.204   -0.54   1.00   0.804
+  griewank               6     2.75   0.01265   0.122   -0.26   0.98   0.846
+  moving_peaks           4     2.96   0.00453   0.172   -0.53   1.04   0.638
+  hartmann_3             3     3.05   0.01576   0.140    1.14   1.49   0.505
+  stevens                4     3.06   0.00626   0.125   -0.17   0.97   0.755
+  eggholder              2     3.21   0.00682   0.420    0.04   1.00   0.681
+  yerkes_dodson          4     3.54   0.00284   0.118    0.27   0.98   0.729
+  rastrigin              4     3.64   0.00224   0.581   -0.08   0.98   0.693
+  schwefel               4     4.33   0.00049   0.249    0.00   0.99   0.689
+  bump_a4_w0.05          4     5.00   0.00595   0.161   -0.00   0.96   0.768
+  bump_a4_w0.15          4     5.28   0.00041   0.161    0.18   0.98   1.080
+  hicks_law              4     5.40   0.00029   0.125    0.40   0.97   0.996
+  hartmann_6             6     7.97   0.00047   0.136    2.67   2.74   0.535
+  michalewicz            5     8.05   0.00005   0.363    1.02   0.92   0.800
+  bump_d11              11     9.00   0.00035   0.395    0.00   0.99   1.068
+  bump_d4                4     9.00   0.00990   0.161   -0.00   0.96   0.769
+  bump_d7                7     9.00   0.00002   0.255    0.00   0.98   0.748
+  bump_a16_w0.15         4    12.30   0.00034   0.163    3.74   1.55   0.134
+  ackley                 4    20.10   0.00017   0.796    3.26   1.67   0.184
+  bump_a16_w0.05         4    21.69   0.00006   0.162    0.19   0.97   0.766
+  shekel                 4    56.77   0.00002   0.131    3.72   1.63   0.000
+  (sparsity is the sample-anchored fraction; frag@1 is the one-shot
+   selection loss at an error of 1 landscape SD)

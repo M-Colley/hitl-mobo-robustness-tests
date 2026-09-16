@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+levy_10,value,exact,slip,0,0.01,5,8,logei,2.6,friedman,9.199999999999989,0.2386141015128612,0.2628571428571425,,True,0.6363042707009632,False
+levy_10,value,exact,slip,0,0.05,5,8,logei,3.2,friedman,4.933333333333337,0.6680987244339149,0.14095238095238105,,True,0.7166997492170655,False
+levy_10,value,exact,slip,0,0.15,5,8,random,2.8,friedman,4.533333333333331,0.7166997492170655,0.12952380952380946,,True,0.7166997492170655,False
+levy_10,value,exact,slip,0,0.4,5,8,random,2.4,friedman,7.0,0.42887985755305486,0.2,,True,0.7166997492170655,False
+levy_10,value,exact,slip,20,0.01,5,8,qucb,2.8,friedman,5.362768496420042,0.6157839629262603,0.15322195704057262,,True,0.7166997492170655,False
+levy_10,value,exact,slip,20,0.05,5,8,sobol,3.0,friedman,4.533333333333331,0.7166997492170655,0.12952380952380946,,True,0.7166997492170655,False
+levy_10,value,exact,slip,20,0.15,5,8,sobol,1.5,friedman,15.62052505966588,0.02881867396595371,0.44630071599045373,,True,0.11527469586381484,False
+levy_10,value,exact,slip,20,0.4,5,8,sobol,1.1,friedman,17.65871121718378,0.013608480940529057,0.5045346062052508,,True,0.10886784752423245,False

@@ -1,0 +1,32 @@
+{
+  "n_runs": 1600,
+  "benchmarks": [
+    "ackley",
+    "branin",
+    "eggholder",
+    "griewank",
+    "hartmann_3",
+    "hartmann_6",
+    "hicks_law",
+    "levy_10",
+    "michalewicz",
+    "moving_peaks",
+    "powell",
+    "power_law_practice",
+    "rastrigin",
+    "rosenbrock",
+    "schwefel",
+    "shekel",
+    "steering_law",
+    "stevens",
+    "weber_fechner",
+    "yerkes_dodson"
+  ],
+  "floor_check_max_abs_excess": null,
+  "currency_verdicts": {
+    "gain": 1,
+    "neither": 1
+  },
+  "most_robust_acquisition": "logei",
+  "best_absolute_acquisition": "qnei"
+}

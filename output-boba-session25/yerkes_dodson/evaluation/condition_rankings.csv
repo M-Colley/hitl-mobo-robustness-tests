@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+yerkes_dodson,value,exact,gaussian,0,0.7071,logei,5,2,1.4,0.3999999999999999,1.6,5.650643573622328,4.751443176187351,0.23544348223426362,38.74735261563405,0.0,True
+yerkes_dodson,value,exact,gaussian,0,0.7071,qnei,5,2,1.6,0.6000000000000001,1.4,11.96663635550728,1.850208700075715,0.4986098481461367,37.385647450544624,0.0,False
+yerkes_dodson,value,exact,gaussian,0,3.5355,logei,5,2,1.2,0.19999999999999996,1.4,23.724261048595846,24.648064815692887,0.988510877024827,56.82097009060756,0.0,True
+yerkes_dodson,value,exact,gaussian,0,3.5355,qnei,5,2,1.8,0.8,1.6,30.16812053289584,27.95236209894258,1.2570050222039935,55.587131627933196,0.0,False

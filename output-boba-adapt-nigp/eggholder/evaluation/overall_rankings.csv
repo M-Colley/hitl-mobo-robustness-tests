@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+eggholder,value,qnei,0.425,1.4125,0.1013425393367254,52.227411031156066,7.800244497039101,5,8
+eggholder,value,logei,0.575,1.5875,0.34221181707807513,55.25448949900864,69.67973777978018,3,8

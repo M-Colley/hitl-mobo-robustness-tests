@@ -403,7 +403,9 @@ class TestBuildResponseTable:
             "regret_cum_true": [float(i) for i in iters],
             "regret_avg_true": [1.0] * n,
             "y_opt": [float(n)] * n,
-            "error_applied": [i > jitter_iteration for i in iters],
+            # A real baseline never has error_applied=True: run_simulation writes
+            # False when apply_error is off, and the evaluator now rejects it.
+            "error_applied": [error_model != "none" and i > jitter_iteration for i in iters],
             "error_magnitude": [0.0] * n,
             "error_magnitude_l2": [0.0] * n,
             "regret_inst_true": [1.0] * n,
@@ -568,7 +570,9 @@ class TestAUCAndRankingStatistics:
             "inference_simple_regret_true": [float(n - i) + regret_offset + 0.5 for i in iters],
             "acq_opt_failed": [False] * n,
             "y_opt": [float(n)] * n,
-            "error_applied": [i > jitter_iteration for i in iters],
+            # A real baseline never has error_applied=True: run_simulation writes
+            # False when apply_error is off, and the evaluator now rejects it.
+            "error_applied": [error_model != "none" and i > jitter_iteration for i in iters],
             "error_magnitude": [0.0] * n,
             "error_magnitude_l2": [0.0] * n,
             "regret_inst_true": [1.0] * n,

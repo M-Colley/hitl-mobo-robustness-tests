@@ -1,0 +1,13 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,gaussian,0,0.25,logei,5,2,1.4,0.3999999999999999,1.0,-2.674222795325643,0.810771938511369,-0.05457597541480902,27.24473294922211,0.0,True
+hicks_law,value,exact,gaussian,0,0.25,pi,5,2,1.6,0.6000000000000001,2.0,9.876747352710076,14.373110220246204,0.20156627250428727,51.60426699464133,0.0,False
+hicks_law,value,exact,gaussian,0,1.0,logei,5,2,1.4,0.3999999999999999,1.2,54.318965798238445,64.74958647563463,1.1085503224130295,84.23792154278621,0.0,True
+hicks_law,value,exact,gaussian,0,1.0,pi,5,2,1.6,0.6000000000000001,1.8,85.26980706670547,79.35605420424989,1.7402001442184791,126.99732670863673,0.0,False
+hicks_law,value,exact,gaussian,0,5.0,pi,5,2,1.4,0.3999999999999999,1.8,120.39977336227832,95.29585256265557,2.4571382318832304,162.12729300420958,0.0,True
+hicks_law,value,exact,gaussian,0,5.0,logei,5,2,1.6,0.6000000000000001,1.2,102.2283198017393,102.70255191312421,2.0862922408518223,132.14727554628703,0.0,False
+hicks_law,value,exact,gaussian,20,0.25,logei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,29.91895574454776,-0.4711113811028632,True
+hicks_law,value,exact,gaussian,20,0.25,pi,5,2,1.5,0.5,1.8,0.0,0.0,0.0,41.72751964193126,0.6915331118743513,True
+hicks_law,value,exact,gaussian,20,1.0,logei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,29.91895574454776,-0.05649826648357479,True
+hicks_law,value,exact,gaussian,20,1.0,pi,5,2,1.5,0.5,1.8,0.0,0.0,0.0,41.72751964193126,2.310203278499846,True
+hicks_law,value,exact,gaussian,20,5.0,logei,5,2,1.5,0.5,1.2,0.0,0.0,0.0,29.91895574454776,-4.692700833956725,True
+hicks_law,value,exact,gaussian,20,5.0,pi,5,2,1.5,0.5,1.8,0.0,0.0,0.0,41.72751964193126,0.23733182833859737,True

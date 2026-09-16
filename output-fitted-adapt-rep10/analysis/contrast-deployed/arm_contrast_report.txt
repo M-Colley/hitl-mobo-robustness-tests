@@ -1,0 +1,24 @@
+ARM CONTRAST: fitted, rep10 vs fitted oracle
+========================================================================
+
+Paired on dataset, acquisition, error_model, jitter_std, jitter_iteration, seed; 480 cells, 3 benchmarks, 2 acquisitions, 10 seeds.
+Positive delta = the treatment arm suffers MORE from feedback error.
+
+OVERALL: fitted oracle 0.2271 -> fitted, rep10 0.2215  (+2.5% of the measured cost)
+
+      error      SD  onset       ref       trt     delta    share      dz    p(FDR)
+   gaussian    0.05      0   -0.0206   -0.0635   -0.0429    +nan%   -1.52       0.8
+   gaussian    0.05     20   -0.0457   -0.0267   +0.0190    +nan%    0.68       0.8
+   gaussian    0.25      0    0.0572    0.0155   -0.0417   +72.9%   -0.45         1
+   gaussian    0.25     20    0.0059    0.0746   +0.0687 -1158.9%    0.94       0.8
+   gaussian       1      0    0.2959    0.3058   +0.0099    -3.3%    0.29    0.8571
+   gaussian       1     20    0.2125    0.1867   -0.0258   +12.1%   -0.61       0.8
+   gaussian       5      0    0.7694    0.7221   -0.0473    +6.2%   -1.60       0.8
+   gaussian       5     20    0.5423    0.5576   +0.0153    -2.8%    0.16    0.8571
+
+Per benchmark (mean over every shared cell):
+
+  benchmark               opt_z       ref       trt     delta    share
+  ehmi                      nan    0.1722    0.1511   -0.0211   +12.2%
+  opticarvis                nan    0.2842    0.2778   -0.0064    +2.3%
+  provoice                  nan    0.2250    0.2356   +0.0107    -4.7%

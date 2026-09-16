@@ -1,0 +1,55 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 400
+- Paired baseline/jitter rows: 320
+- Seeds per condition: min=5, median=5.0, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 5 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg) correction is applied per test family
+  (Friedman omnibus and Wilcoxon pairwise are corrected separately).
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+stevens     value        exact        slip                 0        0.01        5               8            logei  friedman   6.600000 0.471680        0.628906               NaN          True    0.188571
+stevens     value        exact        slip                 0        0.05        5               8            logei  friedman   6.666667 0.464391        0.628906               NaN          True    0.190476
+stevens     value        exact        slip                 0        0.15        5               8            sobol  friedman   3.733333 0.809929        0.925633               NaN          True    0.106667
+stevens     value        exact        slip                 0        0.40        5               8           random  friedman   9.600000 0.212397        0.424793               NaN          True    0.274286
+stevens     value        exact        slip                20        0.01        5               8            sobol  friedman  12.866667 0.075424        0.301698               NaN          True    0.367619
+stevens     value        exact        slip                20        0.05        5               8               ei  friedman   1.105263 0.992947        0.992947               NaN          True    0.031579
+stevens     value        exact        slip                20        0.15        5               8           random  friedman  11.636364 0.113169        0.301785               NaN          True    0.332468
+stevens     value        exact        slip                20        0.40        5               8           random  friedman  19.076923 0.007950        0.063598               NaN          True    0.545055
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+stevens / value
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.335714               7.525                           -0.073569                           59.799482               4           8
+      sobol              0.425000               7.400                           -0.044599                           52.877448               2           8
+      logei              0.464286               2.800                            0.007058                           11.842816               3           8
+        ucb              0.514286               2.875                            0.016979                           11.941806               1           8
+       qucb              0.525000               3.100                            0.014118                           11.802843               1           8
+

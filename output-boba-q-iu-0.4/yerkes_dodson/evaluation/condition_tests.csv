@@ -1,0 +1,3 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+yerkes_dodson,value,exact,slip,0,0.4,5,2,qnei,1.4,wilcoxon,7.0,1.0,,0.0625,True,1.0,False
+yerkes_dodson,value,exact,slip,20,0.4,5,2,logei,1.3,wilcoxon,3.0,0.625,,0.125,True,1.0,False

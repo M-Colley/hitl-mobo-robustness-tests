@@ -1,0 +1,10 @@
+{
+  "reference": "output-boba-incumbent",
+  "treatment": "output-boba-adapt-rep10-obs",
+  "paired_cells": 800,
+  "benchmarks": 20,
+  "mean_reference": 1.1804254274766224,
+  "mean_treatment": 1.5812141777528774,
+  "conditions_tested": 8,
+  "conditions_significant_fdr": 4
+}

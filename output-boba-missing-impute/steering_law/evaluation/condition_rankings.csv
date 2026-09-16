@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+steering_law,value,exact,missing_low,0,0.15,ucb,5,2,1.4,0.3999999999999999,1.2,-0.08817685664821191,0.0,-0.0017995276866982018,4.272512375942043,0.0,True
+steering_law,value,exact,missing_low,0,0.15,logei,5,2,1.6,0.6000000000000001,1.8,-0.22764359100271464,0.0,-0.004645787571483967,4.478282771876454,0.0,False
+steering_law,value,exact,missing_low,0,0.3,ucb,5,2,1.0,0.0,1.2,0.0071105142271591145,0.0,0.0001451125352481486,4.367799746817414,0.0,True
+steering_law,value,exact,missing_low,0,0.3,logei,5,2,2.0,1.0,1.8,0.2592216789959171,0.018455334283679292,0.005290238346855454,4.965148041875087,0.0,False
+steering_law,value,exact,missing_mcar,0,0.15,ucb,5,2,1.2,0.19999999999999996,1.2,0.898896101902182,0.0036093739717264484,0.01834481840616698,5.259585334492437,0.0,True
+steering_law,value,exact,missing_mcar,0,0.15,logei,5,2,1.8,0.8,1.8,1.0719478391480688,0.5334071976611725,0.0218764865132259,5.777874202027238,0.0,False
+steering_law,value,exact,missing_mcar,0,0.3,ucb,5,2,1.4,0.3999999999999999,1.4,1.3775791565559412,1.4194509515115459,0.02811386033787635,5.738268389146197,0.0,True
+steering_law,value,exact,missing_mcar,0,0.3,logei,5,2,1.6,0.6000000000000001,1.6,3.3494624702619307,1.4861566617606465,0.06835637694412103,8.055388833141098,0.0,False

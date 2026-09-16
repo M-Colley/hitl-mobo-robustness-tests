@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+steering_law,value,qnei,0.30000000000000004,1.3,0.08036158178063493,8.627502024326349,0.0,1,2
+steering_law,value,logei,0.7,1.7,0.1983170819727274,14.423463379542813,0.0,1,2

@@ -1,0 +1,322 @@
+"""The process-adaptation arms: how much of the cost of error does each recover?
+
+Why not the usual excess contrast
+---------------------------------
+Every other arm is scored by its excess regret, noisy minus its own identically
+seeded clean run. That is the wrong estimand for a PROCESS change. Rating the
+first ten designs twice, or spending trials re-rating, also changes the clean
+run -- a repeated rating of an exact objective carries no information, so the
+arm's clean twin is itself handicapped -- and "excess over a handicapped twin"
+mixes the benefit under error with the price paid without it. What a
+practitioner wants to know is whether the adapted process, under error, gets
+closer to what the STANDARD process achieves without error. So, per paired cell:
+
+    cost       = ref_noisy - ref_clean     what the error costs the standard process
+    gain       = ref_noisy - trt_noisy     how much better the adapted process does under error
+    price      = trt_clean - ref_clean     what the adaptation costs when there is no error
+    recovered  = gain / cost               share of the standard process's cost recovered
+
+on two responses: the post-onset per-iteration true simple regret (the
+trajectory), and the final regret of the design the experimenter would deploy.
+Aggregates are ratios of landscape means; intervals resample landscapes; the
+test is a Wilcoxon over per-landscape gains, BH-corrected within arm and
+response. Regret is divided by opt_z where the landscape has one, so cost, gain
+and price are fractions of the achievable improvement.
+
+Most arms change the process for the same acquisitions and pair at
+(landscape, acquisition, magnitude, onset, seed). The robust-baseline arms
+(qKG, replication) are different acquisitions, so there the standard process is
+the mean over the ten standard model-based acquisitions and pairing is at
+(landscape, magnitude, onset, seed). The same flaw applies to them: replication
+re-rates the incumbent in its clean run too, and the paper's earlier "recovers
+a third" was an excess-over-own-twin comparison.
+
+Extra trials are counted against the STANDARD clean run (analyse_extra_runs.py
+--baseline-dir), beside the reference's own count, for the arms that pair on
+acquisition.
+
+    python scripts/analyse_boba_adaptations.py
+"""
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+from scipy.stats import wilcoxon
+from statsmodels.stats.multitest import multipletests
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+import boba_benchmarks as bb  # noqa: E402
+
+PY = sys.executable
+PAIR_KEYS = ["dataset", "acquisition", "error_model", "jitter_std", "jitter_iteration", "seed"]
+POOLED_KEYS = ["dataset", "error_model", "jitter_std", "jitter_iteration", "seed"]
+MODEL_FREE = ("random", "sobol")
+RESPONSES = {
+    "trajectory": "auc_simple_regret_true_postonset_per_iter",
+    "deployed": "final_inference_simple_regret_true",
+}
+GRID = (0.05, 0.25, 1.0, 5.0)
+BOOTSTRAP_REPS = 2000
+BOOTSTRAP_SEED = 20260913
+S5 = "7,8,9,10,11"
+TEN = "logei,ei,pi,ucb,qucb,qnei,logpi,qei,qpi,greedy"
+
+
+def arm(dir_, ref, acqs, what, seeds=S5, ref_acqs=None, pool=False, relative=False, error_model=None):
+    return dict(dir=dir_, ref=ref, acqs=acqs, ref_acqs=ref_acqs or acqs, seeds=seeds, what=what,
+                pool=pool, relative=relative, error_model=error_model)
+
+
+ARMS = {
+    # The two ablation arms of the paper change the surrogate or the incumbent,
+    # which changes the clean run as well; re-scored here against the standard
+    # process so their headline shares can be checked on the same footing.
+    "incumbent": arm("output-boba-incumbent", "output-boba", "logei,ei,pi,logpi,qei,ucb,qnei",
+                     "observed-max incumbent instead of the posterior-mean one", error_model="gaussian"),
+    "knownnoise": arm("output-boba-knownnoise", "output-boba", "logei,ei,pi,ucb,qucb,qnei",
+                      "the GP is given the true observation variance", error_model="gaussian"),
+    "rep10": arm("output-boba-adapt-rep10", "output-boba", "logei,qnei", "first ten proposals rated twice",
+                 error_model="gaussian"),
+    "bundle": arm("output-boba-adapt-rep10-obs", "output-boba", "logei",
+                  "first ten rated twice + observed-max incumbent (LogEI), against the standard process",
+                  error_model="gaussian"),
+    "rep10-obs": arm("output-boba-adapt-rep10-obs", "output-boba-incumbent", "logei",
+                     "replication on top of the observed-max incumbent (against the incumbent arm)",
+                     error_model="gaussian"),
+    "rerate": arm("output-boba-adapt-rerate", "output-boba", "logei,qnei",
+                  "last six trials re-rate the top three designs", error_model="gaussian"),
+    "qkg": arm("output-boba-robust", "output-boba", "qkg",
+               "knowledge gradient, against the mean of the ten standard acquisitions",
+               ref_acqs=TEN, pool=True, error_model="gaussian"),
+    "replei": arm("output-boba-robust", "output-boba", "replei",
+                  "every second trial re-rates the incumbent, against the mean of the ten standard acquisitions",
+                  ref_acqs=TEN, pool=True, error_model="gaussian"),
+    "rerate-slip": arm("output-boba-adapt-rerate-slip", "output-boba-slip", "logei,qnei",
+                       "re-rating under an unnoticed slip", error_model="slip"),
+    "nigp": arm("output-boba-adapt-nigp", "output-boba-slip", "logei,qnei",
+                "noisy-input GP under an unnoticed slip", error_model="slip"),
+    "studentt": arm("output-boba-adapt-studentt", "output-boba-misclick", "logei,qnei",
+                    "Student-t surrogate under misclicks", error_model="misclick"),
+    "fitted-rep10": arm("output-fitted-adapt-rep10", "output-fitted", "logei,qnei",
+                        "first ten rated twice, on the three fitted-oracle datasets",
+                        seeds="7,8,9,10,11,12,13,14,15,16", relative=True, error_model="gaussian"),
+
+    # ---------------------------------------------------------------- budget-neutral
+    # The 2026-09-14/16 sweep (run_boba_budget_neutral.ps1). Every arm here keeps
+    # the number of human trials equal to the standard process, or lowers it, so
+    # each is scored against the standard process on the same trial budget. The
+    # arms whose variants differ only in a filename SUFFIX (spike, spike-clip,
+    # spike-rrp, relay, ceiling, mo-halo, mo-halo-backfit) are absent: one
+    # directory holds several conditions and evaluate_research_question.py
+    # refuses to average them, correctly. They need a variant-aware evaluation
+    # before they can appear here.
+    "q-inclcb": arm("output-boba-q-inclcb", "output-boba", "logei,logpi",
+                    "a lower-confidence-bound incumbent instead of the posterior mean",
+                    error_model="gaussian"),
+    "q-aei": arm("output-boba-q-aei", "output-boba", "aei",
+                 "augmented expected improvement, against the mean of the ten standard acquisitions",
+                 ref_acqs=TEN, pool=True, error_model="gaussian"),
+    "q-ts": arm("output-boba-q-ts", "output-boba", "ts",
+                "Thompson sampling, against the mean of the ten standard acquisitions",
+                ref_acqs=TEN, pool=True, error_model="gaussian"),
+    "sched-front10": arm("output-boba-sched-front10", "output-boba", "logei,qnei",
+                         "the same total rating effort, concentrated on the first ten trials",
+                         error_model="gaussian"),
+    "sched-front20": arm("output-boba-sched-front20", "output-boba", "logei,qnei",
+                         "the same total rating effort, concentrated on the first twenty trials",
+                         error_model="gaussian"),
+    "sched-U": arm("output-boba-sched-U", "output-boba", "logei,qnei",
+                   "the same total rating effort, spent on the first and last trials",
+                   error_model="gaussian"),
+    "sched-back10": arm("output-boba-sched-back10", "output-boba", "logei,qnei",
+                        "the same total rating effort, concentrated on the last ten trials",
+                        error_model="gaussian"),
+    "q-mind": arm("output-boba-q-mind", "output-boba", "logei,pi",
+                  "a proposal must stay 0.05 of the box away from every visited design",
+                  error_model="gaussian"),
+    "q-iu-0.05": arm("output-boba-q-iu-0.05", "output-boba-slip", "logei,qnei",
+                     "slip-aware acquisition, 0.05 slip", error_model="slip"),
+    "q-iu-0.15": arm("output-boba-q-iu-0.15", "output-boba-slip", "logei,qnei",
+                     "slip-aware acquisition, 0.15 slip", error_model="slip"),
+    "q-iu-0.4": arm("output-boba-q-iu-0.4", "output-boba-slip", "logei,qnei",
+                    "slip-aware acquisition, 0.4 slip", error_model="slip"),
+    "missing-impute-mcar": arm("output-boba-missing-impute", "output-boba-missing-drop", "logei,ucb",
+                               "a rating lost at random, imputed low instead of dropped",
+                               error_model="missing_mcar"),
+    "missing-impute-low": arm("output-boba-missing-impute", "output-boba-missing-drop", "logei,ucb",
+                              "a rating lost because the design was bad, imputed low instead of dropped",
+                              error_model="missing_low"),
+}
+
+
+def load(root: Path, acqs: set[str], seeds: set[int], error_model: str | None) -> pd.DataFrame:
+    files = sorted(root.glob("*/evaluation/paired_excess_metrics.csv"))
+    if not files:
+        raise FileNotFoundError(f"no evaluation outputs under {root}")
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    keep = ~df["acquisition"].isin(MODEL_FREE) & df["acquisition"].isin(acqs) & df["seed"].isin(seeds)
+    if error_model is not None:
+        keep &= df["error_model"] == error_model
+    return df[keep]
+
+
+def rank_magnitudes(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.copy()
+    for dataset, block in frame.groupby("dataset"):
+        stds = sorted(block["jitter_std"].unique())
+        if len(stds) != len(GRID):
+            raise ValueError(f"{dataset}: {len(stds)} magnitudes, expected {len(GRID)}")
+        frame.loc[block.index, "jitter_std"] = block["jitter_std"].map(dict(zip(stds, GRID)))
+    return frame
+
+
+def paired_frame(ref: pd.DataFrame, trt: pd.DataFrame, response: str, opt_z: dict[str, float],
+                 pool: bool) -> pd.DataFrame:
+    cols = [f"{response}_jitter", f"{response}_baseline"]
+    keys = POOLED_KEYS if pool else PAIR_KEYS
+    if pool:
+        ref = ref.groupby(POOLED_KEYS, as_index=False)[cols].mean()
+        trt = trt.groupby(POOLED_KEYS, as_index=False)[cols].mean()
+    m = ref[keys + cols].merge(trt[keys + cols], on=keys, suffixes=("_ref", "_trt"), validate="one_to_one")
+    if m.empty:
+        raise ValueError("the two arms share no paired cells")
+    z = m["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    return m.assign(
+        ref_noisy=m[f"{response}_jitter_ref"] / z, ref_clean=m[f"{response}_baseline_ref"] / z,
+        trt_noisy=m[f"{response}_jitter_trt"] / z, trt_clean=m[f"{response}_baseline_trt"] / z,
+    )
+
+
+def summarise(block: pd.DataFrame, rng: np.random.Generator) -> dict:
+    per = block.groupby("dataset")[["ref_noisy", "ref_clean", "trt_noisy", "trt_clean"]].mean()
+    cost_l = (per.ref_noisy - per.ref_clean).to_numpy()
+    gain_l = (per.ref_noisy - per.trt_noisy).to_numpy()
+    price_l = (per.trt_clean - per.ref_clean).to_numpy()
+    cost, gain, price = cost_l.mean(), gain_l.mean(), price_l.mean()
+    n = len(per)
+    draws = []
+    for _ in range(BOOTSTRAP_REPS):
+        idx = rng.integers(0, n, n)
+        c = cost_l[idx].mean()
+        draws.append(gain_l[idx].mean() / c if c > 0 else np.nan)
+    draws = np.array(draws)
+    ok = np.isfinite(draws)
+    if np.allclose(gain_l, 0.0):
+        p = 1.0
+    else:
+        try:
+            p = float(wilcoxon(gain_l).pvalue)
+        except ValueError:
+            p = 1.0
+    return {
+        "n_landscapes": int(n), "n_cells": int(len(block)),
+        "cost": float(cost), "gain": float(gain), "price": float(price),
+        "recovered": float(gain / cost) if cost > 0 else np.nan,
+        "recovered_lo": float(np.percentile(draws[ok], 2.5)) if ok.sum() >= 100 else np.nan,
+        "recovered_hi": float(np.percentile(draws[ok], 97.5)) if ok.sum() >= 100 else np.nan,
+        "wilcoxon_p": p,
+    }
+
+
+def run(cmd: list[str]) -> None:
+    print("  $", " ".join(str(c) for c in cmd[1:]))
+    subprocess.run(cmd, check=True)
+
+
+def main(argv=None) -> None:
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--arms", type=str, default=",".join(ARMS))
+    parser.add_argument("--output-dir", type=Path, default=Path("output-boba/analysis"))
+    parser.add_argument("--no-extra-trials", action="store_true")
+    args = parser.parse_args(argv)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    stats = bb.load_stats(bb.DEFAULT_STATS_PATH)
+    opt_z = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+
+    rows, extra_rows = [], []
+    for name in [a.strip() for a in args.arms.split(",") if a.strip()]:
+        spec = ARMS[name]
+        arm_dir, ref_dir = Path(spec["dir"]), Path(spec["ref"])
+        if not any(arm_dir.glob("*/evaluation/paired_excess_metrics.csv")):
+            print(f"{name}: no results yet, skipped")
+            continue
+        seed_set = {int(s) for s in spec["seeds"].split(",")}
+        ref_df = load(ref_dir, set(spec["ref_acqs"].split(",")), seed_set, spec["error_model"])
+        arm_df = load(arm_dir, set(spec["acqs"].split(",")), seed_set, spec["error_model"])
+        if spec["relative"]:
+            ref_df, arm_df = rank_magnitudes(ref_df), rank_magnitudes(arm_df)
+        print(f"\n=== {name}: {spec['what']} (reference {ref_dir}) ===")
+        for label, response in RESPONSES.items():
+            paired = paired_frame(ref_df, arm_df, response, {} if spec["relative"] else opt_z, spec["pool"])
+            rng = np.random.default_rng(BOOTSTRAP_SEED)
+            cond_rows = []
+            for (std, onset), block in paired.groupby(["jitter_std", "jitter_iteration"]):
+                cond_rows.append({"arm": name, "reference": str(ref_dir), "response": label,
+                                  "jitter_std": float(std), "jitter_iteration": int(onset),
+                                  **summarise(block, rng)})
+            pooled = summarise(paired, np.random.default_rng(BOOTSTRAP_SEED))
+            ps = [r["wilcoxon_p"] for r in cond_rows]
+            for r, q in zip(cond_rows, multipletests(ps, method="fdr_bh")[1]):
+                r["wilcoxon_p_fdr"] = float(q)
+                for key in ("recovered", "recovered_lo", "recovered_hi", "price", "cost", "gain"):
+                    r[f"pooled_{key}"] = pooled[key]
+                r["pooled_wilcoxon_p"] = pooled["wilcoxon_p"]
+            rows.extend(cond_rows)
+            print(f"  {label}: pooled recovered {pooled['recovered']:+.0%} "
+                  f"[{pooled['recovered_lo']:+.0%}, {pooled['recovered_hi']:+.0%}], "
+                  f"cost {pooled['cost']:.3f}, gain {pooled['gain']:+.3f}, price without error {pooled['price']:+.3f}")
+            for r in cond_rows:
+                star = "*" if r["wilcoxon_p_fdr"] < 0.05 else " "
+                print(f"     {r['jitter_std']:>5g} / it.{r['jitter_iteration'] + 1:<3d} cost {r['cost']:7.3f}  "
+                      f"gain {r['gain']:+7.3f}  price {r['price']:+7.3f}  recovered {r['recovered']:+6.0%} "
+                      f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]{star}")
+
+        if args.no_extra_trials or spec["relative"] or spec["pool"]:
+            continue
+        # Extra trials against the STANDARD clean run: the arm's noisy runs and the
+        # reference's own noisy runs, both targeting the reference's clean runs.
+        tag = name.replace("-", "_")
+        vs_std = arm_dir / "analysis" / f"extra_runs_vs_{tag}_reference.csv"
+        if not vs_std.is_file():
+            run([PY, str(SCRIPT_DIR / "analyse_extra_runs.py"), "--input-dir", str(arm_dir), "--baseline-dir",
+                 str(ref_dir), "--k", "10,25", "--tolerance", "0.01", "--acquisitions", spec["acqs"],
+                 "--seeds", spec["seeds"], "--output-name", f"extra_runs_vs_{tag}_reference"])
+        ref_out = ref_dir / "analysis" / f"extra_runs_ref_{tag}.csv"
+        if not ref_out.is_file():
+            run([PY, str(SCRIPT_DIR / "analyse_extra_runs.py"), "--input-dir", str(ref_dir), "--k", "10,25",
+                 "--tolerance", "0.01", "--acquisitions", spec["acqs"], "--seeds", spec["seeds"],
+                 "--output-name", f"extra_runs_ref_{tag}"])
+        e_arm, e_ref = pd.read_csv(vs_std), pd.read_csv(ref_out)
+        e_arm = e_arm[e_arm["error_model"] == spec["error_model"]]
+        # The reference directory can hold several error processes and bias
+        # variants; the arm's own process, with no variant, is the matched row.
+        e_ref = e_ref[(e_ref["error_model"] == spec["error_model"]) & (e_ref["variant"].fillna("") == "")]
+        key = ["jitter_std", "jitter_iteration", "k", "tolerance"]
+        merged = e_arm.merge(e_ref, on=key, suffixes=("_arm", "_ref"), validate="one_to_one")
+        for r in merged.itertuples():
+            extra_rows.append({"arm": name, "jitter_std": r.jitter_std, "jitter_iteration": r.jitter_iteration,
+                               "k": r.k, "tolerance": r.tolerance,
+                               "median_extra_arm": r.median_extra_arm, "never_arm": r.censored_fraction_arm,
+                               "mean_extra_arm": r.mean_extra_arm, "median_extra_ref": r.median_extra_ref,
+                               "never_ref": r.censored_fraction_ref, "mean_extra_ref": r.mean_extra_ref})
+        early = merged[(merged.jitter_iteration == merged.jitter_iteration.min()) & (merged.k == 10)]
+        print("  extra trials to match a clean STANDARD 10-trial study, error from it. 1 "
+              "(median / never, arm vs reference): "
+              + "; ".join(f"{r.jitter_std:g}: {r.median_extra_arm:.0f}/{r.censored_fraction_arm:.0%} vs "
+                          f"{r.median_extra_ref:.0f}/{r.censored_fraction_ref:.0%}" for r in early.itertuples()))
+
+    pd.DataFrame(rows).to_csv(args.output_dir / "adaptations_recovery.csv", index=False)
+    pd.DataFrame(extra_rows).to_csv(args.output_dir / "adaptations_extra_runs.csv", index=False)
+    print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'} and adaptations_extra_runs.csv")
+
+
+if __name__ == "__main__":
+    main()

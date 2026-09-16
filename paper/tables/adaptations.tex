@@ -1,0 +1,23 @@
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{recovered (\%)} & \multicolumn{2}{c}{price without error} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+adaptation & trajectory & deployed & trajectory & deployed \\
+\midrule
+\multicolumn{5}{l}{rating error (\textsc{gaussian})} \\
+observed-max incumbent & +19$^{*}$ {\scriptsize [10, 27]} & $-$10$^{*}$ {\scriptsize [$-$15, $-$5]} & +0.1 & +0.2 \\
+GP given the true noise variance & $-$3 {\scriptsize [$-$16, 8]} & $-$3 {\scriptsize [$-$11, 5]} & +0.4 & $-$0.0 \\
+first ten proposals rated twice & $-$88$^{*}$ {\scriptsize [$-$113, $-$67]} & $-$14$^{*}$ {\scriptsize [$-$21, $-$8]} & +5.1 & +1.6 \\
+\quad + observed-max incumbent (LogEI) & $-$93$^{*}$ {\scriptsize [$-$127, $-$58]} & $-$44$^{*}$ {\scriptsize [$-$57, $-$32]} & +4.7 & +1.1 \\
+last six trials re-rate the top three & $-$1$^{*}$ {\scriptsize [$-$2, $-$1]} & +4$^{*}$ {\scriptsize [0.04, 9]} & +0.1 & +0.8 \\
+knowledge gradient & $-$4 {\scriptsize [$-$23, 14]} & $-$32$^{*}$ {\scriptsize [$-$42, $-$24]} & +2.7 & +3.6 \\
+re-rate the incumbent every second trial & $-$61$^{*}$ {\scriptsize [$-$88, $-$33]} & $-$5 {\scriptsize [$-$12, 3]} & +5.4 & +4.3 \\
+\multicolumn{5}{l}{unnoticed \textsc{slip}} \\
+noisy-input GP & $-$28$^{*}$ {\scriptsize [$-$43, $-$13]} & $-$19$^{*}$ {\scriptsize [$-$31, $-$9]} & $-$0.1 & $-$1.5 \\
+last six trials re-rate the top three & 0 {\scriptsize [$-$0.3, 0.2]} & $-$6 {\scriptsize [$-$15, 1]} & +0.1 & +0.8 \\
+\multicolumn{5}{l}{\textsc{misclick}} \\
+Student-$t$ surrogate & $-$2 {\scriptsize [$-$38, 31]} & $-$13 {\scriptsize [$-$50, 16]} & +0.2 & +1.5 \\
+\multicolumn{5}{l}{fitted oracles, rating error} \\
+first ten proposals rated twice & $-$161$^{*}$ {\scriptsize [$-$3504, $-$49]} & $-$8 {\scriptsize [$-$17, 6]} & -- & -- \\
+\bottomrule
+\end{tabular}

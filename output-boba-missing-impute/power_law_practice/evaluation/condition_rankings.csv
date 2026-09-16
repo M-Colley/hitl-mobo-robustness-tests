@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,missing_low,0,0.15,logei,5,2,1.3,0.30000000000000004,1.4,-0.1675993013980456,0.0,-0.003420393906082564,6.60583879088675,0.0,True
+power_law_practice,value,exact,missing_low,0,0.15,ucb,5,2,1.7,0.7,1.6,0.06595900850857994,0.0,0.0013461022144608148,6.2053722846500845,0.0,False
+power_law_practice,value,exact,missing_low,0,0.3,logei,5,2,1.4,0.3999999999999999,1.4,-0.387092294696075,0.0,-0.007899842748899492,6.386345797588722,0.0,True
+power_law_practice,value,exact,missing_low,0,0.3,ucb,5,2,1.6,0.6000000000000001,1.6,1.2705400520803873,0.0,0.02592938881796709,7.409953328221893,0.0,False
+power_law_practice,value,exact,missing_mcar,0,0.15,logei,5,2,1.4,0.3999999999999999,1.4,2.147796829727398,2.02346528399542,0.04383258836178363,8.921234922012193,0.0,True
+power_law_practice,value,exact,missing_mcar,0,0.15,ucb,5,2,1.6,0.6000000000000001,1.6,5.117432374483156,0.0,0.10443739539761543,11.25684565062466,0.0,False
+power_law_practice,value,exact,missing_mcar,0,0.3,logei,5,2,1.4,0.3999999999999999,1.4,10.350634529039485,10.17410327847623,0.21123743936815279,17.12407262132428,0.0,True
+power_law_practice,value,exact,missing_mcar,0,0.3,ucb,5,2,1.6,0.6000000000000001,1.6,11.49838851992282,14.654668581558909,0.23466099020250653,17.637801796064327,0.0,False

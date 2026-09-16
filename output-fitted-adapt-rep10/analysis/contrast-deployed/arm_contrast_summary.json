@@ -1,0 +1,10 @@
+{
+  "reference": "output-fitted",
+  "treatment": "output-fitted-adapt-rep10",
+  "paired_cells": 480,
+  "benchmarks": 3,
+  "mean_reference": 0.22711354787876106,
+  "mean_treatment": 0.2215065155120141,
+  "conditions_tested": 8,
+  "conditions_significant_fdr": 0
+}

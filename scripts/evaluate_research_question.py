@@ -131,6 +131,15 @@ def infer_param_columns(run_df: pd.DataFrame) -> list[str]:
         "inference_value_true",
         "inference_simple_regret_true",
         "dataset",
+        # Error-process extension logs. imputed_value is mostly NaN and missing
+        # is boolean; neither may ever be read as a design parameter.
+        "missing",
+        "imputed_value",
+        "noise_effort",
+        "rater_id",
+        "ceiling_value",
+        # Multi-objective halo backfit logs (with halo_correction_<objective>).
+        "halo_rho_hat",
     }
     param_columns: list[str] = []
     for column in run_df.columns:
@@ -138,7 +147,7 @@ def infer_param_columns(run_df: pd.DataFrame) -> list[str]:
             continue
         if column.startswith("objective_true_") or column.startswith("objective_observed_"):
             continue
-        if column.startswith("error_magnitude_"):
+        if column.startswith(("error_magnitude_", "halo_correction_")):
             continue
         if run_df[column].notna().any():
             param_columns.append(column)
@@ -161,6 +170,22 @@ def build_response_table(logs: pd.DataFrame) -> pd.DataFrame:
         param_columns = infer_param_columns(run_df)
         base_row = run_df.iloc[-1]
         baseline = str(base_row["error_model"]) == "none"
+        # "none" is how a clean baseline is recognised, so a corrupted run that
+        # carries it is silently filed as a baseline, never paired, and dropped.
+        # That happened once -- the first input-error arm -- and surfaced only as
+        # an empty table and a KeyError on n_iterations further down. Fail here,
+        # where the cause is visible. astype(str) because a CSV round-trip can
+        # leave the column as strings, and "False" is truthy.
+        if baseline and "error_applied" in run_df.columns and bool(
+            run_df["error_applied"].astype(str).str.lower().eq("true").any()
+        ):
+            raise ValueError(
+                f"Run {base_row['run_id']} ({base_row['dataset']}, "
+                f"{base_row['acquisition']}, seed {base_row['seed']}) is labelled "
+                "error_model='none' -- the baseline marker -- but has "
+                "error_applied=True. A corrupted run must be labelled by the "
+                "corruption applied, or it cannot be paired with its baseline."
+            )
         run_jitter_iteration = int(base_row["jitter_iteration"])
         target_iterations = jitter_iterations if baseline else [run_jitter_iteration]
 

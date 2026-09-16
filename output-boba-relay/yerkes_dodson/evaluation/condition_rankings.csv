@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+yerkes_dodson,value,exact,gaussian,0,0.25,rater-block10-tau2,logei,5,2,1.0,0.0,1.2,-1.744226673866222,3.9855525766893223,-0.03559646273196369,41.19047530824584,0.0,True
+yerkes_dodson,value,exact,gaussian,0,0.25,rater-block10-tau2,qnei,5,2,2.0,1.0,1.8,23.029104879475362,16.176756189575897,0.469981732234191,48.91725157167016,0.0,False
+yerkes_dodson,value,exact,gaussian,0,0.25,rater-roundrobin5-tau2,logei,5,2,1.4,0.3999999999999999,1.6,-3.5718046329994992,7.290737767647549,-0.07289397210203057,39.36289734911255,0.0,True
+yerkes_dodson,value,exact,gaussian,0,0.25,rater-roundrobin5-tau2,qnei,5,2,1.6,0.6000000000000001,1.4,13.797532471814185,10.049815115708505,0.2815822953431466,39.685679164008974,0.0,False
+yerkes_dodson,value,exact,gaussian,0,1.0,rater-block10-tau2,qnei,5,2,1.4,0.3999999999999999,1.2,18.474034190521955,20.147124133405168,0.37702110592901955,44.36218088271675,0.0,True
+yerkes_dodson,value,exact,gaussian,0,1.0,rater-block10-tau2,logei,5,2,1.6,0.6000000000000001,1.8,18.648095935037862,29.603896497562438,0.38057338642934413,61.58279791714991,0.0,False
+yerkes_dodson,value,exact,gaussian,0,1.0,rater-roundrobin5-tau2,logei,5,2,1.4,0.3999999999999999,1.6,50.54412348486083,57.298159298332834,1.0315127241808333,93.47882546697289,0.0,True
+yerkes_dodson,value,exact,gaussian,0,1.0,rater-roundrobin5-tau2,qnei,5,2,1.6,0.6000000000000001,1.4,68.12183237063621,75.03271630806071,1.3902414769517593,94.00997906283101,0.0,False

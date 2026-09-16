@@ -61,7 +61,18 @@ three human studies falls where the loss is $12$--$20\%$. The expected loss from
 a single noisy greedy choice, computable without running an optimizer, explains
 nearly as much of the variation as the landscape descriptors and the error
 magnitude together, and stays informative beside a descriptor model that lets
-magnitude and landscape interact. Telling the surrogate the true noise variance removes only $5\%$ of the cost,
+magnitude and landscape interact. Decomposing the deployed regret locates that cost: $61.8\%$ $[53.6, 69.5]$ of it
+is \emph{selection} loss --- the run visited a better design than the one it
+ships --- the one term an acquisition function cannot reach, and identically zero
+under exact observation, so a noiseless benchmark never sees it. Consistently,
+none of seven acquisition-side changes improves the deployed design, and
+augmented expected improvement recovers $41\%$ $[27, 53]$ of the cost on the
+search trajectory and none of it on what ships. What works is spending trials on
+identification --- one comparative sitting over the last third of the budget
+gains $0.051$ $[0.028, 0.072]$ of the achievable improvement, and four trials
+confirming the result cut false improvement claims from $15.7\%$ to $0.5\%$ ---
+or modelling the fault explicitly, worth $22$--$38\%$ at near-zero price.
+Telling the surrogate the true noise variance removes only $5\%$ of the cost,
 so the loss is informational; changing the incumbent definition removes $16\%$ overall and
 up to $41\%$ for one acquisition family, so robustness rankings rank
 acquisition-and-incumbent pairs. When the person applies the wrong design
@@ -118,6 +129,17 @@ property of a problem decides whether feedback error hurts''.
     drives it (Sections~\ref{sec:cost}--\ref{sec:acq}). Magnitude, landscape and
     onset dominate, and a one-shot selection loss computable from the landscape
     and the noise level, without running an optimizer, predicts the cost.
+  \item A decomposition of deployed regret into search and selection loss
+    (Section~\ref{sec:decomp}): selection is $61.8\%$ of what error costs, is
+    identically zero under exact observation, and is the term an acquisition
+    cannot reach --- which is what reporting regret at the best \emph{observed}
+    point hides.
+  \item An account of which remedies can therefore work
+    (Section~\ref{sec:budget}, Appendix~\ref{app:budgetneutral}): over
+    twenty-four budget-neutral arms, acquisition changes recover nothing on the
+    deployed design, while spending a third of the budget on identification, or
+    modelling the fault explicitly, recovers $22$--$38\%$, and four confirmation
+    trials cut false improvement claims from $15.7\%$ to $0.5\%$.
   \item A matched run of the fitted-oracle design, which reports about a third
     of the cost, a gap that better oracles do not close (Section~\ref{sec:fitted}).
   \item An input-error arm, in which the person applies the wrong design rather
@@ -147,8 +169,11 @@ observation model: elicit pairwise preferences and fit an ordinal likelihood
 \citep{chu2005preference, gonzalez2017preferential}. That handles inconsistent
 \emph{scaling} but not inconsistent \emph{ranking}, and it does not tell a
 practitioner running a cardinal-rating study what their rater noise will cost.
-We trade the realism of the objective for exactness, and map measured
-rater noise onto the synthetic axis afterwards.
+Appendix~\ref{app:elicitation} measures where the line falls: at equal human cost
+a comparison loop is \emph{exactly} unharmed by drift --- its shipped design
+differs from its clean twin in no run --- and is no better under a saturating
+scale and worse under inconsistency. We trade the realism of the objective for
+exactness, and map measured rater noise onto the synthetic axis afterwards.
 
 \paragraph{Benchmarks and landscape analysis.}
 Results on analytic test functions need not transfer, and suites are small and
@@ -325,6 +350,54 @@ never got there within 100 trials.}
 \input{tables/extra_runs}
 \end{table}
 
+\section{Where the cost is: searching or selecting?}
+\label{sec:decomp}
+
+The regret reported above is the regret of the design a study would deploy, and
+it hides a distinction that decides which remedies can possibly work. Write
+$x^\star$ for the optimum, $V$ for the designs a run visited and $d$ for the one
+it deploys. Then
+\begin{equation}
+  \label{eq:decomp}
+  \underbrace{f(x^\star) - f(d)}_{\text{deployed regret}}
+  \;=\;
+  \underbrace{f(x^\star) - \max_{x \in V} f(x)}_{\text{search loss}}
+  \;+\;
+  \underbrace{\max_{x \in V} f(x) - f(d)}_{\text{selection loss}} .
+\end{equation}
+The first term is what the optimizer failed to find. The second is what the
+ratings failed to identify among what it did find. An acquisition function acts
+on the first term only: it chooses where to sample, and the second term is
+already determined by the time the study picks a design to ship. The selection
+term is also exactly zero under exact observation --- the best-rated visited
+design is then the best visited design --- which is why it never appears in a
+noiseless benchmark and why the field's habit of reporting simple regret at the
+best \emph{observed} point is safe there and not here.
+
+We evaluate both terms on all $64{,}000$ noisy runs by re-scoring every visited
+design under the loop's own refitted surrogate (Appendix~\ref{app:shiprules}). As
+a check rather than an assumption, the largest selection loss over the $2{,}000$
+clean runs is $0.00\times10^{0}$, as Equation~\ref{eq:decomp} requires.
+
+\textbf{Most of what error costs is selection.} Pooled over the four error
+processes, a deployed regret of $0.346$ of the achievable improvement splits into
+$0.212$ of search loss and $0.135$ of selection loss, so selection is $38.9\%$
+$[27.8, 52.6]$ of it. Against the identically seeded clean twin --- the part the
+error caused rather than the part the problem is hard --- of $0.218$ of excess,
+$0.083$ is search and $0.135$ selection: \textbf{selection is $61.8\%$
+$[53.6, 69.5]$ of the cost of error}. The share is the same for every error
+process ($60.7$--$63.6\%$) and rises with magnitude and lateness of onset, from
+$29\%$ at $0.05\sigma$ from the first rating to $82\%$ at $5\sigma$ from trial 21.
+
+\textbf{No rule that re-reads the same ratings recovers it.} Four other ship
+rules remove essentially none of the selection loss: $+3.9\%$ $[-4, +11]$ for the
+posterior mean less two latent SDs, $+0.3\%$ for one, $-1.7\%$ for the mean
+rating, $-8.7\%$ $[-18, -1]$ for the posterior mean. The reason is structural:
+the posterior ranking the visited designs was fitted on the same corrupted
+ratings. Closing the term needs \emph{new} information, which is what
+Section~\ref{sec:budget} spends trials on; Section~\ref{sec:acq} gives the other
+half of the point, an acquisition that improves the search and not what ships.
+
 \section{What makes an error big?}
 \label{sec:currency}
 
@@ -454,6 +527,67 @@ $0.247$, and qUCB takes $10$ of $32$ conditions, UCB and qNEI $6$ each, LogEI $5
 EI $3$, qEI $2$. A study run on one of these landscapes would report a defensible winner that
 largely does not transfer, and could not tell. Appendix~\ref{sec:incumbent} shows that part of this ranking is
 not about the acquisitions at all.
+
+\textbf{A better search does not ship a better design.} The sharper question is
+whether an acquisition built for noisy observations helps at all. We ran seven
+acquisition-side changes as their own arms on the full suite, each keeping the
+human trials fixed, scored against the standard process
+(Appendix~\ref{app:budgetneutral}). None improves the deployed design: augmented
+expected improvement \citep{huang2006global} recovers $+2\%$ $[-6, +11]$ of the
+cost of error, a lower-confidence-bound incumbent $-27\%$ $[-42, -11]$, Thompson
+sampling $-58\%$ $[-81, -40]$, a slip-aware acquisition $-4\%$ to $-35\%$, a
+minimum-distance constraint $-13\%$ $[-23, -6]$; redistributing the same rating
+effort across trials runs from $-7\%$ to $-21\%$. Augmented EI makes the point
+alone: on the post-onset trajectory, the response an acquisition is designed to
+improve, it recovers $+41\%$ $[+27, +53]$, the best of any arm we ran, and on the
+design the study ships it recovers nothing. Under Equation~\ref{eq:decomp} the
+term it improves is not the term that dominates.
+
+\section{Buying identification with the trials you have}
+\label{sec:budget}
+
+If most of the cost is selection, and no re-reading of the ratings recovers it
+(Section~\ref{sec:decomp}), then the only remaining lever is to spend human
+trials on identifying rather than searching. We hold the budget at $T=50$ and
+spend the last $k$ on one comparative sitting: the top $k$ visited designs by the
+ship rule are each shown once, and the best-rated of them is deployed. Everything
+before trial $T-k$ is unchanged, so each procedure is replayed exactly from an
+existing run log (Appendix~\ref{app:endofstudy}). Error shared across the designs
+of one sitting cancels when they are compared, so only the idiosyncratic part
+enters the looks; we report both the full idiosyncratic SD and half of it.
+
+\textbf{Identification is worth about a third of the budget.} Against the
+standard process, in units of the achievable improvement, a sitting of $k=2$
+gains $+0.017$ $[+0.004, +0.029]$, $k=5$ $+0.035$, $k=8$ $+0.042$, $k=12$
+$+0.046$, $k=16$ $+0.051$ $[+0.028, +0.072]$, and then falls away: $k=20$
+$+0.042$, $k=25$ $+0.022$, $k=30$ $-0.008$. The curve is the inverted U the two
+forces imply --- a larger sitting is more likely to contain the best visited
+design and leaves fewer trials to find one --- and it turns over at about a third
+of $T$. The ceiling, choosing the best $k$ for each run in hindsight, is $+0.145$.
+Spending nothing extra and merely changing the ship rule gains $+0.001$
+$[-0.018, +0.018]$, which is the selection result of Section~\ref{sec:decomp} in
+another currency: the trials, not the rule, are what buys the recovery.
+
+\textbf{Ship the fresh look, not the model.} Of the $19$ variants replayed, the
+best takes the top five candidates by the cautious ship rule and deploys
+whichever the final sitting rates highest: it recovers $19.7\%$ $[13, 27]$ of the
+deployed cost of \textsc{gaussian} error, $33.6\%$ $[25, 41]$ at $5\sigma$ from
+trial 21, and $27.9\%$ $[20, 36]$ under an unnoticed slip. Folding the same looks
+into the surrogate's posterior rather than trusting them does worse
+($11.5\%$), for the reason the selection term exists at all: the posterior was
+fitted on the corrupted ratings and carries them forward. It is not universally
+safe --- under misclicks it \emph{loses} $14.3\%$ $[-30, -2]$, since a sitting
+re-shows the \emph{recorded} design rather than the one that earned the rating,
+and below $0.25\sigma$ every variant costs more than the error does.
+
+\textbf{A model-based budget rule inherits the corruption it was meant to fix.}
+Choosing $k$ per run from the surrogate's posterior and the run's own rate of
+improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: $+0.005$
+$[-0.011, +0.022]$ against $+0.051$, because in $64\%$ of runs it declines the
+sitting in favour of the posterior-mean design, the worst policy of all at
+$-0.013$. Its utility is the surrogate's posterior, the surrogate was fitted on
+corrupted ratings, and so it is confident about designs it should not be. We did
+not find a rule that beats simply fixing $k$ at about a third of the budget.
 
 \section{What the fitted-oracle design would have concluded}
 \label{sec:fitted}
@@ -1202,6 +1336,223 @@ acquisitions and five seeds.}
 \end{table}
 
 \FloatBarrier
+\section{Re-scoring the design a study ships}
+\label{app:shiprules}
+
+The deployed regret everywhere else in this paper uses one ship rule: the design
+with the single best observed rating. To separate search from selection
+(Section~\ref{sec:decomp}) we re-score what the same trials would have shipped
+under other rules, adding no trial. The loop's own surrogate --- BoTorch's
+default single-task GP, normalised over the benchmark's box and standardised ---
+is refitted on every logged observation, and each rule picks among the
+\emph{visited} designs: the best single rating (the standard), the best mean
+rating, the posterior-mean maximiser, the maximiser of the posterior mean less
+one or two latent SDs, and, as the ceiling, the visited design with the best true
+value. The arm's own logged rule must reproduce the logged final regret to
+$10^{-9}$ in every run or the analysis stops; over the $66{,}000$ runs it did, with
+no failed fits.
+
+Scored as a share of the deployed cost of \textsc{gaussian} error, the cautious
+rule (posterior mean less two latent SDs) recovers $+5.8\%$ $[2, 10]$ at
+$1\sigma$ from the first rating, $+12.6\%$ $[4, 23]$ at $1\sigma$ from trial 21,
+$+9.7\%$ $[5, 15]$ and $+18.5\%$ $[11, 26]$ at $5\sigma$. It pays a fixed price
+of $0.015$ of the achievable improvement whether or not error is present, so
+below $0.25\sigma$ it costs $80$--$150\%$ more than the error does and should not
+be used without an estimate of the rater's noise. Under \textsc{bias} it survives
+only at $1\sigma$ ($+5.5\%$ $[1, 9]$); under \textsc{drift} and \textsc{ar1}
+nothing survives correction.
+
+\section{End-of-study procedures}
+\label{app:endofstudy}
+
+Both procedures keep $T$ fixed and spend the final trials differently, so each is
+replayed exactly from an existing log: truncate at the trial the procedure
+starts, refit the loop's GP on that prefix, and simulate only the new trials. The
+premise is checked against the re-rating arm, whose earlier trials must equal the
+standard run's.
+
+\emph{Tournament($k$)}. Search trials $1..T-k$; the last $k$ are one sitting in
+which each of $k$ candidates is shown once. Candidates are the top $k$ visited
+designs by the cautious ship rule, or by observed rating; the winner is the best
+look, or the posterior mean after conditioning on the looks. Error shared by
+every trial of a sitting cancels under comparison, so only the idiosyncratic part
+enters: $\sigma$ for \textsc{gaussian}, \textsc{bias} and \textsc{drift}, the
+innovation for \textsc{ar1}, and we report the sitting at both that SD and half
+of it.
+
+\emph{Confirmation($k$)}. Search trials $1..T-2k$; the last $2k$ rate the chosen
+design and the best initial design $k$ times each in counterbalanced order, and
+the chosen design ships only if a one-sided paired $t$-test at $\alpha=0.05$
+prefers it. This changes little about the design that ships (it recovers
+$3.2\%$--$3.4\%$ of the cost) and a great deal about what the study may claim.
+The standard process claims an improvement in $98.3\%$ of runs and that claim is
+false in $15.7\%$ of them, rising to $42.7\%$ at $5\sigma$. Four confirmation
+trials take the false-claim rate to $0.5\%$ overall and $1.0\%$ at $5\sigma$, at
+the cost of detecting only $50.7\%$ of the real improvements; eight trials give
+$0.46\%$ and $65.7\%$.
+
+\section{Deriving the split from the run in hand}
+\label{app:budgetrule}
+
+Write $\mu_i, \sigma_i$ for the loop GP's posterior latent mean and SD at the
+distinct designs visited by the decision point, ordered by the cautious ship
+rule, and $s$ for the idiosyncratic rating SD of a sitting. A $k$-tournament
+shows the top $k$ candidates once each, so with $f_i \sim
+\mathcal{N}(\mu_i, \sigma_i^2)$ and looks $y_i = f_i + \mathcal{N}(0, s^2)$ the
+identification term is $U(k) = \mathbb{E}[f_{\arg\max_i y_i}]$, evaluated by
+Monte Carlo. It is not monotone in $k$: a larger candidate set is more likely to
+contain the best visited design and more likely to let a worse one win on a lucky
+look. The search term prices the forgone trials by the run's own gain in best
+rating per trial over the last ten, floored at zero. Every policy --- ship by
+posterior mean, ship by the cautious rule, or a tournament of $k$ --- is scored
+under the single posterior at $n_0 = T - \max k$, the last trial at which all of
+them are still open; scoring each $k$ under its own $T-k$ posterior looks more
+faithful and is not, because two GPs fitted on different numbers of points put
+their maxima on different scales, and the comparison then picks up that
+difference rather than the difference between policies. The rule reads only
+ratings and the surrogate; the true objective enters only when the choice is
+scored, against the realised regret of that $(\text{run}, k)$ in the replay.
+
+\section{Budget-neutral arms}
+\label{app:budgetneutral}
+
+Every arm below keeps the number of human trials equal to the standard process or
+lowers it, and is scored against the standard process by the estimand of
+Appendix~\ref{app:adapt}: twenty landscapes, seeds 7--11, both onsets where the
+arm has them. Table~\ref{tab:budgetneutral} gives the share of the standard
+process's cost of error that each recovers on the design the study deploys.
+
+The pattern is not that everything fails. It is that what fails is the
+acquisition, and what works is an explicit model of how the rating was produced.
+Clipping the response to the range actually observed recovers $22$--$35\%$ of the
+cost of gross faults at a price of exactly zero; a relevance-pursuit likelihood
+recovers $26$--$38\%$ when $15\%$ of trials carry a gross fault and loses when
+only $5\%$ do; fitting per-rater offsets recovers $32\%$ $[23, 40]$ when raters
+alternate and nothing when they hand over in blocks, because a block offset is
+confounded with the search's own time trend while an interleaved one is
+identifiable; re-anchoring a saturating cap recovers $25\%$ $[17, 32]$; and
+removing the factor shared across objectives recovers $25\%$ $[7, 50]$ of the
+deployed cost of halo error. A saturating rating scale is itself among the most
+expensive faults we measured, costing $185\%$ $[132, 258]$ more than the same
+rating noise on a scale that does not saturate.
+
+\begin{table}[htbp]
+\centering
+\caption{Budget-neutral arms: share of the standard process's cost of error
+recovered on the deployed design, with 95\% landscape-bootstrap intervals.
+Negative means the change does worse under error than the standard process.
+Above the rule, changes to the search; below it, changes to the model of how the
+rating was produced.}
+\label{tab:budgetneutral}
+\small
+\begin{tabular}{lr}
+\toprule
+Arm & Recovered \\
+\midrule
+Augmented expected improvement & $+2\%$ $[-6, +11]$ \\
+Slip-aware acquisition, $0.05$ slip & $-4\%$ $[-15, +4]$ \\
+Effort front-loaded to the first ten trials & $-7\%$ $[-20, +4]$ \\
+Effort front-loaded to the first twenty & $-8\%$ $[-31, +5]$ \\
+Effort on the last ten trials & $-12\%$ $[-24, -2]$ \\
+Minimum-distance proposals & $-13\%$ $[-23, -6]$ \\
+Slip-aware acquisition, $0.15$ slip & $-18\%$ $[-34, -9]$ \\
+Effort split between first and last trials & $-21\%$ $[-33, -10]$ \\
+Lower-confidence-bound incumbent & $-27\%$ $[-42, -11]$ \\
+Slip-aware acquisition, $0.4$ slip & $-35\%$ $[-54, -16]$ \\
+Thompson sampling & $-58\%$ $[-81, -40]$ \\
+A lost rating imputed low rather than dropped & $-979\%$ \\
+\midrule
+Relevance pursuit, $15\%$ of trials spiking at $20$ SD & $+38\%$ $[+24, +51]$ \\
+Response clipped to range, $5\%$ spiking at $20$ SD & $+35\%$ $[+23, +46]$ \\
+Per-rater offsets, round-robin handover & $+32\%$ $[+23, +40]$ \\
+Relevance pursuit, $15\%$ spiking at $5$ SD & $+26\%$ $[+7, +42]$ \\
+Re-anchored rating cap & $+25\%$ $[+17, +32]$ \\
+Halo backfit across objectives & $+25\%$ $[+7, +50]$ \\
+Response clipped to range, $5\%$ spiking at $5$ SD & $+22\%$ $[+10, +35]$ \\
+Response clipped to range, $15\%$ spiking at $20$ SD & $+22\%$ $[+4, +38]$ \\
+Response clipped to range, $15\%$ spiking at $5$ SD & $+6\%$ $[-7, +18]$ \\
+Per-rater offsets, block handover & $+5\%$ $[-5, +14]$ \\
+Relevance pursuit, $5\%$ spiking at $20$ SD & $-30\%$ $[-119, +12]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Comparisons instead of ratings: what the invariance does and does not buy}
+\label{app:elicitation}
+
+Preference elicitation is the usual response to an unreliable rater
+\citep{chu2005preference, gonzalez2017preferential}, on the argument that a
+comparison is invariant to how the rater uses the scale. The argument is exact
+and its reach is narrow, and both halves are measurable here. A fault is
+\emph{shared} when it acts on every design of one sitting through the same
+monotone map $g$; then for strictly increasing $g$, $g(f(a)) > g(f(b))
+\Leftrightarrow f(a) > f(b)$, and the comparison is exactly what it would have
+been with no fault. A fault drawn afresh for each judgement cancels nothing, and
+a comparison inherits the noise of both designs.
+
+We ran two loops at equal human cost on the twenty landscapes, three seeds, $T=20$
+judgements: the standard rating loop, and a comparison loop with a Laplace-approximate
+\textsc{PairwiseGP} \citep{balandat2020botorch} on which each trial proposes one
+design and asks for a comparison with the incumbent, shipping the
+posterior-mean maximiser. Ten of the $960$ fits fell back to prior
+hyperparameters and are counted, not dropped. Each loop is scored against its own
+identically seeded clean twin.
+
+The invariance holds exactly and buys exactly what it should. Under
+\textsc{drift} the rating loop's shipped design differs from its clean twin in
+$41$ of $60$ runs, at an excess of $0.040$ of the achievable improvement; the
+comparison loop's differs in \emph{none}, at an excess of $0.000$ --- not
+approximately, in no run. Under a saturating scale, a map that is monotone but
+not strictly so, the comparison buys nothing ($-0.3\%$ $[-30, +27]$): two designs
+above the cap are indistinguishable, and near the optimum that is exactly the
+pair the study must tell apart. Under \textsc{gaussian} noise, drawn afresh per
+judgement, the comparison is \emph{worse} by $26.5\%$ $[-79, +15]$, the direction
+the $\sqrt2$ argument predicts. A constant \textsc{bias} present from the first
+trial moves neither loop, in no run: a rating loop that standardises its outputs
+and ships an argmax is already shift-equivariant, so that arm tests the rating
+loop's invariance rather than the comparison's, and the cost of \textsc{bias}
+elsewhere in this paper comes from its arriving \emph{part-way through}.
+
+So changing the elicitation is not a general remedy. It removes, exactly, that
+part of the fault which is a strictly monotone reparametrisation of the scale
+--- drift, a rater's personal offset, a handover between raters --- and nothing
+of the inconsistency, the saturation or the gross faults.
+
+\section{Is the CUSUM the right detector?}
+\label{app:detector}
+
+The freeze rule of Section~\ref{sec:budget} detects a mid-study change with a
+one-sided CUSUM on the squared one-step-ahead standardised residual of the
+loop's own surrogate. A CUSUM is a choice, not a derivation, so we compare it
+with two alternatives on exactly the same $13{,}200$ residual streams
+($6{,}600$ tuning, $6{,}600$ held out; $6{,}400$ carrying a real mid-study
+change). Since the residual is standard normal while the rater behaves and a
+rater who becomes noisier inflates its variance, every detector tests
+$\mathcal{N}(0,1)$ against $\mathcal{N}(0,\sigma^2)$, $\sigma>1$:
+the CUSUM; the generalised likelihood ratio maximised over the unknown change
+point, whose statistic $\max_\tau \tfrac{n}{2}(\hat\sigma^2_\tau - 1 -
+\log\hat\sigma^2_\tau)$ is the classical answer to that question and what a
+CUSUM approximates; and Bayesian online change-point detection
+\citep{adams2007bayesian} with a constant hazard and a normal--inverse-gamma
+model of the post-change variance, alarming when the posterior probability that
+the current run is short exceeds a threshold. Each detector's threshold is tuned
+on the tuning seeds to a common false-alarm budget --- an alarm is false when the
+rater never changed, or when it fires at or before a late onset --- and scored on
+the held-out seeds.
+
+\textbf{The detector is not the bottleneck.} At a $10\%$ budget the GLR detects
+$45.5\%$ of changes and the CUSUM $45.4\%$; at $5\%$, $36.8\%$ against $36.9\%$;
+at $20\%$, $56.0\%$ against $56.4\%$. The CUSUM matches the classical optimum for
+this alternative to within half a percentage point at every budget, so there is
+nothing to be gained by replacing it. Bayesian online detection is worse on
+detection rate at every budget ($23.0\%$, $32.2\%$, $45.1\%$) but alarms with a
+median delay of $2$ trials against the CUSUM's $6$--$9$. Since the freeze
+ceiling falls from $82\%$ to $54\%$ after two trials of delay
+(Section~\ref{sec:budget}), that trade is not obviously a bad one, but it is a
+choice of operating point rather than a better method. What limits the freeze
+rule is the signal --- a rater who becomes somewhat noisier midway simply does
+not leave much of one --- not the statistic computed from it.
+
 \section{Process adaptations}
 \label{app:adapt}
 

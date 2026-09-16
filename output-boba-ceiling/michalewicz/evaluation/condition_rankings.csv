@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+michalewicz,value,exact,gaussian,0,0.25,ceil0.9-anchored,logei,5,2,1.4,0.3999999999999999,1.6,28.512763928876286,11.306328344597716,0.5818931414056387,262.4698913704362,0.0,True
+michalewicz,value,exact,gaussian,0,0.25,ceil0.9-anchored,qnei,5,2,1.6,0.6000000000000001,1.4,34.360283536166556,33.33600061457818,0.7012302762482971,260.3353012131359,0.0,False
+michalewicz,value,exact,gaussian,0,0.25,ceil0.9-fixed,logei,5,2,1.4,0.3999999999999999,1.4,28.264414959118902,1.3488086114616635,0.5768247950840591,262.22154240067886,0.0,True
+michalewicz,value,exact,gaussian,0,0.25,ceil0.9-fixed,qnei,5,2,1.6,0.6000000000000001,1.6,48.82838011585052,63.45204011829637,0.9964975533847044,274.80339779281985,0.0,False
+michalewicz,value,exact,gaussian,0,1.0,ceil0.9-anchored,qnei,5,2,1.4,0.3999999999999999,1.2,51.34914862459067,60.3830165104923,1.0479418086651155,277.32416630156,0.0,True
+michalewicz,value,exact,gaussian,0,1.0,ceil0.9-anchored,logei,5,2,1.6,0.6000000000000001,1.8,56.795073131371865,65.84169684840396,1.1590831251300382,290.7522005729318,0.0,False
+michalewicz,value,exact,gaussian,0,1.0,ceil0.9-fixed,qnei,5,2,1.4,0.3999999999999999,1.4,50.40131393915994,49.28311315157836,1.0285982436563252,276.3763316161293,0.0,True
+michalewicz,value,exact,gaussian,0,1.0,ceil0.9-fixed,logei,5,2,1.6,0.6000000000000001,1.6,49.835261345324284,53.67302182318491,1.0170461499045775,283.7923887868842,0.0,False

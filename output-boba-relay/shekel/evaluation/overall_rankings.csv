@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+shekel,value,qnei,0.5,1.55,4.879245197916923,2405.5326491280366,0.0,2,4
+shekel,value,logei,0.5,1.45,6.144729010138447,2416.0294793871453,0.0,2,4

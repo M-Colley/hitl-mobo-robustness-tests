@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,spike,0,0.25,sp0.05-20,logei,5,2,1.5,0.5,1.5,-0.5750992120392848,0.05229237677961329,-0.011736718613046638,10.921857819149709,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.05-20,qnei,5,2,1.5,0.5,1.5,-0.45697173801388014,0.0,-0.00932595383701797,10.991023696466964,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.05-5,logei,5,2,1.5,0.5,1.5,-0.5750992120392848,0.05229237677961329,-0.011736718613046638,10.921857819149709,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.05-5,qnei,5,2,1.5,0.5,1.5,-0.45697173801388014,0.0,-0.00932595383701797,10.991023696466964,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.15-20,logei,5,2,1.2,0.19999999999999996,1.2,2.5975299674677195,2.437884385595213,0.0530108156626065,14.094486998656715,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.15-20,qnei,5,2,1.8,0.8,1.8,16.4592131062071,24.310588112434367,0.3359023082899408,27.907208540687947,0.0,False
+stevens,value,exact,spike,0,0.25,sp0.15-5,logei,5,2,1.2,0.19999999999999996,1.2,5.566368637433579,2.437884385595213,0.11359935994762407,17.06332566862257,0.0,True
+stevens,value,exact,spike,0,0.25,sp0.15-5,qnei,5,2,1.8,0.8,1.8,18.214991845631857,17.67933781192335,0.37173452746187463,29.662987280112702,0.0,False

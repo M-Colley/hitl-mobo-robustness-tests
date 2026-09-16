@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+yerkes_dodson,value,exact,spike,0,0.25,sp0.05-20_relevancepursuit,qnei,5,2,1.2,0.19999999999999996,1.2,5.678010688530753,1.69924287381102,0.11587776915368886,37.11396154975118,0.0,True
+yerkes_dodson,value,exact,spike,0,0.25,sp0.05-20_relevancepursuit,logei,5,2,1.8,0.8,1.8,13.351327747078471,14.165660679045988,0.2724760764709892,51.339297085315295,0.0,False
+yerkes_dodson,value,exact,spike,0,0.25,sp0.05-5_relevancepursuit,qnei,5,2,1.2,0.19999999999999996,1.0,-2.937237341767286,-4.397777654537272,-0.05994361921974053,28.498713519453144,0.0,True
+yerkes_dodson,value,exact,spike,0,0.25,sp0.05-5_relevancepursuit,logei,5,2,1.8,0.8,2.0,12.081773760894048,10.852861966819791,0.2465668114468173,50.06974309913087,0.0,False
+yerkes_dodson,value,exact,spike,0,0.25,sp0.15-20_relevancepursuit,logei,5,2,1.4,0.3999999999999999,1.4,34.41173190976558,26.715691486286772,0.7022802430564402,72.3997012480024,0.0,True
+yerkes_dodson,value,exact,spike,0,0.25,sp0.15-20_relevancepursuit,qnei,5,2,1.6,0.6000000000000001,1.6,33.89261472004195,24.70911123229505,0.6916860146947338,65.32856558126238,0.0,False
+yerkes_dodson,value,exact,spike,0,0.25,sp0.15-5_relevancepursuit,qnei,5,2,1.4,0.3999999999999999,1.4,16.51369151816831,11.210335446051328,0.3370141126156798,47.949642379388735,0.0,True
+yerkes_dodson,value,exact,spike,0,0.25,sp0.15-5_relevancepursuit,logei,5,2,1.6,0.6000000000000001,1.6,11.790347476235686,15.200194223358238,0.24061933624970785,49.778316814472504,0.0,False

@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+power_law_practice,value,exact,gaussian,0,0.25,ceil0.9-anchored,qnei,5,2,1.4,0.3999999999999999,1.4,1.9474817286149047,2.232231940132536,0.03974452507377356,8.569987036962369,0.0,True
+power_law_practice,value,exact,gaussian,0,0.25,ceil0.9-anchored,logei,5,2,1.6,0.6000000000000001,1.6,3.5977841549484006,1.226152336782528,0.07342416642751837,10.371222247233197,0.0,False
+power_law_practice,value,exact,gaussian,0,0.25,ceil0.9-fixed,qnei,5,2,1.4,0.3999999999999999,1.4,2.621141751135439,1.4763650256038243,0.05349268879868243,9.243647059482901,0.0,True
+power_law_practice,value,exact,gaussian,0,0.25,ceil0.9-fixed,logei,5,2,1.6,0.6000000000000001,1.6,4.4231930734765585,4.87858791822456,0.09026924639748077,11.196631165761355,0.0,False
+power_law_practice,value,exact,gaussian,0,1.0,ceil0.9-anchored,qnei,5,2,1.0,0.0,1.0,4.286104818448086,3.6932295155371904,0.08747152690710382,10.908610126795548,0.0,True
+power_law_practice,value,exact,gaussian,0,1.0,ceil0.9-anchored,logei,5,2,2.0,1.0,2.0,19.701269624946065,19.24040674265253,0.4020667270397157,26.47470771723086,0.0,False
+power_law_practice,value,exact,gaussian,0,1.0,ceil0.9-fixed,qnei,5,2,1.2,0.19999999999999996,1.2,11.011672897213028,8.055908041179606,0.22472801831046998,17.634178205560495,0.0,True
+power_law_practice,value,exact,gaussian,0,1.0,ceil0.9-fixed,logei,5,2,1.8,0.8,1.8,14.506009948430792,17.256626767410253,0.29604101935573046,21.279448040715593,0.0,False

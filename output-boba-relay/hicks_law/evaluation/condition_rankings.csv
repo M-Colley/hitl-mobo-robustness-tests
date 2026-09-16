@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,gaussian,0,0.25,rater-block10-tau2,qnei,5,2,1.4,0.3999999999999999,1.4,-1.7434061820021078,-0.7952454452017825,-0.035579718000043024,25.39210590741318,0.0,True
+hicks_law,value,exact,gaussian,0,0.25,rater-block10-tau2,logei,5,2,1.6,0.6000000000000001,1.6,0.14373248424078966,0.8120704281607942,0.002933316004914077,27.245010728386184,0.0,False
+hicks_law,value,exact,gaussian,0,0.25,rater-roundrobin5-tau2,logei,5,2,1.4,0.3999999999999999,1.4,11.611289498911741,0.795681406054328,0.23696509181452532,38.712567743057136,0.0,True
+hicks_law,value,exact,gaussian,0,0.25,rater-roundrobin5-tau2,qnei,5,2,1.6,0.6000000000000001,1.6,8.104280186276728,6.942109114374631,0.16539347318932102,35.23979227569201,0.0,False
+hicks_law,value,exact,gaussian,0,1.0,rater-block10-tau2,qnei,5,2,1.2,0.19999999999999996,1.2,26.13217971474669,22.003895801692806,0.5333097900968712,53.26769180416197,0.0,True
+hicks_law,value,exact,gaussian,0,1.0,rater-block10-tau2,logei,5,2,1.8,0.8,1.8,59.30032608159,76.84690518250142,1.2102107363589796,86.40160432573538,0.0,False
+hicks_law,value,exact,gaussian,0,1.0,rater-roundrobin5-tau2,logei,5,2,1.2,0.19999999999999996,1.2,82.39289444145,91.8656824778911,1.6814876416622446,109.49417268559537,0.0,True
+hicks_law,value,exact,gaussian,0,1.0,rater-roundrobin5-tau2,qnei,5,2,1.8,0.8,1.8,89.45512929810765,84.23416328701826,1.8256148836348494,116.59064138752292,0.0,False

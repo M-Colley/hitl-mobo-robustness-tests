@@ -66,12 +66,18 @@ GRID = (0.05, 0.25, 1.0, 5.0)
 BOOTSTRAP_REPS = 2000
 BOOTSTRAP_SEED = 20260913
 S5 = "7,8,9,10,11"
+S10 = "7,8,9,10,11,12,13,14,15,16"
 TEN = "logei,ei,pi,ucb,qucb,qnei,logpi,qei,qpi,greedy"
 
 
-def arm(dir_, ref, acqs, what, seeds=S5, ref_acqs=None, pool=False, relative=False, error_model=None):
+def arm(dir_, ref, acqs, what, seeds=S5, ref_acqs=None, pool=False, relative=False, error_model=None,
+        variant=None, ref_variant=None):
+    # variant/ref_variant select one condition out of a directory that holds
+    # several (four spike sizes, two ceiling modes, a halo rho). None means "the
+    # whole directory", which is every arm that predates the variant column.
     return dict(dir=dir_, ref=ref, acqs=acqs, ref_acqs=ref_acqs or acqs, seeds=seeds, what=what,
-                pool=pool, relative=relative, error_model=error_model)
+                pool=pool, relative=relative, error_model=error_model,
+                variant=variant, ref_variant=ref_variant)
 
 
 ARMS = {
@@ -153,17 +159,77 @@ ARMS = {
     "missing-impute-low": arm("output-boba-missing-impute", "output-boba-missing-drop", "logei,ucb",
                               "a rating lost because the design was bad, imputed low instead of dropped",
                               error_model="missing_low"),
+
+    # A saturating rating scale: does re-anchoring the cap to the best design so
+    # far beat a cap fixed at the 0.9 quantile of the landscape?
+    "ceiling-anchored": arm("output-boba-ceiling", "output-boba-ceiling", "logei,qnei",
+                            "a rating cap re-anchored to the best design so far, against a fixed cap",
+                            error_model="gaussian", variant="ceil0.9-anchored",
+                            ref_variant="ceil0.9-fixed"),
+    "ceiling-cost": arm("output-boba-ceiling", "output-boba", "logei,qnei",
+                        "what a rating scale that saturates costs, against a scale that does not",
+                        error_model="gaussian", variant="ceil0.9-fixed"),
+
+    # Correlated rating error across objectives (halo), and the backfit that
+    # removes the shared factor. The reference for the remedy is the SAME halo
+    # with no model; the no-halo pair prices the model when there is nothing to
+    # remove.
+    "mo-halo-cost": arm("output-boba-mo-halo", "output-boba-mo-halo", "qlognehvi",
+                        "rating error shared across objectives, against independent error",
+                        seeds=S10, error_model="gaussian", variant="xc0.85", ref_variant=""),
+    "mo-halo-backfit": arm("output-boba-mo-halo-backfit", "output-boba-mo-halo", "qlognehvi",
+                           "the shared factor estimated and removed, under halo error",
+                           seeds=S10, error_model="gaussian", variant="xc0.85_halo-backfit",
+                           ref_variant="xc0.85"),
+    "mo-halo-backfit-price": arm("output-boba-mo-halo-backfit", "output-boba-mo-halo", "qlognehvi",
+                                 "the same model where there is no shared factor to remove",
+                                 seeds=S10, error_model="gaussian", variant="halo-backfit",
+                                 ref_variant=""),
 }
 
+# The gross-fault family. Four spike sizes share one directory each, so every
+# comparison names its own: both remedies are scored against the SAME spike size
+# with no remedy, never against a different one.
+for _sp in ("sp0.05-5", "sp0.05-20", "sp0.15-5", "sp0.15-20"):
+    _prob, _size = _sp[2:].split("-")
+    ARMS[f"spike-clip-{_sp}"] = arm(
+        "output-boba-spike-clip", "output-boba-spike", "logei,qnei",
+        f"the response clipped to the observed range, {_prob} of trials spiking at {_size} SD",
+        error_model="spike", variant=_sp, ref_variant=_sp)
+    ARMS[f"spike-rrp-{_sp}"] = arm(
+        "output-boba-spike-rrp", "output-boba-spike", "logei,qnei",
+        f"a relevance-pursuit GP, {_prob} of trials spiking at {_size} SD",
+        error_model="spike", variant=f"{_sp}_relevancepursuit", ref_variant=_sp)
 
-def load(root: Path, acqs: set[str], seeds: set[int], error_model: str | None) -> pd.DataFrame:
+# Relay raters: the per-rater offset model against the same handover with none.
+# The backfit changes the clean run, so each assignment has its own directory
+# (one variant, hence no `variant` here) and its reference is the matching
+# handover inside the shared relay directory.
+for _tag, _relay in (("block", "rater-block10-tau2"), ("rr", "rater-roundrobin5-tau2")):
+    ARMS[f"relay-backfit-{_tag}"] = arm(
+        f"output-boba-relay-backfit-{_tag}", "output-boba-relay", "logei,qnei",
+        f"per-rater offsets estimated inside the GP ({_relay})",
+        error_model="gaussian", ref_variant=_relay)
+
+
+def load(root: Path, acqs: set[str], seeds: set[int], error_model: str | None,
+         variant: str | None = None) -> pd.DataFrame:
     files = sorted(root.glob("*/evaluation/paired_excess_metrics.csv"))
     if not files:
         raise FileNotFoundError(f"no evaluation outputs under {root}")
     df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    # An empty variant is written as an empty field and read back as NaN, so it
+    # is normalised here rather than in every caller. A directory that predates
+    # the variant column has none at all.
+    df["variant"] = df["variant"].fillna("") if "variant" in df.columns else ""
     keep = ~df["acquisition"].isin(MODEL_FREE) & df["acquisition"].isin(acqs) & df["seed"].isin(seeds)
     if error_model is not None:
         keep &= df["error_model"] == error_model
+    if variant is not None:
+        present = set(df["variant"])
+        if variant not in present:
+            raise ValueError(f"{root} holds no runs with variant {variant!r}; it has {sorted(present)}")
+        keep &= df["variant"] == variant
     return df[keep]
 
 
@@ -249,8 +315,10 @@ def main(argv=None) -> None:
             print(f"{name}: no results yet, skipped")
             continue
         seed_set = {int(s) for s in spec["seeds"].split(",")}
-        ref_df = load(ref_dir, set(spec["ref_acqs"].split(",")), seed_set, spec["error_model"])
-        arm_df = load(arm_dir, set(spec["acqs"].split(",")), seed_set, spec["error_model"])
+        ref_df = load(ref_dir, set(spec["ref_acqs"].split(",")), seed_set, spec["error_model"],
+                      spec.get("ref_variant"))
+        arm_df = load(arm_dir, set(spec["acqs"].split(",")), seed_set, spec["error_model"],
+                      spec.get("variant"))
         if spec["relative"]:
             ref_df, arm_df = rank_magnitudes(ref_df), rank_magnitudes(arm_df)
         print(f"\n=== {name}: {spec['what']} (reference {ref_dir}) ===")

@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -79,11 +80,48 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+# The variant suffix a run's file name carries after the standard stem. One
+# output directory may hold several variants of one arm -- four spike sizes, two
+# ceiling modes, a halo rho -- and nothing inside the log distinguishes them:
+# run_metadata.json is overwritten by the last invocation, and the simulator does
+# not write the adaptation fields per row. The file name is the only record, so
+# it is parsed here and carried as a column. Runs with no suffix get "", which is
+# what a single-variant directory produces, so nothing about those moves.
+# A jittered run ends in _jit<onset>_std<magnitude>, which is unambiguous
+# whatever the error model is called (missing_low carries an underscore of its
+# own). A baseline ends in the oracle model's name, which ALSO carries
+# underscores ("extra_trees"), so that one is not guessed from the name: the
+# oracle is read from the log and stripped exactly. Guessing it split
+# "extra_trees" into oracle "extra" and variant "trees" and would have
+# fragmented every fitted-oracle arm.
+_JITTERED_SUFFIX = re.compile(r"_jittered_.+?_jit\d+_std[0-9.]+(?P<suffix>.*)$")
+
+
+def parse_variant(name: str, oracle_model: str | None = None) -> str:
+    """The variant suffix of a per-run log file name, or "" if it has none."""
+    stem = name[:-4] if name.endswith(".csv") else name
+    match = _JITTERED_SUFFIX.search(stem)
+    if match is not None:
+        return match.group("suffix").lstrip("_")
+    if oracle_model:
+        marker = f"_baseline_{oracle_model}"
+        if marker in stem:
+            return stem.split(marker, 1)[1].lstrip("_")
+    return ""
+
+
 def load_iteration_logs(input_dir: Path) -> pd.DataFrame:
     files = sorted(input_dir.glob("bo_sensor_error_*_seed*_*.csv"))
     if not files:
         raise FileNotFoundError("No per-iteration logs found in input-dir.")
-    frames = [pd.read_csv(path) for path in files]
+    frames = []
+    for path in files:
+        frame = pd.read_csv(path)
+        oracle = None
+        if "oracle_model" in frame.columns and len(frame):
+            oracle = str(frame["oracle_model"].iloc[0])
+        frame["variant"] = parse_variant(path.name, oracle)
+        frames.append(frame)
     df = pd.concat(frames, ignore_index=True)
     if "dataset" not in df.columns:
         raise ValueError("Per-iteration logs must include a dataset column.")
@@ -228,6 +266,7 @@ def build_response_table(logs: pd.DataFrame) -> pd.DataFrame:
                 "seed": int(base_row["seed"]),
                 "oracle_model": str(base_row["oracle_model"]),
                 "baseline": baseline,
+                "variant": str(base_row["variant"]) if "variant" in run_df.columns else "",
                 "error_model": str(base_row["error_model"]),
                 "jitter_std": float(base_row["jitter_std"]),
                 "jitter_iteration": int(jitter_iteration),
@@ -356,6 +395,12 @@ CONDITION_COLS = [
     "error_model",
     "jitter_iteration",
     "jitter_std",
+    # The variant separates several conditions sharing one output directory. It
+    # is NOT a pairing key: a variant that leaves the clean run alone shares its
+    # baseline with every other, which is why build_paired_table joins without
+    # it. A variant that DOES change the clean run needs its own --output-dir,
+    # and the simulator's own clean-run guard refuses anything else.
+    "variant",
 ]
 
 

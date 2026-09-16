@@ -1,5 +1,9 @@
 # HITL MOBO Robustness Tests
 
+<!-- HANDOVER-START -->
+> **Handover in progress (2026-09-16).** Read `handover/README.md` first. It lists the state of the ICLR 2027 submission (abstract due Friday 18 September, paper due Friday 25 September 2026, AoE), the open defects, which machine holds the data, and what to do in which order. The `handover/` folder and this block are deleted before submission with `python handover/strip_handover_blocks.py`.
+<!-- HANDOVER-END -->
+
 This repository simulates Bayesian optimization under noisy human feedback.
 
 It is meant to answer a simple question:
@@ -81,8 +85,10 @@ resumable after any interruption and keep the machine awake while running:
   inspecting the screening rankings.
 
 - `run_boba_pipeline.ps1` — the known-function arm. Fresh `output-boba\`
-  directory; 20 benchmarks x 12 acquisitions x 20 seeds x (1 baseline + 4 error
-  models x 4 magnitudes x 2 onsets) = 158,400 runs, ~17 h on 24 workers. Runs the
+  directory; 20 benchmarks x 12 acquisitions x 10 seeds x (1 baseline + 4 error
+  models x 4 magnitudes x 2 onsets) = 79,200 runs, 19.7 h on 24 workers (the
+  paper's sweep used seeds 7-16; the driver's `$SEEDS` decides). The simulator
+  is CPU-only and single-threaded per worker; a GPU does not help. Runs the
   correctness gate first, then the sweep, then a per-benchmark evaluation and the
   cross-benchmark synthesis.
 
@@ -319,7 +325,7 @@ verified optimum, and each landscape's geometry is measured up front, so
 
 ```bash
 python scripts/boba_benchmarks.py --output boba_landscape_stats.json
-python scripts/bo_synthetic_error_simulation.py --functions all --acq all --error-models gaussian,bias,drift,ar1 --jitter-stds 0.05,0.25,1.0,5.0 --jitter-iterations 0,20 --error-bias-mode scaled --seeds 7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26 --output-dir output-boba --n-jobs 24 --resume
+python scripts/bo_synthetic_error_simulation.py --functions all --acq all --error-models gaussian,bias,drift,ar1 --jitter-stds 0.05,0.25,1.0,5.0 --jitter-iterations 0,20 --error-bias-mode scaled --seeds 7,8,9,10,11,12,13,14,15,16 --output-dir output-boba --n-jobs 24 --resume
 python scripts/evaluate_research_question.py --input-dir output-boba/ackley --output-dir output-boba/ackley/evaluation
 python scripts/analyse_boba_robustness.py --input-dir output-boba --output-dir output-boba/analysis
 ```
@@ -336,13 +342,14 @@ Things worth knowing about this arm:
   affine, so the optimisation problem is untouched.
 - **`opt_z` is the second scale, and it is left in.** It records how many
   landscape SDs the optimum sits above an average random design, and it ranges
-  from 1.25 (`branin`) to 56.8 (`shekel`). The same nominal error is therefore
+  from 0.76 (`powell`) to 56.8 (`shekel`). The same nominal error is therefore
   trivial on one benchmark and catastrophic on another; `analyse_boba_robustness.py`
-  uses that 45x lever arm to test which of the two scales fragility actually
+  uses that 74x lever arm to test which of the two scales fragility actually
   follows, rather than assuming one.
 - **`random` and `sobol` are a hard internal control.** They pick candidates
   without looking at any observation, so their excess regret must be exactly
-  zero. The analysis fails loudly if it is not, and excludes them from the
+  zero. The analysis reports the largest floor excess, flags any value above
+  1e-9, and excludes the floors from the
   robustness ranking -- a method that ignores its data wins any such ranking
   while learning nothing.
 - **`bias` scales with the swept magnitude** (`--error-bias-mode scaled`), so it
@@ -390,8 +397,8 @@ If you want to use different data, update `datasets.json` or pass `--dataset-con
 Reproducibility notes:
 
 - Remote datasets are cloned at HEAD; `run_metadata.json` records the
-  commit SHA of each cloned data directory (`data_dir_commits`) — quote those
-  SHAs in the paper.
+  commit SHA of each cloned data directory (`data_dir_commits`). Quote those
+  SHAs in the camera-ready paper only; the anonymous submission must not carry them.
 - The simulation exits non-zero and records `failed_seeds` in
   `run_metadata.json` if any parallel seed fails, instead of silently writing
   incomplete summaries.
@@ -400,7 +407,15 @@ Reproducibility notes:
 
 ## If You Only Remember One Thing
 
-Run `run_full_workflow.bat` (Windows), or the equivalent steps:
+The paper's results come from the known-function arm. Its driver is
+`run_boba_pipeline.ps1` (see [Known-Function Arm](#known-function-arm-the-boba-suite)),
+and the paper's tables are regenerated with
+`python scripts/make_boba_paper_tables.py --analysis output-boba/analysis`.
+Before claiming any result, follow the checklist at the end of `AGENTS.md`.
+
+The steps below run the older data-driven arm (fitted oracles), which the paper
+uses only as a companion. `run_full_workflow.bat` wraps them but is kept for
+reference only (see the warning above); run the steps by hand instead:
 
 ```bash
 python -m pip install --upgrade -r requirements-eval.txt

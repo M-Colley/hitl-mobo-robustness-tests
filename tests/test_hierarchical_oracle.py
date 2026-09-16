@@ -35,6 +35,11 @@ def _load(module_name: str, filename: str) -> object:
     return mod
 
 
+# The module under test imports numpyro (and through it jax) at import time, so
+# without them this line raises during COLLECTION and pytest abandons the whole
+# suite rather than this file. importorskip turns that into a skip of this file.
+pytest.importorskip("numpyro", reason="hierarchical_oracle_test.py needs numpyro and jax")
+
 hier = _load("hierarchical_oracle_test_mod", "hierarchical_oracle_test.py")
 
 

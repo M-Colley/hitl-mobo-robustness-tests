@@ -550,8 +550,8 @@ and below $0.25\sigma$ every variant costs more than the error does.
 
 \textbf{A model-based budget rule inherits the corruption it was meant to fix.}
 Choosing $k$ per run from the surrogate's posterior and the run's own rate of
-improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: $+0.005$
-$[-0.011, +0.022]$ against $+0.051$, because in $64\%$ of runs it declines the
+improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: $+0.004$
+$[-0.013, +0.021]$ against $+0.051$, because in $65\%$ of runs it declines the
 sitting for the posterior-mean design, the worst policy of all at $-0.013$. Its
 utility is the surrogate's posterior, which was fitted on corrupted ratings, so
 it is confident about designs it should not be. Nothing we tried beat fixing $k$
@@ -1451,9 +1451,13 @@ under the single posterior at $n_0 = T - \max k$, the last trial at which all of
 them are still open; scoring each $k$ under its own $T-k$ posterior looks more
 faithful and is not, because two GPs fitted on different numbers of points put
 their maxima on different scales, and the comparison then picks up that
-difference rather than the difference between policies. The rule reads only
-ratings and the surrogate; the true objective enters only when the choice is
-scored, against the realised regret of that $(\text{run}, k)$ in the replay.
+difference rather than the difference between policies. The sitting's SD is read
+from the surrogate's fitted noise, which is the noise of the \emph{standardised}
+targets, and multiplied by the outcome transform's scale so that it and the
+posterior sit on one axis; without that the rule read a sitting as up to $5.6$
+times more precise than it is. The rule reads only ratings and the surrogate; the
+true objective enters only when the choice is scored, against the realised regret
+of that $(\text{run}, k)$ in the replay.
 
 \section{Budget-neutral arms}
 \label{app:budgetneutral}

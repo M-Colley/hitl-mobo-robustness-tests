@@ -60,6 +60,7 @@ import argparse
 import json
 import os
 import sys
+import zlib
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
@@ -220,7 +221,10 @@ def _init_worker() -> None:
 def derive_for_run(task: dict) -> dict:
     run = eos.read_run(Path(task["path"]), task["iterations"])
     bounds = torch.tensor(np.stack([task["bounds_low"], task["bounds_high"]]), dtype=torch.double)
-    rng = np.random.default_rng(abs(hash(task["file"])) % (2**32))
+    # crc32, not hash(): Python salts string hashing per process, so hash() gave
+    # this run a different Monte Carlo stream on every invocation and the chosen
+    # k was not reproducible.
+    rng = np.random.default_rng(zlib.crc32(task["file"].encode("utf-8")))
     if task["noise_source"] == "truth":
         sitting_sd = task["true_sitting_sd"]
     else:
@@ -228,11 +232,20 @@ def derive_for_run(task: dict) -> dict:
         # noise estimate there, scaled by how much of it a comparative sitting is
         # assumed to remove. Read at n0, not at T, so the rule never uses a trial
         # it is still deciding whether to spend.
+        #
+        # gp.likelihood.noise is the noise variance of the STANDARDISED targets,
+        # while gp.posterior (and so the mu, sigma the rule scores candidates
+        # with) is untransformed back into objective units. Multiplying by the
+        # outcome transform's scale puts the two on one axis. Without it the rule
+        # read a sitting as 1.0 to 5.6 times more precise than it is, and that is
+        # the whole input to the coverage/discrimination trade-off.
         n0 = task["iterations"] - max(task["k_grid"])
         state = eos.search_state(run, n0, bounds, task["beta"])
         if state.gp is None:
             return {"file": task["file"], "k_hat": None, "gp_failed": True}
-        sitting_sd = task["rho"] * float(np.sqrt(state.gp.likelihood.noise.mean().item()))
+        noise_sd_standardised = float(np.sqrt(state.gp.likelihood.noise.mean().item()))
+        scale = float(state.gp.outcome_transform.stdvs.reshape(-1)[0])
+        sitting_sd = task["rho"] * noise_sd_standardised * scale
     out = derive_k(run, bounds, task["k_grid"], task["beta"], task["window"], sitting_sd, rng,
                    task["iterations"])
     return {"file": task["file"], "k_hat": out["k_hat"], "gp_failed": out["gp_failed"],

@@ -38,9 +38,10 @@ and reports, per error process, magnitude and onset:
     the decomposition and the remedies are on one scale.
 
 Regret is divided by the landscape's opt_z (boba_landscape_stats.json) so that
-landscapes with a 45x spread of achievable improvement can be averaged. Shares
-are ratios of landscape means with a landscape bootstrap, as everywhere else in
-this project.
+landscapes whose achievable improvement spans 74x -- 0.76 on powell to 56.8 on
+shekel -- can be averaged. Shares are ratios of landscape means with a landscape
+bootstrap, as everywhere else in this project. The landscapes share their random
+numbers by design, so that bootstrap treats correlated clusters as independent.
 
     python scripts/decompose_regret.py
     python scripts/decompose_regret.py --input-dir output-boba --acquisitions logei,qnei

@@ -68,10 +68,10 @@ under exact observation, so a noiseless benchmark never sees it. Consistently,
 none of seven acquisition-side changes improves the deployed design, and
 augmented expected improvement recovers $41\%$ $[27, 53]$ of the cost on the
 search trajectory and none of it on what ships. What works is spending trials on
-identification --- one comparative sitting over the last third of the budget
-gains $0.051$ $[0.028, 0.072]$ of the achievable improvement, and four trials
-confirming the result cut false improvement claims from $15.7\%$ to $0.5\%$ ---
-or modelling the fault explicitly, worth $22$--$38\%$ at near-zero price.
+identification --- a comparative sitting over the last third of the budget gains
+$0.051$ $[0.028, 0.072]$, and four confirming trials cut false improvement claims
+from $15.7\%$ to $0.5\%$ --- or modelling the fault, worth $22$--$38\%$ at
+near-zero price.
 Telling the surrogate the true noise variance removes only $5\%$ of the cost,
 so the loss is informational; changing the incumbent definition removes $16\%$ overall and
 up to $41\%$ for one acquisition family, so robustness rankings rank
@@ -392,11 +392,10 @@ $29\%$ at $0.05\sigma$ from the first rating to $82\%$ at $5\sigma$ from trial 2
 \textbf{No rule that re-reads the same ratings recovers it.} Four other ship
 rules remove essentially none of the selection loss: $+3.9\%$ $[-4, +11]$ for the
 posterior mean less two latent SDs, $+0.3\%$ for one, $-1.7\%$ for the mean
-rating, $-8.7\%$ $[-18, -1]$ for the posterior mean. The reason is structural:
-the posterior ranking the visited designs was fitted on the same corrupted
-ratings. Closing the term needs \emph{new} information, which is what
-Section~\ref{sec:budget} spends trials on; Section~\ref{sec:acq} gives the other
-half of the point, an acquisition that improves the search and not what ships.
+rating, $-8.7\%$ for the posterior mean. The reason is structural: the posterior
+ranking the visited designs was fitted on the same corrupted ratings. Closing the
+term needs \emph{new} information, which is what Section~\ref{sec:budget} spends
+trials on.
 
 \section{What makes an error big?}
 \label{sec:currency}
@@ -498,20 +497,19 @@ EI $3$, qEI $2$. A study run on one of these landscapes would report a defensibl
 largely does not transfer, and could not tell. Appendix~\ref{sec:incumbent} shows that part of this ranking is
 not about the acquisitions at all.
 
-\textbf{A better search does not ship a better design.} The sharper question is
-whether an acquisition built for noisy observations helps at all. We ran seven
+\textbf{A better search does not ship a better design.} We ran seven
 acquisition-side changes as their own arms on the full suite, each keeping the
 human trials fixed, scored against the standard process
 (Appendix~\ref{app:budgetneutral}). None improves the deployed design: augmented
 expected improvement \citep{huang2006global} recovers $+2\%$ $[-6, +11]$ of the
-cost of error, a lower-confidence-bound incumbent $-27\%$ $[-42, -11]$, Thompson
-sampling $-58\%$ $[-81, -40]$, a slip-aware acquisition $-4\%$ to $-35\%$, a
-minimum-distance constraint $-13\%$ $[-23, -6]$; redistributing the same rating
-effort across trials runs from $-7\%$ to $-21\%$. Augmented EI makes the point
-alone: on the post-onset trajectory, the response an acquisition is designed to
-improve, it recovers $+41\%$ $[+27, +53]$, the best of any arm we ran, and on the
-design the study ships it recovers nothing. Under Equation~\ref{eq:decomp} the
-term it improves is not the term that dominates.
+cost of error, a lower-confidence-bound incumbent $-27\%$, Thompson sampling
+$-58\%$ $[-81, -40]$, a slip-aware acquisition $-4\%$ to $-35\%$, a
+minimum-distance constraint $-13\%$; redistributing the same rating effort across
+trials runs from $-7\%$ to $-21\%$. Augmented EI makes the point alone: on the
+post-onset trajectory, the response an acquisition is designed to improve, it
+recovers $+41\%$ $[+27, +53]$, the best of any arm we ran, and on the design the
+study ships it recovers nothing. Under Equation~\ref{eq:decomp} the term it
+improves is not the term that dominates.
 
 \section{Buying identification with the trials you have}
 \label{sec:budget}
@@ -554,84 +552,30 @@ and below $0.25\sigma$ every variant costs more than the error does.
 Choosing $k$ per run from the surrogate's posterior and the run's own rate of
 improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: $+0.005$
 $[-0.011, +0.022]$ against $+0.051$, because in $64\%$ of runs it declines the
-sitting in favour of the posterior-mean design, the worst policy of all at
-$-0.013$. Its utility is the surrogate's posterior, the surrogate was fitted on
-corrupted ratings, and so it is confident about designs it should not be. We did
-not find a rule that beats simply fixing $k$ at about a third of the budget.
+sitting for the posterior-mean design, the worst policy of all at $-0.013$. Its
+utility is the surrogate's posterior, which was fitted on corrupted ratings, so
+it is confident about designs it should not be. Nothing we tried beat fixing $k$
+at about a third of the budget.
 
 \section{When the error is in the design, not the rating}
 \label{sec:inputerror}
 
-Every error process above corrupts the reported value. People also make the
-other mistake: a slider overshoots, the wrong option is pressed, a configuration
-is applied to the wrong condition. The optimizer proposes $x$, the person
-experiences $x' \neq x$, rates it honestly, and the rating is filed against $x$:
-the right value at the wrong location. A fitted oracle cannot score it, since
-that needs the objective at $x'$.
-
-A \textsc{slip} displaces every trial by $\delta \sim \mathcal{N}(0, s^2)$ per
-coordinate, with $s$ a fraction of that coordinate's range, and clips the result
-to the box. A \textsc{misclick} leaves the
-trial exact with probability $1 - p$ and otherwise lands on a uniformly random
-design. Both magnitudes are swept over $\{0.01, 0.05, 0.15, 0.4\}$ at the same onsets and
-budget, with six model-based acquisitions (LogEI, EI, PI, UCB, qUCB, qNEI), the
-two floors and five seeds; neither is in landscape standard deviations, so the
-comparison with the response-error grid is on the damage axis only.
-
-If the slip goes unnoticed the surrogate trains on $(x, g(x'))$ and the deployed
-design is the recorded $x$, so we score it there. A counterfactual arm records
-$(x', g(x'))$, as an instrumented interface would, with identical slip draws; the
-contrast separates the cost of evaluating the wrong point from that of
-mislabelling it. The model-free floors are no longer a zero control: they
-evaluate the wrong points without learning, so their excess is the geometric
-cost of a slip alone.
-
-\begin{table}[t]
-\centering
-\caption{Fraction of the achievable improvement destroyed by an input error. A
-slip's magnitude is the displacement SD as a fraction of each coordinate's
-range; a misclick's is the probability of a random trial. The last three
-columns decompose the early-onset slip: \emph{floor}, the model-free arms;
-\emph{logged}, a learner whose record holds the point evaluated;
-\emph{mislabelling}, the paired difference between the unnoticed slip (second
-column) and \emph{logged}. Brackets: 95\% intervals over landscapes.}
-\label{tab:inputerror}
-\small\setlength{\tabcolsep}{3.5pt}
-\input{tables/inputerror_main}
-\end{table}
-
-\textbf{A slip costs about as much as a rating error.} A slip of $5\%$ of each
-coordinate's range on every trial, from the first, destroys $5.4\%$ of the
-achievable improvement; one of $15\%$ destroys $11.5\%$; one of $40\%$, $23.2\%$
-(Table~\ref{tab:inputerror}). On this arm's six acquisitions and seeds under \textsc{gaussian} error, the
-$0.25\sigma$, $1\sigma$ and $5\sigma$ rating errors of Table~\ref{tab:dose} cost
-$3.8\%$, $11.7\%$ and $21.3\%$ (the $T=50$ row of Table~\ref{tab:budget}; pooled:
-$5.3\%$, $14.1\%$, $22.0\%$): a $5\%$ slip
-costs more than a $0.25\sigma$ rating error, a $15\%$ slip about as much as
-$1\sigma$, a $40\%$ slip about as much as $5\sigma$. A misclick is cheaper at
-every matched magnitude: even when $40\%$ of trials land somewhere random it
-costs $13.5\%$, little more than a $15\%$ slip on every trial and barely half of
-a $40\%$ one. A late slip is cheaper than an early one by less than a late rating error:
-$1.4$--$3.6\times$ against $5.1\times$ at $1\sigma$ on the same basis.
-
-\textbf{Half of a small slip's cost is the record, not the displacement.}
-The decomposition in Table~\ref{tab:inputerror} (in full,
-Table~\ref{tab:inputmech}) separates the mechanisms. The model-free floor barely moves, since a random design displaced is still
-random; only at $40\%$, where clipping piles evaluations at the box edges, does
-it lose $6.4\%$
-$[0, 13]$. A learner with a correct record loses far more, $2.8\%$ at a $5\%$ slip and
-$19.6\%$ at $40\%$: a displaced proposal is a worse one.
-Mislabelling adds $2.7$ points at $5\%$ and $4.4$ at $15\%$, half and two-fifths
-of the total (paired intervals $[0.35, 0.61]$ and $[0.26, 0.49]$; not estimable at $1\%$); at $40\%$ the displacement
-dominates and the mislabelled share falls to a sixth.
-
-\textbf{The design in the log is not the design that earned its rating.} Scored at the recorded $x$ a practitioner would deploy, the final design's excess
-regret is $16.4\%$ of the achievable improvement at a
-$5\%$ slip from the first trial, $34.3\%$ at $15\%$ and $65.8\%$ at $40\%$,
-against $6.5\%$, $13.4\%$ and $24.9\%$ for the best design the person
-experienced (Appendix~\ref{app:inputerror}): a factor of $2.5$ to $2.6$, and
-$1.6$ at a $1\%$ slip. The optimizer's progress survives an input error far better than the record of
-it, which is what a deployment inherits.
+Every error process above corrupts the reported value. People also make the other
+mistake: a slider overshoots, the wrong option is pressed. The optimizer proposes
+$x$, the person experiences $x' \neq x$, rates it honestly, and the rating is filed
+against $x$ --- the right value at the wrong location, which a fitted oracle cannot
+score at all, since scoring it needs the objective at $x'$. We sweep a \textsc{slip}
+(every trial displaced by $\mathcal{N}(0, s^2)$ per coordinate) and a
+\textsc{misclick} (a uniformly random design with probability $p$); two results carry
+(Appendix~\ref{app:inputerrorarm}). A slip of $15\%$ of each coordinate's range costs
+about what one-SD rating noise costs, so this is not a second-order concern. And
+\textbf{the design in the log is not the design that earned its rating}: scored at the
+recorded $x$ a practitioner would deploy, the final design's excess regret is $16.4\%$
+of the achievable improvement at a $5\%$ slip and $65.8\%$ at $40\%$, against $6.5\%$
+and $24.9\%$ for the design the person actually experienced --- a factor of $2.5$ to
+$2.6$, of which a record of what was applied removes up to half. The optimizer's
+progress survives an input error far better than the record of it, and a deployment
+inherits the record.
 
 \section{The conclusions under six further checks}
 \label{sec:robustness}
@@ -746,6 +690,80 @@ among the proposed designs, and are responsible for everything reported here.
 
 \clearpage
 \appendix
+\section{The input-error arm}
+\label{app:inputerrorarm}
+
+Every error process above corrupts the reported value. People also make the
+other mistake: a slider overshoots, the wrong option is pressed, a configuration
+is applied to the wrong condition. The optimizer proposes $x$, the person
+experiences $x' \neq x$, rates it honestly, and the rating is filed against $x$:
+the right value at the wrong location. A fitted oracle cannot score it, since
+that needs the objective at $x'$.
+
+A \textsc{slip} displaces every trial by $\delta \sim \mathcal{N}(0, s^2)$ per
+coordinate, with $s$ a fraction of that coordinate's range, and clips the result
+to the box. A \textsc{misclick} leaves the
+trial exact with probability $1 - p$ and otherwise lands on a uniformly random
+design. Both magnitudes are swept over $\{0.01, 0.05, 0.15, 0.4\}$ at the same onsets and
+budget, with six model-based acquisitions (LogEI, EI, PI, UCB, qUCB, qNEI), the
+two floors and five seeds; neither is in landscape standard deviations, so the
+comparison with the response-error grid is on the damage axis only.
+
+If the slip goes unnoticed the surrogate trains on $(x, g(x'))$ and the deployed
+design is the recorded $x$, so we score it there. A counterfactual arm records
+$(x', g(x'))$, as an instrumented interface would, with identical slip draws; the
+contrast separates the cost of evaluating the wrong point from that of
+mislabelling it. The model-free floors are no longer a zero control: they
+evaluate the wrong points without learning, so their excess is the geometric
+cost of a slip alone.
+
+\begin{table}[t]
+\centering
+\caption{Fraction of the achievable improvement destroyed by an input error. A
+slip's magnitude is the displacement SD as a fraction of each coordinate's
+range; a misclick's is the probability of a random trial. The last three
+columns decompose the early-onset slip: \emph{floor}, the model-free arms;
+\emph{logged}, a learner whose record holds the point evaluated;
+\emph{mislabelling}, the paired difference between the unnoticed slip (second
+column) and \emph{logged}. Brackets: 95\% intervals over landscapes.}
+\label{tab:inputerror}
+\small\setlength{\tabcolsep}{3.5pt}
+\input{tables/inputerror_main}
+\end{table}
+
+\textbf{A slip costs about as much as a rating error.} A slip of $5\%$ of each
+coordinate's range on every trial, from the first, destroys $5.4\%$ of the
+achievable improvement; one of $15\%$ destroys $11.5\%$; one of $40\%$, $23.2\%$
+(Table~\ref{tab:inputerror}). On this arm's six acquisitions and seeds under \textsc{gaussian} error, the
+$0.25\sigma$, $1\sigma$ and $5\sigma$ rating errors of Table~\ref{tab:dose} cost
+$3.8\%$, $11.7\%$ and $21.3\%$ (the $T=50$ row of Table~\ref{tab:budget}; pooled:
+$5.3\%$, $14.1\%$, $22.0\%$): a $5\%$ slip
+costs more than a $0.25\sigma$ rating error, a $15\%$ slip about as much as
+$1\sigma$, a $40\%$ slip about as much as $5\sigma$. A misclick is cheaper at
+every matched magnitude: even when $40\%$ of trials land somewhere random it
+costs $13.5\%$, little more than a $15\%$ slip on every trial and barely half of
+a $40\%$ one. A late slip is cheaper than an early one by less than a late rating error:
+$1.4$--$3.6\times$ against $5.1\times$ at $1\sigma$ on the same basis.
+
+\textbf{Half of a small slip's cost is the record, not the displacement.}
+The decomposition in Table~\ref{tab:inputerror} (in full,
+Table~\ref{tab:inputmech}) separates the mechanisms. The model-free floor barely moves, since a random design displaced is still
+random; only at $40\%$, where clipping piles evaluations at the box edges, does
+it lose $6.4\%$
+$[0, 13]$. A learner with a correct record loses far more, $2.8\%$ at a $5\%$ slip and
+$19.6\%$ at $40\%$: a displaced proposal is a worse one.
+Mislabelling adds $2.7$ points at $5\%$ and $4.4$ at $15\%$, half and two-fifths
+of the total (paired intervals $[0.35, 0.61]$ and $[0.26, 0.49]$; not estimable at $1\%$); at $40\%$ the displacement
+dominates and the mislabelled share falls to a sixth.
+
+\textbf{The design in the log is not the design that earned its rating.} Scored at the recorded $x$ a practitioner would deploy, the final design's excess
+regret is $16.4\%$ of the achievable improvement at a
+$5\%$ slip from the first trial, $34.3\%$ at $15\%$ and $65.8\%$ at $40\%$,
+against $6.5\%$, $13.4\%$ and $24.9\%$ for the best design the person
+experienced (Appendix~\ref{app:inputerror}): a factor of $2.5$ to $2.6$, and
+$1.6$ at a $1\%$ slip. The optimizer's progress survives an input error far better than the record of
+it, which is what a deployment inherits.
+
 \section{Predicting the cost from one noisy choice}
 \label{app:mediation}
 

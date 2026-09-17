@@ -1,17 +1,17 @@
-# ICLR 2026 submission
+# ICLR 2027 submission
 
 ## Template
 
-The style files here are the **official** ICLR 2026 ones, downloaded from
-[ICLR/Master-Template](https://github.com/ICLR/Master-Template/tree/master/iclr2026):
+The style files here are the **official** ICLR 2027 ones, downloaded from
+[ICLR/Master-Template](https://github.com/ICLR/Master-Template/tree/master/iclr2027):
 
 | file | role |
 |---|---|
-| `iclr2026_conference.sty` | the conference style — do not edit |
-| `iclr2026_conference.bst` | the bibliography style |
+| `iclr2027_conference.sty` | the conference style — do not edit |
+| `iclr2027_conference.bst` | the bibliography style |
 | `fancyhdr.sty`, `natbib.sty` | vendored dependencies, as upstream ships them |
 | `math_commands.tex` | optional macros; not currently `\input` by `main.tex` |
-| `iclr2026_conference_ORIGINAL.tex` | upstream's instructions file, kept for reference — **not part of the submission** |
+| `iclr2027_conference_ORIGINAL.tex` | upstream's instructions file, kept for reference — **not part of the submission** |
 
 `\iclrfinalcopy` stays commented out. Uncommenting it de-anonymises the paper,
 and a non-anonymous submission is rejected without review; it goes in only for

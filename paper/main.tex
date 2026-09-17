@@ -1,9 +1,14 @@
-% ICLR 2026 submission.
+% ICLR 2027 submission.
 %
 % The style files in this directory are the OFFICIAL ones, downloaded from
-% https://github.com/ICLR/Master-Template/tree/master/iclr2026 -- do not edit
-% them. iclr2026_conference_ORIGINAL.tex is the upstream instructions file, kept
-% for reference only; it is not part of this submission.
+% https://github.com/ICLR/Master-Template/tree/master/iclr2027 -- do not edit
+% them. iclr2027_conference_ORIGINAL.tex is the upstream instructions file, kept
+% for reference only; it is not part of this submission. The 2027 style differs
+% from 2026 only in the running header; the .bst is byte-identical.
+%
+% Limits (iclr2027_conference_ORIGINAL.tex): a STRICT 9 pages of main text at
+% submission, 10 at rebuttal/camera-ready; references, the AI use statement, the
+% ethics and reproducibility statements and the appendix do not count.
 %
 % Every table under tables/ is GENERATED. Do not edit them by hand:
 %   python scripts/make_boba_paper_tables.py --analysis output-boba/analysis
@@ -12,7 +17,7 @@
 %   cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 
 \documentclass{article}
-\usepackage{iclr2026_conference,times}
+\usepackage{iclr2027_conference,times}
 
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -732,18 +737,49 @@ detected this by searching every box against its recorded value and corrected it
 here; the correction and the provenance of the original are
 both asserted by test. \todo{repository URL and commit at camera-ready.}
 
-% Required by the ICLR 2026 LLM policy (iclr.cc/FAQ/LLM): significant LLM use
-% must be described in its own section, which does not count toward the limit.
-\section*{LLM usage}
-A large language model (Claude, from Anthropic) was used extensively in this
-work. It proposed and implemented parts of the experimental design and analysis,
-wrote and tested most of the simulation and analysis code, ran and monitored the
-experiments, drafted and edited the manuscript, and checked the numbers in the
-text against the analysis outputs. The authors set the research questions, chose
-among the proposed designs, and are responsible for everything reported here.
-\todo{authors: confirm or amend this description before submission.}
+% Required by the ICLR 2027 AI Policy for Authors. The heading, the
+% required/not-used/recommended structure and the verification sentence follow
+% the template in iclr2027_conference_ORIGINAL.tex. Does not count toward the
+% page limit; must not exceed one page.
+\subsection*{AI use statement}
+In this work, we used generative AI tools (Claude, Anthropic) for the following
+tasks with required disclosure: proposing and implementing parts of the
+experimental design and analysis; writing and testing most of the simulation and
+analysis code; running and monitoring the experiments; and drafting and editing
+the manuscript, including the checking of every number in the text against the
+analysis outputs. We have not used generative AI tools for
+\todo{authors: list the required-disclosure tasks for which no AI was used,
+e.g.\ literature search, reviewing, and the choice of research questions}, and
+the remaining required-disclosure tasks are not applicable to this work.
+Additionally, we used generative AI tools for the recommended-disclosure tasks of
+code documentation and copy-editing.
 
-\bibliographystyle{iclr2026_conference}
+We have reviewed all AI-assisted work. AI-generated code is covered by $697$
+automated tests that pin the estimands, the seed order, the negative controls
+and hand-computed values, and by cross-checks between independently written
+pipelines (for instance, the two computations of the deployed excess agree to
+four decimals in every cell, and the table generator refuses to run if they do
+not). Three independent audit passes over the code and the manuscript are
+recorded in the supplementary material, and the numbers quoted in the text are
+verified against the analysis outputs by a script that runs before every build.
+The authors set the research questions, chose among the proposed designs, and
+take responsibility for the final content of this work, including text, claims
+or artifacts produced with the aid of generative AI.
+
+% Recommended by the ICLR 2027 template; does not count toward the page limit.
+\subsection*{Ethics statement}
+This work collects no new human data. The three human studies it draws on are
+published archival rating datasets, used here only to estimate within-rater
+noise (Section~\ref{sec:cost}) and as fitted-oracle companions
+(Appendix~\ref{sec:fitted}); no participant is identifiable from any quantity we
+report. \todo{authors: state the original studies' ethics approval and consent
+terms, and confirm that re-analysis is within them.} The analytic landscapes
+involve no human participants. We foresee no direct negative societal impact:
+the paper's recommendations --- confirm a claimed improvement before reporting
+it, and spend part of a human-feedback budget on identification --- reduce the
+rate of false improvement claims rather than raise it.
+
+\bibliographystyle{iclr2027_conference}
 \bibliography{references}
 
 \clearpage

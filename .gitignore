@@ -235,3 +235,6 @@ output-boba-instrument/
 output-boba-robust/
 output-boba-confirmatory/*
 !output-boba-confirmatory/HYPOTHESIS.md
+
+# Overleaf upload bundle, built by hand from paper/; never committed.
+paper/*.zip

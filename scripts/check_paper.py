@@ -35,7 +35,9 @@ def check(paper: Path) -> list[str]:
     for package in re.findall(r"\\usepackage(?:\[[^\]]*\])?\{([^}]+)\}", source):
         for name in (p.strip() for p in package.split(",")):
             local = paper / f"{name}.sty"
-            if name in {"iclr2026_conference"} and not local.exists():
+            # Any year's ICLR style: the name was hard-coded to 2026 once and went
+            # stale the moment the venue moved.
+            if re.fullmatch(r"iclr\d{4}_conference", name) and not local.exists():
                 problems.append(f"\\usepackage{{{name}}} but {local.name} is not present")
     style = re.search(r"\\bibliographystyle\{([^}]+)\}", source)
     if style and not (paper / f"{style.group(1)}.bst").exists():

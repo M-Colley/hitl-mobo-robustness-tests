@@ -1,12 +1,8 @@
 This is BibTeX, Version 0.99e (TeX Live 2026)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
-The style file: iclr2026_conference.bst
+The style file: iclr2027_conference.bst
 Database file #1: references.bib
-I was expecting a `{' or a `('---line 37 of file references.bib
- : % One correction was made: eggensperger2021hpobench was an @article 
- :                                                                     and is a
-I'm skipping whatever remains of this entry
 You've used 24 entries,
             2773 wiz_defined-function locations,
             723 strings with 9410 characters,
@@ -48,4 +44,3 @@ warning$ -- 0
 while$ -- 95
 width$ -- 0
 write$ -- 307
-(There was 1 error message)

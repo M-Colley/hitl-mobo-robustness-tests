@@ -38,7 +38,7 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | E16 | MINOR | Invariances that hold by construction are presented as findings. | main.tex:172-175, 1543-1553 | Say "by construction" | V | fixed 2026-09-17 |
 | E7 | MINOR | Factors are ranked by range ratios. The variance shares rank onset (0.17) above landscape (0.10). | abstract, main.tex:306-311 | Lead with the variance shares | V | open |
 | E11 | MINOR | Three abstract numbers appear only in appendices, and "near-zero price" has no table. | abstract | Move them or drop them | V | open |
-| E13 | MINOR | There is no data or ethics statement for the three archival human-rating datasets. | paper | Add one paragraph | V | open |
+| E13 | MINOR | There is no data or ethics statement for the three archival human-rating datasets. | paper | Add one paragraph | V | partly 2026-09-17: an Ethics statement in the 2027 template's slot states what the paper does and does not collect; approval and consent terms are a todo for the authors |
 | I14 | MINOR | All three archival studies are automated-vehicle interface studies. | Section 4, Appendix C | Scope the claims | V | open |
 | I10 | MINOR | BIAS always models a generous rater. | bo_sensor_error_simulation.py:2819-2821, main.tex:228 | State it or add a harsh-rater arm | V | open |
 | I20, C8 | MINOR | Section 3.3 omits the optimiser settings, ξ = 0.01 and β = 4. BIAS matches GAUSSIAN at onset 0 in distribution only. | main.tex:241-255, 313 | Add the settings and reword | V | open |
@@ -55,9 +55,9 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | E15, I11, I22 | MINOR | Twenty landscapes share their random numbers yet are bootstrapped as independent clusters, BH runs within small families, and one star rests on three clusters. | analyses, Table 26 fitted row | State cluster counts and the shared stream, drop the star | V, R | open |
 | F1, F2, F3, I13 | MINOR | The fitted arm's σf and optimum come from seed-specific oracles over an extrapolated box, its bootstrap has three clusters, and its R² figures mix protocols. | analyse_fitted_companion.py:79-88, anchor_noise_scale.py:80, main.tex:107, 833-836 | Disclose | V, R | open |
 | C2, C3, E17, I12, I21, I23 | MINOR | Counting errors and internal contradictions (8, 6 or 9 extra trials, arm counts, "adopted unchanged", two intervals for one cell, observation count, instrument spans). | see `history/` | Prose edits | V | open |
-| C15 | BLOCKER | The draft uses the 2026 style and header, spills onto page 10, and carries four `\todo` markers. | main.tex:1-15, 33, 319, 675, 686 | Switch style, cut, resolve | V | open |
+| C15 | BLOCKER | The draft uses the 2026 style and header, spills onto page 10, and carries four `\todo` markers. | main.tex:1-15, 33, 319, 675, 686 | Switch style, cut, resolve | V | partly 2026-09-17: style, header and check_paper.py switched to the official 2027 kit (only the running header differs, .bst identical); page overflow (~1.1 pages) and six author todos open |
 | review | MAJOR | The abstract has 524 words and the paper has no figure. | main.tex | See `readiness_review.md` Section 4 | V | open |
-| E12 | MAJOR | The AI use statement lacks a negative list and a verification method and cites the 2026 policy. | main.tex:679-686 | The authors write it and list only checks that were performed | V | open |
+| E12 | MAJOR | The AI use statement lacks a negative list and a verification method and cites the 2026 policy. | main.tex:679-686 | The authors write it and list only checks that were performed | V | partly 2026-09-17: heading, required/not-used/recommended structure, verification sentence and 2027 policy reference now follow the template; the negative list is a todo only the authors can fill |
 
 ### Note on A1/I1, I2 and E4, 2026-09-17
 
@@ -128,6 +128,33 @@ E16. The comparison loop's immunity to a shared strictly monotone fault is
 labelled a consequence of the construction, with the run described as confirming
 the implementation rather than the claim; the bias arm is labelled the same way.
 The related-work sentence no longer calls the invariance a measurement.
+
+C15, E12, E13 and a BibTeX error, 2026-09-17.
+
+The official ICLR 2027 kit was fetched from ICLR/Master-Template and diffed
+against 2026: the .sty differs only in the two running-header strings, the .bst
+is byte-identical, and the paper's natbib.sty, fancyhdr.sty and math_commands.tex
+were the unmodified 2026 copies (line endings only). main.tex, paper/README.md
+and check_paper.py (now year-agnostic) point at 2027. The 2027 instructions
+confirm a STRICT 9 pages of main text at submission, 10 at rebuttal; the main
+text ends about a tenth of the way into page 11.
+
+The AI use statement was retitled and restructured to the 2027 template: tasks
+used, tasks not used (a todo -- only the authors know), recommended-disclosure
+tasks, and a verification sentence that names what was actually done (697 tests,
+cross-pipeline checks, three audit passes). An Ethics statement was added in the
+template's slot. Both sit outside the page count.
+
+BibTeX exited 2 on every build: the provenance comment at the top of
+references.bib contained the literal text "@article", and BibTeX has no comment
+syntax between entries, so it tried to parse the comment as an entry. No entry
+was lost (24 cited, 24 in the .bbl) and no citation was undefined, but Overleaf
+would have shown a red error on every compile. Reworded.
+
+A ready-to-upload zip is built by paper/build_overleaf_bundle.py; it contains
+only what a submission needs and a README_OVERLEAF.md listing the six open todos
+and the page overflow. The bundle is test-compiled from a clean directory before
+it is written.
 
 ## 2. Code, tests and reproducibility
 

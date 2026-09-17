@@ -10,11 +10,11 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 
 | ID | severity | problem | where | fix | basis | status |
 |---|---|---|---|---|---|---|
-| A1, I1 | BLOCKER | The headline metric is the post-onset time average of search loss. The text, the abstract and Table 4's caption present it as the cost of the shipped design. The shipped design loses 2.45 to 2.64 times as much at the final trial for the standard process, and the paper's pooled numbers give 0.218 against 0.083. | main.tex:356, abstract, Table 4 caption, Appendix C, Table 7 | Add a deployed column beside every search-loss number, compare final with final, rename the metric | V, D | open |
+| A1, I1 | BLOCKER | The headline metric is the post-onset time average of search loss. The text, the abstract and Table 4's caption present it as the cost of the shipped design. The shipped design loses 2.45 to 2.64 times as much at the final trial for the standard process, and the paper's pooled numbers give 0.218 against 0.083. | main.tex:356, abstract, Table 4 caption, Appendix C, Table 7 | Add a deployed column beside every search-loss number, compare final with final, rename the metric | V, D | fixed 2026-09-17 |
 | A2 | BLOCKER for Section 9 | The budget rule takes the sitting SD from GP noise in standardised units and combines it with a posterior in objective units. | budget_split.py:235 | Multiply by `outcome_transform.stdvs**2`, rerun without `--summary-only` and with the recorded k-grid and ρ | V | fixed 2026-09-16 |
 | A3 | MAJOR | The interaction and quadratic terms are formed from uncentred logs, so "the magnitude is significant again" is a slope at opt_z = 1 and σ = 1. | analyse_boba_robustness.py:848-861, main.tex:797-799, Appendix G | Centre, refit, rewrite both passages | V | open |
-| I2 | MAJOR | Selection is about half of the deployed cost near 1σ from trial 1 (52% at 0.71σ, 56% at 1.41σ). The 61.8% holds only for the excess-weighted pool. | abstract, title, decompose_regret output | Report the 1σ onset-0 share with its interval before choosing the title | D | open |
-| E4 | MAJOR | The pooled shares 61.8%, 5.0%, 15.6% and the multi-objective "at most half" are excess-weighted and dominated by 5σ cells. | main.tex:387-390, 585, 590, 601 | Report the 1σ onset-0 value beside each pool | R | open |
+| I2 | MAJOR | Selection is about half of the deployed cost near 1σ from trial 1 (52% at 0.71σ, 56% at 1.41σ). The 61.8% holds only for the excess-weighted pool. | abstract, title, decompose_regret output | Report the 1σ onset-0 share with its interval before choosing the title | D | fixed 2026-09-17 |
+| E4 | MAJOR | The pooled shares 61.8%, 5.0%, 15.6% and the multi-objective "at most half" are excess-weighted and dominated by 5σ cells. | main.tex:387-390, 585, 590, 601 | Report the 1σ onset-0 value beside each pool | R | partly: 61.8% fixed 2026-09-17, the other three pools open |
 | E3 | MAJOR | "The term an acquisition function cannot reach" and "the reason is structural" are stated as facts. The acquisition shapes the visited set. | abstract, main.tex:133-136, 369-371, 395-396 | State that no acquisition-side change tested reduced it | V | open |
 | I6 | MAJOR | Augmented EI and Thompson sampling are scored against the mean of ten acquisitions, including the four weakest. | analyse_boba_adaptations.py:129-134 | Score against EI or LogEI and report the price | V | open |
 | E2, I3, I7 | MAJOR | Table 25 is typed by hand, has no price column, defines none of its fault models or remedies, and its "−979%" row divides by a reference cost near zero that changes sign. | main.tex:1462-1516 | Generate the table, add prices and definitions, report absolute differences for missing ratings | V, D | open |
@@ -58,6 +58,31 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | C15 | BLOCKER | The draft uses the 2026 style and header, spills onto page 10, and carries four `\todo` markers. | main.tex:1-15, 33, 319, 675, 686 | Switch style, cut, resolve | V | open |
 | review | MAJOR | The abstract has 524 words and the paper has no figure. | main.tex | See `readiness_review.md` Section 4 | V | open |
 | E12 | MAJOR | The AI use statement lacks a negative list and a verification method and cites the 2026 policy. | main.tex:679-686 | The authors write it and list only checks that were performed | V | open |
+
+### Note on A1/I1, I2 and E4, 2026-09-17
+
+A1/I1. `tables/dose_response.tex` is regenerated with three blocks: the post-onset
+per-iteration average of search loss, the deployed design's excess at the final
+trial, and the selection share of that excess. Section 3.4 now defines both
+responses and says which is primary, and the abstract and Section 4 quote both.
+The standalone decomposition table was folded into the same float, so the paper
+gained no table. The generator raises if `cell_means.csv` and
+`regret_decomposition.csv` disagree on the deployed excess by more than 5e-4;
+they currently agree to four decimals in all eight cells, which is an independent
+check of the two pipelines.
+
+I2. The decomposition now emits rows pooled over the error processes per
+(magnitude, onset), with landscape-bootstrap intervals, and the paper leads with
+1 sigma from the first rating: **41.8% [34, 50]**, rising to 83.1% [75, 90] at 5
+sigma from trial 21. The 61.8% pool is still reported, with its scope stated (the
+5 sigma cells carry 66% of the total excess it divides by, the 1 sigma cells 25%).
+
+Discrepancy to resolve. I2 cites 52% at 0.71 sigma and 56% at 1.41 sigma. Those
+magnitudes are not in the main grid; they are the `session25` and `session100`
+arms, which run T = 25 and T = 100 and so split the cost differently. On the main
+sweep at exactly 1 sigma the share is 41.8%. The paper now quotes the main-sweep
+value. If the intended claim was about the session arms, that needs its own
+sentence and its own scope.
 
 ## 2. Code, tests and reproducibility
 

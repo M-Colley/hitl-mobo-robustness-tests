@@ -48,10 +48,12 @@ feedback with the cost of the oracle being wrong, and a study of one design spac
 cannot say what generalises. We instead inject four human-plausible error
 processes into twenty analytic landscapes with published optima, standardised so
 that a unit of error means the same on each: $76{,}800$ paired noisy-versus-clean
-runs over four magnitudes, two onsets and twelve acquisition functions. Error as
-large as the landscape's own standard deviation, present from the first rating,
-costs $14.1\%$ of the available improvement; arriving at iteration 21 of 50, it
-costs $2.8\%$. In trials, one-SD error from the first rating means a median of
+runs over four magnitudes, two onsets and twelve acquisition functions. We report
+two responses throughout: the optimizer's trajectory, and the design a study
+would actually deploy. Error as large as the landscape's own standard deviation,
+present from the first rating, costs $14.1\%$ of the available improvement on the
+trajectory and $29.7\%$ on the deployed design; arriving at iteration 21 of 50 it
+costs $2.8\%$ and $13.6\%$. In trials, one-SD error from the first rating means a median of
 $41$ extra trials to match a clean 25-trial study within one percent of the
 achievable improvement, and $39\%$ of runs never do within 100. At that magnitude
 the landscape and the onset move the cost by $8\times$ and $5\times$, the
@@ -61,10 +63,13 @@ three human studies falls where the loss is $12$--$20\%$. The expected loss from
 a single noisy greedy choice, computable without running an optimizer, explains
 nearly as much of the variation as the landscape descriptors and the error
 magnitude together, and stays informative beside a descriptor model that lets
-magnitude and landscape interact. Decomposing the deployed regret locates that cost: $61.8\%$ $[53.6, 69.5]$ of it
-is \emph{selection} loss --- the run visited a better design than the one it
-ships --- the one term an acquisition function cannot reach, and identically zero
-under exact observation, so a noiseless benchmark never sees it. Consistently,
+magnitude and landscape interact. Decomposing the deployed regret locates that cost: at $1\sigma$, the magnitude at
+which the measured rater noise falls, $41.8\%$ $[34, 50]$ of it is
+\emph{selection} loss --- the run visited a better design than the one it ships
+--- rising to $83.1\%$ $[75, 90]$ when the error is large and arrives late.
+Selection loss is identically zero under exact observation, so a noiseless
+benchmark never sees it, and no acquisition-side change we tested reduced it.
+Consistently,
 none of seven acquisition-side changes improves the deployed design, and
 augmented expected improvement recovers $41\%$ $[27, 53]$ of the cost on the
 search trajectory and none of it on what ships. What works is spending trials on
@@ -130,10 +135,11 @@ property of a problem decides whether feedback error hurts''.
     onset dominate, and a one-shot selection loss computable from the landscape
     and the noise level, without running an optimizer, predicts the cost.
   \item A decomposition of deployed regret into search and selection loss
-    (Section~\ref{sec:decomp}): selection is $61.8\%$ of what error costs, is
-    identically zero under exact observation, and is the term an acquisition
-    cannot reach --- which is what reporting regret at the best \emph{observed}
-    point hides.
+    (Section~\ref{sec:decomp}): at the magnitude where the measured rater noise
+    falls, selection is $41.8\%$ $[34, 50]$ of what error costs, rising to
+    $83.1\%$ $[75, 90]$ for a large error arriving late. It is identically zero
+    under exact observation, and no acquisition-side change we tested reduced it
+    --- which is what reporting regret at the best \emph{observed} point hides.
   \item An account of which remedies can therefore work
     (Section~\ref{sec:budget}, Appendix~\ref{app:budgetneutral}): over
     twenty-four budget-neutral arms, acquisition changes recover nothing on the
@@ -254,10 +260,25 @@ recommended under noise and, as Appendix~\ref{sec:incumbent} shows, not a
 neutral one.
 
 \subsection{Metrics}
-The primary response is post-onset per-iteration excess simple regret in
-landscape standard deviations: the regret of the noisy run minus that of the
-identically seeded clean run, averaged over the iterations the error could have
-affected. The two runs share their candidate-proposal random stream, so the
+\label{sec:metrics}
+We report two responses, and they are not interchangeable.
+
+\textbf{Search loss} is the regret of the best design a run has \emph{visited},
+$y^\star - \max_{t' \le t} f(x_{t'})$. Our primary response is its
+\emph{post-onset per-iteration excess}: the noisy run's search loss minus that of
+the identically seeded clean run, averaged over the iterations the error could
+have affected. It is a time average, it describes the optimizer's progress, and
+it is the response behind the dose-response curve, the currency test, the
+descriptor model and the acquisition ranking.
+
+\textbf{Deployed loss} is the regret of the design a study would actually ship:
+the one with the best observed rating, scored at the final trial. It is search
+loss plus the selection loss of Section~\ref{sec:decomp}, and at the final trial
+it is about $2.6\times$ the final search loss. A study deploys a design, not a
+trajectory, so every table that carries a search-loss number carries the deployed
+number beside it, and we compare a final value only with a final value.
+
+The two runs share their candidate-proposal random stream, so the
 difference isolates the error rather than the seed, and because $y^\star$ is a
 verified supremum rather than a random-search estimate, no regret can be
 negative. For reporting we divide by $\optz$, the fraction of the achievable improvement
@@ -287,18 +308,32 @@ it, which would manufacture the coefficient Section~\ref{sec:currency} estimates
 \section{How much does feedback error cost?}
 \label{sec:cost}
 
-Table~\ref{tab:dose} gives the cost. Error whose standard deviation equals the
-landscape's own, present from the first rating, costs $14.1\%$ of the
-improvement that was available, and even error five times that large costs
+Table~\ref{tab:dose} gives the cost on both responses of
+Section~\ref{sec:metrics}. On the optimizer's trajectory, error whose standard
+deviation equals the landscape's own, present from the first rating, costs
+$14.1\%$ of the improvement that was available, and error five times that large
 $22.0\%$. An optimizer that has already located a good region is hard to
 dislodge: the same $1\sigma$ error arriving at iteration 21 costs $2.8\%$, a
 fifth as much.
 
+\textbf{The design a study would deploy costs far more, and the gap widens with
+the error.} At $1\sigma$ from the first rating the shipped design's excess is
+$29.7\%$ against the trajectory's $14.1\%$; at $5\sigma$ it is $71.1\%$ against
+$22.0\%$, a factor of $3.2$. The late onset, which looks nearly harmless on the
+trajectory ($2.8\%$ at $1\sigma$), costs $13.6\%$ on the design that ships. The
+trajectory average is bounded by the run's good early iterations; the deployed
+value is not, because it is decided at a single moment by a single rating. Every
+number below is a trajectory number unless it says otherwise, and
+Section~\ref{sec:decomp} takes the deployed value apart.
+
 \begin{table}[h]
 \centering
 \caption{Fraction of the achievable improvement destroyed by feedback error,
-averaged over landscapes and model-based acquisitions. Magnitudes are in
-landscape standard deviations.}
+averaged over landscapes and the ten model-based acquisitions. Magnitudes are in
+landscape standard deviations. The upper block is the primary response, a time
+average over the post-onset trajectory of the best design \emph{visited}; the
+lower block is the design the study would \emph{ship}, at the final trial. They
+are different quantities and are not comparable across blocks.}
 \label{tab:dose}
 \input{tables/dose_response}
 \end{table}
@@ -379,15 +414,21 @@ design under the loop's own refitted surrogate (Appendix~\ref{app:shiprules}). A
 a check rather than an assumption, the largest selection loss over the $2{,}000$
 clean runs is $0.00\times10^{0}$, as Equation~\ref{eq:decomp} requires.
 
-\textbf{Most of what error costs is selection.} Pooled over the four error
-processes, a deployed regret of $0.346$ of the achievable improvement splits into
-$0.212$ of search loss and $0.135$ of selection loss, so selection is $38.9\%$
-$[27.8, 52.6]$ of it. Against the identically seeded clean twin --- the part the
-error caused rather than the part the problem is hard --- of $0.218$ of excess,
-$0.083$ is search and $0.135$ selection: \textbf{selection is $61.8\%$
-$[53.6, 69.5]$ of the cost of error}. The share is the same for every error
-process ($60.7$--$63.6\%$) and rises with magnitude and lateness of onset, from
-$29\%$ at $0.05\sigma$ from the first rating to $82\%$ at $5\sigma$ from trial 21.
+\textbf{A large part of what error costs is selection, and how large depends on
+the error.} We report the split against the identically seeded clean twin, which
+isolates the part the error caused from the part the problem is hard, and we
+report it per cell: the share rises steadily with the magnitude and with the
+lateness of the onset, from $30.6\%$ $[20, 44]$ at $0.05\sigma$ from the first
+rating to $83.1\%$ $[75, 90]$ at $5\sigma$ from trial 21
+(Table~\ref{tab:dose}, lower block). \textbf{At $1\sigma$ from the first rating --- the
+magnitude at which the measured rater noise of the three human studies falls
+(Section~\ref{sec:cost}) --- the excess of $0.297$ splits into $0.173$ of search
+loss and $0.124$ of selection loss, so selection is $41.8\%$ $[34, 50]$.} Pooling
+every cell gives $61.8\%$ $[53.6, 69.5]$, but that pool is a ratio of sums in
+which the $5\sigma$ cells carry $66\%$ of the total and the $1\sigma$ cells
+$25\%$, so it is close to the $5\sigma$ answer and we do not use it as the
+headline. The pattern is the same for all four error processes.
+
 
 \textbf{No rule that re-reads the same ratings recovers it.} Four other ship
 rules remove essentially none of the selection loss: $+3.9\%$ $[-4, +11]$ for the

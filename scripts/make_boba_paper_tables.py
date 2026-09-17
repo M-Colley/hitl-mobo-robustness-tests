@@ -89,21 +89,77 @@ def write(path: Path, body: str) -> None:
     print(f"wrote {path}")
 
 
-def table_dose_response(analysis: Path, out: Path) -> None:
+def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = None) -> None:
+    """Search loss and deployed loss, one above the other.
+
+    `fragility` is the post-onset per-iteration excess of SEARCH loss, a time
+    average over the optimizer's trajectory. `inference_excess` is the excess of
+    the design the study would SHIP, at the final trial; it is not divided by
+    opt_z in cell_means, so that is done here. Reporting only the first invites
+    the reader to take a trajectory average for the cost of a deployment, which
+    is between 1.6 and 9.1 times smaller.
+    """
     cells = pd.read_csv(analysis / "cell_means.csv")
     cells = cells[~cells["acquisition"].isin(["random", "sobol"])]
-    grid = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values="fragility")
-    columns = " & ".join(f"${c:g}\\sigma$" for c in grid.columns)
-    rows = []
+    stats = bb.load_stats(stats_path or bb.DEFAULT_STATS_PATH)
+    opt_z = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+    missing = sorted(set(cells["dataset"]) - set(opt_z))
+    if missing:
+        raise ValueError(f"no opt_z for {missing}; the deployed row would be on another scale")
+    cells = cells.assign(deployed=cells["inference_excess"] / cells["dataset"].map(opt_z))
+
     labels = {0: "from it.\\ 1", 20: "from it.\\ 21"}
-    for onset, row in grid.iterrows():
-        cells_tex = " & ".join(f"{v * 100:.1f}\\%" for v in row)
-        rows.append(f"{labels.get(int(onset), f'onset {int(onset)}')} & {cells_tex} \\\\")
-    write(out / "dose_response.tex", f"""\\begin{{tabular}}{{l{'r' * len(grid.columns)}}}
+    blocks, columns = [], None
+    for title, value in (("search loss, post-onset per-iteration average", "fragility"),
+                         ("deployed design, final trial", "deployed")):
+        grid = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values=value)
+        columns = " & ".join(f"${c:g}\\sigma$" for c in grid.columns)
+        rows = [f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}{{\\emph{{{title}}}}} \\\\"]
+        for onset, row in grid.iterrows():
+            cells_tex = " & ".join(f"{v * 100:.1f}\\%" for v in row)
+            rows.append(f"\\quad {labels.get(int(onset), f'onset {int(onset)}')} & {cells_tex} \\\\")
+        blocks.append(chr(10).join(rows))
+
+    # Third block: how much of the deployed excess above is selection loss. It
+    # comes from the decomposition rather than cell_means, and the two pipelines
+    # are checked against each other here rather than trusted: the deployed
+    # excess is computed independently by both.
+    decomp = analysis / "regret_decomposition.csv"
+    if decomp.is_file():
+        dec = pd.read_csv(decomp)
+        dec = dec[(dec["error_model"] == "pooled") & (dec["jitter_std"] != "pooled")].copy()
+        dec["jitter_std"] = dec["jitter_std"].astype(float)
+        dec["jitter_iteration"] = dec["jitter_iteration"].astype(float)
+        check = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values="deployed")
+        for _, r in dec.iterrows():
+            mine = check.loc[r["jitter_iteration"], r["jitter_std"]]
+            if abs(mine - r["mean_excess_deployed"]) > 5e-4:
+                raise ValueError(
+                    f"cell_means and the decomposition disagree on the deployed excess at "
+                    f"{r['jitter_std']}sigma onset {r['jitter_iteration']:.0f}: "
+                    f"{mine:.4f} against {r['mean_excess_deployed']:.4f}"
+                )
+        grid = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
+                               values="excess_selection_share")
+        lo = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
+                             values="excess_selection_share_lo")
+        hi = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
+                             values="excess_selection_share_hi")
+        rows = [f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}"
+                f"{{\\emph{{of that deployed excess, the share that is selection loss}}}} \\\\"]
+        for onset in grid.index:
+            cells_tex = " & ".join(
+                f"{grid.loc[onset, c] * 100:.0f}\\% {{\\scriptsize $[{lo.loc[onset, c] * 100:.0f},"
+                f"{hi.loc[onset, c] * 100:.0f}]$}}" for c in grid.columns)
+            rows.append(f"\\quad {labels.get(int(onset), f'onset {int(onset)}')} & {cells_tex} \\\\")
+        blocks.append(chr(10).join(rows))
+
+    body = "\n\\addlinespace\n".join(blocks)
+    write(out / "dose_response.tex", f"""\\begin{{tabular}}{{l{'r' * 4}}}
 \\toprule
 error present & {columns} \\\\
 \\midrule
-{chr(10).join(rows)}
+{body}
 \\bottomrule
 \\end{{tabular}}""")
 

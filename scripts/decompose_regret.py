@@ -244,6 +244,16 @@ def main(argv=None) -> pd.DataFrame:
         row.update(summarise(group, clean, rng))
         row.update(rule_recovery(group, rng))
         rows.append(row)
+    # Pooled over the error processes but NOT over magnitude and onset. The
+    # all-in pool below is a ratio of sums, so the cells with the largest cost
+    # decide it, and at 5 sigma that is two thirds of the total. A share quoted
+    # without its magnitude is therefore a share at 5 sigma, whatever it is
+    # called, which is why each (magnitude, onset) gets its own row here.
+    for (std, onset), group in noisy.groupby(["jitter_std", "jitter_iteration"], dropna=False):
+        row = {"error_model": "pooled", "jitter_std": std, "jitter_iteration": onset}
+        row.update(summarise(group, clean, rng))
+        row.update(rule_recovery(group, rng))
+        rows.append(row)
     row = {"error_model": "pooled", "jitter_std": "pooled", "jitter_iteration": "pooled"}
     row.update(summarise(noisy, clean, rng))
     row.update(rule_recovery(noisy, rng))

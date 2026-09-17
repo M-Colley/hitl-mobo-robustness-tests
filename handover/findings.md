@@ -55,7 +55,7 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | E15, I11, I22 | MINOR | Twenty landscapes share their random numbers yet are bootstrapped as independent clusters, BH runs within small families, and one star rests on three clusters. | analyses, Table 26 fitted row | State cluster counts and the shared stream, drop the star | V, R | open |
 | F1, F2, F3, I13 | MINOR | The fitted arm's σf and optimum come from seed-specific oracles over an extrapolated box, its bootstrap has three clusters, and its R² figures mix protocols. | analyse_fitted_companion.py:79-88, anchor_noise_scale.py:80, main.tex:107, 833-836 | Disclose | V, R | open |
 | C2, C3, E17, I12, I21, I23 | MINOR | Counting errors and internal contradictions (8, 6 or 9 extra trials, arm counts, "adopted unchanged", two intervals for one cell, observation count, instrument spans). | see `history/` | Prose edits | V | open |
-| C15 | BLOCKER | The draft uses the 2026 style and header, spills onto page 10, and carries four `\todo` markers. | main.tex:1-15, 33, 319, 675, 686 | Switch style, cut, resolve | V | partly 2026-09-17: style, header and check_paper.py switched to the official 2027 kit (only the running header differs, .bst identical); page overflow now ~0.5 page (main text ends 47% down page 10) after cutting Setup 116->~80 lines, moving Controls to the appendix and trimming Discussion; a probe shows moving the error equations to the appendix would buy only 12% of a page, so the rest must come from other sections; five author todos open |
+| C15 | BLOCKER | The draft uses the 2026 style and header, spills onto page 10, and carries four `\todo` markers. | main.tex:1-15, 33, 319, 675, 686 | Switch style, cut, resolve | V | fixed 2026-09-17 for style and page count: official 2027 kit; main text through Limitations ends at the bottom of page 9 (verified on a from-scratch compile, margin about one line). Still open inside C15: the five author todos (author block, three citations, repo URL, AI not-used list, ethics approval) |
 | review | MAJOR | The abstract has 524 words and the paper has no figure. | main.tex | See `readiness_review.md` Section 4 | V | open |
 | E12 | MAJOR | The AI use statement lacks a negative list and a verification method and cites the 2026 policy. | main.tex:679-686 | The authors write it and list only checks that were performed | V | partly 2026-09-17: heading, required/not-used/recommended structure, verification sentence and 2027 policy reference now follow the template; the negative list is a todo only the authors can fill |
 
@@ -155,6 +155,18 @@ A ready-to-upload zip is built by paper/build_overleaf_bundle.py; it contains
 only what a submission needs and a README_OVERLEAF.md listing the six open todos
 and the page overflow. The bundle is test-compiled from a clean directory before
 it is written.
+
+C15 page count, 2026-09-17. Beyond the earlier moves, the extra-trials paragraph
+and its table went to Appendix "Extra trials, by arm" (one sentence with the 41
+and 39% figures stays in Section 4), the three controls went to a new first
+appendix, Setup lost the benchmark name list and repeated prose, the checks
+section (now "seven further checks", matching its seven paragraphs and the
+intro) is one to two sentences per check with every number kept, and the
+Discussion lost a paragraph and a sentence that repeated Section 4 and Appendix
+adapt verbatim. Sequence of from-scratch measurements: 9% into page 11 -> 47%,
+12%, 10%, 9% down page 10 -> Limitations end on page 9. A probe showed moving
+the error-process equations to the appendix would have bought only 12% of a
+page; they stay in the main text.
 
 ## 2. Code, tests and reproducibility
 

@@ -116,10 +116,26 @@ def measure(pdf: Path) -> str:
     for i, page in enumerate(reader.pages, 1):
         text = (page.extract_text() or "")
         j = text.upper().find(FIRST_UNCOUNTED_HEADING)
-        if j >= 0:
-            frac = j / max(1, len(text))
-            return (f"main text ends {frac * 100:.0f}% down page {i} of {len(reader.pages)} "
-                    f"(ICLR 2027 submission limit: a strict 9 pages)")
+        if j < 0:
+            continue
+        # What precedes the heading on its page, minus the style's margin line
+        # numbers and running header. If that is empty, the counted text ended on
+        # the previous page and the heading merely opens this one -- which is
+        # the layout the limit asks for, not an overflow. Reporting "ends on page
+        # i" in that case once read a 9-page paper as a 10-page one.
+        before = re.sub(r"^(\d+\s+)+", "", text[:j].strip())
+        before = re.sub(r"^Under review.*?ICLR \d{4}\s*", "", before).strip()
+        limit = 9
+        if not before:
+            counted = i - 1
+            verdict = "FITS" if counted <= limit else f"OVER by {counted - limit} page(s)"
+            return (f"main text ends at the bottom of page {counted}; the first uncounted "
+                    f"section opens page {i} of {len(reader.pages)} -- {verdict} the strict "
+                    f"{limit}-page ICLR 2027 submission limit")
+        frac = j / max(1, len(text))
+        verdict = "FITS" if i <= limit else f"OVER by about {i - limit - 1 + frac:.1f} page(s)"
+        return (f"main text ends {frac * 100:.0f}% down page {i} of {len(reader.pages)} -- "
+                f"{verdict} the strict {limit}-page ICLR 2027 submission limit")
     return f"{len(reader.pages)} pages; the '{FIRST_UNCOUNTED_HEADING}' heading was not found"
 
 

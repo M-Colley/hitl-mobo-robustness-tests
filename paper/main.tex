@@ -159,7 +159,7 @@ property of a problem decides whether feedback error hurts''.
   \item An input-error arm, in which the person applies the wrong design rather
     than the wrong rating: a slip of $15\%$ of the range costs about as much as
     one-SD rating noise, and up to half of a small slip's cost is the record
-    (Section~\ref{sec:inputerror}). Six further checks, from the surrogate's noise model to a preregistered
+    (Section~\ref{sec:inputerror}). Seven further checks, from the surrogate's noise model to a preregistered
     replication on held-out seeds, each change one part of the design
     (Section~\ref{sec:robustness}).
 \end{enumerate}
@@ -346,25 +346,10 @@ under-fit oracle understates $\sigma_f$, so these ratios are if anything high;
 this anchors the range of interest rather than measuring it.
 
 \paragraph{How many extra trials?} A practitioner budgets trials, not regret.
-For each noisy run we count the trials it needs to come within $1\%$ of the
-achievable improvement of its clean twin after $k$ trials, on the budget-100 arm
-of Appendix~\ref{sec:designchoices} (\textsc{gaussian} error, six acquisitions;
-Table~\ref{tab:extra}; all arms in Appendix~\ref{app:extra}).
-Against a clean 25-trial study, error of
-$0.05\sigma$ from the first rating costs a median of one extra trial and
-$0.25\sigma$ seven; $1\sigma$ costs a median of $41$, a budget of $2.6\times$,
-and $39\%$ of runs never get there within 100 trials; at $5\sigma$, $70\%$
-never do.  Error from trial 41 costs a 50-trial study no extra trials at the median, though $8$--$12\%$ of runs at $1\sigma$ and above never recover.
-
-\begin{table}[t]
-\centering
-\caption{Extra trials a noisy run needs to reach the regret its clean twin had
-after $k$ trials, within $1\%$ of the achievable improvement (budget-100 arm,
-\textsc{gaussian} error, six acquisitions): median over runs, and the share that
-never got there within 100 trials.}
-\label{tab:extra}
-\input{tables/extra_runs}
-\end{table}
+Against a clean 25-trial study, $1\sigma$ error from the first rating costs a
+median of $41$ extra trials and $39\%$ of runs never catch up within 100, while
+the same error from trial 41 costs a 50-trial study no extra trials at the median
+(Appendix~\ref{app:extra}, Table~\ref{tab:extra}).
 
 \section{Where the cost is: searching or selecting?}
 \label{sec:decomp}
@@ -605,71 +590,65 @@ $2.6$, of which a record of what was applied removes up to half. The optimizer's
 progress survives an input error far better than the record of it, and a deployment
 inherits the record.
 
-\section{The conclusions under six further checks}
+\section{The conclusions under seven further checks}
 \label{sec:robustness}
 
 \paragraph{The surrogate's noise estimate is not the problem.} The GP's fitted
-noise is an eighth of the injected value for the first ten iterations at
-$1\sigma$ and above, yet telling it the true variance removes $5.0\%$ of the
-excess-weighted cost and \emph{costs} $7\%$ at $1\sigma$ from the first rating,
-with no condition surviving correction (Appendix~\ref{sec:noisediag}).
+noise is an eighth of the injected value over the first ten iterations at
+$1\sigma$ and above, yet giving it the true variance removes $5.0\%$ of the
+excess-weighted cost, \emph{costs} $7\%$ at $1\sigma$ from the first rating, and
+survives correction in no condition (Appendix~\ref{sec:noisediag}).
 
-\paragraph{The incumbent is part of the method.} Switching improvement-based
-acquisitions from the posterior-mean incumbent to the observed maximum removes $15.6\%$ of the excess-weighted cost, $12\%$ at $1\sigma$ from the first rating and
-$65$--$67\%$ below $0.25\sigma$ ($35$--$41\%$ for the
-probability-of-improvement family) but worsens the deployed design: robustness
-rankings rank acquisition-and-incumbent pairs (Appendices~\ref{sec:incumbent}
+\paragraph{The incumbent is part of the method.} The observed-max incumbent
+removes $15.6\%$ of the excess-weighted cost, $12\%$ at $1\sigma$ and
+$65$--$67\%$ below $0.25\sigma$, and worsens the deployed design: robustness rankings rank
+acquisition-and-incumbent pairs (Appendices~\ref{sec:incumbent}
 and~\ref{app:adapt}).
 
 \paragraph{$\optz$ is not causal on its own, and dimension is not inert.}
 Purpose-built landscapes show that raising a narrow optimum changes nothing, that
 a Levy ladder confounds dimension with signal strength, and that with $\optz$
-fixed dimension still raises the cost, $1.7\times$ from $d = 7$ to $11$ (Appendix~\ref{sec:manipulation}).
+fixed dimension still raises the cost, $1.7\times$ from $d = 7$ to $11$
+(Appendix~\ref{sec:manipulation}).
 
-\paragraph{Multi-objective BO is no more fragile.} On six BoTorch problems with published hypervolume optima the dose-response and
-onset structures replicate and the four hypervolume acquisitions are
-indistinguishable. Early error costs less than on the scalar suite at every
-magnitude, but by how much depends on the magnitude and the gap is narrowest
-where it matters: a seventh at $0.05\sigma$, a third at $0.25\sigma$ and a half
-at $1\sigma$ and $5\sigma$, with the intervals separating only at the two
-smallest (Appendix~\ref{sec:multiobjective}).
+\paragraph{Multi-objective BO is no more fragile.} On six BoTorch problems the
+dose-response and onset structures replicate and the four hypervolume
+acquisitions are indistinguishable. Early error costs a
+seventh of the scalar suite's at $0.05\sigma$, a third at $0.25\sigma$ and a half
+at $1\sigma$ and $5\sigma$, the intervals separating only at the two smallest
+(Appendix~\ref{sec:multiobjective}).
 
 \paragraph{The budget matters; the rating scale cuts both ways.} With the late
 onset held at $40\%$ of the run, the early-to-late cost ratio is $2.3\times$,
-$5.1\times$ and $11.7\times$ at $T = 25$, $50$ and $100$; a discretised
-rating scale makes small errors costlier and large ones marginally cheaper; and scored against the
-standard process, neither qKG nor replication recovers the cost
-(Appendices~\ref{sec:designchoices} and~\ref{app:adapt}).
+$5.1\times$ and $11.7\times$ at $T = 25$, $50$ and $100$, and a discretised
+rating scale makes small errors costlier and large ones marginally cheaper
+(Appendix~\ref{sec:designchoices}).
 
-\paragraph{The replication is void; post hoc, the claims hold.} Four claims were preregistered before ten fresh seeds ran; one control failed
-(a landscape fell below the headroom threshold), so the run is void by its own
-rule, and with that landscape excluded post hoc all four claims clear their
-thresholds (Appendix~\ref{sec:confirmatory}).
+\paragraph{The replication is void; post hoc, the claims hold.} Four
+preregistered claims ran on ten fresh seeds; one control failed, so the run is
+void by its own rule, and with that landscape excluded post hoc all four clear
+their thresholds (Appendix~\ref{sec:confirmatory}).
 
-\paragraph{The fitted-oracle design reports about a third of the cost.} Run on
-three archival datasets at matched magnitudes, the data-driven design recovers
-$29$--$38\%$ of the cost the analytic arm measures. The gap is not the oracles'
-fidelity --- improving them by up to $0.29$ held-out $R^2$ moves the measured
-cost by a median of $+0.006$ --- nor the optimum estimate, which cancels in a
-difference of two regrets; the three fitted design spaces simply sit at the low
-end of the twenty-landscape spread (Appendix~\ref{sec:fitted}).
+\paragraph{The fitted-oracle design reports about a third of the cost.} On three
+archival datasets at matched magnitudes it recovers $29$--$38\%$ of the cost the
+analytic arm measures. The gap is neither the oracles' fidelity --- up to $0.29$
+more held-out $R^2$ moves the cost by a median of $+0.006$ --- nor the optimum
+estimate, which cancels in a difference of regrets; the three fitted spaces sit
+at the low end of the twenty-landscape spread (Appendix~\ref{sec:fitted}).
 
 \section{Discussion}
 \label{sec:discussion}
 
 At measured rater-noise levels, feedback error costs a study $12$--$20\%$ of the
 improvement it could have had: worth reducing, but not a catastrophe, and not one
-extra trials repair, since $39\%$ of runs at $1\sigma$ never match a clean study
-with four times its budget. Classifying the kind of error is largely wasted
+extra trials repair (Section~\ref{sec:cost}). Classifying the kind of error is largely wasted
 effort: at $1\sigma$ and above the four processes are within a third of each
 other. Estimating its size is not: from a ten-trial pilot and the rater noise,
 Equation~\ref{eq:frag} predicts the damage as well as the exact version does.
 
-Most process changes do not help either (Appendix~\ref{app:adapt}): replicating
-ratings does worse than the standard process, because the designs it gives up
-cost more than the averaging buys, and the observed-max incumbent recovers a
-fifth of the trajectory cost while deploying a worse design. Two things remain
-unexplained: why the onset effect grows with the
+Replicating ratings does worse than the standard process, because the designs it
+gives up cost more than the averaging buys (Appendix~\ref{app:adapt}). Two things
+remain unexplained: why the onset effect grows with the
 budget (Appendix~\ref{sec:designchoices}), and why the cost grows with $\optz$
 faster than \textsc{gain} allows when $\optz$ is not causal
 (Appendix~\ref{sec:manipulation}).
@@ -677,11 +656,11 @@ faster than \textsc{gain} allows when $\optz$ is not causal
 \paragraph{Limitations.} The landscapes are analytic, not people: they remove
 the surrogate-human confound at the cost of realism, and Appendix~\ref{sec:fitted}
 cannot say which design's answer is closer to a person. The rater-noise anchor
-runs through a fitted oracle's $\sigma_f$; extra-trial counts are censored at the
-budget and depend on the tolerance (Appendix~\ref{app:extra}); the
-multi-objective arm is six problems at five seeds, too few to separate the
-hypervolume acquisitions; and the preregistered replication is void on a control
-failure, so its claims clear their thresholds only after a post-hoc exclusion.
+runs through a fitted oracle's $\sigma_f$; extra-trial counts are censored and
+tolerance-dependent (Appendix~\ref{app:extra}); the multi-objective arm, six
+problems at five seeds, cannot separate the hypervolume acquisitions; and the
+preregistered replication is void on a control failure, so its claims hold only
+post hoc.
 
 \section*{Reproducibility statement}
 The full pipeline is scripted end to end, from the landscape statistics through
@@ -1441,6 +1420,27 @@ trial. Brackets are 95\% cluster-bootstrap intervals over landscapes.}
 \FloatBarrier
 \section{Extra trials, by arm}
 \label{app:extra}
+
+For each noisy run we count the trials it needs to come within $1\%$ of the
+achievable improvement of its clean twin after $k$ trials, on the budget-100 arm
+of Appendix~\ref{sec:designchoices} (\textsc{gaussian} error, six acquisitions;
+Table~\ref{tab:extra}; every arm in Table~\ref{tab:extrafull} below). Against a
+clean 25-trial study, error of $0.05\sigma$ from the first rating costs a median
+of one extra trial and $0.25\sigma$ seven; $1\sigma$ costs a median of $41$, a
+budget of $2.6\times$, and $39\%$ of runs never get there within 100 trials; at
+$5\sigma$, $70\%$ never do. Error from trial 41 costs a 50-trial study no extra
+trials at the median, though $8$--$12\%$ of runs at $1\sigma$ and above never
+recover.
+
+\begin{table}[htbp]
+\centering
+\caption{Extra trials a noisy run needs to reach the regret its clean twin had
+after $k$ trials, within $1\%$ of the achievable improvement (budget-100 arm,
+\textsc{gaussian} error, six acquisitions): median over runs, and the share that
+never got there within 100 trials.}
+\label{tab:extra}
+\input{tables/extra_runs}
+\end{table}
 
 Table~\ref{tab:extrafull} repeats the count of Section~\ref{sec:cost} for every
 arm at the early onset, against a clean ten-trial study within the fifty-trial

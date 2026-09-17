@@ -48,13 +48,16 @@ structure of the 2027 template (`iclr2027_conference_ORIGINAL.tex`, lines
 
 ## Known blockers that are NOT fixed here
 
-**Page limit.** ICLR 2027 allows a *strict* **9 pages** of main text at
-submission (10 at rebuttal). Main text through *Limitations* currently ends about
-one tenth of the way into **page 11** — roughly 1.1 pages over. Three sections
-were already moved to the appendix and every addition from the last revision was
-compressed; what remains is a cut to older material, which is an argument about
-what the paper is for, not an editing task. Measured candidates: *Setup* (98
-source lines), *Discussion* (67), *How much does feedback error cost?* (66).
+**Page limit — now met.** ICLR 2027 allows a *strict* **9 pages** of main text
+at submission (10 at rebuttal). The main text through *Limitations* ends at the
+bottom of **page 9**, and page 10 opens with the Reproducibility statement, which
+does not count. That took: three sections to the appendix (fitted oracle,
+one-shot loss, input error), the three controls to the appendix, the extra-trials
+paragraph and its table to Appendix *Extra trials, by arm*, and a compression of
+Setup, the seven-checks section and the Discussion. **The margin is about one
+line.** Any addition to the main text — a sentence in the abstract counts — will
+push the Limitations onto page 10; rebuild the bundle after every edit and read
+its last line, which says FITS or OVER.
 
 **Title and abstract.** The title names "the One Number That Predicts It" —
 that is `frag`, whose analysis now lives in Appendix B. The abstract is 609

@@ -8,7 +8,7 @@ This file is for whoever works on the repository next, human or agent. `README.m
 
 ## What the project claims
 
-Bayesian optimization driven by human ratings is measured on twenty analytic landscapes with published optima, with four error processes injected at four magnitudes and two onsets. The deployed design's regret splits into search loss (the run never visited anything better) and selection loss (it visited something better and shipped the wrong one). Selection loss is zero under exact observation, so a noiseless benchmark cannot show it, and no acquisition function targets it directly. Pooled over all cells, selection is 61.8% of the deployed cost of error. Near 1σ from the first rating it is about half. No acquisition-side change tested improved the deployed design. A final comparative sitting of about a third of the budget gains an absolute 0.05 of the achievable improvement, and four confirmation trials cut false improvement claims from 15.7% to 0.5%. Explicit models of the fault, such as response clipping, relevance pursuit and per-rater offsets, recover a substantial share of the cost of gross faults.
+Bayesian optimization driven by human ratings is measured on twenty analytic landscapes with published optima, with four error processes injected at four magnitudes and two onsets. The deployed design's regret splits into search loss (the run never visited anything better) and selection loss (it visited something better and shipped the wrong one). Selection loss is zero under exact observation, so a noiseless benchmark cannot show it, and no acquisition function targets it directly. At 1σ from the first rating, the magnitude where the measured rater noise of the three human studies falls, selection is 41.8% [34, 50] of the deployed cost of error, rising to 83.1% [75, 90] at 5σ from trial 21. Pooled over all cells it is 61.8%, but that pool is a ratio of sums in which the 5σ cells carry 66% of the total, so it is close to the 5σ answer and is not the headline. No acquisition-side change tested improved the deployed design. A final comparative sitting of about a third of the budget gains an absolute 0.05 of the achievable improvement, and four confirmation trials cut false improvement claims from 15.7% to 0.5%. Explicit models of the fault, such as response clipping, relevance pursuit and per-rater offsets, recover a substantial share of the cost of gross faults.
 
 ## Two metrics, never interchangeable
 
@@ -56,7 +56,7 @@ The simulation machine is a Windows box with 24 usable workers. The drivers read
 
 The main sweep (`output-boba/`) and several other arms are gitignored and exist only on that machine. The paper tables read their analysis and evaluation directories. Back them up separately.
 
-`tests/test_hierarchical_oracle.py` imports jax and numpyro at module level. Without them pytest aborts the whole run at collection.
+`tests/test_hierarchical_oracle.py` needs jax and numpyro, which the module under test imports at import time. A module-level `pytest.importorskip("numpyro")` turns a missing install into a skip of that one file; before it was added, pytest abandoned the whole run at collection and reported nothing.
 
 Smoke-test a driver before an overnight run. `run_boba_budget_neutral.ps1 -Smoke` runs every variant of every arm at toy size. It has caught an arm silently skipped by a `--help` guard and an arm whose two variants collided in one directory.
 
@@ -83,7 +83,7 @@ A replay reproduces the logged prefix exactly, because the proposal at trial t d
 
 ## What is settled, and what is not
 
-Settled, with the measurement. Selection is a large share of the deployed cost of error, about half near 1σ and more at the late onset and at 5σ. No acquisition-side change tested improved the deployed design. Early replication and Thompson sampling make the deployed design worse. Four confirmation trials cut false improvement claims from 15.7% to 0.5%. A comparison loop is immune to shared monotone faults such as drift by construction and does not help against a saturating scale. The CUSUM already matches the classical optimal detector.
+Settled, with the measurement. Selection is 41.8% [34, 50] of the deployed cost of error at 1σ from the first rating and 83.1% [75, 90] at 5σ from trial 21. No acquisition-side change tested improved the deployed design. Early replication and Thompson sampling make the deployed design worse. Four confirmation trials cut false improvement claims from 15.7% to 0.5%. A comparison loop is immune to shared monotone faults such as drift by construction and does not help against a saturating scale. The CUSUM already matches the classical optimal detector.
 
 Not settled. The human is simulated. The best fitted oracle has held-out R² of about 0.55, and the provoice oracle is worse than a constant. The end-of-study procedures and the cautious ship rule pay a fixed price whether or not error is present, so they cost more than they recover below 0.25σ. Response clipping has no price. The onset effect is unexplained. The model-based budget rule must be recomputed before it can be quoted. The preregistered replication is void on its own control rule, and the post-hoc sensitivity analysis clears all four thresholds.
 

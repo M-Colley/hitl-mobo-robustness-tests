@@ -15,7 +15,10 @@ import pytest
 
 import analyse_boba_robustness as abr
 
-OPT_Z = np.geomspace(1.25, 56.8, 20)
+# The suite's real span, 0.76 on powell to 56.8 on shekel. The estimator is
+# recovered from synthetic data here, so only the span matters, but a stale span
+# invites the reader to quote it as the suite's.
+OPT_Z = np.geomspace(0.76, 56.8, 20)
 SIGMAS = [0.05, 0.25, 1.0, 5.0]
 LEARNERS = ("ei", "ucb")
 SEEDS = 3

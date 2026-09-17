@@ -101,9 +101,9 @@ open.
 
 | ID | severity | problem | where | fix | basis | status |
 |---|---|---|---|---|---|---|
-| D2 | MAJOR | pytest aborts at collection when jax and numpyro are absent, so the suite runs nothing and CI should fail. | tests/test_hierarchical_oracle.py:38 | Module-level `pytest.importorskip("numpyro")` | X | open |
+| D2 | MAJOR | pytest aborts at collection when jax and numpyro are absent, so the suite runs nothing and CI should fail. | tests/test_hierarchical_oracle.py:38 | Module-level `pytest.importorskip("numpyro")` | X | fixed 2026-09-17 |
 | D1 | MAJOR | The BOBA parity and provenance tests skip on every machine but the author's. | tests/test_boba_benchmarks.py:36 | Vendor the reference outputs into `tests/fixtures` | V | open |
-| C10 | MINOR | The budget rule seeds its Monte Carlo from Python's salted `hash()`. | budget_split.py:223 | Use `zlib.crc32` | V | open |
+| C10 | MINOR | The budget rule seeds its Monte Carlo from Python's salted `hash()`. | budget_split.py:223 | Use `zlib.crc32` | V | fixed 2026-09-17 |
 | C11 | MINOR | `decompose_regret` does not filter variants and drops unpaired runs silently, pooled adaptation references lack a completeness check, and a missing opt_z falls back to 1.0. | decompose_regret.py:225-226, analyse_boba_adaptations.py:250-256 | Add the checks | R | open |
 | C12 | MINOR | The pilot frag is correlated with the opt_z-normalised cost, while Section 7 uses raw excess. | analyse_pilot_frag.py:240-249 | Say so in Appendix R | R | open |
 | J12 | MINOR | The paired table carries only the noisy run's fallback count, and global warning filters hide optimiser warnings. | evaluate_research_question.py:237-239, 316, bo_sensor_error_simulation.py:202-203 | Carry both counts | R | open |
@@ -114,7 +114,7 @@ open.
 | F9 | MINOR | Bootstrap generators are seeded differently across scripts. | replay_mo_front.py:860, analyse_boba_mo.py:146 | Align | R | open |
 | I16 | MINOR | The requirement files contradict each other, `pyproject.toml` requires Python 3.13 while the results used 3.12.9, and CI tests other versions without jax or numpyro. | requirements.txt, requirements-eval.txt, pyproject.toml:5-6, .github/workflows/tests.yml | Freeze the environment of the simulation machine | V | open |
 | I18, I19 | MINOR | Resumed runs carry no code stamp, run metadata reflects the last invocation, and the preregistration has no external timestamp. | bo_sensor_error_simulation.py:4072-4100, output-boba-confirmatory/HYPOTHESIS.md | Stamp runs, cite a dated commit | V, R | open |
-| C13 | MINOR | Stale values remain in `docs/known-function-arm-2026-09-06.md`, `scripts/decompose_regret.py:41`, `tests/test_currency.py:18` and `scripts/analyse_fitted_companion.py:23`. | those files | Update | V | open |
+| C13 | MINOR | Stale values remain in `docs/known-function-arm-2026-09-06.md`, `scripts/decompose_regret.py:41`, `tests/test_currency.py:18` and `scripts/analyse_fitted_companion.py:23`. | those files | Update | V | partly 2026-09-17: decompose_regret.py and test_currency.py corrected to the real 74x span; docs/known-function-arm-2026-09-06.md is a dated record and analyse_fitted_companion.py's 0.37 vs the paper's 0.29 held-out R2 needs the authors to say which is right |
 | check | MINOR | `check_paper.py` hard-codes the 2026 style name. | check_paper.py:38 | Update with the style switch | V | open |
 
 ## 3. Anonymity and submission hygiene

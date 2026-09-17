@@ -152,11 +152,15 @@ def _floor_frame(error_model: str, excess: float):
     })
 
 
-def test_floor_check_still_catches_a_leak_under_rating_error(capsys):
+def test_floor_check_raises_on_a_leak_under_rating_error():
+    """It used to print to stderr and carry on, which let a run whose negative
+    control had failed go on to produce a full set of tables. Under RATING error
+    the model-free arms read no observation, so any excess is a broken pairing
+    and nothing downstream can be trusted."""
     import analyse_boba_robustness as ab
 
-    ab.floor_check(_floor_frame("gaussian", 0.3), tolerance=1e-12)
-    assert "FLOOR CHECK FAILED" in capsys.readouterr().err
+    with pytest.raises(ValueError, match="FLOOR CHECK FAILED"):
+        ab.floor_check(_floor_frame("gaussian", 0.3), tolerance=1e-12)
 
 
 def test_floor_check_reports_rather_than_asserts_under_design_error(capsys):

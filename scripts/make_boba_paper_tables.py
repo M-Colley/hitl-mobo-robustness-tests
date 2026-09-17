@@ -238,8 +238,19 @@ def table_acquisitions(analysis: Path, out: Path) -> None:
         for _, r in overall.iterrows()
     ]
     rows.append(r"\midrule")
+    # The floor's excess regret was typed as 0.00% here. It IS zero, but a table
+    # that asserts its own negative control cannot check it, so the value is read
+    # from the control's own output and refused if it is not zero.
+    check = pd.read_csv(analysis / "floor_check.csv")
+    worst = float(check["max_abs_excess_auc"].abs().max())
+    if worst > 1e-9:
+        raise ValueError(
+            f"the model-free floor shows excess regret up to {worst:.3e}; it must be zero, "
+            "and the table may not print 0.00% over a failed control"
+        )
     rows.append(
-        f"model-free floor & -- & 0.00\\% & {floor['mean_absolute_loss'].mean() * 100:.1f}\\% \\\\"
+        f"model-free floor & -- & {worst * 100:.2f}\\% & "
+        f"{floor['mean_absolute_loss'].mean() * 100:.1f}\\% \\\\"
     )
     write(out / "acquisitions.tex", f"""\\begin{{tabular}}{{lrrr}}
 \\toprule

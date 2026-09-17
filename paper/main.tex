@@ -178,10 +178,11 @@ observation model: elicit pairwise preferences and fit an ordinal likelihood
 \citep{chu2005preference, gonzalez2017preferential}. That handles inconsistent
 \emph{scaling} but not inconsistent \emph{ranking}, and it does not tell a
 practitioner running a cardinal-rating study what their rater noise will cost.
-Appendix~\ref{app:elicitation} measures where the line falls: at equal human cost
-a comparison loop is \emph{exactly} unharmed by drift --- its shipped design
-differs from its clean twin in no run --- and is no better under a saturating
-scale and worse under inconsistency. We trade the realism of the objective for
+Appendix~\ref{app:elicitation} measures where the line falls. A comparison is
+unharmed by a strictly monotone fault shared across a sitting by construction,
+and at equal human cost that buys a great deal against drift and nothing against
+a saturating scale, where the map is monotone but not strictly so. We trade the
+realism of the objective for
 exactness, and map measured rater noise onto the synthetic axis afterwards.
 
 \paragraph{Benchmarks and landscape analysis.}
@@ -293,7 +294,10 @@ it, which would manufacture the coefficient Section~\ref{sec:currency} estimates
 \begin{itemize}
   \item \textbf{Model-free floor.} \texttt{Random} and \texttt{Sobol} never read
     an observation, so their excess regret must be identically zero, and across
-    all $12{,}800$ such comparisons it is exactly zero. This negative control
+    all $12{,}800$ such comparisons the largest absolute value is
+    $0.000\times10^{0}$. The analysis raises rather than warns if it is not, and
+    the table reads the value from that check rather than printing a constant.
+    This negative control
     shows that no observation noise reaches the candidate stream; the floors are
     then excluded from the robustness ranking, which a method that ignores its
     data would otherwise win.
@@ -404,9 +408,11 @@ it deploys. Then
   \underbrace{\max_{x \in V} f(x) - f(d)}_{\text{selection loss}} .
 \end{equation}
 The first term is what the optimizer failed to find. The second is what the
-ratings failed to identify among what it did find. An acquisition function acts
-on the first term only: it chooses where to sample, and the second term is
-already determined by the time the study picks a design to ship. The selection
+ratings failed to identify among what it did find. An acquisition function
+addresses the first directly: it chooses where to sample. It can reach the second
+only indirectly, by changing which designs are visited and so which set the
+ratings must rank --- and none of the seven acquisition-side changes we ran
+reduced the deployed loss (Section~\ref{sec:acq}). The selection
 term is also exactly zero under exact observation --- the best-rated visited
 design is then the best visited design --- which is why it never appears in a
 noiseless benchmark and why the field's habit of reporting simple regret at the
@@ -436,10 +442,12 @@ headline. The pattern is the same for all four error processes.
 \textbf{No rule that re-reads the same ratings recovers it.} Four other ship
 rules remove essentially none of the selection loss: $+3.9\%$ $[-4, +11]$ for the
 posterior mean less two latent SDs, $+0.3\%$ for one, $-1.7\%$ for the mean
-rating, $-8.7\%$ for the posterior mean. The reason is structural: the posterior
-ranking the visited designs was fitted on the same corrupted ratings. Closing the
-term needs \emph{new} information, which is what Section~\ref{sec:budget} spends
-trials on.
+rating, $-8.7\%$ for the posterior mean. A likely reason, which we do not test
+directly, is that the posterior ranking the visited designs was fitted on the
+same corrupted ratings and inherits them. What we can say is that the four rules
+differ only in how they re-read data already in hand, and none of them recovers
+the term, whereas the procedures of Section~\ref{sec:budget}, which buy new
+ratings, do.
 
 \section{What makes an error big?}
 \label{sec:currency}
@@ -576,9 +584,10 @@ $+0.042$, $k=25$ $+0.022$, $k=30$ $-0.008$. The curve is the inverted U the two
 forces imply --- a larger sitting is more likely to contain the best visited
 design and leaves fewer trials to find one --- and it turns over at about a third
 of $T$. The ceiling, choosing the best $k$ for each run in hindsight, is $+0.145$.
-Spending nothing extra and merely changing the ship rule gains $+0.001$
-$[-0.018, +0.018]$, which is the selection result of Section~\ref{sec:decomp} in
-another currency: the trials, not the rule, are what buys the recovery.
+Spending nothing extra and merely changing the ship rule is indistinguishable
+from the standard process ($+0.001$, interval $[-0.018, +0.018]$), which is the
+selection result of Section~\ref{sec:decomp} in another currency: the trials, not
+the rule, are what buys the recovery.
 
 \textbf{Ship the fresh look, not the model.} Of the $19$ variants replayed, the
 best takes the top five candidates by the cautious ship rule and deploys
@@ -594,8 +603,9 @@ and below $0.25\sigma$ every variant costs more than the error does.
 
 \textbf{A model-based budget rule inherits the corruption it was meant to fix.}
 Choosing $k$ per run from the surrogate's posterior and the run's own rate of
-improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: $+0.004$
-$[-0.013, +0.021]$ against $+0.051$, because in $65\%$ of runs it declines the
+improvement (Appendix~\ref{app:budgetrule}) \emph{loses} to a fixed $k$: its gain
+over the standard process is indistinguishable from zero ($+0.004$, interval
+$[-0.013, +0.021]$) against the fixed rule's $+0.051$, because in $65\%$ of runs it declines the
 sitting for the posterior-mean design, the worst policy of all at $-0.013$. Its
 utility is the surrogate's posterior, which was fitted on corrupted ratings, so
 it is confident about designs it should not be. Nothing we tried beat fixing $k$
@@ -1471,10 +1481,12 @@ innovation for \textsc{ar1}, and we report the sitting at both that SD and half
 of it.
 
 \emph{Confirmation($k$)}. Search trials $1..T-2k$; the last $2k$ rate the chosen
-design and the best initial design $k$ times each in counterbalanced order, and
-the chosen design ships only if a one-sided paired $t$-test at $\alpha=0.05$
-prefers it. This changes little about the design that ships (it recovers
-$3.2\%$--$3.4\%$ of the cost) and a great deal about what the study may claim.
+design and the best initial design $k$ times each in counterbalanced order. The
+chosen design ships if its \emph{mean} rating over those $k$ is at least the
+initial design's, and the study \emph{claims} an improvement only if a one-sided
+paired $t$-test at $\alpha=0.05$ prefers it. The two decisions are separate, which
+is why this changes little about the design that ships (it recovers $3.2\%$--$3.4\%$
+of the cost) and a great deal about what the study may claim.
 The standard process claims an improvement in $98.3\%$ of runs and that claim is
 false in $15.7\%$ of them, rising to $42.7\%$ at $5\sigma$. Four confirmation
 trials take the false-claim rate to $0.5\%$ overall and $1.0\%$ at $5\sigma$, at
@@ -1592,17 +1604,22 @@ posterior-mean maximiser. Ten of the $960$ fits fell back to prior
 hyperparameters and are counted, not dropped. Each loop is scored against its own
 identically seeded clean twin.
 
-The invariance holds exactly and buys exactly what it should. Under
-\textsc{drift} the rating loop's shipped design differs from its clean twin in
-$41$ of $60$ runs, at an excess of $0.040$ of the achievable improvement; the
-comparison loop's differs in \emph{none}, at an excess of $0.000$ --- not
-approximately, in no run. Under a saturating scale, a map that is monotone but
-not strictly so, the comparison buys nothing ($-0.3\%$ $[-30, +27]$): two designs
-above the cap are indistinguishable, and near the optimum that is exactly the
-pair the study must tell apart. Under \textsc{gaussian} noise, drawn afresh per
-judgement, the comparison is \emph{worse} by $26.5\%$ $[-79, +15]$, the direction
-the $\sqrt2$ argument predicts. A constant \textsc{bias} present from the first
-trial moves neither loop, in no run: a rating loop that standardises its outputs
+The invariance under a shared strictly monotone fault is not a finding but a
+consequence of the construction above, and the run confirms the implementation
+rather than the claim: under \textsc{drift} the rating loop's shipped design
+differs from its clean twin in $41$ of $60$ runs, at an excess of $0.040$ of the
+achievable improvement, and the comparison loop's differs in \emph{none}. What
+the run does test is the reach of the invariance, and there it is narrow. Under a
+saturating scale, a map that is monotone but
+not strictly so, the comparison buys nothing ($-0.3\%$ $[-30, +27]$, an interval
+that spans zero): two designs above the cap are indistinguishable, and near the
+optimum that is exactly the pair the study must tell apart. Under
+\textsc{gaussian} noise, drawn afresh per judgement, the comparison's excess is
+$26.5\%$ larger, though the interval $[-79, +15]$ spans zero; the direction is
+the one the $\sqrt2$ argument predicts, and the magnitude is not established.
+A constant \textsc{bias} present from the first
+trial moves neither loop, in no run --- also by construction:
+a rating loop that standardises its outputs
 and ships an argmax is already shift-equivariant, so that arm tests the rating
 loop's invariance rather than the comparison's, and the cost of \textsc{bias}
 elsewhere in this paper comes from its arriving \emph{part-way through}.

@@ -15,10 +15,10 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | A3 | MAJOR | The interaction and quadratic terms are formed from uncentred logs, so "the magnitude is significant again" is a slope at opt_z = 1 and σ = 1. | analyse_boba_robustness.py:848-861, main.tex:797-799, Appendix G | Centre, refit, rewrite both passages | V | open |
 | I2 | MAJOR | Selection is about half of the deployed cost near 1σ from trial 1 (52% at 0.71σ, 56% at 1.41σ). The 61.8% holds only for the excess-weighted pool. | abstract, title, decompose_regret output | Report the 1σ onset-0 share with its interval before choosing the title | D | fixed 2026-09-17 |
 | E4 | MAJOR | The pooled shares 61.8%, 5.0%, 15.6% and the multi-objective "at most half" are excess-weighted and dominated by 5σ cells. | main.tex:387-390, 585, 590, 601 | Report the 1σ onset-0 value beside each pool | R | fixed 2026-09-17 |
-| E3 | MAJOR | "The term an acquisition function cannot reach" and "the reason is structural" are stated as facts. The acquisition shapes the visited set. | abstract, main.tex:133-136, 369-371, 395-396 | State that no acquisition-side change tested reduced it | V | open |
+| E3 | MAJOR | "The term an acquisition function cannot reach" and "the reason is structural" are stated as facts. The acquisition shapes the visited set. | abstract, main.tex:133-136, 369-371, 395-396 | State that no acquisition-side change tested reduced it | V | fixed 2026-09-17 |
 | I6 | MAJOR | Augmented EI and Thompson sampling are scored against the mean of ten acquisitions, including the four weakest. | analyse_boba_adaptations.py:129-134 | Score against EI or LogEI and report the price | V | open |
 | E2, I3, I7 | MAJOR | Table 25 is typed by hand, has no price column, defines none of its fault models or remedies, and its "−979%" row divides by a reference cost near zero that changes sign. | main.tex:1462-1516 | Generate the table, add prices and definitions, report absolute differences for missing ratings | V, D | open |
-| I4 | MAJOR | Appendix L says the chosen design ships only if a t-test prefers it. The code ships on the higher mean rating and uses the t-test for the claim only. | main.tex:1427, replay_end_of_study.py:22-28, 485-491 | Rewrite the sentence | V | open |
+| I4 | MAJOR | Appendix L says the chosen design ships only if a t-test prefers it. The code ships on the higher mean rating and uses the t-test for the claim only. | main.tex:1427, replay_end_of_study.py:22-28, 485-491 | Rewrite the sentence | V | fixed 2026-09-17 |
 | I5, D8 | MAJOR | "Zero extra trials" for late error is structural in 86% of runs, and 24% of Table 24's runs are structural zeros. | analyse_extra_runs.py:139-144, main.tex:341, Tables 2 and 24 | Report the structural share or restrict each cell | D | open |
 | A4 | MINOR | "A budget of 2.6×" is computed as (k + extra)/k with extra measured from an earlier origin. | analyse_extra_runs.py:183, main.tex:339 | Drop it or compute trial/k | V | open |
 | E9 | MAJOR | frag is compared with an additive model the paper calls misspecified, using in-sample R² only, with no σe-only baseline, and the pilot uses a clean run. | main.tex:462-468, 789-811, Appendix R | Add leave-one-landscape-out R², a σe-only row and a noisy-pilot row | R | open |
@@ -33,9 +33,9 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | C5, C6, C7, D9, I15 | MAJOR | Table 8's row set, the Appendix C ratio interval, the elicitation T = 20, the scalar Kendall's W of 0.52 and the noise-anchor inputs have no recorded producer, so "scripted end to end" is false. | main.tex:658-661 and the cited passages | Record commands in `paper/COMMANDS.md` and add missing scripts | V, R | open |
 | B1 | MAJOR | The instrument arm discretises only noisy post-onset ratings, so its onset-21 row measures a scale that switches on mid-run. | bo_sensor_error_simulation.py:2793-2869, Table 16 | State it and drop the onset-21 row | V | open |
 | B2 | MAJOR | The Student-t arm also switches the kernel to Matérn-5/2. | robust_gp.py:245 | Rerun with RBF in a fresh directory or state the confound | V | open |
-| B4 | MAJOR | The floor check prints and continues, Table 4's floor excess cell is a literal, and the paper says "exactly zero". | analyse_boba_robustness.py:266-277, make_boba_paper_tables.py:186 | Raise on failure, read the CSV, write "zero to 1e-9, observed 0.000e+00" | V | open |
-| E14 | MINOR | Several intervals that include zero are worded as effects. | main.tex:388-389, 503-504, 600-607, Table 3 | Reword | R | open |
-| E16 | MINOR | Invariances that hold by construction are presented as findings. | main.tex:172-175, 1543-1553 | Say "by construction" | V | open |
+| B4 | MAJOR | The floor check prints and continues, Table 4's floor excess cell is a literal, and the paper says "exactly zero". | analyse_boba_robustness.py:266-277, make_boba_paper_tables.py:186 | Raise on failure, read the CSV, write "zero to 1e-9, observed 0.000e+00" | V | fixed 2026-09-17 |
+| E14 | MINOR | Several intervals that include zero are worded as effects. | main.tex:388-389, 503-504, 600-607, Table 3 | Reword | R | fixed 2026-09-17 |
+| E16 | MINOR | Invariances that hold by construction are presented as findings. | main.tex:172-175, 1543-1553 | Say "by construction" | V | fixed 2026-09-17 |
 | E7 | MINOR | Factors are ranked by range ratios. The variance shares rank onset (0.17) above landscape (0.10). | abstract, main.tex:306-311 | Lead with the variance shares | V | open |
 | E11 | MINOR | Three abstract numbers appear only in appendices, and "near-zero price" has no table. | abstract | Move them or drop them | V | open |
 | E13 | MINOR | There is no data or ethics statement for the three archival human-rating datasets. | paper | Add one paragraph | V | open |
@@ -96,6 +96,38 @@ main text now gives the pattern instead of the bound. The two ablation appendice
 already carried per-magnitude qualifiers and were left as they were, except that
 B9's "3% or less at 1 sigma and above" is still the pool over onsets and remains
 open.
+
+E3, I4, B4, E14 and E16, 2026-09-17.
+
+E3. The decomposition no longer says an acquisition function cannot reach the
+selection term. It says the acquisition addresses search directly and can reach
+selection only indirectly, by changing which designs the ratings must rank, and
+that none of the seven acquisition-side changes we ran reduced the deployed loss.
+"The reason is structural" is now "a likely reason, which we do not test
+directly", with the defensible claim stated separately: four rules that only
+re-read data in hand recover nothing, and the procedures that buy new ratings do.
+
+I4. Verified against `confirmation_decision` in replay_end_of_study.py:486. The
+code ships on the higher MEAN rating; the t-test governs only the claim. Appendix
+L now says both, and says they are separate decisions, which is why the procedure
+changes little about what ships and much about what may be claimed.
+
+B4. `floor_check` now raises instead of printing to stderr and continuing, and
+the acquisitions table reads the floor's excess from `floor_check.csv` instead of
+printing a hard-coded 0.00%, refusing to print a zero over a failed control. The
+observed maximum over all 12,800 comparisons is 0.000e+00. Section 3.5 states
+the mechanism rather than only the value.
+`tests/test_error_model_labels.py` pinned the old print-and-continue behaviour
+and now pins the raise.
+
+E14. "Gains +0.001 [-0.018, +0.018]" and "+0.004 [-0.013, +0.021]" are now
+"indistinguishable from" their references. The intervals in Table 25 are left for
+E2/I3/I7, which rebuilds that table.
+
+E16. The comparison loop's immunity to a shared strictly monotone fault is
+labelled a consequence of the construction, with the run described as confirming
+the implementation rather than the claim; the bias arm is labelled the same way.
+The related-work sentence no longer calls the invariance a measurement.
 
 ## 2. Code, tests and reproducibility
 

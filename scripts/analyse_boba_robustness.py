@@ -266,11 +266,15 @@ def floor_check(df: pd.DataFrame, tolerance: float) -> pd.DataFrame:
     worst = float(np.abs(asserted["auc_simple_regret_excess_true"]).max())
     if worst > tolerance:
         offenders = report[report["max_abs_excess_auc"] > tolerance]
-        print(
+        # This is the negative control the whole design rests on: random and sobol
+        # never read an observation, so a non-zero excess means observation noise
+        # has reached the candidate stream and every paired number downstream is
+        # suspect. Printing and continuing let a broken run produce a full set of
+        # tables, so it raises.
+        raise ValueError(
             f"FLOOR CHECK FAILED: model-free acquisitions show excess regret up to "
             f"{worst:.3e} (tolerance {tolerance:g}). Observation noise is reaching the "
-            f"candidate stream.\n{offenders.to_string(index=False)}",
-            file=sys.stderr,
+            f"candidate stream.\n{offenders.to_string(index=False)}"
         )
     else:
         print(f"FLOOR CHECK PASSED: model-free excess regret <= {worst:.3e}.")

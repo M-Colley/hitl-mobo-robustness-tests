@@ -204,22 +204,18 @@ error level together.
 \section{Setup}
 
 \subsection{Landscapes}
-We use twenty analytic benchmarks spanning $d = 2$ to $d = 11$: eight classical
-functions (Schwefel, Powell, Eggholder, Ackley, Shekel, Griewank, Hartmann-3,
-Hartmann-6), five further standard problems (Branin, Rosenbrock, Rastrigin,
-Michalewicz, Levy), six human-performance laws including the Yerkes--Dodson
-inverted-U \citep{yerkes1908relation}, and the moving-peaks benchmark
-\citep{branke1999memory}. The suite was assembled for a separate study and adopted unchanged;
-Appendix~\ref{app:descriptors} reports its geometry.
-
-Each objective is affinely standardised to zero mean and unit variance over its
-own box, using a fixed scrambled-Sobol sample of $2^{16}$ points. Raw outputs span nearly seven orders of magnitude, so without this one grid of
-error magnitudes could not serve every landscape; the map is strictly increasing,
-so the argmax is unchanged. One scale is deliberately left alone. Write $\optz$ for
-the number of landscape standard deviations by which the optimum exceeds the
-mean, which is the expected regret of a random design. It ranges from $0.76$ to
-$56.8$, and that $74\times$ spread is what identifies which scale the cost of
-error follows (Section~\ref{sec:currency}).
+Twenty analytic benchmarks with verified optima, $d = 2$ to $11$: thirteen
+classical test functions, six human-performance laws including the
+Yerkes--Dodson inverted-U \citep{yerkes1908relation}, and moving peaks
+\citep{branke1999memory}; Appendix~\ref{app:descriptors} names them and reports
+their geometry. Each objective is affinely
+standardised to zero mean and unit variance over its box on a fixed
+scrambled-Sobol sample of $2^{16}$ points, so one grid of error magnitudes serves
+outputs that span seven orders of magnitude; the map is increasing, so the argmax
+is unchanged. One scale is left alone: $\optz$, the number of landscape standard
+deviations by which the optimum exceeds the mean (the expected regret of a random
+design), runs from $0.76$ to $56.8$, and that $74\times$ spread is what
+identifies which scale the cost of error follows (Section~\ref{sec:currency}).
 
 \subsection{Error processes}
 \label{sec:errors}
@@ -238,84 +234,57 @@ are exact for $t \le t_0$; thereafter the optimizer sees $\tilde g_t$:
     \quad e_t = \rho e_{t-1} + \eta_t,
     & \eta_t &\sim \mathcal{N}\!\left(0, \sigma_e^2(1 - \rho^2)\right)
 \end{align}
-with $\rho = 0.8$ and $e_{t_0+1}$ drawn from the stationary distribution, so the \textsc{ar}(1) process has standard deviation $\sigma_e$ from its first
-step.
-\textsc{bias} models a systematically generous or harsh rater; its offset is
-scaled to the swept magnitude so that it and \textsc{gaussian} contrast a
-systematic with a random error \emph{of the same size} (a fixed offset would be
-indistinguishable at the top of the grid). \textsc{drift}
-models fatigue over a session, and \textsc{ar}(1) a rater whose consecutive
-judgements are correlated.
-
-Noise first affects the observation at $t_0 + 1$; the first candidate that can
-react to it is proposed at $t_0 + 2$. We sweep
+with $\rho = 0.8$ and $e_{t_0+1}$ stationary, so \textsc{ar}(1) has standard
+deviation $\sigma_e$ from its first step. \textsc{bias} is a systematically
+generous rater, its offset scaled to $\sigma_e$ so that it and \textsc{gaussian}
+contrast a systematic with a random error of the same size; \textsc{drift} is
+fatigue over a session; \textsc{ar}(1) a rater whose consecutive judgements are
+correlated. Noise first touches the observation at $t_0 + 1$, and the first
+candidate that can react to it is proposed at $t_0 + 2$. We sweep
 $\sigma_e \in \{0.05, 0.25, 1, 5\}$ and $t_0 \in \{0, 20\}$ over $T = 50$
-iterations with $5$ initial uniformly random samples, twelve acquisition functions
-and ten seeds: $79{,}200$ runs, of which $76{,}800$ form noisy/clean pairs.
+iterations with $5$ initial uniformly random samples, twelve acquisitions and ten
+seeds: $79{,}200$ runs, $76{,}800$ of them in noisy/clean pairs.
 
 \subsection{Optimizer and acquisitions}
-Every arm uses the same surrogate, BoTorch's default single-task GP (an RBF
-kernel with dimension-scaled lengthscale priors),
-inputs normalised to the unit cube and outputs standardised, fitted by marginal
-likelihood in BoTorch \citep{balandat2020botorch}. We run ten model-based arms --- expected improvement and probability of
-improvement in their analytic, log \citep{ament2023unexpected} and Monte-Carlo
-forms (EI, LogEI, qEI, PI, LogPI, qPI), the upper confidence bound in analytic
-and Monte-Carlo form \citep{srinivas2010gaussian} (UCB, qUCB), noisy expected
-improvement \citep{letham2019constrained} (qNEI), and pure exploitation of the
-posterior mean (Greedy) --- and two model-free floors, uniform random sampling
-and a scrambled Sobol sequence. Improvement-based acquisitions take the maximum
-posterior mean at visited points as their incumbent, the choice usually
-recommended under noise and, as Appendix~\ref{sec:incumbent} shows, not a
-neutral one.
+Every arm uses BoTorch's default single-task GP \citep{balandat2020botorch} ---
+RBF kernel with dimension-scaled lengthscale priors, inputs normalised to the
+unit cube, outputs standardised, fitted by marginal likelihood. Ten model-based
+acquisitions: expected improvement and probability of improvement in analytic,
+log \citep{ament2023unexpected} and Monte-Carlo form (EI, LogEI, qEI, PI, LogPI,
+qPI), the upper confidence bound in both forms \citep{srinivas2010gaussian}
+(UCB, qUCB), noisy expected improvement \citep{letham2019constrained} (qNEI) and
+the posterior-mean maximiser (Greedy); and two model-free floors, uniform random
+and scrambled Sobol. Improvement-based acquisitions take the maximum posterior
+mean at visited points as their incumbent --- the usual choice under noise and,
+as Appendix~\ref{sec:incumbent} shows, not a neutral one.
 
 \subsection{Metrics}
 \label{sec:metrics}
-We report two responses, and they are not interchangeable.
-
-\textbf{Search loss} is the regret of the best design a run has \emph{visited},
-$y^\star - \max_{t' \le t} f(x_{t'})$. Our primary response is its
-\emph{post-onset per-iteration excess}: the noisy run's search loss minus that of
-the identically seeded clean run, averaged over the iterations the error could
-have affected. It is a time average, it describes the optimizer's progress, and
-it is the response behind the dose-response curve, the currency test, the
-descriptor model and the acquisition ranking.
-
-\textbf{Deployed loss} is the regret of the design a study would actually ship:
-the one with the best observed rating, scored at the final trial. It is search
-loss plus the selection loss of Section~\ref{sec:decomp}, and at the final trial
-it is about $2.6\times$ the final search loss. A study deploys a design, not a
-trajectory, so every table that carries a search-loss number carries the deployed
-number beside it, and we compare a final value only with a final value.
-
-The two runs share their candidate-proposal random stream, so the
-difference isolates the error rather than the seed, and because $y^\star$ is a
-verified supremum rather than a random-search estimate, no regret can be
-negative. For reporting we divide by $\optz$, the fraction of the achievable improvement
-destroyed; we never regress that fraction on $\optz$ or anything collinear with
-it, which would manufacture the coefficient Section~\ref{sec:currency} estimates.
+We report two responses, and they are not interchangeable. \textbf{Search loss}
+is the regret of the best design a run has \emph{visited},
+$y^\star - \max_{t' \le t} f(x_{t'})$; our primary response is its
+\emph{post-onset per-iteration excess}, the noisy run's search loss minus the
+identically seeded clean run's, averaged over the iterations the error could have
+affected. It is a time average of the optimizer's progress and the response
+behind Sections~\ref{sec:cost}--\ref{sec:acq}. \textbf{Deployed loss} is the regret of the design a
+study would ship, the one with the best observed rating, at the final trial; it
+is search loss plus the selection loss of Section~\ref{sec:decomp}, and about
+$2.6\times$ the final search loss. Every table with a search-loss number carries
+the deployed number beside it, and a final value is compared only with a final
+value. The paired runs share their candidate-proposal random stream, so the
+difference isolates the error rather than the seed, and $y^\star$ is a verified
+supremum, so no regret is negative. For reporting we divide by $\optz$, the
+fraction of the achievable improvement destroyed, and never regress that fraction
+on $\optz$ or anything collinear with it, which would manufacture the coefficient
+Section~\ref{sec:currency} estimates.
 
 \subsection{Controls}
-\label{sec:controls}
-\begin{itemize}
-  \item \textbf{Model-free floor.} \texttt{Random} and \texttt{Sobol} never read
-    an observation, so their excess regret must be identically zero, and across
-    all $12{,}800$ such comparisons the largest absolute value is
-    $0.000\times10^{0}$. The analysis raises rather than warns if it is not, and
-    the table reads the value from that check rather than printing a constant.
-    This negative control
-    shows that no observation noise reaches the candidate stream; the floors are
-    then excluded from the robustness ranking, which a method that ignores its
-    data would otherwise win.
-  \item \textbf{Headroom.} Where the clean run already reaches the optimum a null is
-    guaranteed, not earned; the smallest clean-run advantage over the floor is
-    $0.176$ (Rosenbrock), so no landscape is ceiling-limited.
-  \item \textbf{Uniform offset.} A constant added to every observation is
-    invisible to a GP that standardises its targets and uses a posterior-mean
-    incumbent. With a shared noise stream the two arms propose identical designs to below
-    $10^{-9}$ for the initial design and three model-based candidates (asserted by
-    test), after which floating-point differences are amplified; in the sweep, \textsc{bias} and
-    \textsc{gaussian} at onset~0 agree to within $0.012$ at every magnitude.
-\end{itemize}
+Three controls, detailed in Appendix~\ref{sec:controls}: the model-free floors
+never read an observation, so their excess regret must be identically zero, and
+over all $12{,}800$ such comparisons it is; no landscape is ceiling-limited by
+its clean run; and a uniform offset is invisible to a GP that standardises its
+targets, which \textsc{bias} at onset~0 confirms to within $0.012$ of
+\textsc{gaussian} at every magnitude.
 
 \section{How much does feedback error cost?}
 \label{sec:cost}
@@ -358,7 +327,7 @@ iteration 21, by $5.0\times$; changing the acquisition function, by $2.8\times$
 (PI to qUCB); and changing the error \emph{process}, by $1.32\times$ (variance shares over all cells $0.24$, $0.10$, $0.17$, $0.04$, $0.002$: onset
 and landscape trade places, the rest stands). The mean cost is $0.148$ for \textsc{gaussian}, $0.152$ for \textsc{drift}, $0.147$ for
 \textsc{bias} and $0.115$ for \textsc{ar}(1): \textsc{bias} matches \textsc{gaussian} by
-construction at this onset (Section~\ref{sec:controls}) and costs $20\%$ more at
+construction at this onset (Appendix~\ref{sec:controls}) and costs $20\%$ more at
 the late onset, where the offset arrives as a step, and correlated error is
 gentler in every cell, partly absorbed into the surrogate's mean.
 
@@ -692,30 +661,27 @@ At measured rater-noise levels, feedback error costs a study $12$--$20\%$ of the
 improvement it could have had: worth reducing, but not a catastrophe, and not one
 extra trials repair, since $39\%$ of runs at $1\sigma$ never match a clean study
 with four times its budget. Classifying the kind of error is largely wasted
-effort: at $1\sigma$ and above the four processes are within a third of each other. Estimating its size is not: computed from a ten-trial pilot and
-the rater noise, Equation~\ref{eq:frag} predicts the damage as well as the exact version does. When the error is in the design, recording what was applied removes up to half
-of a small slip's cost, and the design a log recommends should be re-evaluated
-before it ships.
+effort: at $1\sigma$ and above the four processes are within a third of each
+other. Estimating its size is not: from a ten-trial pilot and the rater noise,
+Equation~\ref{eq:frag} predicts the damage as well as the exact version does.
 
-Most process changes do not help either (Appendix~\ref{app:adapt}). Replicating
-ratings, early or throughout, does worse under error than the standard process:
-in fifty trials the designs it gives up cost more than the averaging buys. qKG
-loses on the deployed design. The observed-max incumbent recovers a fifth of the
-trajectory cost but deploys a worse design, and re-rating the top three designs
-before deploying recovers $4\%$ of the deployed design's cost.
-
-Two things remain unexplained: why the onset effect grows with the budget
-(Appendix~\ref{sec:designchoices}), and why the cost grows with $\optz$ faster than
-\textsc{gain} allows when $\optz$ is not causal (Appendix~\ref{sec:manipulation}).
+Most process changes do not help either (Appendix~\ref{app:adapt}): replicating
+ratings does worse than the standard process, because the designs it gives up
+cost more than the averaging buys, and the observed-max incumbent recovers a
+fifth of the trajectory cost while deploying a worse design. Two things remain
+unexplained: why the onset effect grows with the
+budget (Appendix~\ref{sec:designchoices}), and why the cost grows with $\optz$
+faster than \textsc{gain} allows when $\optz$ is not causal
+(Appendix~\ref{sec:manipulation}).
 
 \paragraph{Limitations.} The landscapes are analytic, not people: they remove
 the surrogate-human confound at the cost of realism, and Appendix~\ref{sec:fitted}
-cannot say which design's answer is closer to a person. The rater-noise anchor runs through a fitted oracle's $\sigma_f$;  extra-trial counts are censored at the
-budget and depend on the tolerance (Appendix~\ref{app:extra}). The multi-objective
-arm is six problems at five seeds under \textsc{gaussian} error, too few to separate
-the hypervolume acquisitions. The preregistered replication is void on a control failure, so the claims
-clear their thresholds only after a post-hoc exclusion and cannot be called
-confirmed.
+cannot say which design's answer is closer to a person. The rater-noise anchor
+runs through a fitted oracle's $\sigma_f$; extra-trial counts are censored at the
+budget and depend on the tolerance (Appendix~\ref{app:extra}); the
+multi-objective arm is six problems at five seeds, too few to separate the
+hypervolume acquisitions; and the preregistered replication is void on a control
+failure, so its claims clear their thresholds only after a post-hoc exclusion.
 
 \section*{Reproducibility statement}
 The full pipeline is scripted end to end, from the landscape statistics through
@@ -730,7 +696,7 @@ observation. No reported number
 depends on those, and the seed order is now pinned by test. Three further checks are automated. The vendored
 benchmark implementations are asserted by test to agree with their source
 implementations to $10^{-9}$ relative on random points, so the objective cannot
-silently drift. The model-free control of Section~\ref{sec:controls} is verified
+silently drift. The model-free control of Appendix~\ref{sec:controls} is verified
 to be exactly zero in every run. And one recorded optimum in the source
 suite, the supremum for a superseded parameter setting, is wrong by $64\%$; we
 detected this by searching every box against its recorded value and corrected it
@@ -784,6 +750,28 @@ rate of false improvement claims rather than raise it.
 
 \clearpage
 \appendix
+\section{Controls}
+\label{sec:controls}
+\begin{itemize}
+  \item \textbf{Model-free floor.} \texttt{Random} and \texttt{Sobol} never read
+    an observation, so their excess regret must be identically zero, and across
+    all $12{,}800$ such comparisons the largest absolute value is
+    $0.000\times10^{0}$. The analysis raises rather than warns if it is not, and
+    the table reads the value from that check rather than printing a constant.
+    This negative control shows that no observation noise reaches the candidate
+    stream; the floors are then excluded from the robustness ranking, which a
+    method that ignores its data would otherwise win.
+  \item \textbf{Headroom.} Where the clean run already reaches the optimum a null is
+    guaranteed, not earned; the smallest clean-run advantage over the floor is
+    $0.176$ (Rosenbrock), so no landscape is ceiling-limited.
+  \item \textbf{Uniform offset.} A constant added to every observation is
+    invisible to a GP that standardises its targets and uses a posterior-mean
+    incumbent. With a shared noise stream the two arms propose identical designs to below
+    $10^{-9}$ for the initial design and three model-based candidates (asserted by
+    test), after which floating-point differences are amplified; in the sweep, \textsc{bias} and
+    \textsc{gaussian} at onset~0 agree to within $0.012$ at every magnitude.
+\end{itemize}
+
 \section{The input-error arm}
 \label{app:inputerrorarm}
 

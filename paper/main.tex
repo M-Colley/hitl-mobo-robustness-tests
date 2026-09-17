@@ -77,10 +77,13 @@ identification --- a comparative sitting over the last third of the budget gains
 $0.051$ $[0.028, 0.072]$, and four confirming trials cut false improvement claims
 from $15.7\%$ to $0.5\%$ --- or modelling the fault, worth $22$--$38\%$ at
 near-zero price.
-Telling the surrogate the true noise variance removes only $5\%$ of the cost,
-so the loss is informational; changing the incumbent definition removes $16\%$ overall and
-up to $41\%$ for one acquisition family, so robustness rankings rank
-acquisition-and-incumbent pairs. When the person applies the wrong design
+Telling the surrogate the true noise variance removes $5\%$ of the excess-weighted
+cost and nothing at $1\sigma$ from the first rating ($-7\%$), so the loss is
+informational; changing the incumbent definition removes $16\%$ overall but
+$12\%$ at $1\sigma$ and up to $41\%$ for one acquisition family, so robustness
+rankings rank acquisition-and-incumbent pairs. Every pooled share here is a ratio
+of sums that the $5\sigma$ cells dominate, so we give the $1\sigma$ value beside
+it throughout. When the person applies the wrong design
 rather than the wrong rating, a slip of $15\%$ of each coordinate's range costs
 about as much as one-SD rating noise, a record of what was applied removes up
 to half of a small slip's cost, and the design the log recommends does
@@ -624,11 +627,12 @@ inherits the record.
 \paragraph{The surrogate's noise estimate is not the problem.} The GP's fitted
 noise is an eighth of the injected value for the first ten iterations at
 $1\sigma$ and above, yet telling it the true variance removes $5.0\%$ of the
-excess-weighted cost, $3\%$ or less at $1\sigma$ and above, and no condition
-survives correction (Appendix~\ref{sec:noisediag}).
+excess-weighted cost and \emph{costs} $7\%$ at $1\sigma$ from the first rating,
+with no condition surviving correction (Appendix~\ref{sec:noisediag}).
 
 \paragraph{The incumbent is part of the method.} Switching improvement-based
-acquisitions from the posterior-mean incumbent to the observed maximum removes $15.6\%$ of the excess-weighted cost ($35$--$41\%$ for the
+acquisitions from the posterior-mean incumbent to the observed maximum removes $15.6\%$ of the excess-weighted cost, $12\%$ at $1\sigma$ from the first rating and
+$65$--$67\%$ below $0.25\sigma$ ($35$--$41\%$ for the
 probability-of-improvement family) but worsens the deployed design: robustness
 rankings rank acquisition-and-incumbent pairs (Appendices~\ref{sec:incumbent}
 and~\ref{app:adapt}).
@@ -639,9 +643,12 @@ a Levy ladder confounds dimension with signal strength, and that with $\optz$
 fixed dimension still raises the cost, $1.7\times$ from $d = 7$ to $11$ (Appendix~\ref{sec:manipulation}).
 
 \paragraph{Multi-objective BO is no more fragile.} On six BoTorch problems with published hypervolume optima the dose-response and
-onset structures replicate, early error costs at most half as much as on
-the scalar suite, and the four hypervolume acquisitions
-are indistinguishable (Appendix~\ref{sec:multiobjective}).
+onset structures replicate and the four hypervolume acquisitions are
+indistinguishable. Early error costs less than on the scalar suite at every
+magnitude, but by how much depends on the magnitude and the gap is narrowest
+where it matters: a seventh at $0.05\sigma$, a third at $0.25\sigma$ and a half
+at $1\sigma$ and $5\sigma$, with the intervals separating only at the two
+smallest (Appendix~\ref{sec:multiobjective}).
 
 \paragraph{The budget matters; the rating scale cuts both ways.} With the late
 onset held at $40\%$ of the run, the early-to-late cost ratio is $2.3\times$,

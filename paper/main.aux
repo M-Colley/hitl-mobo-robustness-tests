@@ -13,8 +13,6 @@
 \citation{kersting2007most}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}{section*.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related work}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{Bayesian optimization under noise.}{2}{section*.2}\protected@file@percent }
 \citation{chu2005preference,gonzalez2017preferential}
 \citation{eggensperger2021hpobench}
 \citation{weinberger1990correlated}
@@ -22,6 +20,8 @@
 \citation{malan2013survey}
 \citation{yerkes1908relation}
 \citation{branke1999memory}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related work}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Bayesian optimization under noise.}{3}{section*.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Human-in-the-loop and preference-based optimization.}{3}{section*.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Benchmarks and landscape analysis.}{3}{section*.4}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}Setup}{3}{section.3}\protected@file@percent }
@@ -42,25 +42,25 @@
 \@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Fraction of the achievable improvement destroyed by feedback error, averaged over landscapes and the ten model-based acquisitions. Magnitudes are in landscape standard deviations. The upper block is the primary response, a time average over the post-onset trajectory of the best design \emph  {visited}; the lower block is the design the study would \emph  {ship}, at the final trial. They are different quantities and are not comparable across blocks.}}{5}{table.1}\protected@file@percent }
 \newlabel{tab:dose}{{1}{5}{Fraction of the achievable improvement destroyed by feedback error, averaged over landscapes and the ten model-based acquisitions. Magnitudes are in landscape standard deviations. The upper block is the primary response, a time average over the post-onset trajectory of the best design \emph {visited}; the lower block is the design the study would \emph {ship}, at the final trial. They are different quantities and are not comparable across blocks}{table.1}{}}
 \@writefile{toc}{\contentsline {paragraph}{Is $1\sigma $ a lot?}{5}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{How many extra trials?}{5}{section*.6}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Extra trials a noisy run needs to reach the regret its clean twin had after $k$ trials, within $1\%$ of the achievable improvement (budget-100 arm, \textsc  {gaussian} error, six acquisitions): median over runs, and the share that never got there within 100 trials.}}{6}{table.2}\protected@file@percent }
 \newlabel{tab:extra}{{2}{6}{Extra trials a noisy run needs to reach the regret its clean twin had after $k$ trials, within $1\%$ of the achievable improvement (budget-100 arm, \textsc {gaussian} error, six acquisitions): median over runs, and the share that never got there within 100 trials}{table.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{How many extra trials?}{6}{section*.6}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {5}Where the cost is: searching or selecting?}{6}{section.5}\protected@file@percent }
 \newlabel{sec:decomp}{{5}{6}{Where the cost is: searching or selecting?}{section.5}{}}
 \newlabel{eq:decomp}{{5}{6}{Where the cost is: searching or selecting?}{equation.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}What makes an error big?}{6}{section.6}\protected@file@percent }
-\newlabel{sec:currency}{{6}{6}{What makes an error big?}{section.6}{}}
-\citation{benjamini1995controlling}
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Neither scale fits. Exponents of $\mathbb  {E}[R] = A\,\sigma _e^{\beta _c}\mathrm  {opt}_z^{\beta _z}$ fitted to landscape $\times $ magnitude cell means, with 95\% BCa intervals from 2000 landscape resamples and a jackknife over landscapes. $\beta _z$ excludes zero in every condition; $\beta _c + \beta _z - 1$ excludes zero in six of eight.}}{7}{table.3}\protected@file@percent }
 \newlabel{tab:currency}{{3}{7}{Neither scale fits. Exponents of $\mathbb {E}[R] = A\,\sigma _e^{\beta _c}\optz ^{\beta _z}$ fitted to landscape $\times $ magnitude cell means, with 95\% BCa intervals from 2000 landscape resamples and a jackknife over landscapes. $\beta _z$ excludes zero in every condition; $\beta _c + \beta _z - 1$ excludes zero in six of eight}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}What makes an error big?}{7}{section.6}\protected@file@percent }
+\newlabel{sec:currency}{{6}{7}{What makes an error big?}{section.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {7}A one-shot selection loss predicts the cost}{7}{section.7}\protected@file@percent }
 \newlabel{sec:mediation}{{7}{7}{A one-shot selection loss predicts the cost}{section.7}{}}
 \newlabel{eq:frag}{{7}{7}{A one-shot selection loss predicts the cost}{equation.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Which acquisition function?}{7}{section.8}\protected@file@percent }
-\newlabel{sec:acq}{{8}{7}{Which acquisition function?}{section.8}{}}
+\citation{benjamini1995controlling}
 \citation{huang2006global}
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Acquisition robustness, ranked over landscapes within each condition and averaged over conditions. ``Absolute loss'' is the deployment number: the post-onset regret under noise as a percentage of the achievable improvement.}}{8}{table.4}\protected@file@percent }
 \newlabel{tab:acq}{{4}{8}{Acquisition robustness, ranked over landscapes within each condition and averaged over conditions. ``Absolute loss'' is the deployment number: the post-onset regret under noise as a percentage of the achievable improvement}{table.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Which acquisition function?}{8}{section.8}\protected@file@percent }
+\newlabel{sec:acq}{{8}{8}{Which acquisition function?}{section.8}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {9}Buying identification with the trials you have}{8}{section.9}\protected@file@percent }
 \newlabel{sec:budget}{{9}{8}{Buying identification with the trials you have}{section.9}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {10}When the error is in the design, not the rating}{9}{section.10}\protected@file@percent }
@@ -71,7 +71,7 @@
 \@writefile{toc}{\contentsline {paragraph}{The incumbent is part of the method.}{9}{section*.8}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{$\mathrm  {opt}_z$ is not causal on its own, and dimension is not inert.}{9}{section*.9}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{Multi-objective BO is no more fragile.}{9}{section*.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{The budget matters; the rating scale cuts both ways.}{9}{section*.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The budget matters; the rating scale cuts both ways.}{10}{section*.11}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{The replication is void; post hoc, the claims hold.}{10}{section*.12}\protected@file@percent }
 \@writefile{toc}{\contentsline {paragraph}{The fitted-oracle design reports about a third of the cost.}{10}{section*.13}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {12}Discussion}{10}{section.12}\protected@file@percent }

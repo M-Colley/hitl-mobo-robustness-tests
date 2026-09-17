@@ -14,7 +14,7 @@ Severity. BLOCKER changes a headline number, invalidates a claim, or triggers a 
 | A2 | BLOCKER for Section 9 | The budget rule takes the sitting SD from GP noise in standardised units and combines it with a posterior in objective units. | budget_split.py:235 | Multiply by `outcome_transform.stdvs**2`, rerun without `--summary-only` and with the recorded k-grid and ρ | V | fixed 2026-09-16 |
 | A3 | MAJOR | The interaction and quadratic terms are formed from uncentred logs, so "the magnitude is significant again" is a slope at opt_z = 1 and σ = 1. | analyse_boba_robustness.py:848-861, main.tex:797-799, Appendix G | Centre, refit, rewrite both passages | V | open |
 | I2 | MAJOR | Selection is about half of the deployed cost near 1σ from trial 1 (52% at 0.71σ, 56% at 1.41σ). The 61.8% holds only for the excess-weighted pool. | abstract, title, decompose_regret output | Report the 1σ onset-0 share with its interval before choosing the title | D | fixed 2026-09-17 |
-| E4 | MAJOR | The pooled shares 61.8%, 5.0%, 15.6% and the multi-objective "at most half" are excess-weighted and dominated by 5σ cells. | main.tex:387-390, 585, 590, 601 | Report the 1σ onset-0 value beside each pool | R | partly: 61.8% fixed 2026-09-17, the other three pools open |
+| E4 | MAJOR | The pooled shares 61.8%, 5.0%, 15.6% and the multi-objective "at most half" are excess-weighted and dominated by 5σ cells. | main.tex:387-390, 585, 590, 601 | Report the 1σ onset-0 value beside each pool | R | fixed 2026-09-17 |
 | E3 | MAJOR | "The term an acquisition function cannot reach" and "the reason is structural" are stated as facts. The acquisition shapes the visited set. | abstract, main.tex:133-136, 369-371, 395-396 | State that no acquisition-side change tested reduced it | V | open |
 | I6 | MAJOR | Augmented EI and Thompson sampling are scored against the mean of ten acquisitions, including the four weakest. | analyse_boba_adaptations.py:129-134 | Score against EI or LogEI and report the price | V | open |
 | E2, I3, I7 | MAJOR | Table 25 is typed by hand, has no price column, defines none of its fault models or remedies, and its "−979%" row divides by a reference cost near zero that changes sign. | main.tex:1462-1516 | Generate the table, add prices and definitions, report absolute differences for missing ratings | V, D | open |
@@ -83,6 +83,19 @@ arms, which run T = 25 and T = 100 and so split the cost differently. On the mai
 sweep at exactly 1 sigma the share is 41.8%. The paper now quotes the main-sweep
 value. If the intended claim was about the session arms, that needs its own
 sentence and its own scope.
+
+E4, the other three pools, 2026-09-17. Each now carries its 1 sigma onset-0 value
+beside the pool, in the abstract and in Section 8. Known noise removes 5.0% of the
+excess-weighted cost and **costs** 7% at 1 sigma, which strengthens the paper's
+own conclusion. The incumbent removes 15.6% pooled but 12% at 1 sigma and 65-67%
+below 0.25 sigma, so that pool understates the effect at small error and
+overstates it at realistic error. The multi-objective claim was a bound ("at most
+half") that held at every magnitude and hid the fact that the gap is narrowest
+where it matters: a seventh at 0.05 sigma, a half at 1 sigma and 5 sigma; the
+main text now gives the pattern instead of the bound. The two ablation appendices
+already carried per-magnitude qualifiers and were left as they were, except that
+B9's "3% or less at 1 sigma and above" is still the pool over onsets and remains
+open.
 
 ## 2. Code, tests and reproducibility
 

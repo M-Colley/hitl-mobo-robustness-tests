@@ -39,6 +39,41 @@ HAS_BOBA = (BOBA_ROOT / "bayes_opt" / "simulation.py").exists()
 ANALYTIC = [name for name in bb.BOBA_ORDER if bb.BENCHMARKS[name].kind != "stochastic"]
 
 
+class _FakeTabPFNRegressor:
+    """Small pickleable stand-in for TabPFN used by the dtype regression test."""
+
+    init_dtypes: list[object] = []
+    fit_dtypes: list[object] = []
+    predict_dtypes: list[object] = []
+
+    @classmethod
+    def reset(cls) -> None:
+        cls.init_dtypes = []
+        cls.fit_dtypes = []
+        cls.predict_dtypes = []
+
+    def __init__(self, **kwargs: object) -> None:
+        import torch
+
+        self.kwargs = dict(kwargs)
+        type(self).init_dtypes.append(torch.get_default_dtype())
+        self._train_mean = 0.0
+
+    def fit(self, X: object, y: object) -> "_FakeTabPFNRegressor":
+        import torch
+
+        type(self).fit_dtypes.append(torch.get_default_dtype())
+        self._train_mean = float(np.asarray(y, dtype=float).mean())
+        return self
+
+    def predict(self, X: object) -> np.ndarray:
+        import torch
+
+        type(self).predict_dtypes.append(torch.get_default_dtype())
+        n = len(X)
+        return np.full(n, self._train_mean, dtype=np.float32)
+
+
 # ---------------------------------------------------------------------------
 # Agreement with BOBA
 # ---------------------------------------------------------------------------
@@ -803,7 +838,9 @@ def test_arm_flags_reach_the_filename() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_tabpfn_oracle_runs_under_the_float64_default_dtype() -> None:
+def test_tabpfn_oracle_runs_under_the_float64_default_dtype(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Regression test: the tabpfn oracle used to crash before producing a number.
 
     bo_sensor_error_simulation sets torch's default dtype to float64 for BoTorch,
@@ -811,7 +848,6 @@ def test_tabpfn_oracle_runs_under_the_float64_default_dtype() -> None:
     default dtype -- so every fit/predict raised "mat1 and mat2 must have the
     same dtype". The adapter must fix that AND leave the default dtype alone.
     """
-    pytest.importorskip("tabpfn")
     import torch
 
     module_path = SCRIPTS / "bo_sensor_error_simulation.py"
@@ -821,6 +857,8 @@ def test_tabpfn_oracle_runs_under_the_float64_default_dtype() -> None:
     assert spec.loader is not None
     spec.loader.exec_module(bo_sim)
 
+    _FakeTabPFNRegressor.reset()
+    monkeypatch.setattr(bo_sim, "TabPFNRegressor", _FakeTabPFNRegressor)
     assert torch.get_default_dtype() == torch.float64
     model = bo_sim._build_oracle_model("tabpfn", seed=0, tree_scale=0.5)
     rng = np.random.default_rng(0)
@@ -830,5 +868,8 @@ def test_tabpfn_oracle_runs_under_the_float64_default_dtype() -> None:
     predictions = model.predict(X.iloc[:10])
     assert predictions.shape == (10,)
     assert np.isfinite(predictions).all()
+    assert _FakeTabPFNRegressor.init_dtypes == [torch.float32]
+    assert _FakeTabPFNRegressor.fit_dtypes == [torch.float32]
+    assert _FakeTabPFNRegressor.predict_dtypes == [torch.float32]
     assert torch.get_default_dtype() == torch.float64
     assert isinstance(pickle.loads(pickle.dumps(model)), type(model))

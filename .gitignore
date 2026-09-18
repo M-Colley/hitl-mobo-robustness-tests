@@ -238,3 +238,5 @@ output-boba-confirmatory/*
 
 # Overleaf upload bundle, built by hand from paper/; never committed.
 paper/*.zip
+# Real author block; loaded by main.tex if present, never committed (anonymous mirror).
+paper/authors.tex

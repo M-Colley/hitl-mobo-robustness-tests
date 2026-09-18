@@ -26,21 +26,35 @@ author block, and a non-anonymous ICLR submission is rejected without review.
 The header currently reads "Under review as a conference paper at ICLR 2027" and
 the title page reads "Anonymous authors", which is what it should read.
 
-## Open before submission — five `\todo` markers, all author decisions
+## Open before submission: one `\todo` marker, an author decision
 
 Line numbers are as of this build; `grep -n 'todo{' main.tex` gives the current
 positions.
 
 | `main.tex` line | what |
 |---|---|
-| 38 | `\author{\todo{authors}}` — leave for review; fill in at camera-ready |
-| 335 | cite the three human studies in the third person |
-| 632 | repository URL and commit — at camera-ready only, it de-anonymises |
-| 645 | **AI use statement**: the list of required-disclosure tasks for which no AI was used. The 2027 policy asks for this negative list explicitly; only the authors know it |
-| 667 | **Ethics statement**: the original studies' ethics approval and consent terms, and that re-analysis is within them |
+| 646 | **AI use statement**: the list of required-disclosure tasks for which no AI was used. The 2027 policy asks for this negative list explicitly; only the authors know it |
 
-Once all five are resolved, delete the `\newcommand{\todo}` definition in the
-preamble too, or any marker added later ships as red text.
+Resolved on 2026-09-18: the author block now lives in `authors.tex`, which is
+git-ignored and shipped in this zip (the style prints "Anonymous authors" until
+`\iclrfinalcopy` is uncommented, whichever block is loaded); the three human
+studies are cited from their data repositories' READMEs and the ProVoice arXiv
+record; the reproducibility statement links the anonymous repository mirror; the
+ethics statement quotes the three original publications' approval and consent terms
+(check the wording against the papers).
+
+Once that marker is resolved, delete the `\newcommand{\todo}` definition in
+the preamble too, or any marker added later ships as red text.
+
+**Anonymity check before uploading the PDF.** The paper links
+`anonymous.4open.science/r/hitl-mobo-robustness-tests-17E2`. On 2026-09-18 that
+mirror still served `LICENSE` with the copyright holder's name and `datasets.json`
+with the `github.com/M-Colley/...` data URLs unmasked, because Anonymous GitHub
+only masks the terms listed in its settings. Add the names, GitHub handles, the
+Windows user name in logged paths and the institutions there (or recreate the
+mirror under a neutral id from a scrubbed export) and re-check those two files
+through the mirror before submitting. ICLR desk-rejects a paper whose
+supplementary material reveals the authors.
 
 Both the AI use statement and the Ethics statement follow the headings and the
 structure of the 2027 template (`iclr2027_conference_ORIGINAL.tex`, lines

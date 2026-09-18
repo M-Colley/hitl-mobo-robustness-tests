@@ -34,12 +34,11 @@
 \title{What Noisy Feedback Costs Bayesian\\ Optimization, and Where the Cost Sits}
 
 % Authors must not appear in the submitted version; keep \iclrfinalcopy
-% commented out until camera-ready.
-\author{\todo{authors} \\
-Affiliation \\
-Address \\
-\texttt{email}
-}
+% commented out until camera-ready. The real author block is paper/authors.tex,
+% which is git-ignored so that the anonymised repository mirror never carries
+% the names; without that file the anonymous block below is used. The style
+% prints "Anonymous authors" in either case until \iclrfinalcopy is set.
+\InputIfFileExists{authors}{}{\author{Anonymous authors \\ Anonymous affiliation}}
 
 %\iclrfinalcopy % Uncomment for camera-ready ONLY, never for submission.
 \begin{document}
@@ -53,19 +52,20 @@ feedback with the oracle's own error. We instead inject four human-plausible
 error processes into twenty analytic landscapes with verified optima, at four
 magnitudes and two onsets, and pair every noisy run with an identically seeded
 clean one: $76{,}800$ paired runs over twelve acquisition functions. We report
-two responses. On the optimizer's trajectory, error the size of a landscape's own
-standard deviation, present from the first rating, costs $14\%$ of the achievable
-improvement; on the design a study would deploy it costs $30\%$. Decomposing that
-deployed regret into search loss and selection loss shows where the difference
-sits: at that magnitude $42\%$ $[34, 50]$ of the cost is selection, the run
-having visited a better design than the one it ships, and none of seven
+two responses. Along the optimizer's trajectory, an error equal to the
+landscape's standard deviation, present from the first rating, costs $14\%$ of
+the achievable improvement. The design chosen for deployment in a real study or
+product loses $30\%$ of the achievable improvement compared to a clean run.
+Decomposing that deployed regret into search loss and selection loss shows that
+at that magnitude, $42\%$ $[34, 50]$ of the cost is selection, the run having
+visited a better design than the one it ships, and none of the seven
 acquisition-side changes reduces it, although augmented expected improvement
-recovers $41\%$ of the trajectory cost. What does reduce it is spending trials
-on identification: one comparative sitting over the last third of the budget
-gains $0.05$ of the achievable improvement, and four trials confirming the result
-cut false improvement claims from $16\%$ to $0.5\%$. The expected loss of one
-noisy choice among random designs, computable from a ten-trial pilot, explains
-half of the variation in cost across landscapes and magnitudes.
+recovers $41\%$ of the trajectory cost. What reduces it is spending trials on
+identification: one comparative sitting over the last third of the budget gains
+$0.05$ of the achievable improvement, and four trials confirming the result cut
+false improvement claims from $16\%$ to $0.5\%$. The expected loss of one noisy
+choice among random designs, computable from a ten-trial pilot, explains half of
+the variation in cost across landscapes and magnitudes.
 \end{abstract}
 
 \section{Introduction}
@@ -332,7 +332,7 @@ offset arrives as a step, and correlated error is gentler in every cell, partly
 absorbed into the surrogate's mean.
 
 \paragraph{Is $1\sigma$ a lot?} We estimate within-rater noise in three
-published human studies \todo{cite the three studies in the third person} with
+published human studies \citep{colley2025ehmi, jansen2025opticarvis, susak2026provoice} with
 a nearest-neighbour (semivariogram nugget) estimator over repeated ratings by
 the same participant, and divide it by $\sigma_f$, the standard deviation of
 that study's fitted objective over its design box (Table~\ref{tab:anchor},
@@ -629,7 +629,8 @@ here; the correction and the provenance of the original are
 both asserted by test. Software and compute: BoTorch 0.18.2 on PyTorch 2.13
 (a CUDA build; the simulator uses the CPU only), Python 3.12, Windows 11; a run
 costs about $21$ worker-seconds and the main sweep about $470$ worker-hours on a
-24-worker machine. \todo{repository URL and commit at camera-ready.}
+24-worker machine. Code, run settings and every analysis output are in the
+anonymised repository at \url{https://anonymous.4open.science/r/hitl-mobo-robustness-tests-17E2/}.
 
 % Required by the ICLR 2027 AI Policy for Authors. The heading, the
 % required/not-used/recommended structure and the verification sentence follow
@@ -660,12 +661,17 @@ or artifacts produced with the aid of generative AI.
 
 % Recommended by the ICLR 2027 template; does not count toward the page limit.
 \subsection*{Ethics statement}
-This work collects no new human data. The three human studies it draws on are
-published archival rating datasets, used here only to estimate within-rater
+This work collects no new human data. The three human studies it draws on
+\citep{colley2025ehmi, jansen2025opticarvis, susak2026provoice} are published archival rating datasets, used here only to estimate within-rater
 noise (Section~\ref{sec:cost}) and as fitted-oracle companions
 (Appendix~\ref{sec:fitted}); no participant is identifiable from any quantity we
-report. \todo{authors: state the original studies' ethics approval and consent
-terms, and confirm that re-analysis is within them.} The analytic landscapes
+report. The original publications state that two of the studies followed their
+university's ethics-committee guidelines under local regulations that required no
+additional formal approval, and that the third received institutional ethics
+approval; in all three, participants gave informed consent, were compensated, and
+agreed to the anonymised publication of their data, which the original authors
+released openly. We use only those released ratings, within the terms of their
+publication. The analytic landscapes
 involve no human participants. We foresee no direct negative societal impact:
 the paper's recommendations (confirm a claimed improvement before reporting
 it, and spend part of a human-feedback budget on identification) reduce the

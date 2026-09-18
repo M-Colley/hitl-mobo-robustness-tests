@@ -85,6 +85,10 @@ def stage(dst: Path) -> None:
         if not src.is_file():
             raise SystemExit(f"missing {src}")
         shutil.copy2(src, dst / name)
+    # The real author block, if this machine has it (git-ignored; see main.tex).
+    # The zip is private to Overleaf, the repository mirror is not.
+    if (PAPER / "authors.tex").is_file():
+        shutil.copy2(PAPER / "authors.tex", dst / "authors.tex")
     for rel in all_inputs(PAPER / "main.tex"):
         target = dst / f"{rel}.tex"
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,4 @@
-\begin{thebibliography}{28}
+\begin{thebibliography}{31}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -72,6 +72,14 @@ Wei Chu and Zoubin Ghahramani.
 \newblock Preference learning with {G}aussian processes.
 \newblock In \emph{International Conference on Machine Learning}, 2005.
 
+\bibitem[Colley et~al.(2025)Colley, Jansen, Keskar, and Rukzio]{colley2025ehmi}
+Mark Colley, Pascal Jansen, Mugdha Keskar, and Enrico Rukzio.
+\newblock Improving external communication of automated vehicles using
+  {B}ayesian optimization.
+\newblock In \emph{Proceedings of the CHI Conference on Human Factors in
+  Computing Systems}. ACM, 2025.
+\newblock \doi{10.1145/3706598.3714187}.
+
 \bibitem[Daulton et~al.(2021)Daulton, Balandat, and
   Bakshy]{daulton2021parallel}
 Samuel Daulton, Maximilian Balandat, and Eytan Bakshy.
@@ -112,6 +120,16 @@ Deng Huang, Theodore~T. Allen, William~I. Notz, and Ning Zeng.
   kriging meta-models.
 \newblock \emph{Journal of Global Optimization}, 34\penalty0 (3):\penalty0
   441--466, 2006.
+
+\bibitem[Jansen et~al.(2025)Jansen, Colley, Krau{\ss}, Hirschle, and
+  Rukzio]{jansen2025opticarvis}
+Pascal Jansen, Mark Colley, Svenja Krau{\ss}, Daniel Hirschle, and Enrico
+  Rukzio.
+\newblock {OptiCarVis}: Improving automated vehicle functionality
+  visualizations using {B}ayesian optimization to enhance user experience.
+\newblock In \emph{Proceedings of the CHI Conference on Human Factors in
+  Computing Systems}. ACM, 2025.
+\newblock \doi{10.1145/3706598.3713514}.
 
 \bibitem[Jones et~al.(1998)Jones, Schonlau, and Welch]{jones1998efficient}
 Donald~R. Jones, Matthias Schonlau, and William~J. Welch.
@@ -175,6 +193,15 @@ Niranjan Srinivas, Andreas Krause, Sham~M. Kakade, and Matthias Seeger.
 \newblock {G}aussian process optimization in the bandit setting: No regret and
   experimental design.
 \newblock In \emph{International Conference on Machine Learning}, 2010.
+
+\bibitem[Susak et~al.(2026)Susak, Liu, Jansen, and Colley]{susak2026provoice}
+Josh Susak, Yifu Liu, Pascal Jansen, and Mark Colley.
+\newblock {ProVoice}: Designing proactive functionality for in-vehicle
+  conversational assistants using multi-objective {B}ayesian optimization to
+  enhance driver experience.
+\newblock In \emph{Proceedings of the CHI Conference on Human Factors in
+  Computing Systems}. ACM, 2026.
+\newblock \doi{10.1145/3772318.3791877}.
 
 \bibitem[Weinberger(1990)]{weinberger1990correlated}
 Edward Weinberger.

@@ -861,6 +861,7 @@ def test_tabpfn_oracle_runs_under_the_float64_default_dtype(
     monkeypatch.setattr(bo_sim, "TabPFNRegressor", _FakeTabPFNRegressor)
     assert torch.get_default_dtype() == torch.float64
     model = bo_sim._build_oracle_model("tabpfn", seed=0, tree_scale=0.5)
+    assert isinstance(model.model, _FakeTabPFNRegressor)
     rng = np.random.default_rng(0)
     X = pd.DataFrame(rng.normal(size=(60, 3)), columns=["a", "b", "c"])
     y = X["a"].to_numpy() ** 2 + X["b"].to_numpy()

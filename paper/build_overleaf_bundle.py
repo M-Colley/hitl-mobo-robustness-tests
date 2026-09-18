@@ -29,7 +29,8 @@ from pathlib import Path
 PAPER = Path(__file__).resolve().parent
 DEFAULT_OUT = PAPER / "hitl-noisy-feedback-iclr2027.zip"
 
-# Exactly what a submission needs, nothing that Overleaf regenerates.
+# Exactly what a submission needs, nothing that Overleaf regenerates. Figures are
+# collected from the sources in stage().
 STYLE_FILES = ["iclr2027_conference.sty", "iclr2027_conference.bst",
                "natbib.sty", "fancyhdr.sty", "math_commands.tex"]
 TOP_FILES = ["main.tex", "references.bib", "README_OVERLEAF.md"] + STYLE_FILES
@@ -45,6 +46,14 @@ def inputs_of(tex: Path) -> list[str]:
         line.split("%", 1)[0] for line in tex.read_text(encoding="utf-8").splitlines()
     )
     return sorted(set(re.findall(r"\\input\{([^}]+)\}", source)))
+
+
+def graphics_of(tex: Path) -> list[str]:
+    """The \\includegraphics targets of one file, comments stripped."""
+    source = "\n".join(
+        line.split("%", 1)[0] for line in tex.read_text(encoding="utf-8").splitlines()
+    )
+    return sorted(set(re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", source)))
 
 
 def all_inputs(main_tex: Path) -> list[str]:
@@ -80,6 +89,18 @@ def stage(dst: Path) -> None:
         target = dst / f"{rel}.tex"
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(PAPER / f"{rel}.tex", target)
+    # Figures: every \includegraphics target of main.tex and its inputs. The first
+    # bundle with figures compiled here and failed in the clean room for want of
+    # them; this is what the clean-room compile is for.
+    tex_files = [PAPER / "main.tex"] + [PAPER / f"{rel}.tex" for rel in all_inputs(PAPER / "main.tex")]
+    for tex in tex_files:
+        for rel in graphics_of(tex):
+            src = PAPER / rel
+            if not src.is_file():
+                raise SystemExit(f"\\includegraphics{{{rel}}} is referenced but {src} does not exist")
+            target = dst / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, target)
 
 
 def run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess:
@@ -154,7 +175,9 @@ def main(argv=None) -> None:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(args.out, "w", zipfile.ZIP_DEFLATED) as zf:
             for path in sorted(dst.rglob("*")):
-                if path.is_file() and path.suffix in {".tex", ".bib", ".sty", ".bst", ".md"}:
+                keep = path.suffix in {".tex", ".bib", ".sty", ".bst", ".md"} or (
+                    path.suffix == ".pdf" and path.parent != dst)   # figures, not main.pdf
+                if path.is_file() and keep:
                     zf.write(path, path.relative_to(dst).as_posix())
         names = zipfile.ZipFile(args.out).namelist()
 

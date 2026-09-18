@@ -1,4 +1,4 @@
-\begin{thebibliography}{24}
+\begin{thebibliography}{28}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -18,6 +18,18 @@ Sebastian Ament, Samuel Daulton, David Eriksson, Maximilian Balandat, and Eytan
   optimization.
 \newblock In \emph{Advances in Neural Information Processing Systems}, 2023.
 
+\bibitem[Ament et~al.(2024)Ament, Santorella, Eriksson, Letham, Balandat, and
+  Bakshy]{ament2024robust}
+Sebastian Ament, Elizabeth Santorella, David Eriksson, Benjamin Letham,
+  Maximilian Balandat, and Eytan Bakshy.
+\newblock Robust {G}aussian processes via relevance pursuit.
+\newblock In \emph{Advances in Neural Information Processing Systems}, 2024.
+
+\bibitem[Audibert et~al.(2010)Audibert, Bubeck, and Munos]{audibert2010best}
+Jean-Yves Audibert, S{\'e}bastien Bubeck, and R{\'e}mi Munos.
+\newblock Best arm identification in multi-armed bandits.
+\newblock In \emph{Conference on Learning Theory (COLT)}, pp.\  41--53, 2010.
+
 \bibitem[Balandat et~al.(2020)Balandat, Karrer, Jiang, Daulton, Letham, Wilson,
   and Bakshy]{balandat2020botorch}
 Maximilian Balandat, Brian Karrer, Daniel~R. Jiang, Samuel Daulton, Benjamin
@@ -33,6 +45,13 @@ Yoav Benjamini and Yosef Hochberg.
   approach to multiple testing.
 \newblock \emph{Journal of the Royal Statistical Society, Series B},
   57\penalty0 (1):\penalty0 289--300, 1995.
+
+\bibitem[Bogunovic et~al.(2020)Bogunovic, Krause, and
+  Scarlett]{bogunovic2020corruption}
+Ilija Bogunovic, Andreas Krause, and Jonathan Scarlett.
+\newblock Corruption-tolerant {G}aussian process bandit optimization.
+\newblock In \emph{International Conference on Artificial Intelligence and
+  Statistics}, 2020.
 
 \bibitem[Branke(1999)]{branke1999memory}
 J{\"u}rgen Branke.
@@ -111,6 +130,12 @@ Terry Jones and Stephanie Forrest.
 Kristian Kersting, Christian Plagemann, Patrick Pfaff, and Wolfram Burgard.
 \newblock Most likely heteroscedastic {G}aussian process regression.
 \newblock In \emph{International Conference on Machine Learning}, 2007.
+
+\bibitem[Kim \& Nelson(2006)Kim and Nelson]{kim2006selecting}
+Seong-Hee Kim and Barry~L. Nelson.
+\newblock Selecting the best system.
+\newblock In \emph{Handbooks in Operations Research and Management Science:
+  Simulation}, volume~13, pp.\  501--534. Elsevier, 2006.
 
 \bibitem[Letham et~al.(2019)Letham, Karrer, Ottoni, and
   Bakshy]{letham2019constrained}

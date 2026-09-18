@@ -34,10 +34,10 @@ positions.
 | `main.tex` line | what |
 |---|---|
 | 38 | `\author{\todo{authors}}` — leave for review; fill in at camera-ready |
-| 366 | cite the three human studies in the third person |
-| 738 | repository URL and commit — at camera-ready only, it de-anonymises |
-| 751 | **AI use statement**: the list of required-disclosure tasks for which no AI was used. The 2027 policy asks for this negative list explicitly; only the authors know it |
-| 775 | **Ethics statement**: the original studies' ethics approval and consent terms, and that re-analysis is within them |
+| 335 | cite the three human studies in the third person |
+| 632 | repository URL and commit — at camera-ready only, it de-anonymises |
+| 645 | **AI use statement**: the list of required-disclosure tasks for which no AI was used. The 2027 policy asks for this negative list explicitly; only the authors know it |
+| 667 | **Ethics statement**: the original studies' ethics approval and consent terms, and that re-analysis is within them |
 
 Once all five are resolved, delete the `\newcommand{\todo}` definition in the
 preamble too, or any marker added later ships as red text.

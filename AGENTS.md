@@ -77,6 +77,7 @@ Smoke-test a driver before an overnight run. `run_boba_budget_neutral.ps1 -Smoke
 | `changepoint_compare.py` | CUSUM, GLR and BOCPD on the same residual streams |
 | `elicitation_compare.py` | a comparison loop against a rating loop at equal human cost |
 | `make_boba_paper_tables.py` | every generated file in `paper/tables/` |
+| `make_paper_figures.py` | the four figures in `paper/figures/`, each a picture of a table the paper prints |
 | `check_paper.py` | static checks on `\input`, `\ref`, `\cite` and table shapes |
 
 A replay reproduces the logged prefix exactly, because the proposal at trial t depends only on trials 1 to t − 1. The new trials of a replay use a modelled sitting noise and hyperparameters frozen at the prefix fit. Every replay re-derives the standard ship rule from the prefix and aborts if it disagrees with the log. The GP refit and the acquisition are not checked against the log, since hyperparameters are not logged.
@@ -91,5 +92,6 @@ Not settled. The human is simulated. The best fitted oracle has held-out R² of 
 
 1. Run `python -m pytest tests/ -q` and keep the log.
 2. Run `python scripts/check_paper.py --paper paper`. It checks inputs, references and table shapes, and it does not compile the document.
-3. Compile the paper (`pdflatex`, `bibtex`, `pdflatex` twice) and check that the main text through Limitations ends on page 9.
+3. Compile the paper (`pdflatex`, `bibtex`, `pdflatex` twice) and check that the main text through Limitations ends on page 9. `python paper/build_overleaf_bundle.py` does this in a clean directory, collects the figures, and prints FITS or OVER; the zip it writes is the Overleaf upload.
 4. Regenerate tables with `python scripts/make_boba_paper_tables.py --analysis output-boba/analysis` after any analysis change. Never edit generated files in `paper/tables/`.
+5. Regenerate figures with `python scripts/make_paper_figures.py` after any analysis change, and look at the PNGs it writes beside the PDFs before committing.

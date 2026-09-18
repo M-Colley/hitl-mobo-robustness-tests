@@ -26,25 +26,19 @@ author block, and a non-anonymous ICLR submission is rejected without review.
 The header currently reads "Under review as a conference paper at ICLR 2027" and
 the title page reads "Anonymous authors", which is what it should read.
 
-## Open before submission: one `\todo` marker, an author decision
+## Nothing left to fill in
 
-Line numbers are as of this build; `grep -n 'todo{' main.tex` gives the current
-positions.
+The five author decisions were resolved on 2026-09-18 and the `\todo` macro is
+gone from the preamble: the author block lives in `authors.tex` (git-ignored,
+shipped in this zip; the style prints "Anonymous authors" until `\iclrfinalcopy`
+is uncommented); the three human studies are cited from their data repositories'
+READMEs and the ProVoice arXiv record; the reproducibility statement links the
+anonymous repository mirror; the AI use statement lists the used, not-used and
+not-applicable categories of the 2027 AI Policy for Authors; the ethics statement
+quotes the three original publications' approval and consent terms.
 
-| `main.tex` line | what |
-|---|---|
-| 646 | **AI use statement**: the list of required-disclosure tasks for which no AI was used. The 2027 policy asks for this negative list explicitly; only the authors know it |
-
-Resolved on 2026-09-18: the author block now lives in `authors.tex`, which is
-git-ignored and shipped in this zip (the style prints "Anonymous authors" until
-`\iclrfinalcopy` is uncommented, whichever block is loaded); the three human
-studies are cited from their data repositories' READMEs and the ProVoice arXiv
-record; the reproducibility statement links the anonymous repository mirror; the
-ethics statement quotes the three original publications' approval and consent terms
-(check the wording against the papers).
-
-Once that marker is resolved, delete the `\newcommand{\todo}` definition in
-the preamble too, or any marker added later ships as red text.
+Two checks remain by hand. The conference and arXiv entries in `references.bib`
+have not been confirmed against a publisher record (its header says which), and:
 
 **Anonymity check before uploading the PDF.** The paper links
 `anonymous.4open.science/r/hitl-mobo-robustness-tests-17E2`. On 2026-09-18 that

@@ -1,9 +1,5 @@
 # HITL MOBO Robustness Tests
 
-<!-- HANDOVER-START -->
-> **Handover in progress (2026-09-16).** Read `handover/README.md` first. It lists the state of the ICLR 2027 submission (abstract due Friday 18 September, paper due Friday 25 September 2026, AoE), the open defects, which machine holds the data, and what to do in which order. The `handover/` folder and this block are deleted before submission with `python handover/strip_handover_blocks.py`.
-<!-- HANDOVER-END -->
-
 This repository simulates Bayesian optimization under noisy human feedback.
 
 It is meant to answer a simple question:

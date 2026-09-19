@@ -63,6 +63,10 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--analysis", type=Path, default=Path("output-boba/analysis"))
     p.add_argument("--out", type=Path, default=Path("paper/figures"))
     p.add_argument("--stats-path", type=Path, default=bb.DEFAULT_STATS_PATH)
+    p.add_argument("--policies", type=Path, default=None,
+                   help="budget_split_policies.csv for the k-curve; the default is the one "
+                        "in --analysis. Point it at the rho=1 run to draw the sitting in "
+                        "which only the shared error cancels.")
     return p.parse_args(argv)
 
 
@@ -135,9 +139,13 @@ def fig_decomposition(decomp: pd.DataFrame, out: Path) -> None:
         for i, (_, r) in enumerate(block.iterrows()):
             x = g * (len(block) + gap) + i
             xs.append(x); labels.append(f"{r['std']:g}")
-            ax.bar(x, r.mean_excess_search, width, color=SEARCH, linewidth=0)
-            ax.bar(x, r.mean_excess_selection, width, bottom=r.mean_excess_search + 0.004,
-                   color=DEPLOYED, linewidth=0)
+            # The two segments must sum to the drawn total, so the gap between them is a
+            # surface-coloured edge, never an offset added to the bottom: an offset once made
+            # the 0.05 sigma bars half again too tall.
+            ax.bar(x, r.mean_excess_search, width, color=SEARCH,
+                   edgecolor="white", linewidth=0.9)
+            ax.bar(x, r.mean_excess_selection, width, bottom=r.mean_excess_search,
+                   color=DEPLOYED, edgecolor="white", linewidth=0.9)
             top = r.mean_excess_search + r.mean_excess_selection
             ax.annotate(f"{r.excess_selection_share * 100:.0f}%", (x, top), xytext=(0, 3),
                         textcoords="offset points", ha="center", fontsize=7.5, color=INK2)
@@ -160,7 +168,6 @@ def fig_kcurve(policies: pd.DataFrame, out: Path) -> None:
     fixed["k"] = fixed.policy.str.replace("fixed_k", "").astype(float)
     fixed = fixed.sort_values("k")
     oracle = policies[policies.policy == "oracle"].iloc[0]
-    lcb = policies[policies.policy == "always_lcb"].iloc[0]
     fig, ax = plt.subplots(figsize=(WIDTH, 2.4))
     ax.axhline(0, color=INK2, linewidth=0.8)
     ax.axhline(oracle.gain_vs_standard, color=INK2, linewidth=0.8, linestyle="--")
@@ -168,14 +175,18 @@ def fig_kcurve(policies: pd.DataFrame, out: Path) -> None:
                 textcoords="offset points", ha="right", fontsize=7.5, color=INK2)
     ax.annotate("standard process", (fixed.k.min(), 0), xytext=(0, -3),
                 textcoords="offset points", ha="left", va="top", fontsize=7.5, color=INK2)
-    ax.axhline(lcb.gain_vs_standard, color=INK2, linewidth=0.6, linestyle=":")
     ax.errorbar(fixed.k, fixed.gain_vs_standard,
                 yerr=[fixed.gain_vs_standard - fixed.gain_lo, fixed.gain_hi - fixed.gain_vs_standard],
                 color=SEARCH, linewidth=1.4, elinewidth=0.8, capsize=2.5, marker="o", markersize=4.5,
                 markeredgecolor="white", markeredgewidth=0.8, label="fixed k, all runs")
+    # The argmax is not resolved: several k share overlapping intervals, so the
+    # label names the flat region rather than a winner.
     best = fixed.loc[fixed.gain_vs_standard.idxmax()]
-    ax.annotate(f"k = {best.k:g}: +{best.gain_vs_standard:.3f}", (best.k, best.gain_vs_standard),
-                xytext=(8, 8), textcoords="offset points", fontsize=7.5, color=INK)
+    flat = fixed[fixed.gain_hi >= best.gain_vs_standard]
+    ax.annotate(f"flat from k = {flat.k.min():g} to {flat.k.max():g},"
+                f" best +{best.gain_vs_standard:.3f}",
+                (best.k, best.gain_vs_standard), xytext=(0, 14),
+                textcoords="offset points", ha="center", fontsize=7.5, color=INK)
     ax.set_xticks(fixed.k)
     ax.set_xticklabels([f"{k:g}" for k in fixed.k])
     _style(ax, "gain over the standard process\n(fraction of achievable improvement)",
@@ -195,14 +206,18 @@ def fig_frag_scatter(cells: pd.DataFrame, stats: dict, out: Path) -> float:
         rows.append({"dataset": dataset, "std": float(s), "frag": float(stats[dataset][key]),
                      "cost": float(block.fragility.mean())})
     f = pd.DataFrame(rows)
-    f = f[(f.frag > 0) & (f.cost > 0)]
+    # Log axes cannot place a zero one-shot loss or a negative measured cost, and
+    # those cells are the cheap end, so dropping them from the CORRELATION too
+    # would flatter it (0.87 against 0.84). The rank correlation is therefore
+    # taken over every cell and only the drawing is restricted.
+    drawable = f[(f.frag > 0) & (f.cost > 0)]
     stds = sorted(f["std"].unique())
     fig, ax = plt.subplots(figsize=(WIDTH, 2.6))
     # The four magnitudes are ordered, so one hue light->dark; adjacent steps of
     # a ramp sit under the normal-vision separation floor, so the marker shape
     # carries identity as well (the validator's "secondary encoding" clause).
     for colour, marker, s in zip(SEQ_BLUE, ("o", "s", "^", "D"), stds):
-        b = f[f["std"] == s]
+        b = drawable[drawable["std"] == s]
         ax.scatter(b.frag, b.cost, s=20, color=colour, marker=marker, edgecolor="white",
                    linewidth=0.5, label=rf"$\sigma_e = {s:g}$")
     ax.set_xscale("log"); ax.set_yscale("log")
@@ -210,8 +225,13 @@ def fig_frag_scatter(cells: pd.DataFrame, stats: dict, out: Path) -> float:
            r"one-shot selection loss $\mathrm{frag}(\sigma_e)$ of the landscape")
     ax.grid(True, axis="x")
     from scipy.stats import spearmanr
-    rho = float(spearmanr(np.log(f.frag), np.log(f.cost)).statistic)
-    ax.annotate(rf"Spearman $\rho$ = {rho:.2f}, {len(f)} landscape$\times$magnitude cells",
+    rho = float(spearmanr(f.frag, f.cost).statistic)
+    by_std = [float(spearmanr(g.frag, g.cost).statistic) for _, g in f.groupby("std")]
+    # Pooled over the magnitudes, the magnitude alone already reaches 0.85, so the
+    # pooled number says little. The within-magnitude range is the cross-landscape
+    # claim the section actually makes.
+    ax.annotate(rf"Spearman $\rho$ = {rho:.2f} over all {len(f)} cells, "
+                rf"{min(by_std):.2f} to {max(by_std):.2f} within a magnitude",
                 (0.02, 0.97), xycoords="axes fraction", va="top", fontsize=7.5, color=INK2)
     ax.legend(frameon=False, loc="lower right", title="error magnitude", title_fontsize=7.5)
     fig.tight_layout()
@@ -234,7 +254,7 @@ def main(argv=None) -> None:
 
     fig_dose_response(cells, args.out)
     fig_decomposition(pd.read_csv(args.analysis / "regret_decomposition.csv"), args.out)
-    fig_kcurve(pd.read_csv(args.analysis / "budget_split_policies.csv"), args.out)
+    fig_kcurve(pd.read_csv(args.policies or args.analysis / "budget_split_policies.csv"), args.out)
     rho = fig_frag_scatter(cells, stats, args.out)
     for name in ("dose_response", "decomposition", "kcurve", "frag_scatter"):
         print(f"wrote {args.out / (name + '.pdf')}")

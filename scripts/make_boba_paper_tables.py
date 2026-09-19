@@ -172,7 +172,11 @@ def table_mediation(analysis: Path, out: Path) -> None:
              "ruggedness", "dim"]
     # The two interaction models also carry a quadratic in the magnitude,
     # which the table does not show (the caption says so).
-    models = [("mediator_only", r"$\mathrm{frag}$ only"), ("descriptors_only", "descriptors only"),
+    # The two baselines come first. Without them a reader cannot tell how much of
+    # the mediator's R^2 is the onset and error-process indicators, and how much is
+    # simply knowing the error magnitude.
+    models = [("indicators_only", "indicators only"), ("magnitude_only", r"$\log\sigma_e$ only"),
+              ("mediator_only", r"$\mathrm{frag}$ only"), ("descriptors_only", "descriptors only"),
               ("both", "both"), ("descriptors_interaction", "descriptors + int."),
               ("both_interaction", "both + int.")]
     header = " & ".join(PRETTY_TERM.get(t, t) for t in order)
@@ -1044,7 +1048,13 @@ def _recovered_cell(r: pd.Series) -> str:
     if pd.isna(r["pooled_recovered"]):
         return "--"
     lo, hi = r["pooled_recovered_lo"], r["pooled_recovered_hi"]
-    mark = r"$^{*}$" if (not pd.isna(lo) and (lo > 0 or hi < 0)) else ""
+    # Star on the test the analysis actually ran, a BH-corrected Wilcoxon over
+    # the per-landscape gains, NOT on "the interval excludes zero". The two
+    # disagreed on two rows, one of them resting on a bootstrap lower bound of
+    # +0.0004 from 2000 resamples of 20 landscapes, inside its own Monte Carlo
+    # error.
+    q = r.get("pooled_wilcoxon_p_fdr", r.get("pooled_wilcoxon_p", float("nan")))
+    mark = r"$^{*}$" if (not pd.isna(q) and q < 0.05) else ""
     # round() then + 0.0, so a value of -0.3% prints as "0", not a "-0" that reads as a typo.
     pct = lambda v: round(v * 100) + 0.0
 

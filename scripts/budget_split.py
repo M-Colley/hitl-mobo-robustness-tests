@@ -93,8 +93,13 @@ def parse_args(argv=None) -> argparse.Namespace:
                         "comma-separated to pool grids run in separate directories")
     p.add_argument("--output-dir", type=Path, default=None, help="default: <input-dir>/analysis")
     p.add_argument("--k-grid", type=str, default="2,3,5,8,12")
-    p.add_argument("--rho", type=float, default=0.5,
-                   help="the sitting's noise as a multiple of the idiosyncratic SD")
+    p.add_argument("--rho", type=float, default=1.0,
+                   help="the sitting's noise as a multiple of the idiosyncratic SD. 1.0 is the "
+                        "assumption-free setting: a side-by-side comparison cancels the error "
+                        "shared across the designs of one sitting and leaves the idiosyncratic "
+                        "part intact. 0.5 additionally assumes the comparison halves what is "
+                        "left, which doubles every gain and moves the peak from k=8 to k=16, so "
+                        "it is a sensitivity and not the headline.")
     p.add_argument("--lcb-beta", type=float, default=1.0)
     p.add_argument("--window", type=int, default=10,
                    help="trials of recent improvement the search term is extrapolated from")

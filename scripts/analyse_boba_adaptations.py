@@ -98,12 +98,25 @@ ARMS = {
                      error_model="gaussian"),
     "rerate": arm("output-boba-adapt-rerate", "output-boba", "logei,qnei",
                   "last six trials re-rate the top three designs", error_model="gaussian"),
+    # A single acquisition scored against the MEAN OF TEN, four of which the paper
+    # ranks bottom, is not a like-for-like contrast: the reference carries the weak
+    # arms' cost, so the treatment "recovers" part of a cost it never had. Augmented
+    # EI reached +373% of the cost in one cell that way, which is impossible for a
+    # valid estimand. The primary reference is therefore LogEI, the suite's default
+    # and the acquisition an experimenter would otherwise have run; the ten-mean
+    # version stays beside it as "*-ten" so the difference is visible.
     "qkg": arm("output-boba-robust", "output-boba", "qkg",
-               "knowledge gradient, against the mean of the ten standard acquisitions",
-               ref_acqs=TEN, pool=True, error_model="gaussian"),
+               "knowledge gradient, against LogEI",
+               ref_acqs="logei", pool=True, error_model="gaussian"),
+    "qkg-ten": arm("output-boba-robust", "output-boba", "qkg",
+                   "knowledge gradient, against the mean of the ten standard acquisitions",
+                   ref_acqs=TEN, pool=True, error_model="gaussian"),
     "replei": arm("output-boba-robust", "output-boba", "replei",
-                  "every second trial re-rates the incumbent, against the mean of the ten standard acquisitions",
-                  ref_acqs=TEN, pool=True, error_model="gaussian"),
+                  "every second trial re-rates the incumbent, against LogEI",
+                  ref_acqs="logei", pool=True, error_model="gaussian"),
+    "replei-ten": arm("output-boba-robust", "output-boba", "replei",
+                      "every second trial re-rates the incumbent, against the mean of the ten",
+                      ref_acqs=TEN, pool=True, error_model="gaussian"),
     "rerate-slip": arm("output-boba-adapt-rerate-slip", "output-boba-slip", "logei,qnei",
                        "re-rating under an unnoticed slip", error_model="slip"),
     "nigp": arm("output-boba-adapt-nigp", "output-boba-slip", "logei,qnei",
@@ -127,11 +140,17 @@ ARMS = {
                     "a lower-confidence-bound incumbent instead of the posterior mean",
                     error_model="gaussian"),
     "q-aei": arm("output-boba-q-aei", "output-boba", "aei",
-                 "augmented expected improvement, against the mean of the ten standard acquisitions",
-                 ref_acqs=TEN, pool=True, error_model="gaussian"),
+                 "augmented expected improvement, against LogEI",
+                 ref_acqs="logei", pool=True, error_model="gaussian"),
+    "q-aei-ten": arm("output-boba-q-aei", "output-boba", "aei",
+                     "augmented expected improvement, against the mean of the ten",
+                     ref_acqs=TEN, pool=True, error_model="gaussian"),
     "q-ts": arm("output-boba-q-ts", "output-boba", "ts",
-                "Thompson sampling, against the mean of the ten standard acquisitions",
-                ref_acqs=TEN, pool=True, error_model="gaussian"),
+                "Thompson sampling, against LogEI",
+                ref_acqs="logei", pool=True, error_model="gaussian"),
+    "q-ts-ten": arm("output-boba-q-ts", "output-boba", "ts",
+                    "Thompson sampling, against the mean of the ten",
+                    ref_acqs=TEN, pool=True, error_model="gaussian"),
     "sched-front10": arm("output-boba-sched-front10", "output-boba", "logei,qnei",
                          "the same total rating effort, concentrated on the first ten trials",
                          error_model="gaussian"),
@@ -273,7 +292,13 @@ def summarise(block: pd.DataFrame, rng: np.random.Generator) -> dict:
         c = cost_l[idx].mean()
         draws.append(gain_l[idx].mean() / c if c > 0 else np.nan)
     draws = np.array(draws)
+    # A resample whose denominator is <= 0 has no ratio. Dropping those and
+    # taking percentiles over the survivors prints a CONDITIONAL interval as a
+    # 95% one, so the discard share is recorded and an interval is refused when
+    # more than a twentieth of the draws are gone or the point estimate itself
+    # is undefined.
     ok = np.isfinite(draws)
+    usable = bool(cost > 0 and ok.mean() >= 0.95)
     if np.allclose(gain_l, 0.0):
         p = 1.0
     else:
@@ -285,8 +310,9 @@ def summarise(block: pd.DataFrame, rng: np.random.Generator) -> dict:
         "n_landscapes": int(n), "n_cells": int(len(block)),
         "cost": float(cost), "gain": float(gain), "price": float(price),
         "recovered": float(gain / cost) if cost > 0 else np.nan,
-        "recovered_lo": float(np.percentile(draws[ok], 2.5)) if ok.sum() >= 100 else np.nan,
-        "recovered_hi": float(np.percentile(draws[ok], 97.5)) if ok.sum() >= 100 else np.nan,
+        "bootstrap_draws_kept": float(ok.mean()),
+        "recovered_lo": float(np.percentile(draws[ok], 2.5)) if usable else np.nan,
+        "recovered_hi": float(np.percentile(draws[ok], 97.5)) if usable else np.nan,
         "wilcoxon_p": p,
     }
 
@@ -381,7 +407,18 @@ def main(argv=None) -> None:
               + "; ".join(f"{r.jitter_std:g}: {r.median_extra_arm:.0f}/{r.censored_fraction_arm:.0%} vs "
                           f"{r.median_extra_ref:.0f}/{r.censored_fraction_ref:.0%}" for r in early.itertuples()))
 
-    pd.DataFrame(rows).to_csv(args.output_dir / "adaptations_recovery.csv", index=False)
+    out = pd.DataFrame(rows)
+    # The pooled p was never corrected anywhere, yet the paper's table stars on it.
+    # One BH family per response over the arms, taking each arm's pooled p once.
+    if len(out):
+        out["pooled_wilcoxon_p_fdr"] = np.nan
+        for response, blk in out.groupby("response"):
+            one = blk.drop_duplicates(subset=["arm"])[["arm", "pooled_wilcoxon_p"]].dropna()
+            if len(one):
+                q = dict(zip(one["arm"], multipletests(one["pooled_wilcoxon_p"], method="fdr_bh")[1]))
+                sel = out["response"] == response
+                out.loc[sel, "pooled_wilcoxon_p_fdr"] = out.loc[sel, "arm"].map(q).astype(float)
+    out.to_csv(args.output_dir / "adaptations_recovery.csv", index=False)
     pd.DataFrame(extra_rows).to_csv(args.output_dir / "adaptations_extra_runs.csv", index=False)
     print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'} and adaptations_extra_runs.csv")
 

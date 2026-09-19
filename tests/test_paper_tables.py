@@ -128,19 +128,23 @@ def test_inputerror_mechanism_table_has_one_block_per_onset(tmp_path):
 
 
 
-def test_adaptations_table_groups_arms_and_marks_intervals_excluding_zero(tmp_path):
+def test_adaptations_table_groups_arms_and_stars_the_corrected_test(tmp_path):
+    # The star follows the BH-corrected Wilcoxon the analysis ran, NOT the
+    # bootstrap interval. rep10 has a tiny q and is starred; nigp's interval also
+    # excludes zero on one response but its q does not clear 0.05, so it is not.
     rows = []
-    spec = {  # arm: (recovered, lo, hi, price)
-        "rep10": (-0.88, -1.13, -0.67, 0.051),
-        "nigp": (-0.28, -0.43, 0.10, -0.001),
-        "fitted-rep10": (-0.08, -0.17, 0.06, 0.024),
+    spec = {  # arm: (recovered, lo, hi, price, pooled q)
+        "rep10": (-0.88, -1.13, -0.67, 0.051, 0.001),
+        "nigp": (-0.28, -0.43, -0.10, -0.001, 0.400),
+        "fitted-rep10": (-0.08, -0.17, 0.06, 0.024, 0.250),
     }
-    for arm, (rec, lo, hi, price) in spec.items():
+    for arm, (rec, lo, hi, price, q) in spec.items():
         for response in ("trajectory", "deployed"):
             for onset in (0, 20):
                 rows.append({"arm": arm, "reference": "r", "response": response, "jitter_std": 1.0,
                              "jitter_iteration": onset, "pooled_recovered": rec, "pooled_recovered_lo": lo,
-                             "pooled_recovered_hi": hi, "pooled_price": price})
+                             "pooled_recovered_hi": hi, "pooled_price": price,
+                             "pooled_wilcoxon_p_fdr": q})
     pd.DataFrame(rows).to_csv(tmp_path / "adaptations_recovery.csv", index=False)
     mt.table_adaptations(tmp_path, tmp_path)
     tex = (tmp_path / "adaptations.tex").read_text(encoding="utf-8")
@@ -149,28 +153,31 @@ def test_adaptations_table_groups_arms_and_marks_intervals_excluding_zero(tmp_pa
     body = [l for l in lines if l.endswith("\\\\") and l.count("&") == 4 and "adaptation" not in l]
     assert len(groups) == 3          # rating error, slip, fitted; misclick has no row
     assert len(body) == 3
-    assert tex.count("$^{*}$") == 2  # rep10's interval excludes zero on both responses
+    assert tex.count("$^{*}$") == 2  # rep10 on both responses; nigp's interval excludes
+    # zero on both too, and is correctly unstarred because its q is 0.40
     fitted = [l for l in body if "rated twice" in l and "--" in l]
     assert len(fitted) == 1          # the fitted row has no price
 
 
 def test_adaptations_table_never_prints_a_nonzero_bound_as_zero(tmp_path):
-    # The re-rate arm's deployed interval is [0.0395%, 9.3%]: starred, so it must not
-    # read as [0, 9]; its trajectory interval [-0.28%, 0.24%] must not read as [0, 0].
+    # The re-rate arm's deployed interval is [0.0395%, 9.3%], which must not read as
+    # [0, 9]; its trajectory interval [-0.28%, 0.24%] must not read as [0, 0].
     rows = []
-    spec = {"trajectory": (-0.00003, -0.0028, 0.0024), "deployed": (0.0412, 0.000395, 0.0928)}
-    for response, (rec, lo, hi) in spec.items():
+    spec = {"trajectory": (-0.00003, -0.0028, 0.0024, 0.30),
+            "deployed": (0.0412, 0.000395, 0.0928, 0.01)}
+    for response, (rec, lo, hi, q) in spec.items():
         for onset in (0, 20):
             rows.append({"arm": "rerate", "reference": "r", "response": response, "jitter_std": 1.0,
                          "jitter_iteration": onset, "pooled_recovered": rec, "pooled_recovered_lo": lo,
-                         "pooled_recovered_hi": hi, "pooled_price": 0.001})
+                         "pooled_recovered_hi": hi, "pooled_price": 0.001,
+                         "pooled_wilcoxon_p_fdr": q})
     pd.DataFrame(rows).to_csv(tmp_path / "adaptations_recovery.csv", index=False)
     mt.table_adaptations(tmp_path, tmp_path)
     tex = (tmp_path / "adaptations.tex").read_text(encoding="utf-8")
     assert "[0.04, 9]" in tex
     assert "0.2]" in tex and ("[$-$0.3," in tex or "[-0.3," in tex)
     assert "[0, 9]" not in tex and "[0, 0]" not in tex
-    assert tex.count("$^{*}$") == 1  # only the deployed interval excludes zero
+    assert tex.count("$^{*}$") == 1  # only the deployed response clears the corrected test
 
 
 def test_pilot_frag_table_orders_pilot_sizes_and_ends_with_the_exact_ceiling(tmp_path):

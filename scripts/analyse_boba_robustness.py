@@ -849,21 +849,36 @@ def mediator_model(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
     # "_interaction" models add that product and a quadratic in the magnitude;
     # whether frag still adds to THEM is the fair version of the mediation
     # question, and the answer differs from the additive one.
-    cells["noise_x_opt_z"] = cells["log_noise"] * cells["log_opt_z"]
-    cells["log_noise_sq"] = cells["log_noise"] ** 2
+    # Centre the two logs BEFORE forming the product. With raw logs the main
+    # effect of log_noise is its slope at opt_z = 1, which only powell is near
+    # (the suite mean is log10 opt_z = 0.54), and the z-scoring below rescales
+    # without re-centring. Uncentred it printed -0.38; centred it is +0.17, the
+    # opposite sign, on an identical fit.
+    log_noise_c = cells["log_noise"] - cells["log_noise"].mean()
+    log_opt_z_c = cells["log_opt_z"] - cells["log_opt_z"].mean()
+    cells["noise_x_opt_z"] = log_noise_c * log_opt_z_c
+    cells["log_noise_sq"] = log_noise_c ** 2
     INTERACTION = ["noise_x_opt_z", "log_noise_sq"]
 
     frames = []
     for label, terms in (
+        # Two baselines first, so a reader can see what the onset and
+        # error-process indicators alone buy, and what the magnitude alone buys,
+        # before crediting anything to the mediator.
+        ("indicators_only", []),
+        ("magnitude_only", ["log_noise"]),
         ("mediator_only", ["frag_at_c"]),
         ("descriptors_only", ["log_noise"] + PRIMARY_DESCRIPTORS),
         ("both", ["frag_at_c", "log_noise"] + PRIMARY_DESCRIPTORS),
         ("descriptors_interaction", ["log_noise"] + PRIMARY_DESCRIPTORS + INTERACTION),
         ("both_interaction", ["frag_at_c", "log_noise"] + PRIMARY_DESCRIPTORS + INTERACTION),
     ):
-        design = cells[terms].astype(float)
-        design = (design - design.mean()) / design.std(ddof=0).replace(0.0, 1.0)
-        block = pd.concat([design.reset_index(drop=True), dummies.reset_index(drop=True)], axis=1)
+        if terms:
+            design = cells[terms].astype(float)
+            design = (design - design.mean()) / design.std(ddof=0).replace(0.0, 1.0)
+            block = pd.concat([design.reset_index(drop=True), dummies.reset_index(drop=True)], axis=1)
+        else:
+            block = dummies.reset_index(drop=True).copy()
         block["dataset"] = cells["dataset"].to_numpy()
         block["excess_sd"] = cells["excess_sd"].to_numpy()
         predictors = [c for c in block.columns if c not in {"dataset", "excess_sd"}]

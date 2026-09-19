@@ -69,11 +69,12 @@ Smoke-test a driver before an overnight run. `run_boba_budget_neutral.ps1 -Smoke
 | `evaluate_research_question.py` | pairs noisy runs with clean twins, per landscape |
 | `analyse_boba_robustness.py` | cross-benchmark synthesis, rankings, descriptors |
 | `analyse_boba_adaptations.py` | a process change against the standard process |
+| `compare_boba_arms.py` | one arm against another, per condition; shares are ratios of landscape means in opt_z units |
 | `rescore_ship_rules.py`, `analyse_ship_rules.py` | what the same trials would have shipped under another rule |
 | `decompose_regret.py` | deployed regret split into search loss and selection loss |
 | `replay_end_of_study.py` | tournaments and confirmation trials, replayed from logged prefixes |
 | `replay_stopping.py` | onset detection and freezing |
-| `budget_split.py` | how many of T trials to spend on identification |
+| `budget_split.py` | how many of T trials to spend on identification (default `--rho 1.0`, the sitting in which only the shared error cancels; `--rho 0.5` is the optimistic sensitivity) |
 | `changepoint_compare.py` | CUSUM, GLR and BOCPD on the same residual streams |
 | `elicitation_compare.py` | a comparison loop against a rating loop at equal human cost |
 | `make_boba_paper_tables.py` | every generated file in `paper/tables/` |
@@ -84,7 +85,9 @@ A replay reproduces the logged prefix exactly, because the proposal at trial t d
 
 ## What is settled, and what is not
 
-Settled, with the measurement. Selection is 41.8% [34, 50] of the deployed cost of error at 1σ from the first rating and 83.1% [75, 90] at 5σ from trial 21. No acquisition-side change tested improved the deployed design. Early replication and Thompson sampling make the deployed design worse. Four confirmation trials cut false improvement claims from 15.7% to 0.5%. A comparison loop is immune to shared monotone faults such as drift by construction and does not help against a saturating scale. The CUSUM already matches the classical optimal detector.
+An arm that replaces the acquisition is scored against LogEI, never against the mean of the ten standard acquisitions: that reference carries the four weakest arms' cost and produced a recovery above 100% in one cell. The `*-ten` companions keep the other version visible.
+
+Settled, with the measurement. Selection is 41.8% [34, 50] of the deployed cost of error at 1σ from the first rating and 83.1% [75, 90] at 5σ from trial 21. No acquisition-side change tested improved the deployed design, and augmented EI does not improve the trajectory either once it is scored against LogEI (+1% [-18, +18]). Early replication and Thompson sampling make the deployed design worse. Four confirmation trials cut false improvement claims from 15.7% to 0.5%, but the standard process runs no test at all, so the trials take it to 6.6% and the alpha = 0.05 test, which is free, does the rest. A comparison loop is immune to shared monotone faults such as drift by construction and does not help against a saturating scale. The CUSUM matches the classical optimal detector, though the two fire together on all but one held-out run because the residual is far from standard normal, so that comparison shows little.
 
 Not settled. The human is simulated. The best fitted oracle has held-out R² of about 0.55, and the provoice oracle is worse than a constant. The end-of-study procedures and the cautious ship rule pay a fixed price whether or not error is present, so they cost more than they recover below 0.25σ. Response clipping has no price. The onset effect is unexplained. The model-based budget rule must be recomputed before it can be quoted. The preregistered replication is void on its own control rule, and the post-hoc sensitivity analysis clears all four thresholds.
 

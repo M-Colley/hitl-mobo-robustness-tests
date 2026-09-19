@@ -103,10 +103,18 @@ def main(argv: list[str] | None = None) -> None:
                 raise ValueError(f"{dataset}: {len(stds)} magnitudes, expected {len(grid)}")
             paired.loc[block.index, "jitter_std"] = block["jitter_std"].map(dict(zip(stds, grid)))
 
-    paired["delta"] = paired["trt"] - paired["ref"]
-    # The fitted-oracle datasets are not landscapes of the suite and have no
-    # opt_z; the contrast itself does not need one.
+    # Divide by opt_z BEFORE any mean is taken. The paper reports every aggregate
+    # as a ratio of landscape means in units of the achievable improvement, so
+    # that no landscape outweighs another; opt_z spans 74x across the suite, and
+    # on raw values shekel outweighed powell about 74 to 1 in both the numerator
+    # and the denominator. The fitted-oracle datasets have no opt_z and keep
+    # their own scale, which is why the contrast there is within one dataset.
     paired["opt_z"] = paired["dataset"].map(lambda n: stats.get(n, {}).get("opt_z", np.nan))
+    scale = paired["opt_z"].fillna(1.0)
+    paired["ref_raw"], paired["trt_raw"] = paired["ref"], paired["trt"]
+    paired["ref"] = paired["ref"] / scale
+    paired["trt"] = paired["trt"] / scale
+    paired["delta"] = paired["trt"] - paired["ref"]
     # Share of the reference arm's measured cost that the treatment removes.
     paired["share_removed"] = np.where(
         paired["ref"] > 0, 1.0 - paired["trt"] / paired["ref"], np.nan

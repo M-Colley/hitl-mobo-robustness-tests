@@ -56,14 +56,15 @@ the achievable improvement. The design chosen for deployment in a real study or
 product loses $30\%$ of the achievable improvement compared to a clean run.
 Decomposing that deployed regret into search loss and selection loss shows that
 at that magnitude, $42\%$ $[34, 50]$ of the cost is selection, the run having
-visited a better design than the one it ships, and none of the seven
-acquisition-side changes reduces it, although augmented expected improvement
-recovers $41\%$ of the trajectory cost. What reduces it is spending trials on
-identification: one comparative sitting over the last third of the budget gains
-$0.05$ of the achievable improvement, and four trials confirming the result cut
-false improvement claims from $16\%$ to $0.5\%$. The expected loss of one noisy
-choice among random designs, computable from a ten-trial pilot, explains half of
-the variation in cost across landscapes and magnitudes.
+visited a better design than the one it ships, and none of the six
+acquisition-side changes we ran reduces it. What reduces it is spending trials on
+identification: one comparative sitting over the last sixth of the budget gains
+$0.02$ of the achievable improvement, and four trials confirming the result cut
+false improvement claims from $16\%$ to $0.5\%$, of which the confirming test rather
+than the trials supplies more than half. The expected loss of one noisy choice
+among random designs, computable from a ten-trial pilot, explains half of the
+variation in excess regret across landscapes and magnitudes, against a sixth for
+the error magnitude alone.
 \end{abstract}
 
 \section{Introduction}
@@ -111,20 +112,20 @@ property of a problem decides whether feedback error hurts''.
     and selection loss (Section~\ref{sec:decomp}). At the magnitude where the
     measured rater noise falls, selection is $41.8\%$ $[34, 50]$ of what error
     costs, rising to $83\%$ for a large error arriving late; it is zero under
-    exact observation, and none of seven acquisition-side changes reduced it.
-    Spending about a third of the budget on one final comparative sitting
+    exact observation, and none of six acquisition-side changes reduced it.
+    Spending about a sixth of the budget on one final comparative sitting
     recovers more than any other budget-neutral remedy, and four confirmation
     trials cut false improvement claims from $15.7\%$ to $0.5\%$
     (Section~\ref{sec:budget}).
   \item \textbf{A predictor from a pilot.} The expected loss of one noisy choice
     among random designs, computed from a ten-trial pilot and the rater noise,
-    explains $R^2 = 0.52$ of the variation in cost across landscapes and
-    magnitudes and stays informative beside the landscape descriptors
-    (Section~\ref{sec:mediation}).
+    explains $R^2 = 0.52$ of the variation in excess regret across landscapes
+    and magnitudes, against $0.16$ for the error magnitude alone, and stays
+    informative beside the landscape descriptors (Section~\ref{sec:mediation}).
 \end{enumerate}
 The appendices carry the companion run of the fitted-oracle design, the
 input-error arm, the currency test, seven further checks that each change one
-part of the design, and twenty-four budget-neutral remedy arms.
+part of the design, and twenty-three budget-neutral remedy arms.
 
 \section{Related work}
 
@@ -281,7 +282,8 @@ fifth as much.
 \textbf{The design a study would deploy costs far more, and the gap widens with
 the error.} At $1\sigma$ from the first rating the shipped design's excess is
 $29.7\%$ against the trajectory's $14.1\%$; at $5\sigma$ it is $71.1\%$ against
-$22.0\%$, a factor of $3.2$. The late onset, which looks nearly harmless on the
+$22.0\%$. Like for like, against the search loss at the same final trial, the
+deployed design costs $1.7\times$ as much at $1\sigma$ and $2.5\times$ at $5\sigma$. The late onset, which looks nearly harmless on the
 trajectory ($2.8\%$ at $1\sigma$), costs $13.6\%$ on the design that ships. The
 trajectory average is bounded by the run's good early iterations; the deployed
 value is not, because it is decided at a single moment by a single rating. Every
@@ -309,8 +311,8 @@ blocks are different quantities and are not comparable with each other.}
 the post-onset trajectory average of search loss and the deployed design's loss
 at the final trial, as fractions of the achievable improvement, averaged over
 twenty landscapes and ten model-based acquisitions; bands are 95\% landscape
-bootstraps. The gap between the lines is the selection loss of
-Section~\ref{sec:decomp}.}
+bootstraps. The two are on different time bases, so their difference is not the
+selection loss of Section~\ref{sec:decomp}.}
 \label{fig:dose}
 \end{figure}
 
@@ -369,7 +371,7 @@ The first term is what the optimizer failed to find. The second is what the
 ratings failed to identify among what it did find. An acquisition function
 addresses the first directly: it chooses where to sample. It can reach the second
 only indirectly, by changing which designs are visited and so which set the
-ratings must rank, and none of the seven acquisition-side changes we ran
+ratings must rank, and none of the six acquisition-side changes we ran
 reduced the deployed loss (Section~\ref{sec:acq}). The selection
 term is also exactly zero under exact observation (the best-rated visited
 design is then the best visited design), which is why it never appears in a
@@ -437,25 +439,19 @@ per landscape.
 
 With onset and error-process indicators in every model, $\frag(\sigma_e)$ explains
 $R^2 = 0.52$ of the variation in excess regret across landscape-by-condition cells,
-nearly as much as the primary landscape descriptors and the error magnitude together
-($0.53$), and it stays informative beside them ($\beta = +0.31$ $[0.18, 0.45]$ in the
-interaction model) without making the magnitude redundant. Computed on a GP fitted to
-the first ten trials of a clean run rather than on the exact objective, it tracks the
-exact value at Spearman $0.94$ and predicts the measured cost as well (Figure~\ref{fig:frag}). Its residuals
+against $0.04$ for those indicators alone and $0.16$ once the error magnitude is
+added, and nearly as much as the primary landscape descriptors and the magnitude
+together ($0.53$); out of sample, leaving one landscape out, it is ahead of them
+($0.44$ against $0.41$). It stays informative beside them ($\beta = +0.31$
+$[0.18, 0.45]$ in the interaction model) without making the magnitude redundant.
+Computed on a GP fitted to the first ten trials of a clean run rather than on the
+exact objective, it tracks the exact value at Spearman $0.94$ and predicts the
+measured cost as well. The response is excess regret in landscape standard
+deviations; as a fraction of the achievable improvement, which removes the scale
+$\frag$ carries, the magnitude alone does better ($0.51$ against $0.46$), and
+pooling magnitudes flatters both (Figure~\ref{fig:frag}). Its residuals
 are positive in $\optz$ and tail weight: on tall, heavy-tailed landscapes fifty noisy
 choices cost more than one predicts (Appendix~\ref{app:mediation}).
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{figures/frag_scatter.pdf}
-\caption{The one-shot selection loss $\frag(\sigma_e)$ of a landscape
-(Equation~\ref{eq:frag}, computed on 256 quasi-random designs with no optimizer)
-against the trajectory cost the sweep measured on it, one point per landscape and
-magnitude, error from the first rating. Shape and shade both encode the
-magnitude.}
-\label{fig:frag}
-\end{figure}
-
 
 \section{Which acquisition function?}
 \label{sec:acq}
@@ -463,8 +459,9 @@ magnitude.}
 \begin{table}[t]
 \centering
 \caption{Acquisition robustness, ranked over landscapes within each condition
-and averaged over conditions. ``Absolute loss'' is the deployment number: the
-post-onset regret under noise as a percentage of the achievable improvement.}
+and averaged over conditions. ``Absolute loss'' is the noisy run's post-onset
+trajectory regret as a percentage of the achievable improvement, a search
+number, not the design that ships.}
 \label{tab:acq}
 \input{tables/acquisitions}
 \end{table}
@@ -485,19 +482,19 @@ EI $3$, qEI $2$. A study run on one of these landscapes would report a defensibl
 largely does not transfer, and could not tell. Appendix~\ref{sec:incumbent} shows that part of this ranking is
 not about the acquisitions at all.
 
-\textbf{A better search does not ship a better design.} We ran seven
+\textbf{A better search does not ship a better design.} We ran six
 acquisition-side changes as their own arms on the full suite, each keeping the
 human trials fixed, scored against the standard process
 (Appendix~\ref{app:budgetneutral}). None improves the deployed design: augmented
-expected improvement \citep{huang2006global} recovers $+2\%$ $[-6, +11]$ of the
-cost of error, a lower-confidence-bound incumbent $-27\%$, Thompson sampling
-$-58\%$ $[-81, -40]$, a slip-aware acquisition $-4\%$ to $-35\%$, a
+expected improvement \citep{huang2006global} recovers $-5\%$ $[-21, +9]$ of the
+cost of error against LogEI, a lower-confidence-bound incumbent $-27\%$, Thompson
+sampling $-65\%$ $[-90, -41]$, a slip-aware acquisition $-4\%$ to $-35\%$, a
 minimum-distance constraint $-13\%$; redistributing the same rating effort across
-trials runs from $-7\%$ to $-21\%$. Augmented EI makes the point alone: on the
-post-onset trajectory, the response an acquisition is designed to improve, it
-recovers $+41\%$ $[+27, +53]$, the best of any arm we ran, and on the design the
-study ships it recovers nothing. Under Equation~\ref{eq:decomp} the term it
-improves is not the term that dominates.
+trials runs from $-7\%$ to $-21\%$. Nor does any clearly improve the trajectory:
+augmented EI, the arm designed for noisy observations, recovers $+1\%$ $[-18, +18]$
+there. Each is scored against LogEI; against the mean of the ten acquisitions it
+would read $+41\%$, a reference that carries the weakest arms' cost
+(Appendix~\ref{app:adapt}).
 
 \section{Buying identification with the trials you have}
 \label{sec:budget}
@@ -512,18 +509,22 @@ existing run log (Appendix~\ref{app:endofstudy}). Error shared across the design
 of one sitting cancels when they are compared, so only the idiosyncratic part
 enters the looks; we report both the full idiosyncratic SD and half of it.
 
-\textbf{Identification is worth about a third of the budget.} Against the
+\textbf{Identification is worth about a sixth of the budget.} Against the
 standard process, in units of the achievable improvement, a sitting of $k=2$
-gains $+0.017$ $[+0.004, +0.029]$, $k=5$ $+0.035$, $k=8$ $+0.042$, $k=12$
-$+0.046$, $k=16$ $+0.051$ $[+0.028, +0.072]$, and then falls away (Figure~\ref{fig:kcurve}): $k=20$
-$+0.042$, $k=25$ $+0.022$, $k=30$ $-0.008$. The curve is the inverted U the two
-forces imply (a larger sitting is more likely to contain the best visited
-design and leaves fewer trials to find one), and it turns over at about a third
-of $T$. The ceiling, choosing the best $k$ for each run in hindsight, is $+0.145$.
-Spending nothing extra and merely changing the ship rule is indistinguishable
-from the standard process ($+0.001$, interval $[-0.018, +0.018]$), which is the
-selection result of Section~\ref{sec:decomp} in another currency: the trials, not
-the rule, are what buys the recovery.
+gains $+0.010$ $[-0.003, +0.022]$, $k=3$ $+0.015$, $k=5$ $+0.020$, $k=8$
+$+0.022$ $[+0.008, +0.034]$, $k=12$ $+0.021$, $k=16$ $+0.022$, and then falls
+away (Figure~\ref{fig:kcurve}): $k=20$ $+0.009$, $k=25$ $-0.022$, $k=30$ $-0.054$.
+The curve is the inverted U the two forces imply (a larger sitting is more
+likely to contain the best visited design and leaves fewer trials to find one),
+flat from $k=5$ to $k=16$ and peaking at about a sixth of $T$. The ceiling,
+choosing the best $k$ per run in hindsight, is $+0.138$. This assumes only that
+the error shared across one sitting cancels; if a comparison also halves the
+idiosyncratic part the gains roughly double and the peak moves to $k=16$
+(Appendix~\ref{app:endofstudy}).
+Merely changing the ship rule, at no extra trial, is indistinguishable from the
+standard process pooled over every magnitude ($+0.001$ $[-0.018, +0.018]$) but
+removes $10.1\%$ $[4.6, 15.9]$ of \textsc{gaussian} error's cost at $0.25\sigma$
+and above (Appendix~\ref{app:shiprules}): the trials buy more, the rule is free.
 
 \begin{figure}[t]
 \centering
@@ -531,9 +532,9 @@ the rule, are what buys the recovery.
 \caption{Gain over the standard process from spending the last $k$ of $T = 50$
 trials on one comparative sitting among the top-$k$ visited designs, in units of
 the achievable improvement, with 95\% landscape-bootstrap intervals. The dashed
-line is the hindsight-best $k$ per run, the dotted line the cautious ship rule
-with no extra trials. Pooled over the four error processes, magnitudes of
-$0.25\sigma$ and above, and both onsets.}
+line is the hindsight-best $k$ per run. Pooled over the four error processes, all
+four magnitudes and both onsets, with LogEI and qNEI; the looks carry the full
+idiosyncratic SD.}
 \label{fig:kcurve}
 \end{figure}
 
@@ -558,7 +559,7 @@ $[-0.013, +0.021]$) against the fixed rule's $+0.051$, because in $65\%$ of runs
 sitting for the posterior-mean design, the worst policy of all at $-0.013$. Its
 utility is the surrogate's posterior, which was fitted on corrupted ratings, so
 it is confident about designs it should not be. Nothing we tried beat fixing $k$
-at about a third of the budget.
+at about a sixth of the budget.
 
 \section{When the error is in the design, not the rating}
 \label{sec:inputerror}
@@ -761,8 +762,8 @@ excess-weighted cost, \emph{costs} $7\%$ at $1\sigma$ from the first rating, and
 survives correction in no condition (Appendix~\ref{sec:noisediag}).
 
 \paragraph{The incumbent is part of the method.} The observed-max incumbent
-removes $15.6\%$ of the excess-weighted cost, $12\%$ at $1\sigma$ and
-$65$--$67\%$ below $0.25\sigma$, and worsens the deployed design: robustness rankings rank
+removes $20.0\%$ of the excess-weighted cost, $24\%$ at $1\sigma$ and
+$48$--$81\%$ at $0.25\sigma$ and below, and worsens the deployed design: robustness rankings rank
 acquisition-and-incumbent pairs (Appendices~\ref{sec:incumbent}
 and~\ref{app:adapt}).
 
@@ -790,12 +791,13 @@ preregistered claims ran on ten fresh seeds; one control failed, so the run is
 void by its own rule, and with that landscape excluded post hoc all four clear
 their thresholds (Appendix~\ref{sec:confirmatory}).
 
-\paragraph{The fitted-oracle design reports about a third of the cost.} On three
-archival datasets at matched magnitudes it recovers $29$--$38\%$ of the cost the
-analytic arm measures. The gap is neither the oracles' fidelity (up to $0.29$
-more held-out $R^2$ moves the cost by a median of $+0.006$) nor the optimum
-estimate, which cancels in a difference of regrets; the three fitted spaces sit
-at the low end of the twenty-landscape spread (Appendix~\ref{sec:fitted}).
+\paragraph{The fitted-oracle design reports a fraction of the cost.} On three
+archival datasets it recovers $5$--$58\%$ of the cost the analytic arm measures, a
+third at $1\sigma$ from the first rating, though that third is one dataset of three
+($5\%$, $19\%$, $75\%$). The gap is neither the oracles' fidelity (up to
+$0.29$ more held-out $R^2$ moves the cost by a median of $+0.006$) nor the
+optimum estimate, which cancels in a difference of regrets
+(Appendix~\ref{sec:fitted}).
 
 \section{The input-error arm}
 \label{app:inputerrorarm}
@@ -874,6 +876,21 @@ it, which is what a deployment inherits.
 \section{Predicting the cost from one noisy choice}
 \label{app:mediation}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{figures/frag_scatter.pdf}
+\caption{The one-shot selection loss $\frag(\sigma_e)$ of a landscape
+(Equation~\ref{eq:frag}, computed on 256 quasi-random designs with no optimizer)
+against the trajectory cost the sweep measured on it, one point per landscape and
+magnitude, error from the first rating. Shape and shade both encode the magnitude.
+Nine of the eighty cells cannot be placed on log axes, eight because $\frag$ is
+exactly zero and one because the measured cost is negative; both correlations in
+the panel are over all eighty. The pooled value largely restates that both
+quantities grow with $\sigma_e$, which is why the within-magnitude range is given
+beside it.}
+\label{fig:frag}
+\end{figure}
+
 The regression behind Section~\ref{sec:mediation}, whose predictor is
 Equation~\ref{eq:frag}.
 
@@ -895,7 +912,9 @@ bootstrap over landscapes.}
 
 With onset and error-process indicators in every model, $\frag(\sigma_e)$
 explains $R^2 = 0.52$ of the variation in excess regret across
-landscape-by-condition cells ($0.48$ on its own), nearly as much as the primary
+landscape-by-condition cells, against $0.04$ for the onset and error-process
+indicators alone and $0.16$ for those indicators plus the error magnitude,
+and nearly as much as the primary
 landscape descriptors together with the error magnitude ($R^2 = 0.53$;
 Table~\ref{tab:mediation}). Jointly they reach $R^2 = 0.70$, and in that additive model the error magnitude
 collapses to
@@ -903,7 +922,9 @@ $\beta = -0.07$ with $p = 0.44$. That null belongs to the additive specification
 interaction Appendix~\ref{sec:currency} found, and a quadratic in the magnitude,
 the descriptor model reaches $R^2 = 0.78$ with no $\frag$ term; $\frag$ still adds to it,
 keeping $\beta = +0.31$ $[0.18, 0.45]$ at $R^2 = 0.79$, but the magnitude is
-significant again beside it ($-0.38$ $[-0.60, -0.08]$). \textbf{One noisy
+significant again beside it ($+0.17$ $[0.00, +0.31]$; forming the product from
+uncentred logs instead reports this coefficient as a slope at $\optz = 1$, which
+only powell is near, and flips its sign). \textbf{One noisy
 choice predicts, on its own, two thirds of what the best descriptor model
 explains, and stays informative beside it; it does not make the error magnitude
 redundant.} Dimension and ruggedness are not detectably different from zero
@@ -1035,11 +1056,11 @@ exploratory. The acquisitions differ in their exposure to this: LogEI, EI, PI,
 LogPI and qEI consume $\mathrm{best}_f$; UCB does not; qNEI ignores it entirely.
 A ranking of acquisitions by robustness is therefore partly a ranking of their
 sensitivity to a design choice that is not part of the acquisition at all.
-Re-running with the observed maximum as the incumbent removes $15.6\%$ of the
-excess-weighted cost overall ($12\%$ at $1\sigma$ from the first rating and
-$22\%$ from trial 21, two thirds or more at
-$0.25\sigma$ and below), with four of eight conditions significant after FDR
-correction (Table~\ref{tab:incumbent}).
+Re-running with the observed maximum as the incumbent removes $20.0\%$ of the
+excess-weighted cost overall ($24\%$ at $1\sigma$ from the first rating and
+$20\%$ from trial 21, and about a half to four fifths at $0.25\sigma$ and below),
+with six of eight conditions significant after FDR correction
+(Table~\ref{tab:incumbent}).
 
 The per-acquisition breakdown is in Table~\ref{tab:incumbentacq}. UCB
 and qNEI move by \emph{exactly} zero, as they must, a control that validates
@@ -1563,7 +1584,17 @@ The standard process claims an improvement in $98.3\%$ of runs and that claim is
 false in $15.7\%$ of them, rising to $42.7\%$ at $5\sigma$. Four confirmation
 trials take the false-claim rate to $0.5\%$ overall and $1.0\%$ at $5\sigma$, at
 the cost of detecting only $50.7\%$ of the real improvements; eight trials give
-$0.46\%$ and $65.7\%$.
+$0.46\%$ and $65.7\%$. Two changes are bundled there, and they are worth
+separating, because the standard process applies no test at all: it claims
+whenever the best rating of the run exceeds the best of the initial design,
+which is true unless the two coincide, so its power is $1.000$ and its size
+$0.90$--$0.98$ in every cell. Claiming on the fresh mean alone, with the trials
+spent but no test, already takes the false-claim rate from $15.7\%$ to $6.6\%$;
+the $\alpha = 0.05$ test, which costs nothing, takes it from $6.6\%$ to $0.5\%$.
+The trials buy the smaller half of the improvement. Power is also strongly
+magnitude-dependent: $87.5\%$ at $0.05\sigma$ and $6.8\%$ at $5\sigma$ from the
+first rating, so the pooled $50.7\%$ is carried by the cells where little is at
+stake. All figures in this paragraph are the \textsc{gaussian} cells.
 
 \section{Deriving the split from the run in hand}
 \label{app:budgetrule}
@@ -1621,7 +1652,7 @@ so far and never deploys the imputed design.
 
 The pattern is not that everything fails. It is that what fails is the
 acquisition, and what works is an explicit model of how the rating was produced.
-Clipping the response to the range actually observed recovers $22$--$35\%$ of the
+Clipping the response to the range actually observed recovers $6$--$35\%$ of the
 cost of gross faults at a price of exactly zero; a relevance-pursuit likelihood
 recovers $26$--$38\%$ when $15\%$ of trials carry a gross fault and loses when
 only $5\%$ do; fitting per-rater offsets recovers $32\%$ $[23, 40]$ when raters
@@ -1637,7 +1668,13 @@ rating noise on a scale that does not saturate.
 \centering
 \caption{Budget-neutral arms: share of the standard process's cost of error
 recovered on the deployed design, with 95\% landscape-bootstrap intervals.
-Negative means the change does worse under error than the standard process.
+Negative means the change does worse under error than the standard process. Each
+arm is scored on the magnitudes and onsets it was run at, which differ between
+arms, so a row is a share of its own reference's cost and the column is not a
+ranking; the gross-fault rows are $0.25\sigma$ from the first rating only. The
+lost-rating arm divides by a reference cost of $0.010$, near zero and negative on
+nine of twenty landscapes, so it is given as an absolute loss in points of
+achievable improvement rather than a share.
 Above the rule, changes to the search; below it, changes to the model of how the
 rating was produced.}
 \label{tab:budgetneutral}
@@ -1646,7 +1683,7 @@ rating was produced.}
 \toprule
 Arm & Recovered \\
 \midrule
-Augmented expected improvement & $+2\%$ $[-6, +11]$ \\
+Augmented expected improvement & $-5\%$ $[-21, +9]$ \\
 Slip-aware acquisition, $0.05$ slip & $-4\%$ $[-15, +4]$ \\
 Effort front-loaded to the first ten trials & $-7\%$ $[-20, +4]$ \\
 Effort front-loaded to the first twenty & $-8\%$ $[-31, +5]$ \\
@@ -1656,8 +1693,7 @@ Slip-aware acquisition, $0.15$ slip & $-18\%$ $[-34, -9]$ \\
 Effort split between first and last trials & $-21\%$ $[-33, -10]$ \\
 Lower-confidence-bound incumbent & $-27\%$ $[-42, -11]$ \\
 Slip-aware acquisition, $0.4$ slip & $-35\%$ $[-54, -16]$ \\
-Thompson sampling & $-58\%$ $[-81, -40]$ \\
-A lost rating imputed low rather than dropped & $-979\%$ \\
+Thompson sampling & $-65\%$ $[-90, -41]$ \\
 \midrule
 Relevance pursuit, $15\%$ of trials spiking at $20$ SD & $+38\%$ $[+24, +51]$ \\
 Response clipped to range, $5\%$ spiking at $20$ SD & $+35\%$ $[+23, +46]$ \\
@@ -1669,6 +1705,7 @@ Response clipped to range, $5\%$ spiking at $5$ SD & $+22\%$ $[+10, +35]$ \\
 Response clipped to range, $15\%$ spiking at $20$ SD & $+22\%$ $[+4, +38]$ \\
 Response clipped to range, $15\%$ spiking at $5$ SD & $+6\%$ $[-7, +18]$ \\
 Per-rater offsets, block handover & $+5\%$ $[-5, +14]$ \\
+A rating lost at random, imputed low rather than dropped & $-9.4$ points \\
 Relevance pursuit, $5\%$ spiking at $20$ SD & $-30\%$ $[-119, +12]$ \\
 \bottomrule
 \end{tabular}
@@ -1708,8 +1745,14 @@ optimum that is exactly the pair the study must tell apart. Under
 \textsc{gaussian} noise, drawn afresh per judgement, the comparison's excess is
 $26.5\%$ larger, though the interval $[-79, +15]$ spans zero; the direction is
 the one the $\sqrt2$ argument predicts, and the magnitude is not established.
-A constant \textsc{offset} present from the first trial, with no noise added
-(this is not the sweep's \textsc{bias}, which adds noise of the same size), moves
+The three shared faults of this arm carry \emph{no} idiosyncratic noise: the
+\textsc{drift} here is a bare ramp, the \textsc{offset} a bare constant and the
+cap a bare truncation, whereas the sweep's processes of the same name add a
+\textsc{gaussian} draw on top. A noise-free strictly monotone fault is precisely
+what a comparison is immune to, so the $41$-against-none result above states
+the construction rather than measuring a remedy; with the sweep's noise added
+the comparison would inherit $\sqrt2$ of it. Read this arm as an upper bound.
+A constant \textsc{offset} present from the first trial, with no noise added, moves
 neither loop, in no run, also by construction: a rating loop that standardises
 its outputs and ships an argmax is already shift-equivariant, so that arm tests
 the rating loop's invariance rather than the comparison's, and the cost of
@@ -1756,8 +1799,13 @@ CUSUM approximates; and Bayesian online change-point detection
 model of the post-change variance, alarming when the posterior probability that
 the current run is short exceeds a threshold. Each detector's threshold is tuned
 on the tuning seeds to a common false-alarm budget (an alarm is false when the
-rater never changed, or when it fires at or before a late onset), and scored on
-the held-out seeds.
+rater never changed), and scored on the held-out seeds. Two caveats bound what
+the comparison can show. The standardised residual is not standard normal while
+the rater behaves: its root mean square runs from $0.59$ to $11.4$ across
+landscapes, so the tuned thresholds are large and the CUSUM and the GLR are both
+dominated by the same largest squared residual, firing together on all but one
+of the held-out runs. The budget is also common only in the pool: at a nominal
+$5\%$ the held-out false-alarm rate is $0\%$ on branin and $29\%$ on shekel.
 
 \textbf{The detector is not the bottleneck.} At a $10\%$ budget the GLR detects
 $45.5\%$ of changes and the CUSUM $45.4\%$; at $5\%$, $36.8\%$ against $36.9\%$;
@@ -1790,6 +1838,17 @@ improvement,
   \qquad
   \text{price} = R^{\text{adapt}}_{\text{clean}} - R^{\text{std}}_{\text{clean}},
 \end{equation*}
+An arm that replaces the acquisition is scored against LogEI, the suite's
+default. Scoring it against the mean of the ten standard acquisitions, as an
+earlier draft did, is not like for like: the reference carries the four weakest
+arms' cost, and augmented EI then "recovers" $+373\%$ at $0.05\sigma$ from trial
+21, which would mean the arm under error beats the standard process with none.
+The ten-mean figures are kept beside the LogEI ones in the analysis output.
+Shares of a cost are likewise ratios of landscape means in units of the
+achievable improvement; formed from raw landscape-SD values instead, the
+landscapes with the largest $\optz$ dominate and the incumbent arm's overall
+figure reads $15.6\%$ rather than $20.0\%$.
+
 aggregated as ratios of landscape means with landscape-bootstrap intervals, on two
 responses: the post-onset trajectory regret and the regret of the design the
 experimenter would deploy. qKG and replication are different acquisitions, so

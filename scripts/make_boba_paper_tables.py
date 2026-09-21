@@ -1038,11 +1038,11 @@ ADAPTATION_GROUPS = [
         ("studentt", "Student-$t$ surrogate"),
     ]),
     ("changing what the rater is asked or when", [
-        ("idea-selfreport", "the rater reports their own precision"),
-        ("idea-anchor-gaussian", "each proposal judged beside the incumbent"),
-        ("idea-anchors-gaussian", "every fifth trial rates a fixed anchor"),
+        ("idea-selfreport", "the rater reports their precision"),
+        ("idea-anchor-gaussian", "each proposal judged beside the best"),
+        ("idea-anchors-gaussian", "every fifth trial rates an anchor"),
         ("idea-hold", "the first five proposals rated late"),
-        ("idea-shiplcb", "an acquisition aimed at the ship rule"),
+        ("idea-shiplcb", "a ship-rule acquisition"),
     ]),
     ("fitted oracles, rating error", [
         ("fitted-rep10", "first ten proposals rated twice"),
@@ -1080,9 +1080,9 @@ def _recovered_cell(r: pd.Series) -> str:
 
 
 SHORTLIST_ARMS = [
-    ("output-boba", "the main sweep"),
-    ("output-boba-spike", "$15\\%$ of trials spiking at $20$ SD"),
-    ("output-boba-ceiling", "a rating scale capped at its $0.9$ quantile"),
+    ("output-boba", "main sweep"),
+    ("output-boba-spike", "gross faults"),
+    ("output-boba-ceiling", "capped scale"),
 ]
 
 
@@ -1096,11 +1096,11 @@ def table_shortlist(analysis: Path, out: Path, root: Path | None = None) -> None
     """
     root = root or Path(".")
     NL = chr(10)
-    procedures = [("shortlist_m1", "ship 1 design (the cautious rule)"),
+    procedures = [("shortlist_m1", "ship 1, the cautious rule"),
                   ("shortlist_m2", "ship 2"),
                   ("shortlist_m3", "ship 3"),
                   ("shortlist_m5", "ship 5"),
-                  ("ordinal_lcb1", "ship 1, chosen on the ratings' ranks")]
+                  ("ordinal_lcb1", "ship 1, chosen on ranks")]
     columns, blocks = [], {}
     for arm_dir, label in SHORTLIST_ARMS:
         path = root / arm_dir / "analysis" / "hitl_remedies" / "hitl_remedies_recovery.csv"

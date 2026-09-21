@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+weber_fechner,value,logei,0.4624999999999999,1.525,0.07877837667355596,14.349534183837182,-0.1941950457386469,7,8
+weber_fechner,value,qnei,0.5375000000000001,1.475,0.06117334340748964,13.41833109363026,-0.03729098290850036,2,8

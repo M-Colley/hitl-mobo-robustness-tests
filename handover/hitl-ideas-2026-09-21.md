@@ -104,27 +104,94 @@ damage, which is the cheapest remedy in the whole project.
 
 ---
 
-## Built and running: the five that needed new arms
+## Answered: the five that needed new arms
 
-All five are implemented, smoke-tested, and reach the run filename; the two that
-change the clean run also write the clean-run marker. `run_boba_hitl_ideas.ps1`
-owns the ordering. Twenty landscapes, seeds 7-11, both onsets, four magnitudes.
+Twenty landscapes, seeds 7-11, both onsets, four magnitudes, LogEI and qNEI,
+12,915 runs. Each prediction below was written before the sweep, in the commit
+that built the arm. One holds, two are nulls, two fail.
 
-| arm | flag | what it does | prediction |
+| arm | trajectory | deployed | price | prediction |
+|---|---|---|---|---|
+| self-reported confidence | +16% [-4, +36] | **+15%** [+6, +23] | -0.001 | held |
+| interleaved anchors, gaussian | -6% [-23, +14] | +1% [-8, +10] | +0.007 | failed |
+| interleaved anchors, drift | -9% [-31, +11] | -6% [-15, +1] | +0.007 | failed |
+| late re-presentation | -13% [-44, +14] | +1% [-11, +11] | +0.002 | no effect |
+| anchored rating, gaussian | -18% [-25, -12] | -27% [-36, -19] | +0.000 | held |
+| anchored rating, bias | -16% [-21, -10] | -15% [-26, -5] | +0.000 | failed |
+| anchored rating, drift | -11% [-21, -3] | -17% [-30, -6] | +0.000 | failed |
+| ship-rule acquisition | -287% [-366, -219] | -107% [-159, -64] | +0.244 | failed |
+
+### The one that works: ask the rater how sure they were
+
+A self-reported precision, used as a per-trial observation variance, recovers
+**15% [6, 23]** of the deployed cost of error at a price of essentially zero.
+That is the arm to keep, and it is worth setting beside the known-noise arm,
+which hands the GP the TRUE noise variance and recovers nothing (-3%). The
+difference is not accuracy, it is kind: a constant is what the GP already
+learns, and a per-trial report is heteroscedastic, saying which trials were
+hard. The report here is coarse on purpose, a log-normal multiplier of SD 0.5
+on the trial's true squared error, so this is not the ceiling of the idea.
+
+### The two nulls
+
+**Interleaved anchors do not pay.** Every fifth trial rating a fixed anchor
+buys +1% [-8, +10] under gaussian error and -6% [-15, +1] under drift, at a
+price of 0.007. The prediction was that they would fix the identification
+failure behind the block-handover result, and they do not: the trials they
+cost are worth more than the drift estimate they buy. A linear detrend on a
+dozen anchor readings is a weak instrument, and the drift the sweep injects is
+small next to the fresh noise on top of it.
+
+**Late re-presentation does nothing.** Holding the first five proposals back
+and rating them late moves the deployed cost by +1% [-11, +11]. So the onset
+effect is not about when a design is judged; something else about early error
+makes it expensive, and this arm rules out one explanation of it.
+
+### The two failures, and what they say
+
+**The anchored rating loses everywhere, including where it should have won.**
+Judging the proposal beside the incumbent cancels the error the pair shares
+and differences the fresh part, so the idiosyncratic noise grows by sqrt(2).
+The prediction was that this would pay under bias and drift and cost under
+gaussian. It costs under all three: -27% deployed under gaussian, -15% under
+bias, -17% under drift. The reason is visible in hindsight. A constant offset
+was never expensive, because the loop standardises its targets and an argmax
+is shift-invariant; the drift ramp is partly absorbed by the GP's mean. So the
+arm pays sqrt(2) more noise for cancelling something that was nearly free.
+This is the sharpest negative result of the ten: a comparison is worth having
+only against a fault the rating scale cannot absorb, which is what the
+elicitation appendix's narrow reach already suggested.
+
+**The ship-rule acquisition is a bad optimiser, so the idea is untested.**
+It loses 107% of the deployed cost, but the number that matters is its price
+WITHOUT error: +0.244 of the achievable improvement, by far the largest price
+in the project. An acquisition that is this much worse on a clean run has not
+been tested as a remedy for noise; it has been shown to search badly. The
+one-step lookahead on the lower bound is too conservative: penalising a
+candidate for the uncertainty it will still have after one rating suppresses
+exploration almost entirely. The idea, valuing a rating by what it does to the
+decision rather than to the posterior maximum, is not refuted by this. A
+version that keeps the ship-rule threshold but not the post-rating penalty
+would be the next thing to try.
+
+---
+
+## The ten, in one table
+
+| # | idea | verdict | deployed recovery |
 |---|---|---|---|
-| anchored rating | `--anchor-rating` | the proposal is judged beside the incumbent, so the error shared by the pair cancels and the fresh part is differenced (sqrt(2) larger) | pays under bias and drift, costs under gaussian |
-| self-reported confidence | `--observation-noise self_report` | the rater says how sure they were; the GP takes it as a per-trial variance | should beat the known-noise arm, which recovers nothing, because it is heteroscedastic |
-| interleaved anchors | `--anchor-every 5 --anchor-model detrend` | every fifth trial rates a fixed anchor; the anchors identify the rater's drift, which is removed | should fix the block-handover identification failure |
-| late re-presentation | `--hold-early 5 --hold-until 0.6` | the first five proposals are rated late instead of early | tests whether the onset effect is about when a design is judged |
-| ship-rule acquisition | `--acq-list shiplcb` | values a rating by what it does to the cautious ship rule, not to the posterior maximum | should beat EI on the deployed design and not on the trajectory |
+| 1 | ship a shortlist of 3 to 5 | **works** | +24% to +34% |
+| 2 | rank-based inference, against outliers | **works** | +50% spike, +36% cap |
+| 3 | screen the instrument for a ceiling | **works** | halves the cap's damage |
+| 4 | ask the rater how sure they were | **works** | +15% |
+| 5 | LUCB allocation of the final sitting | null | -0.7pp against one look each |
+| 6 | size the study from a pilot | null | no better than random |
+| 7 | interleaved anchors | null | +1% |
+| 8 | late re-presentation | null | +1% |
+| 9 | anchored rating | fails | -27% |
+| 10 | ship-rule acquisition | untested, bad optimiser | -107%, price +0.24 |
 
-### Notes for whoever picks this up
-
-- The anchored rating and `--observation-noise known` are refused together: the
-  variance of a differenced rating is not the injected one.
-- `--anchor-every` and `--hold-early` each need their own output directory; the
-  marker enforces it.
-- The new acquisition is APPENDED to `EXTENSION_ACQUISITION_CHOICES`, at index
-  20, because the index seeds the jitter stream.
-- `replay_end_of_study` now admits the spike process and takes a `--variants`
-  filter, so a directory holding several arms can be replayed one arm at a time.
+Four work, four are nulls, one fails, one is not a fair test of its own idea.
+The four that work share a shape: none of them changes the search. Three change
+what the study deploys or claims, and the fourth changes what the rater is
+asked. That is the same grain as everything else in this project.

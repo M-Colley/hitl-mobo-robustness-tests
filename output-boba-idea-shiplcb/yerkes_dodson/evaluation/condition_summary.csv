@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+yerkes_dodson,value,exact,gaussian,0,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.00022876045331940987,225
+yerkes_dodson,value,exact,gaussian,0,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.0,225
+yerkes_dodson,value,exact,gaussian,0,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.7315856278706073,225
+yerkes_dodson,value,exact,gaussian,0,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,1.3018579275886162,225
+yerkes_dodson,value,exact,gaussian,20,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.0,225
+yerkes_dodson,value,exact,gaussian,20,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.008453707132244314,225
+yerkes_dodson,value,exact,gaussian,20,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,0.19966581922505675,225
+yerkes_dodson,value,exact,gaussian,20,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,74.68892652270043,2.054531305738488,225

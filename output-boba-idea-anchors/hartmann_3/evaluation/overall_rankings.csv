@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+hartmann_3,value,logei,0.43749999999999994,1.4437499999999999,0.1302620756206323,24.57699207694659,-0.016467844204911763,12,16
+hartmann_3,value,qnei,0.5625,1.5562500000000001,0.12947892370813463,24.202873651407494,-0.11549411468804692,4,16

@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,gaussian,0,0.05,noise-self_report,qnei,5,2,1.4,0.3999999999999999,1.6,0.06069352064661047,-0.05608024294468805,0.0012386432785022716,27.593118588223142,0.0,True
+hicks_law,value,exact,gaussian,0,0.05,noise-self_report,logei,5,2,1.6,0.6000000000000001,1.4,0.3721419549926047,0.0896164927086538,0.007594733775359286,27.54328461432769,0.0,False
+hicks_law,value,exact,gaussian,0,0.25,noise-self_report,qnei,5,2,1.2,0.19999999999999996,1.2,-1.2603734738979782,-0.8032312167448268,-0.025721907630570983,26.272051593678555,0.0,True
+hicks_law,value,exact,gaussian,0,0.25,noise-self_report,logei,5,2,1.8,0.8,1.8,2.0896978189057145,1.0109375861352348,0.04264689426338194,29.260840478240794,0.0,False
+hicks_law,value,exact,gaussian,0,1.0,noise-self_report,qnei,5,2,1.4,0.3999999999999999,1.4,1.7263377171038166,3.1186978305242334,0.035231381981710566,29.25876278468035,0.0,True
+hicks_law,value,exact,gaussian,0,1.0,noise-self_report,logei,5,2,1.6,0.6000000000000001,1.6,5.599304476542498,8.577846613690234,0.11427151992943876,32.770447135877575,0.0,False
+hicks_law,value,exact,gaussian,0,5.0,noise-self_report,qnei,5,2,1.4,0.3999999999999999,1.4,12.387961238955326,5.303537714726765,0.25281553548888425,39.92038630653185,0.0,True
+hicks_law,value,exact,gaussian,0,5.0,noise-self_report,logei,5,2,1.6,0.6000000000000001,1.6,49.46543346196862,33.760456272870215,1.009498642080992,76.6365761213037,0.0,False
+hicks_law,value,exact,gaussian,20,0.05,noise-self_report,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.171142659335082,-0.0014827940116489912,True
+hicks_law,value,exact,gaussian,20,0.05,noise-self_report,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.532425067576533,0.0,True
+hicks_law,value,exact,gaussian,20,0.25,noise-self_report,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.171142659335082,0.36907156732004437,True
+hicks_law,value,exact,gaussian,20,0.25,noise-self_report,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.532425067576533,0.0,True
+hicks_law,value,exact,gaussian,20,1.0,noise-self_report,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.171142659335082,0.36887508460591223,True
+hicks_law,value,exact,gaussian,20,1.0,noise-self_report,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.532425067576533,0.0,True
+hicks_law,value,exact,gaussian,20,5.0,noise-self_report,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,27.171142659335082,-11.066735687917646,True
+hicks_law,value,exact,gaussian,20,5.0,noise-self_report,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,27.532425067576533,0.0,True

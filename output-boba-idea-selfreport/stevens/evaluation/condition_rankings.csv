@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,gaussian,0,0.05,noise-self_report,logei,5,2,1.3,0.30000000000000004,1.5,-0.6809978003572901,0.0,-0.013897914293005914,10.997320828937635,0.0,True
+stevens,value,exact,gaussian,0,0.05,noise-self_report,qnei,5,2,1.7,0.7,1.5,-0.043406608719278594,0.0,-0.0008858491575363004,11.48186982160899,0.0,False
+stevens,value,exact,gaussian,0,0.25,noise-self_report,logei,5,2,1.4,0.3999999999999999,1.4,-0.1628170688817729,0.2733723798474017,-0.0033227973241178018,11.515501560413153,0.0,True
+stevens,value,exact,gaussian,0,0.25,noise-self_report,qnei,5,2,1.6,0.6000000000000001,1.6,0.3726579853301413,0.6826989168593691,0.0076052650067375775,11.89793441565841,0.0,False
+stevens,value,exact,gaussian,0,1.0,noise-self_report,qnei,5,2,1.0,0.0,1.0,0.5218272904478429,0.21544859127902782,0.010649536539751883,12.047103720776112,0.0,True
+stevens,value,exact,gaussian,0,1.0,noise-self_report,logei,5,2,2.0,1.0,2.0,6.453345118479137,6.883667810181439,0.1317009207852885,18.131663747774063,0.0,False
+stevens,value,exact,gaussian,0,5.0,noise-self_report,qnei,5,2,1.4,0.3999999999999999,1.4,5.8660459336334085,4.682856904932631,0.11971522313537566,17.391322363961677,0.0,True
+stevens,value,exact,gaussian,0,5.0,noise-self_report,logei,5,2,1.6,0.6000000000000001,1.6,24.069734230785656,30.28123894876867,0.4912190659344011,35.748052860080584,0.0,False
+stevens,value,exact,gaussian,20,0.05,noise-self_report,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.678318629294926,-7.817400694216658e-05,True
+stevens,value,exact,gaussian,20,0.05,noise-self_report,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.52527643032827,0.0,True
+stevens,value,exact,gaussian,20,0.25,noise-self_report,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.678318629294926,-0.0419537679955206,True
+stevens,value,exact,gaussian,20,0.25,noise-self_report,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.52527643032827,0.0,True
+stevens,value,exact,gaussian,20,1.0,noise-self_report,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.678318629294926,-0.1448217475970251,True
+stevens,value,exact,gaussian,20,1.0,noise-self_report,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.52527643032827,0.0,True
+stevens,value,exact,gaussian,20,5.0,noise-self_report,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.678318629294926,-1.0982719930543159,True
+stevens,value,exact,gaussian,20,5.0,noise-self_report,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.52527643032827,0.0,True

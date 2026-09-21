@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+griewank,value,qnei,0.45,1.85625,0.2328366759676538,38.43678740513504,-37.57467690864048,9,16
+griewank,value,logei,0.55,1.14375,0.23431467614943244,32.79460796659229,70.18930609378236,7,16

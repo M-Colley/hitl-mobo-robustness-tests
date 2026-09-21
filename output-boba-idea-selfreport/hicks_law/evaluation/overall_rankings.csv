@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+hicks_law,value,qnei,0.42499999999999993,1.5,0.03294545663981576,29.146752442927504,0.0,8,8
+hicks_law,value,logei,0.5750000000000001,1.5,0.1467514737561465,34.36196487338626,-1.2912839787504173,4,8

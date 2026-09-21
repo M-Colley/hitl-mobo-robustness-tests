@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+steering_law,value,exact,gaussian,0,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.0,225
+steering_law,value,exact,gaussian,0,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.09095634586470111,225
+steering_law,value,exact,gaussian,0,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.4351050397810595,225
+steering_law,value,exact,gaussian,0,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.7104168223651542,225
+steering_law,value,exact,gaussian,20,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.0067997640501678445,225
+steering_law,value,exact,gaussian,20,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.13700478321566503,225
+steering_law,value,exact,gaussian,20,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,0.4108782724236554,225
+steering_law,value,exact,gaussian,20,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,16.060908531046074,1.1432985367837996,225

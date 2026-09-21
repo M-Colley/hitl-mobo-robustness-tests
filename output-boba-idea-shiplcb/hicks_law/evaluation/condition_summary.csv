@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+hicks_law,value,exact,gaussian,0,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.0,225
+hicks_law,value,exact,gaussian,0,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.06054285459296764,225
+hicks_law,value,exact,gaussian,0,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.5936895585491313,225
+hicks_law,value,exact,gaussian,0,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,2.80521230448577,225
+hicks_law,value,exact,gaussian,20,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.0,225
+hicks_law,value,exact,gaussian,20,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.0,225
+hicks_law,value,exact,gaussian,20,1.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,0.48917217277297376,225
+hicks_law,value,exact,gaussian,20,5.0,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,168.7630422160326,1.383396650805651,225

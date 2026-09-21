@@ -53,8 +53,15 @@ foreach ($arm in $ARMS) {
         --output-dir $dir --resume @($arm.Flags) *>> $log
     if ($LASTEXITCODE -ne 0) { "[FAIL] $dir exited $LASTEXITCODE" | Tee-Object -FilePath $log -Append; continue }
 
+    # The driver writes one directory per landscape, so the evaluator runs per
+    # landscape too; pointed at the arm root it finds no per-iteration logs.
     "[eval] $dir" | Tee-Object -FilePath $log -Append
-    & $PYTHON scripts\evaluate_research_question.py --input-dir $dir *>> $log
+    foreach ($d in Get-ChildItem -Path $dir -Directory) {
+        if ($d.Name -in @("evaluation", "analysis")) { continue }
+        & $PYTHON scripts\evaluate_research_question.py --input-dir $d.FullName `
+            --output-dir (Join-Path $d.FullName "evaluation") *>> $log
+        if ($LASTEXITCODE -ne 0) { "[FAIL] eval $($d.Name) in $dir" | Tee-Object -FilePath $log -Append }
+    }
     New-Item -ItemType File (Join-Path $dir "ARM_COMPLETE") -Force | Out-Null
 }
 

@@ -88,7 +88,10 @@ from botorch.models.transforms.input import Normalize  # noqa: E402
 from botorch.models.transforms.outcome import Standardize  # noqa: E402
 from gpytorch.mlls import ExactMarginalLogLikelihood  # noqa: E402
 
-RESPONSE_MODELS = ("gaussian", "bias", "drift", "ar1")
+RESPONSE_MODELS = ("gaussian", "bias", "drift", "ar1", "spike")
+# The spike arm was launched at p = 0.05 and p = 0.15; the sitting SD uses the
+# larger, which is conservative for a procedure that spends looks to average.
+SPIKE_PROB_DEFAULT = 0.15
 INPUT_MODELS = ("slip", "misclick")
 DEFAULT_ARMS = "output-boba,output-boba-slip,output-boba-misclick"
 # The re-rating arm that modifies each standard arm, for context at matched cells.
@@ -121,6 +124,7 @@ class Filters:
     error_models: frozenset[str] | None = None
     stds: tuple[float, ...] | None = None
     onsets: frozenset[int] | None = None
+    variants: frozenset[str] | None = None
 
 
 @dataclasses.dataclass(frozen=True)
@@ -298,6 +302,11 @@ def idiosyncratic_sd(error_model: str, jitter_std: float, ar1_rho: float = 0.8) 
     if error_model == "ar1":
         # e_t = rho e_{t-1} + u_t: the state is shared, the innovation u_t is new.
         return float(jitter_std) * float(np.sqrt(max(0.0, 1.0 - ar1_rho ** 2)))
+    if error_model == "spike":
+        # A spike is drawn afresh per rating, so all of it is idiosyncratic. The
+        # marginal SD is sqrt(std^2 + p * spike_std^2); with the sweep's scaled
+        # spike the size is the magnitude itself, so p is the only extra term.
+        return float(jitter_std) * float(np.sqrt(1.0 + SPIKE_PROB_DEFAULT))
     raise ValueError(
         f"error model {error_model!r} has no idiosyncratic-noise model for the end-of-study sitting; "
         f"supported: {', '.join(RESPONSE_MODELS + INPUT_MODELS)}"
@@ -542,9 +551,14 @@ def rerate_outcome(path: Path, standard_run: RunLog, arm: ArmInfo) -> dict | Non
 # ---------------------------------------------------------------------------
 
 
-def _accepted_variant(error_model: str, jitter_std: float, variant: str) -> bool:
-    # The standard process only: the bias arm's scaled bias is in the name, and
-    # any other suffix (single error, known noise, ...) is a different arm.
+def _accepted_variant(error_model: str, jitter_std: float, variant: str,
+                      wanted: frozenset[str] | None = None) -> bool:
+    # The standard process only, unless a caller names the variant it means. The
+    # bias arm's scaled bias is part of the standard name; any other suffix
+    # (single error, known noise, a spike size, a cap mode) is a different arm,
+    # and averaging two of them in one cell is what this guard exists to stop.
+    if wanted is not None:
+        return str(variant) in wanted
     return variant == "" or (error_model == "bias" and variant == f"bias{jitter_std:g}")
 
 
@@ -574,7 +588,8 @@ def build_tasks(arm: ArmInfo, filters: Filters, settings: Settings, out_dir: Pat
         if rec["error_model"] not in allowed:
             counts[f"skipped: error model {rec['error_model']}"] += 1
             continue
-        if not _accepted_variant(rec["error_model"], rec["jitter_std"], rec["variant"]):
+        if not _accepted_variant(rec["error_model"], rec["jitter_std"], rec["variant"],
+                                 filters.variants):
             counts[f"skipped: variant {rec['variant']}"] += 1
             continue
         by_stem.setdefault(rec["stem"], []).append(rec)

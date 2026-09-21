@@ -136,6 +136,39 @@ ARMS = {
     # directory holds several conditions and evaluate_research_question.py
     # refuses to average them, correctly. They need a variant-aware evaluation
     # before they can appear here.
+    # ------------------------------------------------- the 2026-09-21 idea round
+    # Five process changes aimed at the selection term. run_boba_hitl_ideas.ps1
+    # owns their sweep; handover/hitl-ideas-2026-09-21.md states each prediction
+    # BEFORE the numbers, which is the only way a prediction is worth anything.
+    "idea-anchor-gaussian": arm("output-boba-idea-anchor", "output-boba", "logei,qnei",
+                               "the proposal judged beside the incumbent, so the shared error cancels",
+                               error_model="gaussian"),
+    "idea-anchor-bias": arm("output-boba-idea-anchor", "output-boba", "logei,qnei",
+                           "the anchored rating under a constant offset, which it should remove",
+                           error_model="bias"),
+    "idea-anchor-drift": arm("output-boba-idea-anchor", "output-boba", "logei,qnei",
+                            "the anchored rating under drift, which it should remove",
+                            error_model="drift"),
+    "idea-selfreport": arm("output-boba-idea-selfreport", "output-boba", "logei,qnei",
+                          "the rater reports their own precision and the GP uses it per trial",
+                          error_model="gaussian"),
+    "idea-anchors-gaussian": arm("output-boba-idea-anchors", "output-boba", "logei,qnei",
+                                "every fifth trial rates a fixed anchor; the anchors detrend the rest",
+                                error_model="gaussian"),
+    "idea-anchors-drift": arm("output-boba-idea-anchors", "output-boba", "logei,qnei",
+                             "anchors under drift, the fault they are meant to identify",
+                             error_model="drift"),
+    "idea-hold": arm("output-boba-idea-hold", "output-boba", "logei,qnei",
+                    "the first five proposals rated late instead of early",
+                    error_model="gaussian"),
+    # An acquisition, so it is scored against LogEI like every other acquisition
+    # arm, with the ten-mean version kept beside it.
+    "idea-shiplcb": arm("output-boba-idea-shiplcb", "output-boba", "shiplcb",
+                       "an acquisition that values a rating by what it does to the ship rule",
+                       ref_acqs="logei", pool=True, error_model="gaussian"),
+    "idea-shiplcb-ten": arm("output-boba-idea-shiplcb", "output-boba", "shiplcb",
+                           "the same, against the mean of the ten standard acquisitions",
+                           ref_acqs=TEN, pool=True, error_model="gaussian"),
     "q-inclcb": arm("output-boba-q-inclcb", "output-boba", "logei,logpi",
                     "a lower-confidence-bound incumbent instead of the posterior mean",
                     error_model="gaussian"),

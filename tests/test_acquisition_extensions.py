@@ -131,7 +131,7 @@ def test_pre_existing_names_keep_their_indices():
         assert sim.ERROR_MODEL_CHOICES.index(name) == index
     assert sim.INCUMBENT_CHOICES[:2] == PRE_EXISTING_INCUMBENTS
     # the new names sit at the very end
-    assert sim.ACQUISITION_CHOICES[len(PRE_EXISTING_ACQUISITIONS):] == ["ts", "aei"]
+    assert sim.ACQUISITION_CHOICES[len(PRE_EXISTING_ACQUISITIONS):] == ["ts", "aei", "shiplcb"]
     assert sim.INCUMBENT_CHOICES[2:] == ["lcb"]
 
 

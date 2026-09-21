@@ -281,7 +281,7 @@ BASELINE_ACQUISITION_CHOICES = ["random", "sobol"]
 #   aei  augmented expected improvement (Huang, Allen, Notz & Zeng 2006): EI
 #        against the posterior mean at the lower-confidence-bound incumbent,
 #        discounted where the model is already about as sure as a rating is.
-EXTENSION_ACQUISITION_CHOICES = ["ts", "aei"]
+EXTENSION_ACQUISITION_CHOICES = ["ts", "aei", "shiplcb"]
 # Acquisitions whose values are logs, so an average over them has to be taken
 # in log space. replei optimises LogEI on its model-based trials.
 LOG_VALUED_ACQUISITIONS = frozenset({"logei", "logpi", "replei", "aei"})
@@ -324,7 +324,7 @@ DEFAULT_JITTER_STDS = "0.05,0.5,1,5"
 # still carries a wide band there, so it cannot raise the bar the way its
 # posterior mean alone would.
 INCUMBENT_CHOICES = ["posterior_mean", "observed_max", "lcb"]
-OBSERVATION_NOISE_CHOICES = ["learned", "known"]
+OBSERVATION_NOISE_CHOICES = ["learned", "known", "self_report"]
 ORACLE_MODEL_CHOICES = [
     "xgboost",
     "lightgbm",
@@ -512,6 +512,25 @@ class SimulationConfig:
     #   the true value of the best-rated design so far.
     response_ceiling: float = 0.0
     ceiling_mode: str = "fixed"
+    # anchor_rating: the proposal is judged beside the incumbent, so the error
+    #   the rater shares between the pair cancels and the fresh part is
+    #   differenced. The clean run is unchanged.
+    anchor_rating: bool = False
+    # confidence_noise: how coarse the rater's own precision report is, as the SD
+    #   of a log-normal multiplier on the true squared error. 0 = a perfect report.
+    confidence_noise: float = 0.5
+    # anchor_every / anchor_set: every anchor_every trials the rater sees one of
+    #   anchor_set fixed designs instead of the proposal. Their true value never
+    #   moves, so any movement in their ratings is the rater drifting. 0 = off.
+    anchor_every: int = 0
+    anchor_set: int = 3
+    # anchor_model: 'detrend' fits a line in the trial index to the anchors and
+    #   subtracts it from every training rating before the surrogate is fitted.
+    anchor_model: str = "none"
+    # hold_early / hold_until: a design proposed in the first hold_early trials is
+    #   not rated then; it is queued and rated from trial hold_until onward.
+    hold_early: int = 0
+    hold_until_frac: float = 0.6
 
     # --- multi-objective halo error (equal-trial: neither adds a rating) -----
     # error_cross_corr: rho in [0, 1]. A rater's overall impression of a design
@@ -535,6 +554,7 @@ LIKELIHOOD_CHOICES = ["gaussian", "student_t", "relevance_pursuit"]
 MISSING_HANDLING_CHOICES = ["drop", "impute_low"]
 RATER_MODEL_CHOICES = ["none", "backfit"]
 CEILING_MODE_CHOICES = ["fixed", "anchored"]
+ANCHOR_MODEL_CHOICES = ["none", "detrend"]
 MO_HALO_MODEL_CHOICES = ["none", "backfit"]
 
 
@@ -655,6 +675,13 @@ def adaptation_fields(args: "argparse.Namespace") -> dict:
         "rater_model": getattr(args, "rater_model", "none") or "none",
         "response_ceiling": float(getattr(args, "response_ceiling", None) or 0.0),
         "ceiling_mode": getattr(args, "ceiling_mode", "fixed") or "fixed",
+        "anchor_rating": bool(getattr(args, "anchor_rating", False)),
+        "confidence_noise": float(getattr(args, "confidence_noise", 0.5) or 0.0),
+        "anchor_every": int(getattr(args, "anchor_every", 0) or 0),
+        "anchor_set": int(getattr(args, "anchor_set", 3) or 3),
+        "anchor_model": str(getattr(args, "anchor_model", "none") or "none"),
+        "hold_early": int(getattr(args, "hold_early", 0) or 0),
+        "hold_until_frac": float(getattr(args, "hold_until_frac", 0.6) or 0.6),
         # The multi-objective halo error and its remedy, likewise.
         "error_cross_corr": float(getattr(args, "error_cross_corr", 0.0) or 0.0),
         "mo_halo_model": getattr(args, "mo_halo_model", "none") or "none",
@@ -2081,6 +2108,59 @@ def _postprocess_response(observed: np.ndarray, config: SimulationConfig) -> np.
     return observed
 
 
+def self_reported_variance(error_magnitude, config: "SimulationConfig",
+                           rng: np.random.Generator, apply_error: bool) -> float:
+    """The variance a rater who reports their own confidence implies.
+
+    The known-noise arm hands the GP the true but CONSTANT variance and
+    recovers nothing, which is what a homoscedastic constant should do: the GP
+    already learns one. A confidence report differs in kind because it is
+    HETEROSCEDASTIC, saying which trials were hard. It is modelled as this
+    trial's squared error seen through an honest but coarse rater, a log-normal
+    multiplier of SD `confidence_noise`. At 0 the report is perfect, which
+    prices the ceiling of the idea rather than a plausible rater.
+
+    Drawn from a stream of its own, never the run rng, so a run with the arm on
+    keeps common random numbers with the standard sweep.
+    """
+    if not apply_error:
+        return 1e-6
+    err = float(np.mean(np.atleast_1d(np.asarray(error_magnitude, dtype=float)) ** 2))
+    scale = float(getattr(config, "confidence_noise", 0.5) or 0.0)
+    if scale > 0:
+        err *= float(np.exp(rng.normal(0.0, scale) - 0.5 * scale ** 2))
+    return float(max(err, 1e-6))
+
+def anchor_detrend(anchor_rows: list[int], anchor_ids: list[int],
+                   observed: list[float], n_trials: int) -> np.ndarray:
+    """A per-trial additive correction, read off the anchors alone.
+
+    An anchor design has one true value, so the spread of its ratings across the
+    session is pure rater movement: drift, a handover offset, a scale that
+    compresses as the rater tires. Each anchor is centred on its own mean, which
+    removes the design and leaves only the movement, and a least-squares line in
+    the trial index is fitted to the pooled residuals. Two anchor ratings are
+    needed before a line means anything; below that the correction is zero.
+
+    A line, not a spline: with one anchor visit every few trials there are rarely
+    more than a dozen points, and the failure this exists to fix -- a block
+    handover confounded with the search trend -- is first order.
+    """
+    out = np.zeros(int(n_trials), dtype=float)
+    if len(anchor_rows) < 3:
+        return out
+    rows = np.asarray(anchor_rows, dtype=int)
+    ids = np.asarray(anchor_ids, dtype=int)
+    vals = np.asarray([observed[r] for r in rows], dtype=float)
+    resid = np.empty_like(vals)
+    for a in np.unique(ids):
+        sel = ids == a
+        resid[sel] = vals[sel] - vals[sel].mean()
+    if not np.all(np.isfinite(resid)) or np.ptp(rows) == 0:
+        return out
+    slope, intercept = np.polyfit(rows.astype(float), resid, 1)
+    return intercept + slope * np.arange(n_trials, dtype=float)
+
 def known_noise_variance(
     iteration: int, config: SimulationConfig, apply_error: bool
 ) -> float:
@@ -2110,6 +2190,13 @@ def known_noise_variance(
     nugget large enough that the Cholesky factorisation survives the
     near-duplicate designs BO piles up around an optimum.
     """
+    if config.anchor_rating and apply_error and config.observation_noise == "known":
+        # An anchored rating is the difference of two draws, so none of the
+        # per-model variances below describes it. Rather than hand the GP a
+        # number that is wrong by a factor of two, refuse the combination.
+        raise ValueError(
+            "--observation-noise known cannot be combined with --anchor-rating: "
+            "the variance of a differenced rating is not the injected one.")
     floor = 1e-6
     if not apply_error or iteration <= config.jitter_iteration:
         return floor
@@ -2588,7 +2675,7 @@ def validate_error_extensions(
 
     # (2) relevance pursuit: the restrictions of the Student-t surrogate.
     if likelihood == "relevance_pursuit" and (
-        is_multi or observation_noise == "known" or input_noise_model != "none"
+        is_multi or observation_noise in ("known", "self_report") or input_noise_model != "none"
     ):
         raise ValueError(
             "likelihood='relevance_pursuit' is single-objective with learned noise and no "
@@ -2626,7 +2713,7 @@ def validate_error_extensions(
                 f"{input_error} never moves the design, so there is no 'actual' design to record; "
                 "drop --input-error-recorded."
             )
-        if missing_handling == "impute_low" and observation_noise == "known":
+        if missing_handling == "impute_low" and observation_noise in ("known", "self_report"):
             raise ValueError(
                 "--missing-handling impute_low with --observation-noise known: an imputed value has no "
                 "injected variance to declare."
@@ -2866,6 +2953,16 @@ def apply_sensor_error(
 
     if rater_offset is not None:
         observed = observed + rater_offset
+    if config.anchor_rating:
+        # Judged against the incumbent shown beside it. Everything the rater
+        # gets wrong about BOTH designs at this moment -- a constant bias, the
+        # drift ramp so far, the carried AR(1) state, a relay offset -- is
+        # common to the pair and cancels. What is drawn fresh per judgement
+        # does not, and the anchor contributes a draw of its own, so the
+        # idiosyncratic part grows by sqrt(2). That trade is the arm: it should
+        # pay under bias and drift and cost under pure gaussian noise.
+        anchor_jitter = rng.normal(0.0, config.jitter_std, size=true_value.shape)
+        observed = true_value + (jitter - anchor_jitter)
     observed = _postprocess_response(observed, config)
     return observed, observed - true_value
 
@@ -2945,6 +3042,68 @@ def observation_noise_sd(model: object) -> float:
     if stdvs is not None:
         variance = variance * stdvs.detach().reshape(-1)[0].to(torch.double) ** 2
     return float(variance.sqrt())
+
+
+class ShipRuleExpectedImprovement(AnalyticAcquisitionFunction):
+    r"""Expected improvement in the value the CAUTIOUS SHIP RULE would deliver.
+
+    Ordinary EI asks what a rating does to the best posterior mean. A study does
+    not ship the best posterior mean; it ships the best lower confidence bound,
+    and the decomposition of this paper says that choice, not the search, is
+    where the cost of feedback error sits. So value a candidate by what one
+    rating of it does to that bound:
+
+        sigma_post^2 = sigma^2 sn^2 / (sigma^2 + sn^2)     the SD left after one rating
+        v^2          = sigma^2 - sigma_post^2              how far the mean may move
+        A(x)         = E[ max(0, mu + v Z - beta sigma_post - c) ]
+
+    with c the bound the rule already achieves. The expectation is the usual
+    analytic EI with threshold c + beta sigma_post and scale v, so this is no
+    more expensive than EI. Where the model is already sure, v is small and the
+    candidate cannot move the decision; where it is unsure, beta sigma_post
+    penalises it for still being unsure AFTER the rating. Not log-valued: the
+    threshold moves with x, so the log form has no stable best_f to subtract.
+    """
+
+    def __init__(
+        self,
+        model: object,
+        best_lcb: float | torch.Tensor,
+        noise_sd: float | torch.Tensor,
+        beta: float = 1.0,
+        maximize: bool = True,
+    ) -> None:
+        super().__init__(model=model)
+        self.register_buffer("best_lcb", torch.as_tensor(best_lcb))
+        self.register_buffer("noise_sd", torch.as_tensor(noise_sd))
+        self.beta = float(beta)
+        self.maximize = maximize
+
+    @t_batch_mode_transform(expected_q=1)
+    def forward(self, X: torch.Tensor) -> torch.Tensor:
+        posterior = self.model.posterior(X)
+        mu = posterior.mean.squeeze(-1).squeeze(-1)
+        sigma = posterior.variance.clamp_min(1e-12).sqrt().squeeze(-1).squeeze(-1)
+        if not self.maximize:
+            mu = -mu
+        sn = self.noise_sd.to(mu)
+        sigma_post = (sigma * sn / torch.sqrt(sigma**2 + sn**2).clamp_min(1e-12))
+        # How far one rating can still move the mean: the total variance minus
+        # what is left. Clamped because both terms are estimates.
+        v = (sigma**2 - sigma_post**2).clamp_min(1e-12).sqrt()
+        threshold = self.best_lcb.to(mu) + self.beta * sigma_post
+        z = (mu - threshold) / v
+        normal = torch.distributions.Normal(torch.zeros_like(z), torch.ones_like(z))
+        return v * (z * normal.cdf(z) + torch.exp(normal.log_prob(z)))
+
+
+def build_ship_rule_ei(model: object, train_X: torch.Tensor, noise_sd: float,
+                       beta: float = 1.0) -> "ShipRuleExpectedImprovement":
+    """The acquisition, with the bound the ship rule currently achieves."""
+    # The helper is the loop's own lcb incumbent: mean minus ONE latent SD.
+    _, lcb = _posterior_mean_and_lcb(model, train_X)
+    return ShipRuleExpectedImprovement(
+        model=model, best_lcb=float(lcb.max()), noise_sd=float(noise_sd), beta=beta)
 
 
 class LogAugmentedExpectedImprovement(AnalyticAcquisitionFunction):
@@ -3381,6 +3540,8 @@ def get_botorch_candidate(
         acqf = build_thompson_sampling(gp_model, rng)
     elif acq_config.name == "aei":
         acqf = build_augmented_ei(gp_model, train_X, noise_sd=noise_sd)
+    elif acq_config.name == "shiplcb":
+        acqf = build_ship_rule_ei(gp_model, train_X, noise_sd=noise_sd)
     else:
         raise ValueError(f"Unknown acquisition: {acq_config.name}")
 
@@ -3477,6 +3638,11 @@ def run_simulation(
     y_true_list: list[np.ndarray] = []
     error_magnitudes: list[np.ndarray] = []
     noise_variances: list[float] = []
+    # The confidence report gets a stream of its own. Drawing it from the run or
+    # jitter rng would shift every later error and lose common random numbers
+    # with the standard sweep, which is the whole basis of the pairing.
+    confidence_rng = np.random.default_rng(
+        np.random.SeedSequence([int(config.seed), 0xC0FFEE, len(str(config.error_model))]))
     fit_times: list[float] = []
     acq_failures: list[bool] = []
     input_error_l2s: list[float] = []
@@ -3511,10 +3677,10 @@ def run_simulation(
         raise ValueError("replei ranks a scalar incumbent and has no multi-objective form.")
     if is_multi and (config.replicate_first or config.final_rerate_top or config.input_noise_model != "none"):
         raise NotImplementedError("The process adaptations are single-objective only.")
-    if config.input_noise_model != "none" and config.observation_noise == "known":
+    if config.input_noise_model != "none" and config.observation_noise in ("known", "self_report"):
         raise ValueError("input_noise_model and observation_noise='known' both set train_Yvar; pick one.")
     if config.likelihood == "student_t" and (
-        is_multi or config.observation_noise == "known" or config.input_noise_model != "none"
+        is_multi or config.observation_noise in ("known", "self_report") or config.input_noise_model != "none"
     ):
         raise ValueError("likelihood='student_t' is single-objective with learned noise and no input-noise model.")
     if config.final_rerate_top and config.final_rerate_top * config.final_rerate_reps >= config.iterations - config.initial_samples:
@@ -3561,6 +3727,22 @@ def run_simulation(
     # Replication state: the design due a second rating, how many have had one,
     # and the end-of-run re-rating schedule once its window opens.
     replication_pending: np.ndarray | None = None
+    # Arm 5. The anchor designs are drawn from a stream of their own so the run
+    # rng is untouched and the arm keeps common random numbers with the sweep.
+    anchor_designs: np.ndarray | None = None
+    anchor_rows: list[int] = []
+    anchor_ids: list[int] = []
+    if config.anchor_every > 0:
+        anchor_rng = np.random.default_rng(
+            np.random.SeedSequence([int(config.seed), 0xA9C40, int(config.anchor_set)]))
+        anchor_designs = sample_uniform(bounds, anchor_rng, size=int(config.anchor_set))
+    # Arm 10. Designs proposed early and rated late; the queue is FIFO, so the
+    # order within the held set is preserved and only its position moves.
+    held_designs: list[np.ndarray] = []
+    held_count = 0
+    hold_release = int(round(config.hold_until_frac * config.iterations))
+    anchor_rng_hold = np.random.default_rng(
+        np.random.SeedSequence([int(config.seed), 0x401D, int(config.hold_early)]))
     replicated = 0
     rerate_schedule: list[np.ndarray] = []
     rerate_window = config.final_rerate_top * config.final_rerate_reps
@@ -3598,6 +3780,20 @@ def run_simulation(
                 )
             candidate_np = rerate_schedule.pop(0)
             fit_time = 0.0
+        elif (config.anchor_every > 0 and anchor_designs is not None
+              and iteration > config.initial_samples
+              and (iteration - config.initial_samples) % config.anchor_every == 0):
+            # An anchor trial. It buys no new design, which is the price; what it
+            # buys is a reading of the rater that the search cannot confound.
+            which = (len(anchor_rows)) % int(config.anchor_set)
+            candidate_np = np.array(anchor_designs[which], dtype=float)
+            anchor_rows.append(len(X_list))
+            anchor_ids.append(which)
+            fit_time = 0.0
+        elif held_designs and iteration >= hold_release:
+            # A design proposed early, judged now. Same design, later moment.
+            candidate_np = held_designs.pop(0)
+            fit_time = 0.0
         elif replication_pending is not None:
             # The second rating of a design proposed one trial ago.
             candidate_np = replication_pending
@@ -3625,6 +3821,14 @@ def run_simulation(
             # multi-hour sweep (review finding).
             try:
                 train_X = torch.tensor(np.vstack(X_list), dtype=torch.double)
+                if config.anchor_model == "detrend" and config.anchor_every > 0:
+                    # What the anchors say the rater has drifted by, per trial.
+                    # Subtracted from every rating, the anchors' own included, so
+                    # the surrogate sees one scale for the whole session.
+                    anchor_offset = anchor_detrend(
+                        anchor_rows, anchor_ids, objective_observed_scalar, len(X_list))
+                else:
+                    anchor_offset = None
                 if is_multi:
                     train_Y_array = np.vstack(y_observed_list)
                     train_Y_list = [
@@ -3644,11 +3848,18 @@ def run_simulation(
                     best_f = None
                     train_Y_for_acq: list[torch.Tensor] | torch.Tensor = train_Y_list
                 else:
+                    y_for_fit = np.array(y_observed_list, dtype=float).reshape(-1)
+                    if anchor_offset is not None:
+                        # The anchors' reading of the rater, removed. Applied to the
+                        # ratings the surrogate trains on AND, through best_f and the
+                        # deployment rule below, to what the run ships: correcting one
+                        # and not the other would measure nothing.
+                        y_for_fit = y_for_fit - anchor_offset[: len(y_for_fit)]
                     train_Y = torch.tensor(
-                        np.array(y_observed_list, dtype=float).reshape(-1, 1), dtype=torch.double
+                        y_for_fit.reshape(-1, 1), dtype=torch.double
                     )
                     train_Yvar = None
-                    if config.observation_noise == "known":
+                    if config.observation_noise in ("known", "self_report"):
                         assert len(noise_variances) == train_Y.shape[0], (
                             "noise schedule out of step with the training targets"
                         )
@@ -3716,7 +3927,7 @@ def run_simulation(
                     train_Y_for_acq = train_Y
 
                 aei_noise_sd = None
-                if acq.name == "aei" and config.observation_noise == "known":
+                if acq.name == "aei" and config.observation_noise in ("known", "self_report"):
                     # The model is told each rating's variance, so the discount
                     # uses the variance the rating about to be taken will carry.
                     aei_noise_sd = float(np.sqrt(known_noise_variance(iteration, config, apply_error)))
@@ -3760,6 +3971,14 @@ def run_simulation(
             if config.replicate_first and replicated < config.replicate_first and not acq_failed:
                 replication_pending = np.array(candidate_np, dtype=float)
                 replicated += 1
+            if (config.hold_early and held_count < config.hold_early
+                    and iteration < hold_release and not acq_failed):
+                # Hold it back rather than rate it now. The trial still has to go
+                # somewhere, so the next proposal takes its place; the design is
+                # not duplicated, it is moved.
+                held_designs.append(np.array(candidate_np, dtype=float))
+                held_count += 1
+                candidate_np = sample_uniform(bounds, anchor_rng_hold, size=1)[0]
 
         # Where the person actually went. The objective is evaluated THERE --
         # that is what really happened and what the run really achieved -- while
@@ -3852,7 +4071,12 @@ def run_simulation(
         X_list.append(recorded_np)
         input_error_l2s.append(input_error_l2)
         input_error_flags.append(bool(slipped))
-        noise_variances.append(known_noise_variance(iteration, config, apply_error))
+        if config.observation_noise == "self_report":
+            # The rater says how sure they were; the GP believes them, coarsely.
+            noise_variances.append(
+                self_reported_variance(error_magnitude, config, confidence_rng, apply_error))
+        else:
+            noise_variances.append(known_noise_variance(iteration, config, apply_error))
         y_true_list.append(true_value)
         y_observed_list.append(observed_value)
         error_magnitudes.append(error_magnitude)

@@ -300,6 +300,30 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rater-model", type=str, default="none", choices=sim.RATER_MODEL_CHOICES,
                         help="'backfit': estimate per-rater offsets inside the GP fit and deploy on the corrected "
                              "ratings. Changes the clean run, so it needs its own --output-dir.")
+    parser.add_argument("--anchor-every", type=int, default=0,
+                        help="Every N trials, rate one of a small fixed anchor set instead of the "
+                             "proposal. The anchors have a constant true value, so movement in their "
+                             "ratings is the rater drifting, separated from the search trend. "
+                             "Costs trials and changes the clean run: needs its own --output-dir.")
+    parser.add_argument("--anchor-set", type=int, default=3,
+                        help="How many fixed anchor designs to cycle through.")
+    parser.add_argument("--anchor-model", type=str, default="none", choices=sim.ANCHOR_MODEL_CHOICES,
+                        help="'detrend': fit a line in the trial index to the anchors and subtract "
+                             "it from every rating before the surrogate is fitted.")
+    parser.add_argument("--hold-early", type=int, default=0,
+                        help="Hold back the first N model-based proposals and rate them late instead, "
+                             "to decouple 'informative design' from 'early in the session'. The "
+                             "design is moved, not duplicated. Changes the clean run.")
+    parser.add_argument("--hold-until", type=float, default=0.6,
+                        help="Fraction of the budget after which held designs are released.")
+    parser.add_argument("--confidence-noise", type=float, default=0.5,
+                        help="With --observation-noise self_report: how coarse the rater's own "
+                             "precision report is, as the SD of a log-normal multiplier on the "
+                             "trial's true squared error. 0 prices a perfect report.")
+    parser.add_argument("--anchor-rating", action="store_true",
+                        help="Judge each proposal against the incumbent shown beside it: the error "
+                             "shared by the pair cancels and the fresh part is differenced, so the "
+                             "idiosyncratic noise grows by sqrt(2). The clean run is unchanged.")
     parser.add_argument("--response-ceiling", type=float, default=None,
                         help="Cap every noisy rating at this quantile q of the landscape (0 < q < 1). Single-"
                              "objective; the clean run is unchanged.")
@@ -475,6 +499,12 @@ def _variant_suffix(args: argparse.Namespace, error_model: str, error_bias: floa
         parts.append(f"raterfit-{adapt['rater_model']}")
     if adapt["response_ceiling"] > 0:
         parts.append(f"ceil{adapt['response_ceiling']:g}-{adapt['ceiling_mode']}")
+    if adapt["anchor_rating"]:
+        parts.append("anchored")
+    if adapt["anchor_every"] > 0:
+        parts.append(f"anch{adapt['anchor_every']}x{adapt['anchor_set']}-{adapt['anchor_model']}")
+    if adapt["hold_early"] > 0:
+        parts.append(f"hold{adapt['hold_early']}@{adapt['hold_until_frac']:g}")
     # The multi-objective halo error and its remedy, named nowhere else.
     if adapt["error_cross_corr"] > 0:
         parts.append(f"xc{adapt['error_cross_corr']:g}")
@@ -507,6 +537,11 @@ def _clean_run_settings(args: argparse.Namespace) -> dict:
     if adapt["rater_model"] != "none":
         # The assignment decides who rated what in the clean run too.
         settings["rater_model"] = [adapt["rater_model"], adapt["rater_assign"]]
+    # Both of these replace proposals, so the clean run is a different search.
+    if adapt["anchor_every"] > 0:
+        settings["anchors"] = [adapt["anchor_every"], adapt["anchor_set"], adapt["anchor_model"]]
+    if adapt["hold_early"] > 0:
+        settings["hold_early"] = [adapt["hold_early"], adapt["hold_until_frac"]]
     # The halo backfit refits the clean run's surrogate too; new, so tracked.
     # --error-cross-corr acts on noisy ratings only and is not.
     if adapt["mo_halo_model"] != "none":

@@ -86,8 +86,11 @@ def test_idiosyncratic_sd_keeps_only_the_part_that_does_not_cancel():
     for model in ("gaussian", "bias", "drift"):
         assert eos.idiosyncratic_sd(model, 2.0) == 2.0
     assert eos.idiosyncratic_sd("ar1", 1.0, 0.8) == pytest.approx(0.6)
+    # A spike is drawn afresh per rating, so all of it is idiosyncratic and the
+    # marginal SD carries the spike probability as well as the jitter.
+    assert eos.idiosyncratic_sd("spike", 1.0) == pytest.approx((1.0 + eos.SPIKE_PROB_DEFAULT) ** 0.5)
     with pytest.raises(ValueError, match="no idiosyncratic-noise model"):
-        eos.idiosyncratic_sd("spike", 1.0)
+        eos.idiosyncratic_sd("dropout", 1.0)
 
 
 def test_sitting_noise_follows_the_onset_except_for_rendered_designs():

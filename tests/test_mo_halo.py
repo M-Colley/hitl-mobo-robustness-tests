@@ -107,7 +107,11 @@ def test_no_acquisition_or_error_model_was_added():
     # The halo error is a flag on the gaussian model, not a new model, so the
     # seed indices of the jitter stream cannot have moved.
     assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
-    assert sim.ACQUISITION_CHOICES[-2:] == ["ts", "aei"] and len(sim.ACQUISITION_CHOICES) == 20
+    # shiplcb was appended on 2026-09-21. The guarantee this test exists for is
+    # that nothing was INSERTED (the index seeds the jitter stream) and that
+    # nothing new reached the multi-objective suite, which is checked below.
+    assert sim.ACQUISITION_CHOICES[-3:] == ["ts", "aei", "shiplcb"]
+    assert len(sim.ACQUISITION_CHOICES) == 21
     assert sim.MO_HALO_MODEL_CHOICES == ["none", "backfit"]
 
 

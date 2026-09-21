@@ -132,7 +132,7 @@ def test_new_names_are_appended():
     assert sim.INPUT_ERROR_CHOICES == ["none", "slip", "misclick", "missing_mcar", "missing_low"]
     assert sim.LIKELIHOOD_CHOICES == ["gaussian", "student_t", "relevance_pursuit"]
     assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
-    assert sim.ACQUISITION_CHOICES[-2:] == ["ts", "aei"]
+    assert sim.ACQUISITION_CHOICES[-3:] == ["ts", "aei", "shiplcb"]
 
 
 @pytest.mark.skipif(not BACKUP_SIM.is_file(), reason="pre-build backup of the simulator not present")

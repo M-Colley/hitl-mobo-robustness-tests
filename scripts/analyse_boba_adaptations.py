@@ -451,7 +451,20 @@ def main(argv=None) -> None:
                 q = dict(zip(one["arm"], multipletests(one["pooled_wilcoxon_p"], method="fdr_bh")[1]))
                 sel = out["response"] == response
                 out.loc[sel, "pooled_wilcoxon_p_fdr"] = out.loc[sel, "arm"].map(q).astype(float)
-    out.to_csv(args.output_dir / "adaptations_recovery.csv", index=False)
+    # Merge, never overwrite. A call with --arms used to truncate the file to the
+    # arms it ran, which is how the budget-neutral numbers came to exist in no
+    # artefact at all. Rows for the arms in THIS call replace their old selves;
+    # every other arm is kept exactly as it was.
+    recovery_path = args.output_dir / "adaptations_recovery.csv"
+    if recovery_path.is_file() and len(out):
+        previous = pd.read_csv(recovery_path)
+        kept = previous[~previous["arm"].isin(set(out["arm"]))]
+        if len(kept):
+            print(f"  keeping {kept['arm'].nunique()} arm(s) "
+                  f"already in {recovery_path.name}")
+        out = pd.concat([kept, out], ignore_index=True)
+    out = out.sort_values(["arm", "response", "jitter_std", "jitter_iteration"], kind="stable")
+    out.to_csv(recovery_path, index=False)
     pd.DataFrame(extra_rows).to_csv(args.output_dir / "adaptations_extra_runs.csv", index=False)
     print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'} and adaptations_extra_runs.csv")
 

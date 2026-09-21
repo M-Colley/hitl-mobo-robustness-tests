@@ -58,8 +58,10 @@ Decomposing that deployed regret into search loss and selection loss shows that
 at that magnitude, $42\%$ $[34, 50]$ of the cost is selection, the run having
 visited a better design than the one it ships, and none of the six
 acquisition-side changes we ran reduces it. What reduces it is spending trials on
-identification: one comparative sitting over the last sixth of the budget gains
-$0.02$ of the achievable improvement, and four trials confirming the result cut
+identification, or not spending them at all: shipping three candidate designs
+instead of one recovers $24\%$ $[18, 30]$ of the cost with no extra trial, one
+comparative sitting over the last sixth of the budget gains $0.02$ of the
+achievable improvement, and four trials confirming the result cut
 false improvement claims from $16\%$ to $0.5\%$, of which the confirming test rather
 than the trials supplies more than half. The expected loss of one noisy choice
 among random designs, computable from a ten-trial pilot, explains half of the
@@ -113,9 +115,10 @@ property of a problem decides whether feedback error hurts''.
     measured rater noise falls, selection is $41.8\%$ $[34, 50]$ of what error
     costs, rising to $83\%$ for a large error arriving late; it is zero under
     exact observation, and none of six acquisition-side changes reduced it.
-    Spending about a sixth of the budget on one final comparative sitting
-    recovers more than any other budget-neutral remedy, and four confirmation
-    trials cut false improvement claims from $15.7\%$ to $0.5\%$
+    What works acts on the decision, not the search: shipping three designs
+    instead of one recovers $24\%$ $[18, 30]$ for no extra trial, one final
+    comparative sitting over a sixth of the budget gains $0.02$, and four
+    confirmation trials cut false improvement claims from $15.7\%$ to $0.5\%$
     (Section~\ref{sec:budget}).
   \item \textbf{A predictor from a pilot.} The expected loss of one noisy choice
     among random designs, computed from a ten-trial pilot and the rater noise,
@@ -560,6 +563,25 @@ sitting for the posterior-mean design, the worst policy of all at $-0.013$. Its
 utility is the surrogate's posterior, which was fitted on corrupted ratings, so
 it is confident about designs it should not be. Nothing we tried beat fixing $k$
 at about a sixth of the budget.
+
+\textbf{The cheapest remedy is to ship more than one design.} A study that
+deploys the top three by the cautious rule, rather than the top one, recovers
+$24\%$ $[18, 30]$ of the cost of error, and the top five $34\%$ $[28, 40]$,
+for no extra human trial (Appendix~\ref{app:remedies}). That is more than any
+procedure above buys with trials, and it follows directly from
+Equation~\ref{eq:decomp}: the run has already visited a better design than the
+one it ships, so widening the deliverable recovers part of the selection term
+without touching the search. The number is what a later decision could recover
+if it identified the best of the shortlist correctly, so it prices the
+opportunity rather than delivering it; it is worth having only where such a
+decision is cheaper than a rating, as a field trial or an objective
+measurement often is. Three further remedies that cost no rating trials are in
+the same appendix: choosing on the ratings' ranks rather than their values
+recovers $51\%$ $[36, 63]$ when $15\%$ of trials carry a gross fault and
+$-1\%$ when none do; asking the rater how sure they were and using it as a
+per-trial variance recovers $15\%$ $[6, 23]$; and the damage a saturating
+scale does is predictable before the study from the headroom above its
+ceiling.
 
 \section{When the error is in the design, not the rating}
 \label{sec:inputerror}
@@ -1928,6 +1950,89 @@ standard process does on this arm ($24\%$ never, against $28\%$). Misclicks cost
 place, so there is little for any model to recover.
 
 \FloatBarrier
+
+\section{Four remedies that cost no rating trials}
+\label{app:remedies}
+
+Every remedy in Appendix~\ref{app:budgetneutral} changes the loop. These four
+change what the study deploys, how it reads the ratings it already has, or what
+it asks the rater, and three of them are scored by re-reading runs that already
+exist (\texttt{scripts/replay\_hitl\_remedies.py}), so they cost nothing to
+evaluate as well as nothing to run. The estimand is the one of
+Appendix~\ref{app:adapt}: a share of the standard process's cost of error on the
+design the study deploys, as a ratio of landscape means with a
+landscape bootstrap.
+
+\begin{table}[htbp]
+\centering
+\caption{What a wider deliverable and a rank-based reading recover, on the
+design the study deploys, as a share of the standard process's cost of error.
+Shipping one design by the cautious rule is the baseline row, so every row above
+it is what the wider deliverable buys. Twenty landscapes, LogEI and qNEI; the
+main sweep pools four error processes, four magnitudes and both onsets; the
+spike column is $0.25\sigma$ from the first rating and the capped column pools
+$0.25\sigma$ and $1\sigma$ from the first rating.}
+\label{tab:shortlist}
+\small
+\input{tables/shortlist}
+\end{table}
+
+\paragraph{A shortlist instead of a design.} Table~\ref{tab:shortlist} gives the
+curve. Two things about it are worth stating plainly. The gain is entirely the
+width of the deliverable: at $m=1$ the same rule recovers nothing on the main
+sweep. And the score is the regret of the \emph{best} of the $m$, which a later
+decision would have to find; it is therefore an upper bound on what shipping a
+shortlist delivers, and the right way to read it is as the size of the prize for
+any downstream discrimination that is cheaper than a human rating. Where no such
+decision exists the number is unavailable, and a study should say so.
+
+\paragraph{Choosing on ranks.} Refitting the surrogate on the ratings' normal
+scores instead of their values makes the choice invariant to any strictly
+monotone distortion of the scale and robust to a single wild rating. It costs
+$1\%$ on the main sweep, where discarding the magnitudes throws information
+away, and recovers $51\%$ $[36, 63]$ under gross faults and $36\%$ $[29, 43]$
+against a saturating cap. At that fault rate it matches the relevance-pursuit
+likelihood of Appendix~\ref{app:budgetneutral} while assuming nothing about the
+fault. The contrast is the finding: a rank-based reading is not a general
+improvement, it is an outlier remedy that happens to be free.
+
+\paragraph{Asking the rater how sure they were.} A self-reported precision, used
+as a per-trial observation variance, recovers $15\%$ $[6, 23]$ of the deployed
+cost at a price of $-0.001$ (Table~\ref{tab:adapt}). It is worth setting beside
+the known-noise arm, which is handed the \emph{true} noise variance and recovers
+nothing: the difference is not accuracy but kind, since a constant is what the
+GP already learns and a per-trial report says which trials were hard. We model
+the report as the trial's squared error seen through a log-normal multiplier of
+SD $0.5$, so an honest but coarse rater; a perfect report would price the
+ceiling of the idea rather than a plausible version of it.
+
+\paragraph{Screening the instrument.} A capped scale costs $185\%$ more than the
+same noise on a scale that does not saturate, and how often the cap binds is
+fixed by its quantile. What varies, and what a pilot can measure, is the
+headroom: how far the reachable optimum sits above the ceiling. Across the
+twenty landscapes that headroom predicts the extra cost at Spearman $0.65$, and
+the extra cost doubles from $0.153$ in the low-headroom half to $0.316$ in the
+high-headroom half. Re-anchoring the cap to the best design rated so far halves
+the median damage, from $0.219$ to $0.104$. An instrument can therefore be
+rejected before a participant is spent on it.
+
+\paragraph{What did not work.} Six further ideas were built and measured, and
+they are reported here because a remedy that fails is as useful as one that
+works when the question is where the cost lives. Allocating the final sitting's
+looks where the ranking is in doubt, by the standard best-arm rule
+\citep{audibert2010best, kim2006selecting}, is never ahead of one look each
+($+9.0\%$ against $+9.7\%$ at $k=8$): the gain is having looks, not where they
+go. Sizing a study from the pilot's $\frag$ does no better than sizing it at
+random, although any uneven allocation of a fixed budget beats an even one.
+Interleaving fixed anchor designs to identify the rater's drift buys $+1\%$ and
+costs trials. Rating the first five proposals late instead of early moves
+nothing ($+1\%$), which rules out one explanation of the onset effect. Judging
+each proposal beside the incumbent, so the error shared by the pair cancels,
+\emph{loses} $27\%$: it pays $\sqrt2$ more fresh noise to remove faults the
+loop already absorbs, since it standardises its targets and an argmax is
+shift-invariant. An acquisition aimed at the ship rule rather than the posterior
+maximum loses $107\%$, but its price without error is $+0.244$, the largest in
+this paper, so it searches badly and its own idea is untested.
 \section{The one-shot loss from a pilot}
 \label{app:pilot}
 

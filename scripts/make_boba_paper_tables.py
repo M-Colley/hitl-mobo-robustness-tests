@@ -1037,6 +1037,13 @@ ADAPTATION_GROUPS = [
     ("\\textsc{misclick}", [
         ("studentt", "Student-$t$ surrogate"),
     ]),
+    ("changing what the rater is asked or when", [
+        ("idea-selfreport", "the rater reports their own precision"),
+        ("idea-anchor-gaussian", "each proposal judged beside the incumbent"),
+        ("idea-anchors-gaussian", "every fifth trial rates a fixed anchor"),
+        ("idea-hold", "the first five proposals rated late"),
+        ("idea-shiplcb", "an acquisition aimed at the ship rule"),
+    ]),
     ("fitted oracles, rating error", [
         ("fitted-rep10", "first ten proposals rated twice"),
     ]),
@@ -1070,6 +1077,60 @@ def _recovered_cell(r: pd.Series) -> str:
     interval = "" if pd.isna(lo) else f" {{\\scriptsize [{bound(lo)}, {bound(hi)}]}}"
     value = pct(r["pooled_recovered"])
     return f"{value:+.0f}{mark}{interval}" if value != 0 else f"0{mark}{interval}"
+
+
+SHORTLIST_ARMS = [
+    ("output-boba", "the main sweep"),
+    ("output-boba-spike", "$15\\%$ of trials spiking at $20$ SD"),
+    ("output-boba-ceiling", "a rating scale capped at its $0.9$ quantile"),
+]
+
+
+def table_shortlist(analysis: Path, out: Path, root: Path | None = None) -> None:
+    """What a shortlist recovers, and what the same runs recover by rank.
+
+    Both are read from replay_hitl_remedies.py's own recovery files, one per
+    arm, so the table cannot drift from the replay that produced it. The
+    shortlist row at m = 1 IS the cautious ship rule, which is what makes the
+    column readable: everything above it is what the wider deliverable buys.
+    """
+    root = root or Path(".")
+    NL = chr(10)
+    procedures = [("shortlist_m1", "ship 1 design (the cautious rule)"),
+                  ("shortlist_m2", "ship 2"),
+                  ("shortlist_m3", "ship 3"),
+                  ("shortlist_m5", "ship 5"),
+                  ("ordinal_lcb1", "ship 1, chosen on the ratings' ranks")]
+    columns, blocks = [], {}
+    for arm_dir, label in SHORTLIST_ARMS:
+        path = root / arm_dir / "analysis" / "hitl_remedies" / "hitl_remedies_recovery.csv"
+        if not path.is_file():
+            print(f"skipped shortlist table: {path} not found")
+            return
+        frame = pd.read_csv(path)
+        frame = frame[frame["error_model"] == "pooled"].set_index("procedure")
+        columns.append(label)
+        blocks[label] = frame
+    rows = []
+    for proc, label in procedures:
+        cells = []
+        for column in columns:
+            block = blocks[column]
+            if proc not in block.index:
+                cells.append("--")
+                continue
+            r = block.loc[proc]
+            lo, hi = r["recovered_lo"], r["recovered_hi"]
+            interval = "" if pd.isna(lo) else f" {{\\scriptsize $[{lo * 100:.0f},{hi * 100:.0f}]$}}"
+            cells.append(f"${r['recovered'] * 100:.0f}\\%$" + interval)
+        rows.append(f"{label} & " + " & ".join(cells) + " \\\\")
+    header = " & ".join(columns)
+    body = NL.join(rows)
+    tex = (f"\\begin{{tabular}}{{l{'r' * len(columns)}}}{NL}\\toprule{NL}"
+           f"deliverable & {header} \\\\{NL}\\midrule{NL}{body}{NL}\\bottomrule{NL}"
+           f"\\end{{tabular}}{NL}")
+    (out / "shortlist.tex").write_text(tex, encoding="utf-8")
+    print(f"wrote {out / 'shortlist.tex'}")
 
 
 def table_adaptations(analysis: Path, out: Path) -> None:
@@ -1216,6 +1277,7 @@ def main(argv: list[str] | None = None) -> None:
     }, args.out, "robust", "acquisitions")
     table_extra_runs(Path("output-boba-budget100/analysis"), args.out)
     table_adaptations(args.analysis, args.out)
+    table_shortlist(args.analysis, args.out)
     table_pilot_frag(args.analysis, args.out)
     table_extra_runs_full({
         "gaussian": (Path("output-boba/analysis"), "gaussian", ""),

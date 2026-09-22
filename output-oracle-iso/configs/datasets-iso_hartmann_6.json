@@ -1,0 +1,20 @@
+[
+  {
+    "name": "iso_hartmann_6",
+    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\hartmann_6",
+    "oracle_target": "individual",
+    "param_columns": [
+      "x0",
+      "x1",
+      "x2",
+      "x3",
+      "x4",
+      "x5"
+    ],
+    "objective_map": {
+      "composite": [
+        "value"
+      ]
+    }
+  }
+]

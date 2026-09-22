@@ -1,0 +1,3 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+rosenbrock,value,exact,gaussian,0,0.25,noise-self_report_conf-r0,5,2,qnei,1.4,wilcoxon,7.0,1.0,,0.0625,True,1.0,False
+rosenbrock,value,exact,gaussian,0,1.0,noise-self_report_conf-r0,5,2,qnei,1.4,wilcoxon,3.0,0.3125,,0.0625,True,0.625,False

@@ -316,6 +316,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                              "design is moved, not duplicated. Changes the clean run.")
     parser.add_argument("--hold-until", type=float, default=0.6,
                         help="Fraction of the budget after which held designs are released.")
+    parser.add_argument("--confidence-corr", type=float, default=None,
+                        help="With --observation-noise self_report: the correlation between the "
+                             "rater's reported variance and their realised squared error, via a "
+                             "gaussian copula that keeps the error's own marginal. Unset keeps the "
+                             "older log-normal model.")
     parser.add_argument("--confidence-noise", type=float, default=0.5,
                         help="With --observation-noise self_report: how coarse the rater's own "
                              "precision report is, as the SD of a log-normal multiplier on the "
@@ -461,6 +466,9 @@ def _variant_suffix(args: argparse.Namespace, error_model: str, error_bias: floa
     # not the name would silently reuse the wrong CSVs.
     if args.observation_noise != "learned":
         parts.append(f"noise-{args.observation_noise}")
+        if getattr(args, "confidence_corr", None) is not None:
+            # A calibration level changes the run, so it has to change the name.
+            parts.append(f"conf-r{float(args.confidence_corr):g}")
     if args.incumbent != "posterior_mean":
         parts.append(f"inc-{args.incumbent}")
     # The input-error arm. Which design gets written down changes the run, and

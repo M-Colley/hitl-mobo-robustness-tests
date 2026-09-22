@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 70
+- Paired baseline/jitter rows: 50
+- Seeds per condition: min=5, median=5.0, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
 dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
- shekel     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
- shekel     value        exact       spike                 0        0.25        5               2             qnei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
- shekel     value        exact       spike                 0        0.25        5               2             qnei  wilcoxon        4.0   0.4375          0.8125            0.0625          True         NaN
- shekel     value        exact       spike                 0        0.25        5               2             qnei  wilcoxon        3.0   0.3125          0.8125            0.0625          True         NaN
+ shekel     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        6.0 0.812500          0.8125          0.062500          True         NaN
+ shekel     value        exact       spike                 0        0.25        5               2             qnei  wilcoxon        6.0 0.812500          0.8125          0.062500          True         NaN
+ shekel     value        exact       spike                 0        0.25       10               2            logei  wilcoxon       19.0 0.431641          0.8125          0.001953         False         NaN
+ shekel     value        exact       spike                 0        0.25        5               2             qnei  wilcoxon        3.0 0.312500          0.8125          0.062500          True         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 shekel / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-       qnei                   0.4                1.45                            6.312820                         2475.777799               3           4
-      logei                   0.6                1.55                            9.311572                         2571.204808               1           4
+       qnei                 0.475              1.4875                            6.592103                         2485.780974               3           4
+      logei                 0.525              1.5125                            8.998194                         2582.139659               2           4
 

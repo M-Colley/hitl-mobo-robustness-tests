@@ -1,0 +1,18 @@
+[
+  {
+    "name": "iso_power_law_practice",
+    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\power_law_practice",
+    "oracle_target": "individual",
+    "param_columns": [
+      "x0",
+      "x1",
+      "x2",
+      "x3"
+    ],
+    "objective_map": {
+      "composite": [
+        "value"
+      ]
+    }
+  }
+]

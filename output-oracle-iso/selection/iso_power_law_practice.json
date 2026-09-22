@@ -1,0 +1,50 @@
+{
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "iso_power_law_practice",
+      "objectives": {
+        "composite": {
+          "best_model": "gradient_boosting",
+          "scores": {
+            "xgboost": 0.46694439007189426,
+            "lightgbm": 0.4753694475156703,
+            "catboost": 0.5221976315375574,
+            "random_forest": 0.486797933659609,
+            "extra_trees": 0.4940451915155375,
+            "gradient_boosting": 0.5356219602144294,
+            "hist_gradient_boosting": 0.5099893440037591
+          },
+          "rmse": {
+            "xgboost": 1.1321584787448509,
+            "lightgbm": 1.1214234816025541,
+            "catboost": 1.0705243461246003,
+            "random_forest": 1.1140361161541743,
+            "extra_trees": 1.1028515052674082,
+            "gradient_boosting": 1.0551758076162845,
+            "hist_gradient_boosting": 1.085558402820286
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.0,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "individual"
+        }
+      }
+    }
+  ]
+}

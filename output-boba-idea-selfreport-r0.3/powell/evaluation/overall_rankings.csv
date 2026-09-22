@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+powell,value,logei,0.3999999999999999,1.4,0.008731076588599802,2.1670473228643248,0.0,2,2
+powell,value,qnei,0.6000000000000001,1.6,0.015753641479960716,2.5248271556903106,0.0,0,2

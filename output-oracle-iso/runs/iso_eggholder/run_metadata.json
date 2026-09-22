@@ -1,0 +1,156 @@
+{
+  "args": {
+    "iterations": 50,
+    "jitter_iteration": null,
+    "jitter_std": null,
+    "single_error": false,
+    "jitter_iterations": "0",
+    "jitter_stds": "0.195499,0.781998,3.909988",
+    "initial_samples": 5,
+    "candidate_pool": 1000,
+    "objective": "composite",
+    "objectives": null,
+    "acq": "all",
+    "acq_list": "logei,qnei,ucb,ei,random,sobol",
+    "seed": 7,
+    "seeds": "7,8,9,10,11",
+    "num_seeds": 5,
+    "output_dir": "output-oracle-iso\\runs\\iso_eggholder",
+    "data_dir": null,
+    "dataset_config": "output-oracle-iso\\configs\\datasets-iso_eggholder.json",
+    "combine_datasets": false,
+    "dataset_cache_dir": ".dataset_cache",
+    "baseline_run": true,
+    "error_model": null,
+    "error_models": "gaussian",
+    "error_bias": 0.2,
+    "error_spike_prob": 0.1,
+    "error_spike_std": 0.5,
+    "dropout_strategy": "hold_last",
+    "error_ar1_rho": 0.8,
+    "response_clip": "none",
+    "response_round": null,
+    "incumbent": "posterior_mean",
+    "input_error": "none",
+    "input_error_scale": 0.0,
+    "input_error_from_sweep": false,
+    "input_error_recorded": "proposed",
+    "observation_noise": "learned",
+    "replicate_first": 0,
+    "final_rerate": "0,0",
+    "input_noise_model": "none",
+    "likelihood": "gaussian",
+    "inference_rule": null,
+    "min_oracle_r2": null,
+    "user_id": null,
+    "group_id": null,
+    "normalize_objective": false,
+    "objective_weights": null,
+    "xi": 0.01,
+    "kappa": 2.0,
+    "oracle_model": "auto",
+    "oracle_models": null,
+    "oracle_selection_path": "output-oracle-iso\\selection\\iso_eggholder.json",
+    "oracle_augmentation": "jitter",
+    "oracle_augment_repeats": 2,
+    "oracle_augment_std": 0.02,
+    "oracle_fast": false,
+    "oracle_opt_samples": 200000,
+    "oracle_opt_batch_size": 50000,
+    "oracle_opt_seed": 10007,
+    "acq_num_restarts": 10,
+    "acq_raw_samples": 512,
+    "acq_maxiter": 200,
+    "acq_mc_samples": 256,
+    "parallel": true,
+    "n_jobs": 8,
+    "resume": true
+  },
+  "runtime_sec": 185.7426809000317,
+  "parallel_execution": true,
+  "n_workers": 5,
+  "git_commit": "ec612c1be38550738e61d0cdeeb0472fb88e7380",
+  "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "win32",
+  "data_dir_commits": {
+    "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\eggholder": "ec612c1be38550738e61d0cdeeb0472fb88e7380"
+  },
+  "resolved_oracle_cv_r2": {
+    "iso_eggholder:composite": 0.3357123239907645
+  },
+  "failed_seeds": [],
+  "effective_jitter_stds": [
+    0.195499,
+    0.781998,
+    3.909988
+  ],
+  "effective_jitter_iterations": [
+    0
+  ],
+  "datasets": [
+    {
+      "name": "iso_eggholder",
+      "data_dirs": [
+        "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\eggholder"
+      ],
+      "param_columns": [
+        "x0",
+        "x1"
+      ],
+      "objective_map": {
+        "composite": [
+          "value"
+        ]
+      },
+      "observation_glob": "ObservationsPerEvaluation.csv"
+    }
+  ],
+  "objectives": {
+    "iso_eggholder": [
+      "composite"
+    ]
+  },
+  "error_models": [
+    "gaussian"
+  ],
+  "requested_oracle_models": [
+    "auto"
+  ],
+  "resolved_oracle_models": {
+    "iso_eggholder:composite": [
+      "extra_trees"
+    ]
+  },
+  "oracle_selection_path": "output-oracle-iso\\selection\\iso_eggholder.json",
+  "acquisitions": [
+    "logei",
+    "qnei",
+    "ucb",
+    "ei",
+    "random",
+    "sobol"
+  ],
+  "seeds": [
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "package_versions": {
+    "numpy": "2.5.3",
+    "pandas": "3.0.5",
+    "scikit-learn": "1.9.0",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.1",
+    "seaborn": "0.13.2",
+    "tqdm": "4.70.0",
+    "xgboost": "3.4.1",
+    "lightgbm": "4.7.0",
+    "catboost": "1.2.10",
+    "statsmodels": null,
+    "botorch": "0.18.2.dev23+geea35f51a",
+    "torch": "2.13.0+cu126",
+    "tabpfn": "8.5.0"
+  }
+}

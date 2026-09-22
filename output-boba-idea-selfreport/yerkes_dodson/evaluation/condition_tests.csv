@@ -1,9 +1,9 @@
 dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
-yerkes_dodson,value,exact,gaussian,0,0.05,noise-self_report,5,2,logei,1.2,wilcoxon,4.0,0.4375,,0.0625,True,0.8333333333333334,False
-yerkes_dodson,value,exact,gaussian,0,0.25,noise-self_report,5,2,logei,1.2,wilcoxon,5.0,0.625,,0.0625,True,0.8333333333333334,False
-yerkes_dodson,value,exact,gaussian,0,1.0,noise-self_report,5,2,logei,1.4,wilcoxon,5.0,0.625,,0.0625,True,0.8333333333333334,False
-yerkes_dodson,value,exact,gaussian,0,5.0,noise-self_report,5,2,logei,1.2,wilcoxon,4.0,0.4375,,0.0625,True,0.8333333333333334,False
-yerkes_dodson,value,exact,gaussian,20,0.05,noise-self_report,5,2,logei,1.2,wilcoxon,2.0,0.1875,,0.0625,True,0.75,False
-yerkes_dodson,value,exact,gaussian,20,0.25,noise-self_report,5,2,logei,1.4,wilcoxon,6.0,0.8125,,0.0625,True,0.9285714285714286,False
-yerkes_dodson,value,exact,gaussian,20,1.0,noise-self_report,5,2,qnei,1.2,wilcoxon,1.0,0.125,,0.0625,True,0.75,False
-yerkes_dodson,value,exact,gaussian,20,5.0,noise-self_report,5,2,logei,1.4,wilcoxon,7.0,1.0,,0.0625,True,1.0,False
+yerkes_dodson,value,exact,gaussian,0,0.05,noise-self_report,10,2,logei,1.4,wilcoxon,22.0,0.625,,0.001953125,False,0.6953125,False
+yerkes_dodson,value,exact,gaussian,0,0.25,noise-self_report,10,2,logei,1.4,wilcoxon,23.0,0.6953125,,0.001953125,False,0.6953125,False
+yerkes_dodson,value,exact,gaussian,0,1.0,noise-self_report,10,2,qnei,1.4,wilcoxon,22.0,0.625,,0.001953125,False,0.6953125,False
+yerkes_dodson,value,exact,gaussian,0,5.0,noise-self_report,10,2,logei,1.2,wilcoxon,10.0,0.083984375,,0.001953125,False,0.3359375,False
+yerkes_dodson,value,exact,gaussian,20,0.05,noise-self_report,10,2,logei,1.1,wilcoxon,5.0,0.01953125,,0.001953125,False,0.15625,False
+yerkes_dodson,value,exact,gaussian,20,0.25,noise-self_report,10,2,logei,1.2,wilcoxon,13.0,0.16015625,,0.001953125,False,0.4270833333333333,False
+yerkes_dodson,value,exact,gaussian,20,1.0,noise-self_report,10,2,logei,1.5,wilcoxon,21.0,0.556640625,,0.001953125,False,0.6953125,False
+yerkes_dodson,value,exact,gaussian,20,5.0,noise-self_report,10,2,logei,1.3,wilcoxon,23.0,0.6953125,,0.001953125,False,0.6953125,False

@@ -109,27 +109,39 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
     cells = cells.assign(deployed=cells["inference_excess"] / cells["dataset"].map(opt_z))
 
     labels = {0: "from it.\\ 1", 20: "from it.\\ 21"}
-    blocks, columns = [], None
-    for title, value in (("search loss, post-onset per-iteration average", "fragility"),
-                         ("deployed design, final trial", "deployed")):
-        grid = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values=value)
-        columns = " & ".join(f"${c:g}\\sigma$" for c in grid.columns)
+
+    def block(title: str, grid: pd.DataFrame) -> str:
         rows = [f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}{{\\emph{{{title}}}}} \\\\"]
         for onset, row in grid.iterrows():
             cells_tex = " & ".join(f"{v * 100:.1f}\\%" for v in row)
             rows.append(f"\\quad {labels.get(int(onset), f'onset {int(onset)}')} & {cells_tex} \\\\")
-        blocks.append(chr(10).join(rows))
+        return chr(10).join(rows)
 
-    # Third block: how much of the deployed excess above is selection loss. It
-    # comes from the decomposition rather than cell_means, and the two pipelines
-    # are checked against each other here rather than trusted: the deployed
-    # excess is computed independently by both.
+    grid = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values="fragility")
+    columns = " & ".join(f"${c:g}\\sigma$" for c in grid.columns)
+    blocks = [block("search loss, post-onset per-iteration average", grid)]
+
+    # The final-trial blocks: search loss at T and the deployed design at T, on
+    # one time base, so deployed minus search is the selection loss. The search
+    # row comes from the decomposition, the deployed row from cell_means, and the
+    # two pipelines are checked against each other here rather than trusted: the
+    # deployed excess is computed independently by both.
     decomp = analysis / "regret_decomposition.csv"
+    dec = None
     if decomp.is_file():
         dec = pd.read_csv(decomp)
         dec = dec[(dec["error_model"] == "pooled") & (dec["jitter_std"] != "pooled")].copy()
         dec["jitter_std"] = dec["jitter_std"].astype(float)
         dec["jitter_iteration"] = dec["jitter_iteration"].astype(float)
+        blocks.append(block("search loss, final trial",
+                            dec.pivot_table(index="jitter_iteration", columns="jitter_std",
+                                            values="mean_excess_search")))
+    blocks.append(block("deployed design, final trial",
+                        cells.pivot_table(index="jitter_iteration", columns="jitter_std",
+                                          values="deployed")))
+
+    # Last block: how much of the deployed excess is selection loss.
+    if dec is not None:
         check = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values="deployed")
         for _, r in dec.iterrows():
             mine = check.loc[r["jitter_iteration"], r["jitter_std"]]
@@ -233,12 +245,41 @@ error process & $t_0$ & $\\beta_c$ & $\\beta_z$ & 95\\% CI & $\\beta_c + \\beta_
 \\end{{tabular}}""")
 
 
+def _deployed_ranks(analysis: Path, stats_path: Path | None = None) -> pd.DataFrame:
+    """Mean rank and mean excess of the DEPLOYED design per acquisition, ranked
+    within each condition and landscape exactly as the trajectory ranking is, so
+    the two rankings can be set side by side."""
+    cells = pd.read_csv(analysis / "cell_means.csv")
+    cells = cells[~cells["acquisition"].isin(["random", "sobol"])].copy()
+    stats = bb.load_stats(stats_path or bb.DEFAULT_STATS_PATH)
+    opt_z = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+    cells["deployed"] = cells["inference_excess"] / cells["dataset"].map(opt_z)
+    keys = ["error_model", "jitter_std", "jitter_iteration", "dataset"]
+    cells["rank_deployed"] = cells.groupby(keys)["deployed"].rank()
+    return cells.groupby("acquisition").agg(deployed_rank=("rank_deployed", "mean"),
+                                            deployed=("deployed", "mean"))
+
+
+def _floor_deployed_excess(analysis: Path, stats_path: Path | None = None) -> float:
+    """The model-free floor's search is blind to the ratings, so its trajectory
+    excess is zero, but the design it SHIPS is still the best-rated one, so its
+    deployed excess is not. Averaged exactly as the acquisitions' column."""
+    cells = pd.read_csv(analysis / "cell_means.csv")
+    cells = cells[cells["acquisition"].isin(["random", "sobol"])].copy()
+    stats = bb.load_stats(stats_path or bb.DEFAULT_STATS_PATH)
+    opt_z = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+    return float((cells["inference_excess"] / cells["dataset"].map(opt_z)).mean())
+
+
 def table_acquisitions(analysis: Path, out: Path) -> None:
     overall = pd.read_csv(analysis / "overall_acquisition_rankings.csv")
     floor = pd.read_csv(analysis / "floor_reference.csv")
+    dep = _deployed_ranks(analysis)
     rows = [
         f"{PRETTY_ACQ.get(r['acquisition'], r['acquisition'])} & {r['mean_rank']:.2f} & "
-        f"{r['mean_fragility'] * 100:.2f}\\% & {r['mean_absolute_loss'] * 100:.1f}\\% \\\\"
+        f"{r['mean_fragility'] * 100:.2f}\\% & {r['mean_absolute_loss'] * 100:.1f}\\% & "
+        f"{dep.loc[r['acquisition'], 'deployed_rank']:.2f} & "
+        f"{dep.loc[r['acquisition'], 'deployed'] * 100:.1f}\\% \\\\"
         for _, r in overall.iterrows()
     ]
     rows.append(r"\midrule")
@@ -254,11 +295,14 @@ def table_acquisitions(analysis: Path, out: Path) -> None:
         )
     rows.append(
         f"model-free floor & -- & {worst * 100:.2f}\\% & "
-        f"{floor['mean_absolute_loss'].mean() * 100:.1f}\\% \\\\"
+        f"{floor['mean_absolute_loss'].mean() * 100:.1f}\\% & -- & "
+        f"{_floor_deployed_excess(analysis) * 100:.1f}\\% \\\\"
     )
-    write(out / "acquisitions.tex", f"""\\begin{{tabular}}{{lrrr}}
+    write(out / "acquisitions.tex", f"""\\begin{{tabular}}{{lrrrrr}}
 \\toprule
-acquisition & mean rank & excess regret & absolute loss \\\\
+ & \\multicolumn{{3}}{{c}}{{search loss, trajectory}} & \\multicolumn{{2}}{{c}}{{deployed design}} \\\\
+\\cmidrule(lr){{2-4}} \\cmidrule(lr){{5-6}}
+acquisition & mean rank & excess & absolute & mean rank & excess \\\\
 \\midrule
 {chr(10).join(rows)}
 \\bottomrule
@@ -310,8 +354,46 @@ observations & {columns} \\\\
 \\end{{tabular}}""")
 
 
-def table_noise_anchor(path: Path, out: Path) -> None:
-    """Where three real human studies sit on the synthetic arm's x-axis."""
+def table_noise_anchor(path: Path, out: Path,
+                       archival: Path = Path("output-boba/analysis/review/archival_error_processes.csv")) -> None:
+    """Where three real human studies sit on the synthetic arm's x-axis.
+
+    With the archival estimates present (estimate_archival_error_processes.py),
+    each study gets its participant-bootstrap interval and the within-session
+    residual SD that bounds the noise from above, and opticarvis gets a second
+    row on its scale-consistent ratings: 40 of its 586 rows were logged on the
+    raw instrument scales, and mixing the two scales is what put it at 3.35.
+    """
+    if archival.exists():
+        est = pd.read_csv(archival)
+
+        def get(dataset: str, basis: str, quantity: str):
+            row = est[(est.dataset == dataset) & (est.data_basis == basis) & (est.quantity == quantity)]
+            return row.iloc[0] if len(row) else None
+
+        rows = []
+        for dataset, basis, label in (("ehmi", "pipeline", "as logged"),
+                                      ("opticarvis", "pipeline", "as logged, two scales mixed"),
+                                      ("opticarvis", "scale_consistent", "one scale"),
+                                      ("provoice", "pipeline", "as logged")):
+            nug = get(dataset, basis, "noise_nn_close_over_sigma_f")
+            upper = get(dataset, basis, "noise_within_session_resid_sd_over_sigma_f")
+            if nug is None:
+                raise ValueError(f"archival estimates lack the nugget for {dataset}/{basis}")
+            weak = " (weak)" if str(nug["identification"]).startswith("weak") else ""
+            up = f"{upper['estimate']:.2f}" if upper is not None else "--"
+            rows.append(
+                f"\\texttt{{{_tex_escape(dataset)}}} & {label} & {nug['sigma_f_used']:.3f} & "
+                f"{nug['estimate']:.2f} {{\\scriptsize $[{nug['ci_low']:.2f}, {nug['ci_high']:.2f}]$}}{weak} & {up} \\\\"
+            )
+        write(out / "noise_anchor.tex", f"""\\begin{{tabular}}{{llrrr}}
+\\toprule
+study & ratings & $\\sigma_f$ & noise / $\\sigma_f$ & upper bound \\\\
+\\midrule
+{chr(10).join(rows)}
+\\bottomrule
+\\end{{tabular}}""")
+        return
     if not path.exists():
         print(f"skipping noise anchor: {path} not present")
         return

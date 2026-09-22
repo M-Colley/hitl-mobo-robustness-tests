@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+steering_law,value,exact,gaussian,0,0.25,noise-self_report_conf-r0.3,logei,5,2,1.4,0.3999999999999999,1.4,1.9253860552704558,0.5998620717743783,0.03929359296470318,6.650218417705945,0.0,True
+steering_law,value,exact,gaussian,0,0.25,noise-self_report_conf-r0.3,qnei,5,2,1.6,0.6000000000000001,1.6,0.685284774530312,1.0964125605427348,0.013985403561843102,5.409828125722883,0.0,False
+steering_law,value,exact,gaussian,0,1.0,noise-self_report_conf-r0.3,qnei,5,2,1.2,0.19999999999999996,1.2,3.109741209503556,2.8747340934916874,0.0634641063163991,7.834284560696126,0.0,True
+steering_law,value,exact,gaussian,0,1.0,noise-self_report_conf-r0.3,logei,5,2,1.8,0.8,1.8,9.339612190241322,7.548831181421938,0.19060433041308822,14.064444552676813,0.0,False

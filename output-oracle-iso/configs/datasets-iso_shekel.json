@@ -1,0 +1,18 @@
+[
+  {
+    "name": "iso_shekel",
+    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\shekel",
+    "oracle_target": "individual",
+    "param_columns": [
+      "x0",
+      "x1",
+      "x2",
+      "x3"
+    ],
+    "objective_map": {
+      "composite": [
+        "value"
+      ]
+    }
+  }
+]

@@ -1,3 +1,3 @@
 dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
-power_law_practice,value,qnei,0.24999999999999994,1.25,0.10135918977250745,11.589105607200327,0.0,4,4
-power_law_practice,value,logei,0.75,1.75,0.21545028980511133,17.33050229273525,0.0,0,4
+power_law_practice,value,qnei,0.29999999999999993,1.2999999999999998,0.13019371723101694,13.237134531553384,0.0,4,4
+power_law_practice,value,logei,0.7000000000000001,1.7000000000000002,0.23809572072307406,18.60924257973271,0.0,0,4

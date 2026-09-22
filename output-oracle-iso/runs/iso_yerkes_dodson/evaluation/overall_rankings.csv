@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_yerkes_dodson,composite,random,0.3133333333333333,3.7999999999999994,0.0,134.64028386181474,0.0,2,3
+iso_yerkes_dodson,composite,sobol,0.3133333333333333,4.866666666666666,0.0,146.9576153899294,0.0,2,3
+iso_yerkes_dodson,composite,ucb,0.52,3.1333333333333333,0.3478423125605084,120.58236739374435,0.0,0,3
+iso_yerkes_dodson,composite,logei,0.5333333333333333,3.3333333333333335,0.4951353063100947,126.6438655031846,0.0,1,3
+iso_yerkes_dodson,composite,ei,0.6,3.1333333333333333,0.38729341873409523,123.18964112261996,0.0,0,3
+iso_yerkes_dodson,composite,qnei,0.7200000000000001,2.733333333333333,0.5342947080959,117.21233935692892,0.0,0,3

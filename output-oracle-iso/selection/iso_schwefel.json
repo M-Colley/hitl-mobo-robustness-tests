@@ -1,0 +1,50 @@
+{
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "iso_schwefel",
+      "objectives": {
+        "composite": {
+          "best_model": "gradient_boosting",
+          "scores": {
+            "xgboost": 0.3589119866996515,
+            "lightgbm": 0.35158036515819696,
+            "catboost": 0.4032564271124034,
+            "random_forest": 0.3955941467892804,
+            "extra_trees": 0.3594807344689427,
+            "gradient_boosting": 0.43211065941487165,
+            "hist_gradient_boosting": 0.37450947404202817
+          },
+          "rmse": {
+            "xgboost": 1.2395650228718165,
+            "lightgbm": 1.2448582880163608,
+            "catboost": 1.1950346329250985,
+            "random_forest": 1.203869945980825,
+            "extra_trees": 1.238775048363253,
+            "gradient_boosting": 1.164293299679089,
+            "hist_gradient_boosting": 1.2244291086651207
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.0,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "individual"
+        }
+      }
+    }
+  ]
+}

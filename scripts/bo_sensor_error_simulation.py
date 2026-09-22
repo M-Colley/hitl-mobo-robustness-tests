@@ -519,6 +519,9 @@ class SimulationConfig:
     # confidence_noise: how coarse the rater's own precision report is, as the SD
     #   of a log-normal multiplier on the true squared error. 0 = a perfect report.
     confidence_noise: float = 0.5
+    # confidence_corr: if set, the report is a gaussian copula of the realised
+    #   squared error with this correlation, instead of the log-normal model.
+    confidence_corr: float | None = None
     # anchor_every / anchor_set: every anchor_every trials the rater sees one of
     #   anchor_set fixed designs instead of the proposal. Their true value never
     #   moves, so any movement in their ratings is the rater drifting. 0 = off.
@@ -677,6 +680,8 @@ def adaptation_fields(args: "argparse.Namespace") -> dict:
         "ceiling_mode": getattr(args, "ceiling_mode", "fixed") or "fixed",
         "anchor_rating": bool(getattr(args, "anchor_rating", False)),
         "confidence_noise": float(getattr(args, "confidence_noise", 0.5) or 0.0),
+        "confidence_corr": (None if getattr(args, "confidence_corr", None) is None
+                            else float(getattr(args, "confidence_corr"))),
         "anchor_every": int(getattr(args, "anchor_every", 0) or 0),
         "anchor_set": int(getattr(args, "anchor_set", 3) or 3),
         "anchor_model": str(getattr(args, "anchor_model", "none") or "none"),
@@ -2126,6 +2131,21 @@ def self_reported_variance(error_magnitude, config: "SimulationConfig",
     if not apply_error:
         return 1e-6
     err = float(np.mean(np.atleast_1d(np.asarray(error_magnitude, dtype=float)) ** 2))
+    corr = getattr(config, "confidence_corr", None)
+    if corr is not None and float(corr) >= 0:
+        # Gaussian copula: the report ranks trials by difficulty with rank
+        # correlation about rho to the truth, and keeps the squared error's own
+        # marginal, sigma^2 chi^2_1, so its average is right and only the
+        # ordering is degraded. rho = 1 returns the realised error exactly.
+        from scipy.stats import chi2, norm
+        sigma2 = float(config.jitter_std) ** 2
+        if sigma2 <= 0:
+            return 1e-6
+        rho = min(max(float(corr), 0.0), 1.0)
+        u_true = float(np.clip(chi2.cdf(err / sigma2, df=1), 1e-12, 1 - 1e-12))
+        z = rho * norm.ppf(u_true) + np.sqrt(1.0 - rho ** 2) * rng.normal()
+        report = sigma2 * float(chi2.ppf(norm.cdf(z), df=1))
+        return float(max(report, 1e-6))
     scale = float(getattr(config, "confidence_noise", 0.5) or 0.0)
     if scale > 0:
         err *= float(np.exp(rng.normal(0.0, scale) - 0.5 * scale ** 2))

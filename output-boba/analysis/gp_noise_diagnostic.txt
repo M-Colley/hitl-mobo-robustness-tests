@@ -1,0 +1,39 @@
+GP NOISE DIAGNOSTIC
+========================================================================
+
+Fitted observation-noise SD against the error actually injected, in the
+objective's own (standardised) units. A ratio far below 1 means the
+surrogate does not know its observations are noisy.
+
+   error SD  onset   obs  injected    fitted   ratio     flat   ratio  runs
+       0.05      0     8     0.050     0.071    1.43    0.011    0.23    60
+       0.05      0    15     0.050     0.075    1.50    0.024    0.47    60
+       0.05      0    25     0.050     0.068    1.37    0.045    0.90    60
+       0.05      0    50     0.050     0.062    1.24    0.053    1.06    60
+       0.05     20    25     0.022     0.065    2.91    0.032    1.41    60
+       0.05     20    50     0.039     0.060    1.56    0.050    1.29    60
+       0.25      0     8     0.250     0.076    0.30    0.011    0.04    60
+       0.25      0    15     0.250     0.102    0.41    0.204    0.82    60
+       0.25      0    25     0.250     0.180    0.72    0.225    0.90    60
+       0.25      0    50     0.250     0.221    0.88    0.240    0.96    60
+       0.25     20    25     0.112     0.114    1.02    0.117    1.05    60
+       0.25     20    50     0.194     0.229    1.18    0.242    1.25    60
+          1      0     8     1.000     0.121    0.12    0.017    0.02    60
+          1      0    15     1.000     0.138    0.14    0.551    0.55    60
+          1      0    25     1.000     0.656    0.66    0.907    0.91    60
+          1      0    50     1.000     0.829    0.83    0.931    0.93    60
+          1     20    25     0.447     0.313    0.70    0.379    0.85    60
+          1     20    50     0.775     0.897    1.16    0.995    1.28    60
+          5      0     8     5.000     0.543    0.11    0.073    0.01    60
+          5      0    15     5.000     0.521    0.10    3.180    0.64    60
+          5      0    25     5.000     2.822    0.56    4.441    0.89    60
+          5      0    50     5.000     4.461    0.89    5.041    1.01    60
+          5     20    25     2.236     1.273    0.57    1.763    0.79    60
+          5     20    50     3.873     3.082    0.80    3.482    0.90    60
+
+'fitted' uses BoTorch's shipped noise prior, as the sweep does; 'flat fit'
+re-runs the same fit with a much wider prior. If the flat fit recovers the
+injected level and the shipped one does not, the shrinkage is the prior's,
+not the data's -- and a fixed-noise arm (train_Yvar at the SingleTaskGP
+construction site in run_simulation) is the contrast needed before any
+claim about noise-aware acquisitions.

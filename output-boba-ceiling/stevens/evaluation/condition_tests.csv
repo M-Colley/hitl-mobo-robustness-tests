@@ -1,5 +1,5 @@
 dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
 stevens,value,exact,gaussian,0,0.25,ceil0.9-anchored,5,2,logei,1.5,wilcoxon,5.0,1.0,,0.125,True,1.0,False
-stevens,value,exact,gaussian,0,0.25,ceil0.9-fixed,5,2,logei,1.2,wilcoxon,5.0,0.625,,0.0625,True,0.8333333333333334,False
-stevens,value,exact,gaussian,0,1.0,ceil0.9-anchored,5,2,qnei,1.2,wilcoxon,4.0,0.4375,,0.0625,True,0.8333333333333334,False
-stevens,value,exact,gaussian,0,1.0,ceil0.9-fixed,5,2,qnei,1.4,wilcoxon,3.0,0.3125,,0.0625,True,0.8333333333333334,False
+stevens,value,exact,gaussian,0,0.25,ceil0.9-fixed,10,2,logei,1.2,wilcoxon,14.0,0.193359375,,0.001953125,False,0.55078125,False
+stevens,value,exact,gaussian,0,1.0,ceil0.9-anchored,5,2,qnei,1.2,wilcoxon,4.0,0.4375,,0.0625,True,0.5833333333333334,False
+stevens,value,exact,gaussian,0,1.0,ceil0.9-fixed,10,2,qnei,1.4,wilcoxon,16.0,0.275390625,,0.001953125,False,0.55078125,False

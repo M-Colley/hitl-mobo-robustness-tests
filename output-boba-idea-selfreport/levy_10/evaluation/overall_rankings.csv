@@ -1,3 +1,3 @@
 dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
-levy_10,value,logei,0.35,1.5875,0.10816728322357216,42.66033931290224,-0.4319333141606832,6,8
-levy_10,value,qnei,0.65,1.4125,0.1527869811927,40.30038935506265,0.41174469956611637,2,8
+levy_10,value,logei,0.3875,1.56875,0.0721217597791617,42.18069058101853,-0.7048771058537513,7,8
+levy_10,value,qnei,0.6125,1.43125,0.10923654861633464,39.612477924609664,0.42259128294308845,2,8

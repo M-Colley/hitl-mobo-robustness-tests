@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 80
+- Paired baseline/jitter rows: 60
+- Seeds per condition: min=5, median=7.5, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
      dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-steering_law     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        1.0   0.1250           0.500            0.0625          True         NaN
-steering_law     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        3.0   0.3125           0.625            0.0625          True         NaN
-steering_law     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        7.0   1.0000           1.000            0.0625          True         NaN
-steering_law     value        exact    gaussian                 0        1.00        5               2            logei  wilcoxon        7.0   1.0000           1.000            0.0625          True         NaN
+steering_law     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        1.0 0.125000        0.500000          0.062500          True         NaN
+steering_law     value        exact    gaussian                 0        0.25       10               2            logei  wilcoxon       22.0 0.625000        0.833333          0.001953         False         NaN
+steering_law     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        7.0 1.000000        1.000000          0.062500          True         NaN
+steering_law     value        exact    gaussian                 0        1.00       10               2             qnei  wilcoxon       16.0 0.275391        0.550781          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 steering_law / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-      logei                  0.35                1.35                            0.066520                            7.965393               3           4
-       qnei                  0.65                1.65                            0.059041                            7.582790               1           4
+      logei                 0.425               1.425                            0.072913                            8.059047               2           4
+       qnei                 0.575               1.575                            0.055844                            7.213950               2           4
 

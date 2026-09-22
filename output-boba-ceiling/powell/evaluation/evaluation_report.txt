@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 80
+- Paired baseline/jitter rows: 60
+- Seeds per condition: min=5, median=7.5, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
 dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
- powell     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        7.0   1.0000             1.0            0.0625          True         NaN
- powell     value        exact    gaussian                 0        0.25        5               2             qnei  wilcoxon        7.0   1.0000             1.0            0.0625          True         NaN
- powell     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        7.0   1.0000             1.0            0.0625          True         NaN
- powell     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        6.0   0.8125             1.0            0.0625          True         NaN
+ powell     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        7.0 1.000000             1.0          0.062500          True         NaN
+ powell     value        exact    gaussian                 0        0.25       10               2            logei  wilcoxon       18.0 0.375000             1.0          0.001953         False         NaN
+ powell     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        7.0 1.000000             1.0          0.062500          True         NaN
+ powell     value        exact    gaussian                 0        1.00       10               2            logei  wilcoxon       24.0 0.769531             1.0          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 powell / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-       qnei                  0.45                1.35                            0.012062                            2.217381               3           4
-      logei                  0.55                1.65                            0.007233                            2.043622               1           4
+      logei                 0.475                1.55                            0.007276                            2.147350               3           4
+       qnei                 0.525                1.45                            0.012659                            2.361853               2           4
 

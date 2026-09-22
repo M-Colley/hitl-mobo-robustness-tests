@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_griewank,composite,random,0.21999999999999997,2.9333333333333336,0.0,90.74894217106423,0.0,3,3
+iso_griewank,composite,sobol,0.21999999999999997,4.5,0.0,102.2438055154227,0.0,3,3
+iso_griewank,composite,qnei,0.52,2.7999999999999994,0.14307966923752877,88.70852542075458,0.0,0,3
+iso_griewank,composite,ei,0.6,3.3333333333333335,0.3973822190594504,95.69504044942887,0.0,0,3
+iso_griewank,composite,logei,0.6933333333333334,4.266666666666667,0.4902745014066801,103.26138007356985,0.0,0,3
+iso_griewank,composite,ucb,0.7466666666666667,3.1666666666666665,0.5705053126464397,93.17687244498408,0.0,0,3

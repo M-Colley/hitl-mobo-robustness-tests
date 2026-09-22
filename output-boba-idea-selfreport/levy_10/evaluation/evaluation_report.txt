@@ -14,16 +14,12 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 100
-- Paired baseline/jitter rows: 80
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 200
+- Paired baseline/jitter rows: 160
+- Seeds per condition: min=10, median=10.0, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
-- WARNING: only 5 seeds in the smallest condition. Two-method
-  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
-  is 0.0625); treat per-condition p-values as descriptive and rely on
-  effect sizes, CIs and replication across conditions instead.
 - FDR (Benjamini-Hochberg) correction is applied per test family
   (Friedman omnibus and Wilcoxon pairwise are corrected separately).
 - Kendall's W accompanies every Friedman test as the effect size.
@@ -32,14 +28,14 @@ Statistical notes
 
 Condition-level omnibus tests
 dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-levy_10     value        exact    gaussian                 0        0.05        5               2            logei  wilcoxon        2.0   0.1875          0.3750            0.0625          True         NaN
-levy_10     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        1.0   0.1250          0.3750            0.0625          True         NaN
-levy_10     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        3.0   0.3125          0.5000            0.0625          True         NaN
-levy_10     value        exact    gaussian                 0        5.00        5               2             qnei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
-levy_10     value        exact    gaussian                20        0.05        5               2            logei  wilcoxon        1.0   0.1250          0.3750            0.0625          True         NaN
-levy_10     value        exact    gaussian                20        0.25        5               2            logei  wilcoxon        5.0   0.6250          0.8125            0.0625          True         NaN
-levy_10     value        exact    gaussian                20        1.00        5               2            logei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
-levy_10     value        exact    gaussian                20        5.00        5               2            logei  wilcoxon        2.0   0.1875          0.3750            0.0625          True         NaN
+levy_10     value        exact    gaussian                 0        0.05       10               2            logei  wilcoxon       19.0 0.431641        0.575521          0.001953         False         NaN
+levy_10     value        exact    gaussian                 0        0.25       10               2            logei  wilcoxon       19.0 0.431641        0.575521          0.001953         False         NaN
+levy_10     value        exact    gaussian                 0        1.00       10               2            logei  wilcoxon       21.0 0.556641        0.636161          0.001953         False         NaN
+levy_10     value        exact    gaussian                 0        5.00       10               2             qnei  wilcoxon       26.0 0.921875        0.921875          0.001953         False         NaN
+levy_10     value        exact    gaussian                20        0.05       10               2            logei  wilcoxon       12.0 0.130859        0.575521          0.001953         False         NaN
+levy_10     value        exact    gaussian                20        0.25       10               2            logei  wilcoxon       18.0 0.375000        0.575521          0.001953         False         NaN
+levy_10     value        exact    gaussian                20        1.00       10               2            logei  wilcoxon       18.0 0.375000        0.575521          0.001953         False         NaN
+levy_10     value        exact    gaussian                20        5.00       10               2            logei  wilcoxon       13.0 0.160156        0.575521          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -47,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 levy_10 / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-      logei                  0.35              1.5875                            0.108167                           42.660339               6           8
-       qnei                  0.65              1.4125                            0.152787                           40.300389               2           8
+      logei                0.3875             1.56875                            0.072122                           42.180691               7           8
+       qnei                0.6125             1.43125                            0.109237                           39.612478               2           8
 

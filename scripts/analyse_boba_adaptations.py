@@ -152,6 +152,24 @@ ARMS = {
     "idea-selfreport": arm("output-boba-idea-selfreport", "output-boba", "logei,qnei",
                           "the rater reports their own precision and the GP uses it per trial",
                           error_model="gaussian"),
+    # The 2026-09-22 review: the arm above was chosen on seeds 7-11, so it is
+    # re-scored on seeds 12-16, which were run for this check afterwards; and its
+    # report model (log-normal multiplier, SD 0.5) gives the rater a rank
+    # correlation of about 0.96 with their own realised error, so three arms name
+    # that correlation instead, at 0.6, 0.3 and 0 (gaussian copula,
+    # --confidence-corr), in the two cells where the arm helped most.
+    "idea-selfreport-heldout": arm("output-boba-idea-selfreport", "output-boba", "logei,qnei",
+                                  "self-reported precision, scored on held-out seeds 12-16",
+                                  seeds="12,13,14,15,16", error_model="gaussian"),
+    "idea-selfreport-r0.6": arm("output-boba-idea-selfreport-r0.6", "output-boba", "logei,qnei",
+                               "self-reported precision, rank correlation 0.6 with the realised error",
+                               error_model="gaussian"),
+    "idea-selfreport-r0.3": arm("output-boba-idea-selfreport-r0.3", "output-boba", "logei,qnei",
+                               "self-reported precision, rank correlation 0.3 with the realised error",
+                               error_model="gaussian"),
+    "idea-selfreport-r0": arm("output-boba-idea-selfreport-r0", "output-boba", "logei,qnei",
+                             "self-reported precision, uninformative (rank correlation 0)",
+                             error_model="gaussian"),
     "idea-anchors-gaussian": arm("output-boba-idea-anchors", "output-boba", "logei,qnei",
                                 "every fifth trial rates a fixed anchor; the anchors detrend the rest",
                                 error_model="gaussian"),

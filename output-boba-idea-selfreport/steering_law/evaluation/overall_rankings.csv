@@ -1,3 +1,3 @@
 dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
-steering_law,value,qnei,0.425,1.425,0.006530394229530878,5.043855809326596,0.05713969208551526,5,8
-steering_law,value,logei,0.575,1.575,0.014535717838111131,5.436081410973639,-0.08583026702008308,3,8
+steering_law,value,qnei,0.4,1.525,0.00955516588332801,4.81371478327239,0.04024796855719429,7,8
+steering_law,value,logei,0.6,1.475,0.015058429243724511,5.064260036994683,-0.07039582499427541,3,8

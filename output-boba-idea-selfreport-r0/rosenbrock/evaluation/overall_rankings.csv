@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+rosenbrock,value,qnei,0.3999999999999999,1.4,0.017289261455145793,3.359654822296767,0.0,2,2
+rosenbrock,value,logei,0.6000000000000001,1.6,0.025037927235468715,3.707852137251098,0.0,0,2

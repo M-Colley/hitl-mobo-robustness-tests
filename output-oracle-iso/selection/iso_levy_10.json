@@ -1,0 +1,50 @@
+{
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "iso_levy_10",
+      "objectives": {
+        "composite": {
+          "best_model": "gradient_boosting",
+          "scores": {
+            "xgboost": 0.41613643171302483,
+            "lightgbm": 0.4496574855812939,
+            "catboost": 0.44701346118645036,
+            "random_forest": 0.42143795182331695,
+            "extra_trees": 0.4076708571946761,
+            "gradient_boosting": 0.4916954246938178,
+            "hist_gradient_boosting": 0.45582746338248514
+          },
+          "rmse": {
+            "xgboost": 1.2151972716622654,
+            "lightgbm": 1.1768645207134545,
+            "catboost": 1.1818760908036192,
+            "random_forest": 1.2112202247163109,
+            "extra_trees": 1.2254664720580506,
+            "gradient_boosting": 1.130143209716453,
+            "hist_gradient_boosting": 1.168782286994801
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.0,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "individual"
+        }
+      }
+    }
+  ]
+}

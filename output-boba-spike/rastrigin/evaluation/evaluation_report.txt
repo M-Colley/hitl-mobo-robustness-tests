@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 70
+- Paired baseline/jitter rows: 50
+- Seeds per condition: min=5, median=5.0, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
   dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        2.0   0.1875           0.375            0.0625          True         NaN
-rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        0.0   0.0625           0.250            0.0625          True         NaN
-rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        7.0   1.0000           1.000            0.0625          True         NaN
-rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        7.0   1.0000           1.000            0.0625          True         NaN
+rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        2.0 0.187500         0.37500          0.062500          True         NaN
+rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        0.0 0.062500         0.25000          0.062500          True         NaN
+rastrigin     value        exact       spike                 0        0.25       10               2            logei  wilcoxon       20.0 0.492188         0.65625          0.001953         False         NaN
+rastrigin     value        exact       spike                 0        0.25        5               2            logei  wilcoxon        7.0 1.000000         1.00000          0.062500          True         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 rastrigin / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-      logei                  0.25                1.35                            0.202221                           84.871966               4           4
-       qnei                  0.75                1.65                            0.419462                           91.140349               0           4
+      logei                 0.225              1.3125                            0.253130                           88.171725               4           4
+       qnei                 0.775              1.6875                            0.455974                           94.135998               0           4
 

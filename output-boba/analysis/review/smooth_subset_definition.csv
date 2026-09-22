@@ -1,0 +1,21 @@
+landscape,group,primary_smooth_subset,secondary_smooth_classical,dim,optimum,opt_z,ruggedness,spec_note,rationale
+schwefel,classical,False,False,4,interior,4.328390371778852,0.2494223140151759,Deceptive: the global optimum sits far from the second-best basin.,classical global-optimisation test function
+powell,classical,False,True,4,interior,0.7642238834584598,0.13176434452803676,Extremely heavy-tailed: quartic terms span five orders of magnitude.,convex quartic (sum of squares and fourth powers of linear forms): one minimum
+eggholder,classical,False,False,2,boundary,3.2050455310550587,0.42017743811145414,Optimum on the x0=512 face.,classical global-optimisation test function
+ackley,classical,False,False,4,interior,20.102447153853433,0.7959970520097299,Flat outer plateau with a narrow central funnel.,classical global-optimisation test function
+shekel,classical,False,False,4,interior,56.774074038018384,0.13065702347045738,Ten narrow wells in an otherwise flat box; very sparse.,classical global-optimisation test function
+griewank,classical,False,True,6,interior,2.7538558156589708,0.12213957155668809,Near-quadratic at this box size; the cosine ripple is negligible.,near-quadratic at the +-600 box; cosine ripple negligible (spec note)
+hartmann_3,classical,False,False,3,interior,3.0549009421557276,0.14046546240431357,,classical global-optimisation test function
+hartmann_6,classical,False,False,6,interior,7.967163963291937,0.13634138944395036,,classical global-optimisation test function
+branin,classical,False,False,2,interior,1.2500554659000687,0.13034088245107944,"BOBA restricts Branin to [0,10]^2; one of its three optima lies inside.",classical global-optimisation test function
+rosenbrock,classical,False,True,4,interior,1.0256232505714238,0.1299911737556515,"Smooth curved valley, effectively unimodal, enormous value range.","curved valley, effectively unimodal (spec note)"
+rastrigin,classical,False,False,4,interior,3.638939073438052,0.5805393765409548,Regular lattice of local optima on a quadratic bowl.,classical global-optimisation test function
+michalewicz,classical,False,False,5,interior,8.047721166688978,0.3626429006562,Steep ridges separated by flat plateaus; the sparsest landscape here.,classical global-optimisation test function
+yerkes_dodson,law,True,False,4,interior,3.5354125437868587,0.11764900611986673,Inverted-U (Yerkes & Dodson 1908); the shape most human responses take.,"mean of 1-D Gaussian bumps centred at 0.5: separable, one interior peak"
+stevens,law,True,False,4,boundary,3.0593887562558817,0.12476395973060661,Monotone psychophysical law: optimum at the upper corner.,"mean of x^0.67: monotone increasing, optimum at the upper corner (infinite slope at x=0)"
+hicks_law,law,True,False,4,boundary,5.402837764670362,0.12470938814807364,Monotone: optimum at the lower corner.,"minus mean of log2(x+1): monotone decreasing, optimum at the lower corner"
+weber_fechner,law,True,False,4,boundary,2.153305282720616,0.14656421014222643,Monotone: optimum at the upper corner.,"mean of log(1+x/0.01): monotone increasing, optimum at the upper corner (steep near 0)"
+moving_peaks,other,False,False,4,interior,2.9574997815819173,0.17159994278379176,"Branke (1999). Five orbiting cones; piecewise-linear, non-smooth ridges.","five cones, piecewise-linear ridges: neither a law nor a classical function"
+power_law_practice,law,True,False,4,boundary,1.7175746997911816,0.12763961198182106,Newell & Rosenbloom (1981). Moving corner optimum.,"-(B(m) N(t)^-alpha(m)): monotone in the time axis, corner optimum"
+steering_law,law,True,False,4,interior,1.290375177799024,0.12084343112765383,Accot & Zhai (1997) plus a screen-area penalty.,"-(a + bA/W + lambda A W): smooth, single interior supremum"
+levy_10,classical,False,False,11,interior,2.6244803317786123,0.20449124213710357,Dimension probe: nothing else in the suite exceeds six inputs.,classical global-optimisation test function

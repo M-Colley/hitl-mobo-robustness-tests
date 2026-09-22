@@ -10,10 +10,18 @@ itself. The build must finish with **zero errors and zero undefined references**
 | file | role |
 |---|---|
 | `main.tex` | the paper; nothing else is `\input` except the tables below |
-| `references.bib` | 25 entries, 24 cited |
+| `references.bib` | 39 entries, 38 cited |
 | `iclr2027_conference.sty`, `.bst` | the **official** ICLR 2027 style, byte-for-byte from `github.com/ICLR/Master-Template/iclr2027` — do not edit |
 | `natbib.sty`, `fancyhdr.sty`, `math_commands.tex` | vendored with the style, as upstream ships them |
-| `tables/*.tex` | 26 generated tables; regenerate with `python scripts/make_boba_paper_tables.py`, never by hand |
+| `tables/*.tex` | generated tables; regenerate with `python scripts/make_boba_paper_tables.py`, never by hand |
+| `figures/*.pdf` | four figures, drawn by `python scripts/make_paper_figures.py` from the analysis CSVs |
+| `authors.tex` | the real author block; printed only once `\iclrfinalcopy` is uncommented |
+
+**Source layout.** Every prose paragraph of `main.tex` is one source line, so
+Overleaf's soft wrap shows a paragraph as a paragraph instead of breaking it
+wherever an old hard wrap fell. Equations, tables and list items keep their own
+lines. The reflow was checked by compiling before and after: the PDF text is
+identical on every page.
 
 Not included on purpose: `main.pdf` and the auxiliary files (Overleaf rebuilds
 them), `iclr2027_conference_ORIGINAL.tex` (upstream's instructions, not part of a
@@ -23,22 +31,8 @@ submission), and `archive/`.
 
 `\iclrfinalcopy` is commented out and must stay so. Uncommenting it prints the
 author block, and a non-anonymous ICLR submission is rejected without review.
-The header currently reads "Under review as a conference paper at ICLR 2027" and
-the title page reads "Anonymous authors", which is what it should read.
-
-## Nothing left to fill in
-
-The five author decisions were resolved on 2026-09-18 and the `\todo` macro is
-gone from the preamble: the author block lives in `authors.tex` (git-ignored,
-shipped in this zip; the style prints "Anonymous authors" until `\iclrfinalcopy`
-is uncommented); the three human studies are cited from their data repositories'
-READMEs and the ProVoice arXiv record; the reproducibility statement links the
-anonymous repository mirror; the AI use statement lists the used, not-used and
-not-applicable categories of the 2027 AI Policy for Authors; the ethics statement
-quotes the three original publications' approval and consent terms.
-
-Two checks remain by hand. The conference and arXiv entries in `references.bib`
-have not been confirmed against a publisher record (its header says which), and:
+The header reads "Under review as a conference paper at ICLR 2027" and the title
+page reads "Anonymous authors", which is what it should read.
 
 **Anonymity check before uploading the PDF.** The paper links
 `anonymous.4open.science/r/hitl-mobo-robustness-tests-17E2`. On 2026-09-18 that
@@ -50,29 +44,25 @@ mirror under a neutral id from a scrubbed export) and re-check those two files
 through the mirror before submitting. ICLR desk-rejects a paper whose
 supplementary material reveals the authors.
 
-Both the AI use statement and the Ethics statement follow the headings and the
-structure of the 2027 template (`iclr2027_conference_ORIGINAL.tex`, lines
-397–426). The AI statement is required; the ethics statement is recommended.
+## Page limit
 
-## Known blockers that are NOT fixed here
+ICLR 2027 allows a *strict* **9 pages** of main text at submission (10 at
+rebuttal). `python paper/build_overleaf_bundle.py` compiles the bundle in a clean
+directory and prints where the main text ends and whether it FITS; on the
+2026-09-22 build it ends 40% down page 9. Rebuild after every edit to the main
+text and read that last line.
 
-**Page limit — now met.** ICLR 2027 allows a *strict* **9 pages** of main text
-at submission (10 at rebuttal). The main text through *Limitations* ends at the
-bottom of **page 9**, and page 10 opens with the Reproducibility statement, which
-does not count. That took: three sections to the appendix (fitted oracle,
-one-shot loss, input error), the three controls to the appendix, the extra-trials
-paragraph and its table to Appendix *Extra trials, by arm*, and a compression of
-Setup, the seven-checks section and the Discussion. **The margin is about one
-line.** Any addition to the main text — a sentence in the abstract counts — will
-push the Limitations onto page 10; rebuild the bundle after every edit and read
-its last line, which says FITS or OVER.
+## Still open, and the authors' to decide
 
-**Title and abstract.** The title names "the One Number That Predicts It" —
-that is `frag`, whose analysis now lives in Appendix B. The abstract is 609
-words; the readiness review flagged it at 524. Both are author decisions.
-
-**No figure.** The paper has none. The readiness review (Section 4) calls this
-out.
+- **A DOI.** The reproducibility statement says an archived snapshot with a DOI
+  will accompany the camera-ready version; that deposit is yours to make.
+- **Two defects in the fitted-oracle companion's data** (Appendix B, "The error
+  processes in the archival data"): `opticarvis` mixes two rating scales in 40 of
+  586 rows, and `provoice` enters Predictability with the wrong sign. The paper
+  states both and relies instead on the oracle-isolation experiment; fixing
+  `datasets.json` and rerunning the companion arm is a few hours of compute.
+- The references in `references.bib` added on 2026-09-22 were checked against
+  publisher records; the older conference and arXiv entries were not all.
 
 The full list of open items is `handover/findings.md` in the repository — it is
 the single register, with severity and status columns.

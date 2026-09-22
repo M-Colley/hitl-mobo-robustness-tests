@@ -220,7 +220,20 @@ __marimo__/
 .dataset_cache/
 output/
 output-chi/
-output-boba/
+# The main sweep's run logs (4.4 GB) regenerate bit for bit from the recorded
+# settings and stay out of the repository; its analysis outputs, which every
+# table and figure in the paper is read from, are tracked, except the per-run
+# replay caches and the largest per-run dumps, which the scripts rebuild.
+output-boba/*
+!output-boba/analysis/
+output-boba/analysis/**/per_run/
+output-boba/analysis/stopping/cache_*/
+output-boba/analysis/*.jsonl
+output-boba/analysis/*.bak.csv
+output-boba/analysis/**/*.parquet
+output-boba/analysis/stopping/stopping_per_run.csv
+output-boba/analysis/extra_runs_per_run.csv
+output-boba/analysis/*.png
 output-boba-extensions/
 output-boba-knownnoise/
 output-boba-incumbent/

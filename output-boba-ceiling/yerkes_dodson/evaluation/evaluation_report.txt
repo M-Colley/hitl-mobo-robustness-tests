@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 80
+- Paired baseline/jitter rows: 60
+- Seeds per condition: min=5, median=7.5, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
       dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-yerkes_dodson     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        3.0   0.3125        0.625000            0.0625          True         NaN
-yerkes_dodson     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        3.0   0.3125        0.625000            0.0625          True         NaN
-yerkes_dodson     value        exact    gaussian                 0        1.00        5               2            logei  wilcoxon        7.0   1.0000        1.000000            0.0625          True         NaN
-yerkes_dodson     value        exact    gaussian                 0        1.00        5               2            logei  wilcoxon        5.0   0.6250        0.833333            0.0625          True         NaN
+yerkes_dodson     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        3.0 0.312500        0.625000          0.062500          True         NaN
+yerkes_dodson     value        exact    gaussian                 0        0.25       10               2            logei  wilcoxon       12.0 0.130859        0.523438          0.001953         False         NaN
+yerkes_dodson     value        exact    gaussian                 0        1.00        5               2            logei  wilcoxon        7.0 1.000000        1.000000          0.062500          True         NaN
+yerkes_dodson     value        exact    gaussian                 0        1.00       10               2            logei  wilcoxon       23.0 0.695312        0.927083          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 yerkes_dodson / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-      logei                  0.35                1.55                            0.159718                           50.760869               4           4
-       qnei                  0.65                1.45                            0.460043                           48.430266               0           4
+      logei                   0.4               1.575                            0.250065                           55.454970               4           4
+       qnei                   0.6               1.425                            0.467177                           50.710913               0           4
 

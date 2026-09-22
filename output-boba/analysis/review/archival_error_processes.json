@@ -1,0 +1,344 @@
+{
+  "ehmi": {
+    "oracle_family": "extra_trees",
+    "pipeline_cv_r2": 0.5474910874610203,
+    "pipeline_cv_strategy": "kfold",
+    "oracle_target": "mean",
+    "rows_loaded": 737,
+    "rows_after_dedup": 735,
+    "order_problem_files": [],
+    "nugget_reproduced": 0.26921771003503486,
+    "nugget_stored": 0.2692177100350348,
+    "sigma_f_manifest": 0.3647132748128259,
+    "sigma_f_recomputed": 0.36471327481282595,
+    "anchor_ratio_stored": 0.738162629734823,
+    "raw_scale_rows": 0,
+    "pipeline_basis": {
+      "n_participants": 37,
+      "n_ratings": 735,
+      "n_sessions": 37,
+      "n_eligible_sessions": 37,
+      "n_eligible_participants": 37,
+      "n_eligible_ratings": 735,
+      "session_length_min_median_max": [
+        17,
+        20.0,
+        20
+      ],
+      "median_session_span": 19.0,
+      "nn_close_pairs": 123,
+      "close_pairs_all": 234,
+      "close_pairs_lag1": 112,
+      "close_pairs_lag2to3": 89,
+      "close_pairs_lag4plus": 33,
+      "shared_design_rows": 180,
+      "shared_design_participants": 36,
+      "sampling_phase_rows_on_shared_designs": 0.9836065573770492,
+      "sampling_phase_drift_estimated": false,
+      "sampling_phase_rows": 0,
+      "crossover_pairs": 0,
+      "crossover_participants": 0,
+      "crossover_c1_first": 0,
+      "crossover_c2_first": 0,
+      "consecutive_step_median": 0.617394811118479,
+      "ar_estimators_under_paper_ar1": {
+        "mean_raw": 0.566963213605957,
+        "mean_corr": 0.7272813286481972,
+        "pooled_raw": 0.6375351232606582,
+        "pooled_corr": 0.8102376852509355,
+        "detr": 0.5051900936951795
+      },
+      "ar_estimators_under_white_noise": {
+        "mean_raw": -0.050416331615758585,
+        "mean_corr": -3.1421987738047166e-05,
+        "pooled_raw": -0.05059114790167115,
+        "pooled_corr": -0.00029566299315432124,
+        "detr": -0.10077071663369407
+      },
+      "sigma_f": 0.3647132748128259,
+      "bootstrap_nan_share": {
+        "drift_sampling_phase_total_over_sigma_f": 1.0
+      }
+    },
+    "design_model_lopo_r2_by_family_pipeline": {
+      "extra_trees": 0.22711644281502374,
+      "random_forest": 0.17366321542356267,
+      "gradient_boosting": 0.13328391658307615
+    }
+  },
+  "opticarvis": {
+    "oracle_family": "gradient_boosting",
+    "pipeline_cv_r2": 0.5180773516473657,
+    "pipeline_cv_strategy": "group_kfold",
+    "oracle_target": "individual",
+    "rows_loaded": 626,
+    "rows_after_dedup": 586,
+    "order_problem_files": [],
+    "nugget_reproduced": 1.2535279098159475,
+    "nugget_stored": 1.2535279098159475,
+    "sigma_f_manifest": 0.3737085152645548,
+    "sigma_f_recomputed": 0.37370851526455484,
+    "anchor_ratio_stored": 3.354293141885068,
+    "raw_scale_rows": 40,
+    "raw_scale_runs": [
+      0
+    ],
+    "raw_scale_groups": [
+      "GroupB",
+      "GroupE"
+    ],
+    "raw_scale_rows_on_designs_rated_by_many": 22,
+    "raw_scale_composite_mean": 4.10375,
+    "normalised_composite_mean": 0.5702380952380953,
+    "pipeline_basis": {
+      "n_participants": 58,
+      "n_ratings": 586,
+      "n_sessions": 58,
+      "n_eligible_sessions": 52,
+      "n_eligible_participants": 52,
+      "n_eligible_ratings": 566,
+      "session_length_min_median_max": [
+        2,
+        10.0,
+        14
+      ],
+      "median_session_span": 9.0,
+      "nn_close_pairs": 181,
+      "close_pairs_all": 431,
+      "close_pairs_lag1": 82,
+      "close_pairs_lag2to3": 183,
+      "close_pairs_lag4plus": 166,
+      "shared_design_rows": 112,
+      "shared_design_participants": 40,
+      "sampling_phase_rows_on_shared_designs": NaN,
+      "sampling_phase_drift_estimated": false,
+      "sampling_phase_rows": 0,
+      "crossover_pairs": 0,
+      "crossover_participants": 0,
+      "crossover_c1_first": 0,
+      "crossover_c2_first": 0,
+      "consecutive_step_median": 0.4760403902436713,
+      "ar_estimators_under_paper_ar1": {
+        "mean_raw": 0.37591641086829397,
+        "mean_corr": 0.658703262432908,
+        "pooled_raw": 0.49774015268492555,
+        "pooled_corr": 0.8139534790723607,
+        "detr": 0.2731192479085015
+      },
+      "ar_estimators_under_white_noise": {
+        "mean_raw": -0.09482095736147773,
+        "mean_corr": 0.0010542257353430094,
+        "pooled_raw": -0.09113368851344443,
+        "pooled_corr": 0.001020322686318182,
+        "detr": -0.181650860163154
+      },
+      "sigma_f": 0.3737085152645548,
+      "bootstrap_nan_share": {
+        "drift_sampling_phase_total_over_sigma_f": 1.0
+      }
+    },
+    "sigma_f_scale_consistent": 0.2577087279351241,
+    "scale_consistent_basis": {
+      "n_participants": 58,
+      "n_ratings": 546,
+      "n_sessions": 58,
+      "n_eligible_sessions": 52,
+      "n_eligible_participants": 52,
+      "n_eligible_ratings": 532,
+      "session_length_min_median_max": [
+        1,
+        9.0,
+        14
+      ],
+      "median_session_span": 8.0,
+      "nn_close_pairs": 118,
+      "close_pairs_all": 310,
+      "close_pairs_lag1": 82,
+      "close_pairs_lag2to3": 120,
+      "close_pairs_lag4plus": 108,
+      "shared_design_rows": 90,
+      "shared_design_participants": 18,
+      "sampling_phase_rows_on_shared_designs": NaN,
+      "sampling_phase_drift_estimated": false,
+      "sampling_phase_rows": 0,
+      "crossover_pairs": 0,
+      "crossover_participants": 0,
+      "crossover_c1_first": 0,
+      "crossover_c2_first": 0,
+      "consecutive_step_median": 0.4507338336380271,
+      "ar_estimators_under_paper_ar1": {
+        "mean_raw": 0.34626611285237013,
+        "mean_corr": 0.648315153208977,
+        "pooled_raw": 0.48126385804989613,
+        "pooled_corr": 0.8192350331982573,
+        "detr": 0.2519093208662662
+      },
+      "ar_estimators_under_white_noise": {
+        "mean_raw": -0.10268468822689203,
+        "mean_corr": 0.0008792633845352899,
+        "pooled_raw": -0.09675802180723497,
+        "pooled_corr": 0.0013955648897632782,
+        "detr": -0.19245150623680632
+      },
+      "sigma_f": 0.2577087279351241,
+      "bootstrap_nan_share": {
+        "drift_sampling_phase_total_over_sigma_f": 1.0
+      }
+    },
+    "design_model_lopo_r2_by_family_scale_consistent": {
+      "extra_trees": -0.08986928838296837,
+      "random_forest": -0.05898347116555924,
+      "gradient_boosting": -0.21007696891899763
+    }
+  },
+  "provoice": {
+    "oracle_family": "extra_trees",
+    "pipeline_cv_r2": -0.032396896646550655,
+    "pipeline_cv_strategy": "group_kfold",
+    "oracle_target": "individual",
+    "rows_loaded": 532,
+    "rows_after_dedup": 532,
+    "order_problem_files": [],
+    "nugget_reproduced": 0.3039097088135078,
+    "nugget_stored": 0.3039097088135078,
+    "sigma_f_manifest": 0.2983639676464009,
+    "sigma_f_recomputed": 0.29836396764640083,
+    "anchor_ratio_stored": 1.018587167917271,
+    "raw_scale_rows": 0,
+    "sigma_f_sign_corrected": 0.44858875107732876,
+    "sign_corrected_composite": [
+      "-Predictability",
+      "Percieved Usefulness",
+      "-Mental Demand"
+    ],
+    "pipeline_basis": {
+      "n_participants": 19,
+      "n_ratings": 532,
+      "n_sessions": 38,
+      "n_eligible_sessions": 38,
+      "n_eligible_participants": 19,
+      "n_eligible_ratings": 532,
+      "session_length_min_median_max": [
+        13,
+        14.0,
+        15
+      ],
+      "median_session_span": 13.0,
+      "nn_close_pairs": 16,
+      "close_pairs_all": 21,
+      "close_pairs_lag1": 12,
+      "close_pairs_lag2to3": 7,
+      "close_pairs_lag4plus": 2,
+      "shared_design_rows": 324,
+      "shared_design_participants": 19,
+      "sampling_phase_rows_on_shared_designs": 1.0,
+      "sampling_phase_drift_estimated": false,
+      "sampling_phase_rows": 0,
+      "crossover_pairs": 126,
+      "crossover_participants": 18,
+      "crossover_c1_first": 13,
+      "crossover_c2_first": 5,
+      "consecutive_step_median": 0.5752433730792603,
+      "ar_estimators_under_paper_ar1": {
+        "mean_raw": 0.47200236688308617,
+        "mean_corr": 0.6929379442920169,
+        "pooled_raw": 0.5629505373827886,
+        "pooled_corr": 0.80739159303264,
+        "detr": 0.3758024895948673
+      },
+      "ar_estimators_under_white_noise": {
+        "mean_raw": -0.07153422855841937,
+        "mean_corr": 0.00036691510281639526,
+        "pooled_raw": -0.07124324254203532,
+        "pooled_corr": 0.00023587312831869136,
+        "detr": -0.14258653526264525
+      },
+      "sigma_f": 0.2983639676464009,
+      "bootstrap_nan_share": {
+        "semivar_lag2to3_over_sigma_f2": 0.033499999999999974,
+        "semivar_lag4plus_over_sigma_f2": 0.12050000000000005,
+        "semivar_ratio_lag1_to_lag4plus": 0.36850000000000005,
+        "semivar_ratio_paper_ar1_prediction": 0.12050000000000005,
+        "drift_resid_pooled_total_over_noise_sd": 0.011499999999999955,
+        "drift_closepair_total_over_noise_sd": 0.011499999999999955,
+        "drift_sampling_phase_total_over_sigma_f": 1.0,
+        "drift_crossover_total_over_sigma_f": 0.0050000000000000044,
+        "drift_crossover_total_over_noise_sd": 0.01649999999999996,
+        "drift_crossover_condition_effect_over_sigma_f": 0.0050000000000000044,
+        "noise_crossover_repeat_upper_bound_over_sigma_f": 0.0050000000000000044,
+        "het_closepair_var_rel_slope_per_sigma_f_level": 0.01200000000000001,
+        "drift_crossover_construct_Predictability_points_per_session": 0.0050000000000000044,
+        "drift_crossover_construct_Percieved_Usefulness_points_per_session": 0.0050000000000000044,
+        "drift_crossover_construct_Mental_Demand_points_per_session": 0.0050000000000000044
+      }
+    },
+    "design_model_lopo_r2_by_family_pipeline": {
+      "extra_trees": 0.09393524155290134,
+      "random_forest": 0.07846365666115496,
+      "gradient_boosting": 0.007251140166377956
+    },
+    "sign_corrected_basis": {
+      "n_participants": 19,
+      "n_ratings": 532,
+      "n_sessions": 38,
+      "n_eligible_sessions": 38,
+      "n_eligible_participants": 19,
+      "n_eligible_ratings": 532,
+      "session_length_min_median_max": [
+        13,
+        14.0,
+        15
+      ],
+      "median_session_span": 13.0,
+      "nn_close_pairs": 16,
+      "close_pairs_all": 21,
+      "close_pairs_lag1": 12,
+      "close_pairs_lag2to3": 7,
+      "close_pairs_lag4plus": 2,
+      "shared_design_rows": 324,
+      "shared_design_participants": 19,
+      "sampling_phase_rows_on_shared_designs": 1.0,
+      "sampling_phase_drift_estimated": false,
+      "sampling_phase_rows": 0,
+      "crossover_pairs": 126,
+      "crossover_participants": 18,
+      "crossover_c1_first": 13,
+      "crossover_c2_first": 5,
+      "consecutive_step_median": 0.5752433730792603,
+      "ar_estimators_under_paper_ar1": {
+        "mean_raw": 0.47200236688308617,
+        "mean_corr": 0.6929379442920169,
+        "pooled_raw": 0.5629505373827886,
+        "pooled_corr": 0.80739159303264,
+        "detr": 0.3758024895948673
+      },
+      "ar_estimators_under_white_noise": {
+        "mean_raw": -0.07153422855841937,
+        "mean_corr": 0.00036691510281639526,
+        "pooled_raw": -0.07124324254203532,
+        "pooled_corr": 0.00023587312831869136,
+        "detr": -0.14258653526264525
+      },
+      "sigma_f": 0.44858875107732876,
+      "bootstrap_nan_share": {
+        "semivar_lag2to3_over_sigma_f2": 0.04049999999999998,
+        "semivar_lag4plus_over_sigma_f2": 0.12549999999999994,
+        "semivar_ratio_lag1_to_lag4plus": 0.368,
+        "semivar_ratio_paper_ar1_prediction": 0.12549999999999994,
+        "drift_resid_pooled_total_over_noise_sd": 0.04200000000000004,
+        "drift_closepair_total_over_noise_sd": 0.04200000000000004,
+        "drift_sampling_phase_total_over_sigma_f": 1.0,
+        "drift_crossover_total_over_sigma_f": 0.0010000000000000009,
+        "drift_crossover_total_over_noise_sd": 0.04300000000000004,
+        "drift_crossover_condition_effect_over_sigma_f": 0.0010000000000000009,
+        "noise_crossover_repeat_upper_bound_over_sigma_f": 0.0010000000000000009,
+        "het_closepair_var_rel_slope_per_sigma_f_level": 0.04349999999999998
+      }
+    },
+    "design_model_lopo_r2_by_family_sign_corrected": {
+      "extra_trees": 0.08394105157377563,
+      "random_forest": 0.0697743821171426,
+      "gradient_boosting": -0.007133423338351763
+    }
+  }
+}

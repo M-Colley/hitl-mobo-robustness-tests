@@ -1,5 +1,5 @@
 dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
 hartmann_3,value,exact,gaussian,0,0.25,ceil0.9-anchored,5,2,qnei,1.4,wilcoxon,7.0,1.0,,0.0625,True,1.0,False
-hartmann_3,value,exact,gaussian,0,0.25,ceil0.9-fixed,5,2,qnei,1.4,wilcoxon,7.0,1.0,,0.0625,True,1.0,False
+hartmann_3,value,exact,gaussian,0,0.25,ceil0.9-fixed,10,2,logei,1.5,wilcoxon,24.0,0.76953125,,0.001953125,False,1.0,False
 hartmann_3,value,exact,gaussian,0,1.0,ceil0.9-anchored,5,2,qnei,1.0,wilcoxon,0.0,0.0625,,0.0625,True,0.125,False
-hartmann_3,value,exact,gaussian,0,1.0,ceil0.9-fixed,5,2,qnei,1.0,wilcoxon,0.0,0.0625,,0.0625,True,0.125,False
+hartmann_3,value,exact,gaussian,0,1.0,ceil0.9-fixed,10,2,qnei,1.1,wilcoxon,2.0,0.005859375,,0.001953125,False,0.0234375,True

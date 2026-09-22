@@ -1,0 +1,16 @@
+[
+  {
+    "name": "iso_branin",
+    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\branin",
+    "oracle_target": "individual",
+    "param_columns": [
+      "x0",
+      "x1"
+    ],
+    "objective_map": {
+      "composite": [
+        "value"
+      ]
+    }
+  }
+]

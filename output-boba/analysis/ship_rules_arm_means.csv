@@ -1,0 +1,13 @@
+arm,baseline,rule,n_runs,mean_regret_over_opt_z,logged_rule,share_same_design_as_best_observed,gp_fit_failures
+output-boba,False,best_observed,64000,0.3461625835275103,best_observed,1.0,0
+output-boba,False,best_mean,64000,0.34847906477878543,best_observed,0.900875,0
+output-boba,False,pm,64000,0.35785894056427164,best_observed,0.203734375,0
+output-boba,False,lcb1,64000,0.34574572500324774,best_observed,0.228421875,0
+output-boba,False,lcb2,64000,0.3408858258821874,best_observed,0.228875,0
+output-boba,False,best_visited,64000,0.21167326370399372,best_observed,0.179125,0
+output-boba,True,best_observed,2000,0.12842269516657132,best_observed,1.0,0
+output-boba,True,best_mean,2000,0.12842269516657132,best_observed,0.999,0
+output-boba,True,pm,2000,0.14462604367244092,best_observed,0.542,0
+output-boba,True,lcb1,2000,0.14294698741812506,best_observed,0.497,0
+output-boba,True,lcb2,2000,0.14312481310432612,best_observed,0.5005,0
+output-boba,True,best_visited,2000,0.12842269516657132,best_observed,1.0,0

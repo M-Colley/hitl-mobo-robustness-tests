@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_hicks_law,composite,random,0.21999999999999997,5.2,0.0,169.73764658865417,0.0,2,3
+iso_hicks_law,composite,sobol,0.21999999999999997,5.3999999999999995,0.0,176.87538997375918,0.0,2,3
+iso_hicks_law,composite,ucb,0.48,1.6666666666666667,0.54480473671064,65.11336636563418,0.0,0,3
+iso_hicks_law,composite,qnei,0.48,2.533333333333333,0.5885746788565492,72.25997806440272,0.0,1,3
+iso_hicks_law,composite,ei,0.7466666666666667,3.0,0.9096879017934718,82.88713648058643,0.0,0,3
+iso_hicks_law,composite,logei,0.8533333333333334,3.1999999999999997,0.9801259717622824,85.5827602656941,0.0,0,3

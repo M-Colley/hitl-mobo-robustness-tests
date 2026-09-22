@@ -1,0 +1,20 @@
+{
+  "h": 2000.0,
+  "kappa": 16.0,
+  "w": 3,
+  "objective": "regret",
+  "tune_row": {
+    "h": 2000.0,
+    "kappa": 16.0,
+    "w": 3,
+    "n_runs": 6600,
+    "false_alarm_clean": 0.055,
+    "false_alarm_onset0": 0.0703125,
+    "pre_onset_alarm_late": 0.005,
+    "detection_rate_late": 0.38875,
+    "mean_trials_used": 45.55984848484848,
+    "mean_regret_norm": 0.3055420788692145,
+    "mean_regret_norm_ship_T": 0.32924965219464397,
+    "feasible": true
+  }
+}

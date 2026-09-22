@@ -14,9 +14,9 @@ Recommended primary evaluation
 - Response-step excess L2 is descriptive only.
 
 Data coverage
-- Response rows: 50
-- Paired baseline/jitter rows: 40
-- Seeds per condition: min=5, median=5.0, max=5
+- Response rows: 80
+- Paired baseline/jitter rows: 60
+- Seeds per condition: min=5, median=7.5, max=10
 - Acquisition-optimization fallbacks in jittered runs: 0
 
 Statistical notes
@@ -32,10 +32,10 @@ Statistical notes
 
 Condition-level omnibus tests
      dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-moving_peaks     value        exact    gaussian                 0        0.25        5               2             qnei  wilcoxon        4.0   0.4375          0.8125            0.0625          True         NaN
-moving_peaks     value        exact    gaussian                 0        0.25        5               2            logei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
-moving_peaks     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        3.0   0.3125          0.8125            0.0625          True         NaN
-moving_peaks     value        exact    gaussian                 0        1.00        5               2            logei  wilcoxon        6.0   0.8125          0.8125            0.0625          True         NaN
+moving_peaks     value        exact    gaussian                 0        0.25        5               2             qnei  wilcoxon        4.0 0.437500        0.583333          0.062500          True         NaN
+moving_peaks     value        exact    gaussian                 0        0.25       10               2            logei  wilcoxon       14.0 0.193359        0.583333          0.001953         False         NaN
+moving_peaks     value        exact    gaussian                 0        1.00        5               2             qnei  wilcoxon        3.0 0.312500        0.583333          0.062500          True         NaN
+moving_peaks     value        exact    gaussian                 0        1.00       10               2             qnei  wilcoxon       27.0 1.000000        1.000000          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 moving_peaks / value
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-       qnei                  0.45                1.45                            0.187324                           59.453275               2           4
-      logei                  0.55                1.55                            0.328972                           61.519753               2           4
+       qnei                  0.45               1.475                            0.200604                           57.393215               3           4
+      logei                  0.55               1.525                            0.283568                           59.050955               1           4
 

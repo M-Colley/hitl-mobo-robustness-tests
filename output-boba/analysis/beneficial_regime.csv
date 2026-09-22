@@ -1,0 +1,2 @@
+dataset,error_model,jitter_std,jitter_iteration,mean,std,count,dz
+michalewicz,ar1,0.05,20,-0.13612272273605308,0.6481965136445167,100,-0.21000224449017227

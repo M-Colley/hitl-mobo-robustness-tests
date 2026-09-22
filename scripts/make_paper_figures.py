@@ -2,14 +2,18 @@
 
 Every figure here is a picture of a table the paper already prints, so the
 number a reader takes from the figure can be checked against the table, and
-the command that produced it is this file. Four figures:
+the command that produced it is this file. Five figures (decomposition.pdf is
+kept for the record; the paper now shows the per-landscape split instead):
 
-  dose_response.pdf   search loss and deployed loss against the error magnitude,
-                      one panel per onset, landscape-bootstrap bands
+  dose_response.pdf   deployed loss and search loss at the same final trial
+                      against the error magnitude (their gap is the selection
+                      loss), the trajectory average dashed, one panel per onset
   decomposition.pdf   the deployed excess split into search and selection loss,
                       per magnitude and onset, the selection share on each bar
   kcurve.pdf          gain over the standard process from a final comparative
                       sitting of k trials, with intervals, against the oracle
+  per_landscape.pdf   the headline cell (1 sigma from the first rating) per
+                      landscape: deployed excess as search plus selection loss
   frag_scatter.pdf    the one-shot selection loss of a landscape against the
                       cost the sweep measured on it, one point per landscape
                       and magnitude
@@ -30,6 +34,7 @@ from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.patches  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -95,25 +100,50 @@ def _style(ax, ylabel: str, xlabel: str | None = None) -> None:
 # ---------------------------------------------------------------------------
 
 
-def fig_dose_response(cells: pd.DataFrame, out: Path) -> None:
+def final_trial_excess(analysis: Path, opt_z: dict[str, float]) -> pd.DataFrame:
+    """Per noisy run: search and deployed excess over the clean twin at the final
+    trial, in units of opt_z. Paired exactly as decompose_regret.py pairs them, so
+    the gap between the two is the selection loss of Section 5."""
+    import decompose_regret as dr
+    runs = dr.load_runs(analysis / "ship_rules_per_run.csv", None)
+    runs = runs[~runs["acquisition"].isin(MODEL_FREE)]
+    table = dr.decompose(runs, opt_z)
+    clean = table[table["baseline"]]
+    noisy = table[~table["baseline"]]
+    base = clean.groupby(dr.PAIR_KEYS)[["deployed", "search"]].mean().rename(
+        columns={"deployed": "deployed_clean", "search": "search_clean"})
+    m = noisy.merge(base, on=dr.PAIR_KEYS, how="inner")
+    return m.assign(final_search=m["search"] - m["search_clean"],
+                    final_deployed=m["deployed"] - m["deployed_clean"])
+
+
+def fig_dose_response(cells: pd.DataFrame, final: pd.DataFrame, out: Path) -> None:
+    """Deployed loss against search loss at the SAME final trial, so the gap
+    between the two solid lines is the selection loss. The trajectory average,
+    the primary search response of the mechanistic sections, is the dashed line."""
     rng = np.random.default_rng(SEED)
     stds = sorted(cells["jitter_std"].unique())
-    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.4), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.2), sharey=True)
+    series = ((final, "final_search", SEARCH, "-", "search loss, final trial"),
+              (final, "final_deployed", DEPLOYED, "-", "deployed design, final trial"),
+              (cells, "fragility", INK2, "--", "search loss, trajectory average"))
     for ax, onset, title in zip(axes, (0, 20), ("error from trial 1", "error from trial 21")):
-        for value, colour, label in (("fragility", SEARCH, "search loss, trajectory average"),
-                                     ("deployed", DEPLOYED, "deployed design, final trial")):
+        for frame, value, colour, style, label in series:
             mean, lo, hi = [], [], []
             for s in stds:
-                per = (cells[(cells.jitter_std == s) & (cells.jitter_iteration == onset)]
+                per = (frame[(frame.jitter_std == s) & (frame.jitter_iteration == onset)]
                        .groupby("dataset")[value].mean().to_numpy())
                 m, l, h = boot_mean(per, rng)
                 mean.append(m); lo.append(l); hi.append(h)
-            ax.fill_between(stds, lo, hi, color=colour, alpha=0.18, linewidth=0)
-            ax.plot(stds, mean, color=colour, linewidth=1.4, marker="o", markersize=4.5,
-                    markeredgecolor="white", markeredgewidth=0.8, label=label)
-            # Direct label at the right end; the legend carries the full name.
-            ax.annotate(f"{mean[-1] * 100:.0f}%", (stds[-1], mean[-1]), xytext=(5, 0),
-                        textcoords="offset points", va="center", fontsize=7.5, color=INK2)
+            if style == "-":
+                ax.fill_between(stds, lo, hi, color=colour, alpha=0.18, linewidth=0)
+                ax.plot(stds, mean, color=colour, linewidth=1.4, marker="o", markersize=4.5,
+                        markeredgecolor="white", markeredgewidth=0.8, label=label)
+                # Direct label at the right end; the legend carries the full name.
+                ax.annotate(f"{mean[-1] * 100:.0f}%", (stds[-1], mean[-1]), xytext=(5, 0),
+                            textcoords="offset points", va="center", fontsize=7.5, color=INK2)
+            else:
+                ax.plot(stds, mean, color=colour, linewidth=1.0, linestyle=style, label=label)
         ax.set_xscale("log")
         ax.set_xticks(stds)
         ax.set_xticklabels([f"{s:g}" for s in stds])
@@ -125,6 +155,56 @@ def fig_dose_response(cells: pd.DataFrame, out: Path) -> None:
     axes[1].legend(frameon=False, loc="upper left")
     fig.tight_layout(w_pad=1.5)
     _save(fig, out, "dose_response")
+
+
+PRETTY = {
+    "ackley": "Ackley", "branin": "Branin", "eggholder": "Eggholder", "griewank": "Griewank",
+    "hartmann_3": "Hartmann-3", "hartmann_6": "Hartmann-6", "levy_10": "Levy-10",
+    "michalewicz": "Michalewicz", "moving_peaks": "Moving peaks", "powell": "Powell",
+    "rastrigin": "Rastrigin", "rosenbrock": "Rosenbrock", "schwefel": "Schwefel", "shekel": "Shekel",
+    "hicks_law": "Hick's law", "power_law_practice": "Practice law", "steering_law": "Steering law",
+    "stevens": "Stevens", "weber_fechner": "Weber-Fechner", "yerkes_dodson": "Yerkes-Dodson",
+}
+
+
+def fig_per_landscape(per: pd.DataFrame, out: Path, jitter_std: float = 1.0, onset: int = 0) -> None:
+    """The headline cell per landscape: the deployed excess as a stack of search
+    and selection loss, with the deployed interval. The six human-performance
+    laws, the smooth subset fixed before any result, sit on a grey band.
+
+    Input: per_landscape_headline.csv from smooth_subset_and_gp_diagnostics.py,
+    pooled over the four error processes, intervals bootstrapped over the
+    acquisitions and seeds within each landscape."""
+    cell = per[(per.error_model == "pooled") & (per.jitter_std == jitter_std)
+               & (per.jitter_iteration == onset)].sort_values("deployed").reset_index(drop=True)
+    if len(cell) != 20:
+        raise SystemExit(f"expected 20 landscapes in the headline cell, found {len(cell)}")
+    x = np.arange(len(cell))
+    fig, ax = plt.subplots(figsize=(WIDTH, 2.2))
+    for i, group in enumerate(cell["group"]):
+        if group == "law":
+            ax.axvspan(i - 0.5, i + 0.5, color=GRID, alpha=0.7, linewidth=0, zorder=0)
+    search = cell["search_final"].to_numpy()
+    selection = (cell["deployed"] - cell["search_final"]).to_numpy()
+    ax.bar(x, search, width=0.72, color=SEARCH, label="search loss", zorder=2)
+    ax.bar(x, selection, width=0.72, bottom=search, color=DEPLOYED, label="selection loss",
+           edgecolor="white", linewidth=0.8, zorder=2)
+    ax.errorbar(x, cell["deployed"], yerr=[cell["deployed"] - cell["deployed_lo"],
+                                          cell["deployed_hi"] - cell["deployed"]],
+                fmt="none", ecolor=INK2, elinewidth=0.8, capsize=1.8, zorder=3)
+    ax.set_xticks(x)
+    ax.set_xticklabels([PRETTY.get(n, n) for n in cell["landscape"]], rotation=55, ha="right",
+                       fontsize=7)
+    ax.set_xlim(-0.6, len(cell) - 0.4)
+    _style(ax, "deployed excess,\nfraction of achievable\nimprovement")
+    ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0, decimals=0))
+    ax.set_ylim(0, float(cell["deployed_hi"].max()) * 1.22)   # headroom for the legend
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(matplotlib.patches.Patch(color=GRID, alpha=0.7))
+    labels.append("human-performance law")
+    ax.legend(handles, labels, frameon=False, loc="upper left", ncol=3)
+    fig.tight_layout()
+    _save(fig, out, "per_landscape")
 
 
 def fig_decomposition(decomp: pd.DataFrame, out: Path) -> None:
@@ -168,7 +248,7 @@ def fig_kcurve(policies: pd.DataFrame, out: Path) -> None:
     fixed["k"] = fixed.policy.str.replace("fixed_k", "").astype(float)
     fixed = fixed.sort_values("k")
     oracle = policies[policies.policy == "oracle"].iloc[0]
-    fig, ax = plt.subplots(figsize=(WIDTH, 2.4))
+    fig, ax = plt.subplots(figsize=(WIDTH, 2.0))
     ax.axhline(0, color=INK2, linewidth=0.8)
     ax.axhline(oracle.gain_vs_standard, color=INK2, linewidth=0.8, linestyle="--")
     ax.annotate("oracle k per run", (fixed.k.max(), oracle.gain_vs_standard), xytext=(0, 3),
@@ -180,11 +260,13 @@ def fig_kcurve(policies: pd.DataFrame, out: Path) -> None:
                 color=SEARCH, linewidth=1.4, elinewidth=0.8, capsize=2.5, marker="o", markersize=4.5,
                 markeredgecolor="white", markeredgewidth=0.8, label="fixed k, all runs")
     # The argmax is not resolved: several k share overlapping intervals, so the
-    # label names the flat region rather than a winner.
+    # label names the flat top rather than a winner. The flat top is the k whose
+    # point estimate is within 0.0025 of the best, the definition the text uses;
+    # held out, the k chosen on seeds 7-11 always falls inside it.
     best = fixed.loc[fixed.gain_vs_standard.idxmax()]
-    flat = fixed[fixed.gain_hi >= best.gain_vs_standard]
-    ax.annotate(f"flat from k = {flat.k.min():g} to {flat.k.max():g},"
-                f" best +{best.gain_vs_standard:.3f}",
+    flat = fixed[fixed.gain_vs_standard >= best.gain_vs_standard - 0.0025]
+    ax.annotate(f"k = {flat.k.min():g} to {flat.k.max():g}: +{flat.gain_vs_standard.min():.3f}"
+                f" to +{best.gain_vs_standard:.3f}",
                 (best.k, best.gain_vs_standard), xytext=(0, 14),
                 textcoords="offset points", ha="center", fontsize=7.5, color=INK)
     ax.set_xticks(fixed.k)
@@ -252,11 +334,14 @@ def main(argv=None) -> None:
         raise SystemExit(f"no opt_z for {missing}")
     cells["deployed"] = cells.inference_excess / cells.dataset.map(opt_z)
 
-    fig_dose_response(cells, args.out)
+    fig_dose_response(cells, final_trial_excess(args.analysis, opt_z), args.out)
     fig_decomposition(pd.read_csv(args.analysis / "regret_decomposition.csv"), args.out)
+    headline = args.analysis / "review" / "per_landscape_headline.csv"
+    if headline.is_file():
+        fig_per_landscape(pd.read_csv(headline), args.out)
     fig_kcurve(pd.read_csv(args.policies or args.analysis / "budget_split_policies.csv"), args.out)
     rho = fig_frag_scatter(cells, stats, args.out)
-    for name in ("dose_response", "decomposition", "kcurve", "frag_scatter"):
+    for name in ("dose_response", "decomposition", "per_landscape", "kcurve", "frag_scatter"):
         print(f"wrote {args.out / (name + '.pdf')}")
     print(f"frag scatter: Spearman rho on log-log = {rho:.3f}")
 

@@ -1,0 +1,5 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+levy_10,value,exact,gaussian,0,0.25,noise-self_report_conf-r0,logei,5,2,1.4,0.3999999999999999,1.4,4.376931212198674,5.987875262073434,0.08932512677956476,42.1141901336009,0.0,True
+levy_10,value,exact,gaussian,0,0.25,noise-self_report_conf-r0,qnei,5,2,1.6,0.6000000000000001,1.6,9.855362846252513,5.314976612196119,0.20112985400515332,43.70706789333923,0.0,False
+levy_10,value,exact,gaussian,0,1.0,noise-self_report_conf-r0,qnei,5,2,1.0,0.0,1.2,1.6178984305697313,4.925436834576711,0.0330183353177496,35.46960347765645,0.0,True
+levy_10,value,exact,gaussian,0,1.0,noise-self_report_conf-r0,logei,5,2,2.0,1.0,1.8,18.618856786678265,6.959861796357963,0.37997666911588296,56.35611570808051,0.0,False

@@ -1,0 +1,52 @@
+Sensor-error simulation configuration
+============================================================
+
+Datasets:
+  - iso_eggholder: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\eggholder
+
+Objectives by dataset:
+  iso_eggholder: composite
+    composite: oracles=[extra_trees] acquisitions=[logei, qnei, ucb, ei, random, sobol]
+Error models: gaussian
+Requested oracle models: auto
+Seeds: 7, 8, 9, 10, 11
+
+Core settings:
+  iterations: 50
+  initial_samples: 5
+  candidate_pool: 1000
+  jitter_iterations: [0]
+  jitter_stds: [0.195499, 0.781998, 3.909988]
+  incumbent: posterior_mean
+  response_clip: none
+  response_round: None
+  single_error: False
+  baseline_run: True
+
+Oracle settings:
+  oracle_selection_path: output-oracle-iso\selection\iso_eggholder.json
+  augmentation: jitter
+  augmentation_repeats: 2
+  augmentation_std: 0.02
+  oracle_fast: False
+
+BO settings:
+  xi: 0.01
+  kappa: 2.0
+  acq_num_restarts: 10
+  acq_raw_samples: 512
+  acq_maxiter: 200
+  acq_mc_samples: 256
+
+Error model parameters:
+  error_bias: 0.2
+  error_spike_prob: 0.1
+  error_spike_std: 0.5
+
+Data filters:
+  user_id: None
+  group_id: None
+
+Normalization:
+  normalize_objective: False
+  objective_weights: None

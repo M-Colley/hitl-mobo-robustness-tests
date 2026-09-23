@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_power_law_practice: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\power_law_practice
+  - iso_power_law_practice: output-oracle-iso/data/power_law_practice
 
 Objectives by dataset:
   iso_power_law_practice: composite

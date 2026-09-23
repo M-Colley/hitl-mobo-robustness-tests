@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_hartmann_3: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\hartmann_3
+  - iso_hartmann_3: output-oracle-iso/data/hartmann_3
 
 Objectives by dataset:
   iso_hartmann_3: composite

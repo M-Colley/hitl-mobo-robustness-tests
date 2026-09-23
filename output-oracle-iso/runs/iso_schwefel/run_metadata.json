@@ -73,7 +73,7 @@
   "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
   "platform": "win32",
   "data_dir_commits": {
-    "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\schwefel": "ec612c1be38550738e61d0cdeeb0472fb88e7380"
+    "output-oracle-iso/data/schwefel": "ec612c1be38550738e61d0cdeeb0472fb88e7380"
   },
   "resolved_oracle_cv_r2": {
     "iso_schwefel:composite": 0.43211065941487165
@@ -91,7 +91,7 @@
     {
       "name": "iso_schwefel",
       "data_dirs": [
-        "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\schwefel"
+        "output-oracle-iso/data/schwefel"
       ],
       "param_columns": [
         "x0",

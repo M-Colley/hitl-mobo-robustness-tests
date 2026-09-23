@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_steering_law: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\steering_law
+  - iso_steering_law: output-oracle-iso/data/steering_law
 
 Objectives by dataset:
   iso_steering_law: composite

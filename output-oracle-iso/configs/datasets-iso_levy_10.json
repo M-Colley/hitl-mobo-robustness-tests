@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_levy_10",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\levy_10",
+    "data_dir": "output-oracle-iso/data/levy_10",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

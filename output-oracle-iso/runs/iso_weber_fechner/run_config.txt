@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_weber_fechner: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\weber_fechner
+  - iso_weber_fechner: output-oracle-iso/data/weber_fechner
 
 Objectives by dataset:
   iso_weber_fechner: composite

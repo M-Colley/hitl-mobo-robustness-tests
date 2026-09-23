@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_schwefel: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\schwefel
+  - iso_schwefel: output-oracle-iso/data/schwefel
 
 Objectives by dataset:
   iso_schwefel: composite

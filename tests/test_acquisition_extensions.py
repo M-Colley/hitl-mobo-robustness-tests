@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import importlib.util
 import json
 import math
 import sys
@@ -34,12 +33,11 @@ import bo_synthetic_error_simulation as syn  # noqa: E402
 
 # The simulator as it stood before these features were added (2026-09-14).
 # Where the copy exists, the index test compares against that module itself;
-# the pinned lists were copied from it and keep the check alive elsewhere.
-BACKUP_SIM = Path(
-    r"C:\Users\markc\AppData\Local\Temp\claude\C--Users-markc-Desktop-hitl-mobo-robustness-tests"
-    r"\a133aa05-04f4-4678-851c-66290dbc1d23\scratchpad\backup_2026-09-14\scripts"
-    r"\bo_sensor_error_simulation.py"
-)
+# elsewhere against its name lists, vendored in
+# tests/fixtures/bo_sim_backup_2026-09-14.json (register item D1). The pinned
+# lists below were copied from it.
+import _reference_fixtures as ref  # noqa: E402
+
 PRE_EXISTING_ACQUISITIONS = [
     "logei", "logpi", "ei", "pi", "ucb", "qucb", "qei", "qpi", "qnei", "greedy",
     "qkg", "replei",
@@ -135,12 +133,8 @@ def test_pre_existing_names_keep_their_indices():
     assert sim.INCUMBENT_CHOICES[2:] == ["lcb"]
 
 
-@pytest.mark.skipif(not BACKUP_SIM.is_file(), reason="pre-feature backup of the simulator not present")
 def test_pre_existing_names_match_the_backup_module():
-    spec = importlib.util.spec_from_file_location("bo_sim_backup_2026_09_14", BACKUP_SIM)
-    backup = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(backup)
+    backup = ref.backup_simulator("bo_sim_backup_2026_09_14")
     assert backup.ACQUISITION_CHOICES == PRE_EXISTING_ACQUISITIONS
     for name in backup.ACQUISITION_CHOICES:
         assert sim.ACQUISITION_CHOICES.index(name) == backup.ACQUISITION_CHOICES.index(name)

@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+stevens,value,exact,misclick,0,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.347340164257371,0.0,0
+stevens,value,exact,misclick,0,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.691895830317279,0.0,0
+stevens,value,exact,misclick,0,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,1.4489989847139966,0.0,2.599826928623659,0.0,3.8483416884021535,0.029571407851306054,12.796339148971366,0.0,0
+stevens,value,exact,misclick,0,0.05,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,2.9172051499169216,0.0,5.8908854573658465,0.0,8.049662201123963,0.059534798977896354,14.609100980234203,0.0,0
+stevens,value,exact,misclick,0,0.15,studenttrbf,logei,5,0.0,0.0,0.0,0.0,10.820739187371228,2.5293012138454545,13.326644974598437,1.0202473022148242,22.007439723040342,0.22083141198716794,22.1680793516286,0.0,0
+stevens,value,exact,misclick,0,0.15,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,4.310207650439583,2.0457861490907714,4.7882784083218715,0.7370402103624929,7.871320326468913,0.0879634214375425,16.002103480756865,0.0,0
+stevens,value,exact,misclick,0,0.4,studenttrbf,logei,5,0.0,0.0,0.25154728777410607,0.0,33.238821149264275,21.072370909064333,26.823286975435103,13.31757553240694,55.6799741577384,0.6783432887604953,44.58616131352164,0.25154728777410607,0
+stevens,value,exact,misclick,0,0.4,studenttrbf,qnei,5,0.0,0.0,0.21235803824579205,0.0979892439812797,21.993924899619863,21.621644577941893,12.1128459440398,12.533395533561485,30.764917105407175,0.4488556101963237,33.68582072993714,0.21235803824579205,0
+stevens,value,exact,misclick,20,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.347340164257371,0.0,0
+stevens,value,exact,misclick,20,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.691895830317279,0.0,0
+stevens,value,exact,misclick,20,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.347340164257371,0.0,0
+stevens,value,exact,misclick,20,0.05,studenttrbf,qnei,5,-0.05527792018623817,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.691895830317279,0.0,0
+stevens,value,exact,misclick,20,0.15,studenttrbf,logei,5,-0.08284271247461902,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.347340164257371,0.0,0
+stevens,value,exact,misclick,20,0.15,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.691895830317279,0.0,0
+stevens,value,exact,misclick,20,0.4,studenttrbf,logei,5,0.04506284622454999,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.347340164257371,0.0,0
+stevens,value,exact,misclick,20,0.4,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,11.691895830317279,0.0,0

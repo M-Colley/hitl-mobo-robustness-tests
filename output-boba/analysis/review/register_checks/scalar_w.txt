@@ -1,0 +1,9 @@
+Loaded 76,800 paired runs from 20 benchmarks.
+all 32 conditions excess_sd W=0.519 n=20 k=10
+all 32 conditions fragility W=0.519 n=20 k=10
+all 32 conditions fragility ['logei', 'ei', 'qei', 'qnei'] W=0.181 n=20 k=4
+all 32 conditions fragility ['logei', 'qnei', 'ucb', 'ei'] W=0.167 n=20 k=4
+gaussian only excess_sd W=0.516 n=20 k=10
+gaussian only fragility W=0.516 n=20 k=10
+gaussian only fragility ['logei', 'ei', 'qei', 'qnei'] W=0.105 n=20 k=4
+gaussian only fragility ['logei', 'qnei', 'ucb', 'ei'] W=0.111 n=20 k=4

@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+hicks_law,value,exact,misclick,0,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.986494487059975,0.0,0
+hicks_law,value,exact,misclick,0,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.97093774794506,0.0,0
+hicks_law,value,exact,misclick,0,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,23.5492884710236,0.0,33.60467403459405,0.0,52.44893440075322,0.48059772389844085,50.53578295808357,0.0,0
+hicks_law,value,exact,misclick,0,0.05,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,4.3948533087598705,0.0,11.320105791768196,-1.5434043615537505,14.727964287833363,0.08969088385224225,31.365791056704932,0.0,0
+hicks_law,value,exact,misclick,0,0.15,studenttrbf,logei,5,0.0,0.0,0.3558567969056711,0.0,27.073242329669785,17.08890582929956,33.8708218754359,3.860564148191839,56.30358014905816,0.5525151495850977,54.05973681672977,0.3558567969056711,0
+hicks_law,value,exact,misclick,0,0.15,studenttrbf,qnei,5,0.0,0.0,0.25691662133540005,0.0,30.900838682790493,29.569117970369206,26.12892745349462,11.827647188147683,49.88780039336381,0.6306293608732754,57.87177643073555,0.25691662133540005,0
+hicks_law,value,exact,misclick,0,0.4,studenttrbf,logei,5,0.0,0.0,0.7626863416323026,0.0,50.2990018596016,31.003397986814022,47.326085908894235,15.511422944829798,90.69137592900033,1.026510242032686,77.28549634666157,0.7626863416323026,0
+hicks_law,value,exact,misclick,0,0.4,studenttrbf,qnei,5,0.0,0.0,0.10934417723912179,0.0,39.1454270451748,31.43676653605344,18.011719482948955,25.358676435796962,53.27398633983366,0.798886266228057,66.11636479311986,0.10934417723912179,0
+hicks_law,value,exact,misclick,20,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.986494487059975,0.0,0
+hicks_law,value,exact,misclick,20,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.97093774794506,0.0,0
+hicks_law,value,exact,misclick,20,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.986494487059975,0.0,0
+hicks_law,value,exact,misclick,20,0.05,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.97093774794506,0.0,0
+hicks_law,value,exact,misclick,20,0.15,studenttrbf,logei,5,-0.2022940511543064,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.986494487059975,0.0,0
+hicks_law,value,exact,misclick,20,0.15,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.97093774794506,0.0,0
+hicks_law,value,exact,misclick,20,0.4,studenttrbf,logei,5,0.025029329671234325,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.986494487059975,0.0,0
+hicks_law,value,exact,misclick,20,0.4,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,26.97093774794506,0.0,0

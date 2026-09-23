@@ -26,9 +26,11 @@ What is delivered
   non-Gaussian likelihood -- there is no sparsity approximation at the sizes
   used in this study (``n <= ~100``);
 * Matern-5/2 ARD kernel with BoTorch's dimension-scaled log-normal
-  lengthscale prior (``get_covar_module_with_dim_scaled_prior``), i.e. the same
-  kernel family and prior as the ``SingleTaskGP`` used in
-  ``bo_sensor_error_simulation.py``;
+  lengthscale prior (``get_covar_module_with_dim_scaled_prior``). The prior is
+  the one the ``SingleTaskGP`` of ``bo_sensor_error_simulation.py`` uses, but
+  that model's kernel is RBF, so by default this surrogate changes the kernel
+  as well as the likelihood; ``use_rbf_kernel=True`` changes the likelihood
+  only (the simulator's ``--likelihood student_t_rbf``);
 * ``Standardize(m=1)`` outcome transform, supported natively by
   ``SingleTaskVariationalGP`` (it standardises ``train_Y`` once at construction
   and un-transforms the posterior), so outputs are standardised the same way
@@ -210,6 +212,7 @@ def build_robust_gp(
     warm_start: bool = True,
     fit: bool = True,
     optimizer_kwargs: dict | None = None,
+    use_rbf_kernel: bool = False,
 ) -> SingleTaskVariationalGP:
     """Fit a Student-t-likelihood variational GP on ``(train_X, train_Y)``.
 
@@ -242,8 +245,11 @@ def build_robust_gp(
     train_X, train_Y = _as_double_2d(train_X, train_Y)
     n, d = train_X.shape
 
+    # Matern-5/2 with ARD by default, which is what the published Student-t arm
+    # ran with; use_rbf_kernel=True gives the RBF kernel of the standard
+    # SingleTaskGP, so that the likelihood is the only thing that changes.
     covar_module = get_covar_module_with_dim_scaled_prior(
-        ard_num_dims=d, use_rbf_kernel=False  # Matern-5/2 with ARD
+        ard_num_dims=d, use_rbf_kernel=use_rbf_kernel
     ).to(train_X)
     input_transform = None
     unit_X = train_X

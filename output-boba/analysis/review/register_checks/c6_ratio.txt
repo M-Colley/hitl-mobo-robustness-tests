@@ -1,0 +1,6 @@
+Loaded 2,880 paired runs from 3 benchmarks.
+Loaded 76,800 paired runs from 20 benchmarks.
+fitted per dataset: {'ehmi': 0.753, 'opticarvis': 0.315, 'provoice': 0.308}
+synthetic mean 0.99 fitted mean 0.459 ratio 2.16
+20260910 percentile 95%: [1.   4.43] share of draws with fitted mean <= 0: n/a
+20260923 percentile 95%: [1.04 4.42] share of draws with fitted mean <= 0: n/a

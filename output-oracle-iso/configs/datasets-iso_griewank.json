@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_griewank",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\griewank",
+    "data_dir": "output-oracle-iso/data/griewank",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

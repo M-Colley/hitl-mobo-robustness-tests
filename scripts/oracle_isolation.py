@@ -97,7 +97,7 @@ def make_data(args) -> None:
             frame.to_csv(out / f"u_{i}" / "ObservationsPerEvaluation.csv", sep=";", index=False)
         config = [{
             "name": f"iso_{name}",
-            "data_dir": str(out.resolve()),
+            "data_dir": out.as_posix(),  # relative to the repository root, where every step runs
             "oracle_target": "individual",
             "param_columns": cols,
             "objective_map": {"composite": ["value"]},

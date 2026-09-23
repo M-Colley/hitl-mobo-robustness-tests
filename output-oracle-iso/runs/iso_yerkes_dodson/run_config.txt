@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_yerkes_dodson: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\yerkes_dodson
+  - iso_yerkes_dodson: output-oracle-iso/data/yerkes_dodson
 
 Objectives by dataset:
   iso_yerkes_dodson: composite

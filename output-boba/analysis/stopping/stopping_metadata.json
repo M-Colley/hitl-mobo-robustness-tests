@@ -2,7 +2,7 @@
   "args": {
     "input_dir": "output-boba",
     "output_dir": null,
-    "stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_landscape_stats.json",
+    "stats_path": "boba_landscape_stats.json",
     "functions": "all",
     "acquisitions": "logei,qnei",
     "error_models": "gaussian,bias,drift,ar1",

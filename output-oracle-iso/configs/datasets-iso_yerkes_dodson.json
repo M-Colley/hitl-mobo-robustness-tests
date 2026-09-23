@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_yerkes_dodson",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\yerkes_dodson",
+    "data_dir": "output-oracle-iso/data/yerkes_dodson",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

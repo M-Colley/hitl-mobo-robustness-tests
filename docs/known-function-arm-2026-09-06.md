@@ -866,7 +866,7 @@ rejected without review.
 ## 9. How to reproduce
 
 ```powershell
-$env:PYTHON = "C:\Users\markc\AppData\Local\Programs\Python\Python312\python.exe"
+$env:PYTHON = "python"
 powershell -ExecutionPolicy Bypass -File run_boba_pipeline.ps1
 ```
 

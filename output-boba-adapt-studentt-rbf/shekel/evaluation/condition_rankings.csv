@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+shekel,value,exact,misclick,0,0.01,studenttrbf,logei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,2484.2832054412806,0.0,True
+shekel,value,exact,misclick,0,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,2497.6021557670783,0.0,True
+shekel,value,exact,misclick,0,0.05,studenttrbf,logei,5,2,1.3,0.30000000000000004,1.5,-40.31426989471602,0.0,-0.8227402019329801,2443.9689355465644,0.0,True
+shekel,value,exact,misclick,0,0.05,studenttrbf,qnei,5,2,1.7,0.7,1.5,-26.99567898842279,0.0,-0.5509322242535262,2470.6064767786556,0.0,False
+shekel,value,exact,misclick,0,0.15,studenttrbf,qnei,5,2,1.4,0.3999999999999999,1.6,45.68790824048656,32.020358439172014,0.9324062906221741,2543.290064007565,0.0,True
+shekel,value,exact,misclick,0,0.15,studenttrbf,logei,5,2,1.6,0.6000000000000001,1.4,52.51877973327064,93.85772362716807,1.0718118312912381,2536.801985174551,0.0,False
+shekel,value,exact,misclick,0,0.4,studenttrbf,qnei,5,2,1.4,0.3999999999999999,1.6,167.70108153918017,110.36975358052223,3.4224710518200014,2665.3032373062583,0.0,True
+shekel,value,exact,misclick,0,0.4,studenttrbf,logei,5,2,1.6,0.6000000000000001,1.4,133.21861538588809,112.39825764098941,2.7187472527732224,2617.5018208271686,0.0,False
+shekel,value,exact,misclick,20,0.01,studenttrbf,logei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,2484.2832054412806,0.0,True
+shekel,value,exact,misclick,20,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.7,0.0,0.0,0.0,2497.6021557670783,0.0,True
+shekel,value,exact,misclick,20,0.05,studenttrbf,logei,5,2,1.5,0.5,1.3,0.0,0.0,0.0,2484.2832054412806,0.0,True
+shekel,value,exact,misclick,20,0.05,studenttrbf,qnei,5,2,1.5,0.5,1.7,1.5100546354068682,0.0,0.05207084949678205,2499.1122104024857,0.711399472905089,True
+shekel,value,exact,misclick,20,0.15,studenttrbf,logei,5,2,1.5,0.5,1.3,4.4782920948491665,0.0,0.15442386533962207,2488.76149753613,-0.25854168896246693,True
+shekel,value,exact,misclick,20,0.15,studenttrbf,qnei,5,2,1.5,0.5,1.7,16.448681644989755,0.0,0.5671959187927428,2514.050837412068,0.0,True
+shekel,value,exact,misclick,20,0.4,studenttrbf,logei,5,2,1.5,0.5,1.5,13.550105870752395,0.0,0.4672450300259442,2497.833311312033,-0.6067370104321249,True
+shekel,value,exact,misclick,20,0.4,studenttrbf,qnei,5,2,1.5,0.5,1.5,16.448681644989755,0.0,0.5671959187927428,2514.050837412068,0.7693497930432124,True

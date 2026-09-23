@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_power_law_practice",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\power_law_practice",
+    "data_dir": "output-oracle-iso/data/power_law_practice",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

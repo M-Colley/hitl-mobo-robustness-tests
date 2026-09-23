@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_hicks_law: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\hicks_law
+  - iso_hicks_law: output-oracle-iso/data/hicks_law
 
 Objectives by dataset:
   iso_hicks_law: composite

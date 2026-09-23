@@ -2,9 +2,9 @@
   "args": {
     "functions": "branincurrin,zdt1,dtlz2,vehiclesafety",
     "multi_objective": true,
-    "mo_stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_mo_stats.json",
+    "mo_stats_path": "boba_mo_stats.json",
     "boba_root": null,
-    "stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_landscape_stats.json",
+    "stats_path": "boba_landscape_stats.json",
     "iterations": 50,
     "initial_samples": 5,
     "candidate_pool": 1000,
@@ -103,7 +103,7 @@
   "boba_commit": null,
   "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
   "platform": "Windows-11-10.0.26200-SP0",
-  "landscape_stats_path": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\boba_landscape_stats.json",
+  "landscape_stats_path": "boba_landscape_stats.json",
   "landscape_stats": {
     "branincurrin": {
       "name": "branincurrin",

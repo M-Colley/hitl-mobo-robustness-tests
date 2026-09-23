@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_michalewicz: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\michalewicz
+  - iso_michalewicz: output-oracle-iso/data/michalewicz
 
 Objectives by dataset:
   iso_michalewicz: composite

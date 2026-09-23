@@ -1,0 +1,8 @@
+Oracle (extra_trees) trained on 1677 samples:
+  train R^2 (in-sample, optimistic; CV fidelity is in best_oracle_models.json): 0.9917
+  train RMSE: 0.0652
+ehmi extra_trees mean sigma_f=0.365 nugget/sigma_f=0.74
+Oracle (extra_trees) trained on 2211 samples:
+  train R^2 (in-sample, optimistic; CV fidelity is in best_oracle_models.json): 0.9113
+  train RMSE: 0.2144
+ehmi extra_trees individual sigma_f=0.315 nugget/sigma_f=0.86

@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_stevens: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\stevens
+  - iso_stevens: output-oracle-iso/data/stevens
 
 Objectives by dataset:
   iso_stevens: composite

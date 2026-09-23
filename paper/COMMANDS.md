@@ -51,14 +51,39 @@ minus sign. The pre-fix outputs are kept in `output/pre_fix_2026-09-23/` and
 `output-fitted*-prefix/`.
 
 ```
-python scripts/select_best_oracle_model.py --dataset-config datasets.json --objective composite --output-path output/best_oracle_models_postfix.json
-    # merged into output/best_oracle_models.json for opticarvis and provoice; ehmi and the
-    # multi-objective entries are unchanged
+python scripts/select_best_oracle_model.py --dataset-config datasets.json --objective composite --oracle-models xgboost,lightgbm,catboost,random_forest,extra_trees,gradient_boosting,hist_gradient_boosting --output-path output/best_oracle_models_postfix.json
+    # (the 2026-09-23 run also offered tabpfn; extra trees won on all three datasets, which is
+    # also the best of the seven families above, so the selected oracles are the same)
+python scripts/select_best_oracle_model.py --dataset-config datasets.json --objective composite --oracle-augmentation none --output-path output/best_oracle_models_postfix_noaug.json
+    # the held-out R2 without augmentation, compared within the seven families
+    # merged into output/best_oracle_models.json for opticarvis and provoice; ehmi is unchanged
+python scripts/select_best_oracle_model.py --dataset-config <datasets.json restricted to opticarvis and provoice> --objective multi_objective --oracle-models xgboost,lightgbm,catboost,random_forest,extra_trees,gradient_boosting,hist_gradient_boosting --output-path output/best_oracle_models_postfix_mo.json
+    # the multi-objective entries for the two fixed datasets (extra trees on both, CV R2 -0.16
+    # and -0.12), merged the same way; no result in the paper reads them
 python scripts/calibrate_noise_from_data.py --dataset-config datasets.json   # output/noise_calibration.csv
 python scripts/anchor_noise_scale.py                                          # output/noise_anchor.csv
 python scripts/make_per_dataset_configs.py                                    # output/per_dataset/
 powershell -File run_fitted_postfix.ps1                                       # output-fitted, -noaug, -adapt-rep10
 python scripts/analyse_fitted_companion.py                                    # output-fitted/analysis
+```
+
+## Checks behind individual sentences
+
+The currency-test curvature and spline checks, the manipulated-landscape
+intervals, the structural extra-trial zeros, the like-for-like Kendall's W, the
+multi-objective front, the nugget-radius sensitivity, the ehmi sigma_f on two
+surfaces, the companion ratio interval and the augmentation contrast per dataset
+are each a script under `scripts/review_checks/`:
+
+```
+python scripts/run_review_checks.py        # writes output-boba/analysis/review/register_checks/<check>.txt
+```
+
+## Student-t likelihood with the standard kernel
+
+```
+powershell -File run_boba_adapt_studentt_rbf.ps1   # output-boba-adapt-studentt-rbf (--likelihood student_t_rbf)
+python scripts/analyse_boba_adaptations.py --arms studentt-rbf
 ```
 
 ## Arms run by hand once

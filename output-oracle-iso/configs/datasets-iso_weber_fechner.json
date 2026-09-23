@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_weber_fechner",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\weber_fechner",
+    "data_dir": "output-oracle-iso/data/weber_fechner",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

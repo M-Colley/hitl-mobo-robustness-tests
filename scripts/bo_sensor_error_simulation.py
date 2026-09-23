@@ -553,7 +553,7 @@ INPUT_NOISE_MODEL_CHOICES = ["none", "nigp"]
 INFERENCE_RULE_CHOICES = ["best_observed", "best_mean"]
 # relevance_pursuit (appended): Ament et al.'s robust GP, which gives each
 # training point its own outlier variance and selects how many are non-zero.
-LIKELIHOOD_CHOICES = ["gaussian", "student_t", "relevance_pursuit"]
+LIKELIHOOD_CHOICES = ["gaussian", "student_t", "relevance_pursuit", "student_t_rbf"]
 MISSING_HANDLING_CHOICES = ["drop", "impute_low"]
 RATER_MODEL_CHOICES = ["none", "backfit"]
 CEILING_MODE_CHOICES = ["fixed", "anchored"]
@@ -691,6 +691,46 @@ def adaptation_fields(args: "argparse.Namespace") -> dict:
         "error_cross_corr": float(getattr(args, "error_cross_corr", 0.0) or 0.0),
         "mo_halo_model": getattr(args, "mo_halo_model", "none") or "none",
     }
+
+
+def code_stamp(repo_root: Path) -> dict:
+    """The code a run was produced with: the commit, and whether the simulator's
+    code or the dataset configs had uncommitted changes (register item I18)."""
+    def _git(*args: str) -> str | None:
+        try:
+            return subprocess.run(["git", "-C", str(repo_root), *args], capture_output=True,
+                                  text=True, check=True).stdout.strip()
+        except Exception:
+            return None
+    status = _git("status", "--porcelain", "--untracked-files=no", "--", "scripts", "datasets.json")
+    return {
+        "git_commit": _git("rev-parse", "HEAD"),
+        "code_dirty": None if status is None else bool(status),
+        "stamped_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        # the home directory is masked so that metadata served by the anonymous mirror stays anonymous
+        "argv": [arg.replace(str(Path.home()), "~") for arg in sys.argv],
+    }
+
+
+def append_invocation(metadata_path: Path, payload: dict, repo_root: Path) -> dict:
+    """Keep one record per invocation. A resumed sweep used to overwrite the
+    metadata of the invocation that produced most of its runs; now every
+    invocation's code stamp is kept, oldest first, under 'invocations'."""
+    history: list = []
+    if metadata_path.is_file():
+        try:
+            previous = json.loads(metadata_path.read_text(encoding="utf-8"))
+            history = list(previous.get("invocations") or [])
+            if not history and previous.get("git_commit"):
+                history = [{"git_commit": previous.get("git_commit"), "code_dirty": None,
+                            "stamped_at": None, "argv": None, "note": "recorded before invocations were kept"}]
+        except Exception:
+            history = []
+    stamp = code_stamp(repo_root)
+    payload = dict(payload)
+    payload["code_dirty"] = stamp["code_dirty"]
+    payload["invocations"] = history + [stamp]
+    return payload
 
 
 @dataclasses.dataclass
@@ -1852,7 +1892,10 @@ def parse_dataset_configs(
         for key, bounds in column_ranges.items():
             if not isinstance(bounds, (list, tuple)) or len(bounds) != 2:
                 raise ValueError(f"Dataset '{name}' column_ranges['{key}'] must be [low, high].")
-            cleaned_ranges[str(key)] = (float(bounds[0]), float(bounds[1]))
+            low, high = float(bounds[0]), float(bounds[1])
+            if not low <= high:
+                raise ValueError(f"Dataset '{name}' column_ranges['{key}'] has low {low} above high {high}.")
+            cleaned_ranges[str(key)] = (low, high)
 
         resolved_dirs = resolve_data_dirs([str(path) for path in data_dirs], cache_dir)
         datasets.append(
@@ -3727,7 +3770,7 @@ def run_simulation(
         raise NotImplementedError("The process adaptations are single-objective only.")
     if config.input_noise_model != "none" and config.observation_noise in ("known", "self_report"):
         raise ValueError("input_noise_model and observation_noise='known' both set train_Yvar; pick one.")
-    if config.likelihood == "student_t" and (
+    if config.likelihood in ("student_t", "student_t_rbf") and (
         is_multi or config.observation_noise in ("known", "self_report") or config.input_noise_model != "none"
     ):
         raise ValueError("likelihood='student_t' is single-objective with learned noise and no input-noise model.")
@@ -3925,13 +3968,14 @@ def run_simulation(
                         train_Y = torch.tensor(np.asarray(targets, dtype=float).reshape(-1, 1), dtype=torch.double)
                         if train_Yvar is not None:
                             train_Yvar = train_Yvar[row_index]
-                    if config.likelihood == "student_t":
+                    if config.likelihood in ("student_t", "student_t_rbf"):
                         scripts_dir = str(Path(__file__).resolve().parent)
                         if scripts_dir not in sys.path:
                             sys.path.insert(0, scripts_dir)
                         from robust_gp import build_robust_gp
 
-                        gp = build_robust_gp(train_X, train_Y, bounds=bounds_tensor)
+                        gp = build_robust_gp(train_X, train_Y, bounds=bounds_tensor,
+                                             use_rbf_kernel=config.likelihood == "student_t_rbf")
                         mll = None
                     elif config.likelihood == "relevance_pursuit":
                         gp, mll = fit_relevance_pursuit_gp(train_X, train_Y, bounds_tensor)
@@ -5167,6 +5211,7 @@ def main() -> None:
         return obj
 
     metadata_path = output_dir / "run_metadata.json"
+    metadata_payload = append_invocation(metadata_path, metadata_payload, REPO_ROOT)
     metadata_path.write_text(json.dumps(metadata_payload, indent=2, default=json_fallback))
 
     total_runtime = time.perf_counter() - runtime_start

@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_powell: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\powell
+  - iso_powell: output-oracle-iso/data/powell
 
 Objectives by dataset:
   iso_powell: composite

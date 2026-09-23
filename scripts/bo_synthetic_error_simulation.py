@@ -540,7 +540,7 @@ def _clean_run_settings(args: argparse.Namespace) -> dict:
     # no existing output directory lacks the marker they bring. student_t also
     # changes it but predates the marker, and tracking it now would refuse to
     # resume its arm.
-    if adapt["likelihood"] == "relevance_pursuit":
+    if adapt["likelihood"] in ("relevance_pursuit", "student_t_rbf"):
         settings["likelihood"] = adapt["likelihood"]
     if adapt["rater_model"] != "none":
         # The assignment decides who rated what in the clean run too.
@@ -1201,8 +1201,15 @@ def main(argv: list[str] | None = None) -> None:
         excess = build_excess_summary(summary_df)
         excess.to_csv(output_dir / "bo_synthetic_error_excess_summary.csv", index=False)
 
+    def _portable(value):
+        # paths inside the repository are recorded relative to it, so that the
+        # metadata names no local directory (the repository is mirrored anonymously)
+        text = str(value)
+        root = str(REPO_ROOT)
+        return Path(text).relative_to(root).as_posix() if text.startswith(root) else text
+
     metadata = {
-        "args": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
+        "args": {k: (_portable(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         "functions": functions,
         "acquisitions": acquisitions,
         "error_models": error_models,
@@ -1219,13 +1226,14 @@ def main(argv: list[str] | None = None) -> None:
         "boba_commit": _git_commit(Path(args.boba_root)) if args.boba_root else None,
         "python_version": sys.version,
         "platform": platform.platform(),
-        "landscape_stats_path": str(args.stats_path),
+        "landscape_stats_path": _portable(args.stats_path),
         "landscape_stats": {f: stats[f] for f in functions},
         "multi_objective": bool(args.multi_objective),
         "package_versions": sim.collect_package_versions(
             ["numpy", "pandas", "scipy", "scikit-learn", "botorch", "torch", "gpytorch", "tqdm"]
         ),
     }
+    metadata = sim.append_invocation(output_dir / "run_metadata.json", metadata, REPO_ROOT)
     (output_dir / "run_metadata.json").write_text(json.dumps(metadata, indent=2, default=str),
                                                   encoding="utf-8")
 

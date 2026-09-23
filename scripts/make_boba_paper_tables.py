@@ -1136,7 +1136,8 @@ ADAPTATION_GROUPS = [
         ("rerate-slip", "last six trials re-rate the top three"),
     ]),
     ("\\textsc{misclick}", [
-        ("studentt", "Student-$t$ surrogate"),
+        ("studentt", "Student-$t$ surrogate, Mat\\'ern kernel"),
+        ("studentt-rbf", "Student-$t$ likelihood, standard RBF kernel"),
     ]),
     ("changing what the rater is asked or when", [
         ("idea-selfreport", "the rater reports their precision"),

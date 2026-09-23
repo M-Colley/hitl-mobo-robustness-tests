@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+stevens,value,exact,misclick,0,0.01,studenttrbf,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,0,0.01,studenttrbf,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,0,0.05,studenttrbf,logei,auc_simple_regret_excess_true,5,1.4489989847139966,0.0,2.599826928623659,0.5573444019525917,-1.779112514118668,4.677110483546661,-0.42296891566136297,1.4820111095374386,1.2462599696449614,0.28067224784738615,0.0,0.5,0.3302608142971099,0.5
+stevens,value,exact,misclick,0,0.05,studenttrbf,qnei,auc_simple_regret_excess_true,5,2.9172051499169216,0.0,5.8908854573658465,0.4952065646208256,-4.397295240036365,10.231705539870209,-0.4674506697106229,1.4065711781835697,1.1073155413963083,0.3302608142971099,0.0,0.5,0.3302608142971099,0.5
+stevens,value,exact,misclick,0,0.15,studenttrbf,logei,auc_simple_regret_excess_true,5,10.820739187371228,2.5293012138454545,13.326644974598437,0.811962741409886,-5.726476094430769,27.367954469173224,-0.2528554525129725,1.8091403924817546,1.8156038849895886,0.14360877261868324,0.0,0.0625,0.21541315892802487,0.125
+stevens,value,exact,misclick,0,0.15,studenttrbf,qnei,auc_simple_regret_excess_true,5,4.310207650439583,2.0457861490907714,4.7882784083218715,0.900158111723116,-1.635225262550108,10.255640563429274,-0.1978757649978698,1.9284096848038612,2.0128147283107376,0.1144310498233134,0.0,0.125,0.21541315892802487,0.1875
+stevens,value,exact,misclick,0,0.4,studenttrbf,logei,auc_simple_regret_excess_true,5,33.238821149264275,21.072370909064333,26.823286975435103,1.2391777778653508,-0.0666886016214221,66.54433090014997,-0.0013664397809997676,2.409010209124379,2.7708857475140585,0.05028536547496808,0.0,0.0625,0.15085609642490425,0.125
+stevens,value,exact,misclick,0,0.4,studenttrbf,qnei,auc_simple_regret_excess_true,5,21.993924899619863,21.621644577941893,12.1128459440398,1.815752053747708,6.9538401751171595,37.03400962412257,0.29400252664191356,3.280214912901559,4.060145022464727,0.015346877264647509,0.0,0.0625,0.09208126358788506,0.125
+stevens,value,exact,misclick,20,0.01,studenttrbf,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.01,studenttrbf,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.05,studenttrbf,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.05,studenttrbf,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.15,studenttrbf,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.15,studenttrbf,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.4,studenttrbf,logei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,
+stevens,value,exact,misclick,20,0.4,studenttrbf,qnei,auc_simple_regret_excess_true,5,0.0,0.0,0.0,,,,,,,,,,,

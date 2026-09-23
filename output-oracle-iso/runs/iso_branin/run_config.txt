@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_branin: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\branin
+  - iso_branin: output-oracle-iso/data/branin
 
 Objectives by dataset:
   iso_branin: composite

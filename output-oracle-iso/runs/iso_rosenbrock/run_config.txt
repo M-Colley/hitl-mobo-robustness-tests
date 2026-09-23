@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_rosenbrock: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\rosenbrock
+  - iso_rosenbrock: output-oracle-iso/data/rosenbrock
 
 Objectives by dataset:
   iso_rosenbrock: composite

@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_griewank: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\griewank
+  - iso_griewank: output-oracle-iso/data/griewank
 
 Objectives by dataset:
   iso_griewank: composite

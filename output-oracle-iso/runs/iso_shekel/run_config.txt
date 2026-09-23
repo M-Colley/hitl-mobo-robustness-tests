@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_shekel: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\shekel
+  - iso_shekel: output-oracle-iso/data/shekel
 
 Objectives by dataset:
   iso_shekel: composite

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import importlib.util
 import json
 import math
 import sys
@@ -34,12 +33,10 @@ import bo_sensor_error_simulation as sim  # noqa: E402
 import bo_synthetic_error_simulation as syn  # noqa: E402
 
 # The simulator before this build (2026-09-14). The index test compares against
-# that module itself where the copy exists.
-BACKUP_SIM = Path(
-    r"C:\Users\markc\AppData\Local\Temp\claude\C--Users-markc-Desktop-hitl-mobo-robustness-tests"
-    r"\a133aa05-04f4-4678-851c-66290dbc1d23\scratchpad\backup_2026-09-14\scripts"
-    r"\bo_sensor_error_simulation.py"
-)
+# that module itself where the copy exists, and against its name lists, vendored
+# in tests/fixtures/bo_sim_backup_2026-09-14.json, elsewhere (register item D1).
+import _reference_fixtures as ref  # noqa: E402
+
 BRANIN = bb.BENCHMARKS["branin"]
 COLS = BRANIN.param_columns
 BOUNDS = sim.Bounds(low=BRANIN.bounds_low, high=BRANIN.bounds_high)
@@ -130,17 +127,13 @@ def _expected_training_targets(frame: pd.DataFrame, initial: int = 5) -> list[li
 
 def test_new_names_are_appended():
     assert sim.INPUT_ERROR_CHOICES == ["none", "slip", "misclick", "missing_mcar", "missing_low"]
-    assert sim.LIKELIHOOD_CHOICES == ["gaussian", "student_t", "relevance_pursuit"]
+    assert sim.LIKELIHOOD_CHOICES == ["gaussian", "student_t", "relevance_pursuit", "student_t_rbf"]
     assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
     assert sim.ACQUISITION_CHOICES[-3:] == ["ts", "aei", "shiplcb"]
 
 
-@pytest.mark.skipif(not BACKUP_SIM.is_file(), reason="pre-build backup of the simulator not present")
 def test_pre_existing_names_match_the_backup_module():
-    spec = importlib.util.spec_from_file_location("bo_sim_backup_errext_2026_09_14", BACKUP_SIM)
-    backup = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(backup)
+    backup = ref.backup_simulator("bo_sim_backup_errext_2026_09_14")
     for attr in ("ACQUISITION_CHOICES", "ERROR_MODEL_CHOICES", "INPUT_ERROR_CHOICES", "LIKELIHOOD_CHOICES",
                  "INCUMBENT_CHOICES", "INPUT_NOISE_MODEL_CHOICES", "INFERENCE_RULE_CHOICES",
                  "OBSERVATION_NOISE_CHOICES", "INPUT_ERROR_RECORDED_CHOICES"):

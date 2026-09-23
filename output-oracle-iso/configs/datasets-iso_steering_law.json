@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_steering_law",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\steering_law",
+    "data_dir": "output-oracle-iso/data/steering_law",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

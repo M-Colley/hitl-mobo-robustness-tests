@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+stevens,value,exact,misclick,0,0.01,studenttrbf,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.347340164257371,0.0,True
+stevens,value,exact,misclick,0,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.69189583031728,0.0,True
+stevens,value,exact,misclick,0,0.05,studenttrbf,logei,5,2,1.5,0.5,1.4,1.4489989847139966,0.0,0.029571407851306054,12.796339148971368,0.0,True
+stevens,value,exact,misclick,0,0.05,studenttrbf,qnei,5,2,1.5,0.5,1.6,2.9172051499169216,0.0,0.059534798977896354,14.609100980234203,0.0,True
+stevens,value,exact,misclick,0,0.15,studenttrbf,qnei,5,2,1.4,0.3999999999999999,1.4,4.310207650439582,2.0457861490907714,0.0879634214375425,16.002103480756865,0.0,True
+stevens,value,exact,misclick,0,0.15,studenttrbf,logei,5,2,1.6,0.6000000000000001,1.6,10.820739187371228,2.5293012138454545,0.220831411987168,22.1680793516286,0.0,False
+stevens,value,exact,misclick,0,0.4,studenttrbf,logei,5,2,1.4,0.3999999999999999,1.4,33.23882114926427,21.072370909064333,0.6783432887604952,44.58616131352164,0.0,True
+stevens,value,exact,misclick,0,0.4,studenttrbf,qnei,5,2,1.6,0.6000000000000001,1.6,21.993924899619863,21.621644577941893,0.4488556101963237,33.685820729937134,0.0,False
+stevens,value,exact,misclick,20,0.01,studenttrbf,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.347340164257371,0.0,True
+stevens,value,exact,misclick,20,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.69189583031728,0.0,True
+stevens,value,exact,misclick,20,0.05,studenttrbf,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.347340164257371,0.0,True
+stevens,value,exact,misclick,20,0.05,studenttrbf,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.69189583031728,-0.05527792018623817,True
+stevens,value,exact,misclick,20,0.15,studenttrbf,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.347340164257371,-0.08284271247461902,True
+stevens,value,exact,misclick,20,0.15,studenttrbf,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.69189583031728,0.0,True
+stevens,value,exact,misclick,20,0.4,studenttrbf,logei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.347340164257371,0.04506284622454999,True
+stevens,value,exact,misclick,20,0.4,studenttrbf,qnei,5,2,1.5,0.5,1.5,0.0,0.0,0.0,11.69189583031728,0.0,True

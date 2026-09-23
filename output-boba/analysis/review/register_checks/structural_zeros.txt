@@ -1,0 +1,32 @@
+
+== budget100 late onset (Table extra, right column): k=50, tol=0.01, onset t0=40 (shared prefix through trial 41) ==
+clean runs: 600; structural (origin <= 41): 505 = 84.2%
+  gaussian  0.05: n=  600 median=  0.0 zeros=87.5% structural=84.2% share of zeros structural=96.2% | non-structural: n=95 median=  2.0 never= 7.4%
+  gaussian  0.25: n=  600 median=  0.0 zeros=86.3% structural=84.2% share of zeros structural=97.5% | non-structural: n=95 median=  8.0 never=16.8%
+  gaussian     1: n=  600 median=  0.0 zeros=85.2% structural=84.2% share of zeros structural=98.8% | non-structural: n=95 median= 50.0 never=49.5%
+  gaussian     5: n=  600 median=  0.0 zeros=84.8% structural=84.2% share of zeros structural=99.2% | non-structural: n=95 median= 53.0 never=77.9%
+
+== budget100 early onset (Table extra, left column): k=25, tol=0.01, onset t0=0 (shared prefix through trial 5) ==
+clean runs: 600; structural (origin <= 5): 26 = 4.3%
+  gaussian  0.05: n=  600 median=  1.0 zeros=19.0% structural= 4.3% share of zeros structural=22.8% | non-structural: n=574 median=  1.0 never= 4.2%
+  gaussian  0.25: n=  600 median=  7.0 zeros=10.7% structural= 4.3% share of zeros structural=40.6% | non-structural: n=574 median=  8.0 never=14.5%
+  gaussian     1: n=  600 median= 40.5 zeros= 5.5% structural= 4.3% share of zeros structural=78.8% | non-structural: n=574 median= 46.0 never=40.2%
+  gaussian     5: n=  600 median= 78.0 zeros= 5.0% structural= 4.3% share of zeros structural=86.7% | non-structural: n=574 median= 78.0 never=73.2%
+
+A4 check, budget100, 1 sigma, onset 0, k=25, tol 0.01:
+  median extra=40.5; (k+median extra)/k=2.62; median origin=18.0; median tau=56.0; median tau/k=2.24; median tau/origin=3.55; censored=38.5%
+
+== main sweep early onset (Table extrafull): k=10, tol=0.01, onset t0=0 (shared prefix through trial 5) ==
+clean runs: 2000; structural (origin <= 5): 369 = 18.4%
+  ar1       0.05: n= 2000 median=  0.0 zeros=55.3% structural=18.4% share of zeros structural=33.4% | non-structural: n=1631 median=  0.0 never= 1.0%
+  ar1       0.25: n= 2000 median=  1.0 zeros=34.5% structural=18.4% share of zeros structural=53.4% | non-structural: n=1631 median=  2.0 never= 5.5%
+  ar1          1: n= 2000 median=  3.0 zeros=27.4% structural=18.4% share of zeros structural=67.3% | non-structural: n=1631 median=  7.0 never=26.4%
+  ar1          5: n= 2000 median= 23.0 zeros=21.3% structural=18.4% share of zeros structural=86.6% | non-structural: n=1631 median= 40.0 never=51.4%
+  drift     0.05: n= 2000 median=  0.0 zeros=45.9% structural=18.4% share of zeros structural=40.2% | non-structural: n=1631 median=  1.0 never= 1.6%
+  drift     0.25: n= 2000 median=  2.0 zeros=28.9% structural=18.4% share of zeros structural=63.7% | non-structural: n=1631 median=  3.0 never=10.7%
+  drift        1: n= 2000 median=  8.0 zeros=23.5% structural=18.4% share of zeros structural=78.3% | non-structural: n=1631 median= 16.0 never=34.6%
+  drift        5: n= 2000 median= 36.0 zeros=20.2% structural=18.4% share of zeros structural=91.6% | non-structural: n=1631 median= 40.0 never=59.7%
+  gaussian  0.05: n= 2000 median=  0.0 zeros=46.5% structural=18.4% share of zeros structural=39.7% | non-structural: n=1631 median=  0.0 never= 1.3%
+  gaussian  0.25: n= 2000 median=  1.0 zeros=29.5% structural=18.4% share of zeros structural=62.5% | non-structural: n=1631 median=  3.0 never= 9.8%
+  gaussian     1: n= 2000 median=  9.0 zeros=22.9% structural=18.4% share of zeros structural=80.7% | non-structural: n=1631 median= 17.0 never=32.4%
+  gaussian     5: n= 2000 median= 26.0 zeros=21.0% structural=18.4% share of zeros structural=87.9% | non-structural: n=1631 median= 40.0 never=54.4%

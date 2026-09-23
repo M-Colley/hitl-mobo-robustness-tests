@@ -1,0 +1,499 @@
+{
+ "_header": {
+  "what": "bo_sensor_error_simulation.py as it stood on 2026-09-14, before the acquisition-extension, error-extension and multi-objective halo builds: its name lists and one default multi-objective run, for the provenance tests of those builds",
+  "produced_at": "2026-09-23T21:17:35+01:00",
+  "produced_by": "python tests/fixtures/build_reference_fixtures.py backup --source bo_sensor_error_simulation.cpython-312.pyc",
+  "how": "constants: every module-level *_CHOICES list of the loaded module. calls: module.parse_error_models(None, 'all'). runs.mo_default_run: tests/test_mo_halo.py::_run(module, iterations=6) -- branincurrin, qlognehvi, seed 7, gaussian noise 0.5 SD from trial 1, jitter_rng seed 99 -- with fit_time_sec dropped; floats stored by repr, NaN as null. The current repository code is on sys.path for the module's own imports, as in the original tests.",
+  "source": {
+   "path": "<session scratch>/backup_2026-09-14/scripts/__pycache__/bo_sensor_error_simulation.cpython-312.pyc",
+   "sha256": "fd194bd5e1eb5678164ef26755a632518f905ba7a48c2f960c0458fdbf3fdfb9",
+   "bytes": 154865,
+   "pyc_header": {
+    "magic_hex": "cb0d0d0a",
+    "matches_running_interpreter": true,
+    "flags": 0,
+    "source_mtime": "2026-09-14T15:03:51+01:00",
+    "source_size_bytes": 155097
+   },
+   "note": "the .py copy had been deleted; this is the CPython 3.12 bytecode compiled from it on 2026-09-14, loaded with SourcelessFileLoader"
+  },
+  "repository": {
+   "git_commit": "395965ac28ca64d8f7f798c0827d82737bc14667",
+   "scripts_dirty": true
+  },
+  "environment": {
+   "python": "3.12.9",
+   "platform": "win32",
+   "machine": "AMD64",
+   "numpy": "2.5.3",
+   "scipy": "1.18.1",
+   "pandas": "3.0.5",
+   "torch": "2.13.0+cu126",
+   "gpytorch": "1.15.2",
+   "botorch": "0.18.2.dev23+geea35f51a"
+  }
+ },
+ "constants": {
+  "ACQUISITION_CHOICES": [
+   "logei",
+   "logpi",
+   "ei",
+   "pi",
+   "ucb",
+   "qucb",
+   "qei",
+   "qpi",
+   "qnei",
+   "greedy",
+   "qkg",
+   "replei",
+   "qehvi",
+   "qnehvi",
+   "qlogehvi",
+   "qlognehvi",
+   "random",
+   "sobol"
+  ],
+  "BASELINE_ACQUISITION_CHOICES": [
+   "random",
+   "sobol"
+  ],
+  "DEFAULT_ACQUISITION_CHOICES": [
+   "logei",
+   "logpi",
+   "ei",
+   "pi",
+   "ucb",
+   "qucb",
+   "qei",
+   "qpi",
+   "qnei",
+   "greedy",
+   "qehvi",
+   "qnehvi",
+   "qlogehvi",
+   "qlognehvi",
+   "random",
+   "sobol"
+  ],
+  "ERROR_MODEL_CHOICES": [
+   "gaussian",
+   "bias",
+   "dropout",
+   "spike",
+   "drift",
+   "ar1"
+  ],
+  "INCUMBENT_CHOICES": [
+   "posterior_mean",
+   "observed_max"
+  ],
+  "INFERENCE_RULE_CHOICES": [
+   "best_observed",
+   "best_mean"
+  ],
+  "INPUT_ERROR_CHOICES": [
+   "none",
+   "slip",
+   "misclick"
+  ],
+  "INPUT_ERROR_RECORDED_CHOICES": [
+   "proposed",
+   "actual"
+  ],
+  "INPUT_NOISE_MODEL_CHOICES": [
+   "none",
+   "nigp"
+  ],
+  "LIKELIHOOD_CHOICES": [
+   "gaussian",
+   "student_t"
+  ],
+  "MULTI_ACQUISITION_CHOICES": [
+   "qehvi",
+   "qnehvi",
+   "qlogehvi",
+   "qlognehvi"
+  ],
+  "OBSERVATION_NOISE_CHOICES": [
+   "learned",
+   "known"
+  ],
+  "ORACLE_MODEL_CHOICES": [
+   "xgboost",
+   "lightgbm",
+   "catboost",
+   "tabpfn",
+   "random_forest",
+   "extra_trees",
+   "gradient_boosting",
+   "hist_gradient_boosting"
+  ],
+  "ROBUST_ACQUISITION_CHOICES": [
+   "qkg",
+   "replei"
+  ],
+  "SINGLE_ACQUISITION_CHOICES": [
+   "logei",
+   "logpi",
+   "ei",
+   "pi",
+   "ucb",
+   "qucb",
+   "qei",
+   "qpi",
+   "qnei",
+   "greedy"
+  ]
+ },
+ "calls": {
+  "parse_error_models(None, 'all')": [
+   "gaussian",
+   "bias",
+   "dropout",
+   "spike",
+   "drift",
+   "ar1"
+  ]
+ },
+ "runs": {
+  "mo_default_run": {
+   "columns": [
+    "iteration",
+    "x0",
+    "x1",
+    "objective_true",
+    "objective_observed",
+    "objective_true_f0",
+    "objective_observed_f0",
+    "objective_true_f1",
+    "objective_observed_f1",
+    "error_applied",
+    "error_magnitude_l2",
+    "error_magnitude_f0",
+    "error_magnitude_f1",
+    "acquisition",
+    "acq_opt_failed",
+    "seed",
+    "run_id",
+    "error_model",
+    "jitter_std",
+    "jitter_iteration",
+    "oracle_model",
+    "objective",
+    "observation_noise",
+    "known_noise_var",
+    "param_columns",
+    "y_opt",
+    "best_true_so_far",
+    "regret_inst_true",
+    "regret_cum_true",
+    "simple_regret_true",
+    "regret_avg_true",
+    "inference_value_true",
+    "inference_simple_regret_true"
+   ],
+   "kinds": {
+    "iteration": "int",
+    "x0": "float",
+    "x1": "float",
+    "objective_true": "float",
+    "objective_observed": "float",
+    "objective_true_f0": "float",
+    "objective_observed_f0": "float",
+    "objective_true_f1": "float",
+    "objective_observed_f1": "float",
+    "error_applied": "bool",
+    "error_magnitude_l2": "float",
+    "error_magnitude_f0": "float",
+    "error_magnitude_f1": "float",
+    "acquisition": "str",
+    "acq_opt_failed": "bool",
+    "seed": "int",
+    "run_id": "str",
+    "error_model": "str",
+    "jitter_std": "float",
+    "jitter_iteration": "int",
+    "oracle_model": "str",
+    "objective": "str",
+    "observation_noise": "str",
+    "known_noise_var": "float",
+    "param_columns": "str",
+    "y_opt": "float",
+    "best_true_so_far": "float",
+    "regret_inst_true": "float",
+    "regret_cum_true": "float",
+    "simple_regret_true": "float",
+    "regret_avg_true": "float",
+    "inference_value_true": "float",
+    "inference_simple_regret_true": "float"
+   },
+   "data": {
+    "iteration": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "x0": [
+     0.625095466604667,
+     0.7756856902451935,
+     0.30016628491122543,
+     0.005265304565574724,
+     0.7970694287520462,
+     0.0
+    ],
+    "x1": [
+     0.8972138009695755,
+     0.22520718999059186,
+     0.8735534453962619,
+     0.8212284183827663,
+     0.4679349528437208,
+     0.5118013752621365
+    ],
+    "objective_true": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "objective_observed": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "objective_true_f0": [
+     -1.8596554032090595,
+     0.5897847129242478,
+     -0.0695250179944539,
+     0.4052546097751137,
+     0.05273134113133822,
+     -0.953388002659856
+    ],
+    "objective_observed_f0": [
+     -1.8184082510672082,
+     0.6150422444115663,
+     -0.9479202707839213,
+     0.17633319014322799,
+     -0.47075244000987476,
+     -0.6158977608700533
+    ],
+    "objective_true_f1": [
+     1.0894737586923795,
+     -0.6719823308425104,
+     0.6698687763360491,
+     2.256971495550157,
+     0.2732607259428083,
+     2.1614862582077423
+    ],
+    "objective_observed_f1": [
+     0.8572645512152701,
+     -0.32886692100187875,
+     1.5120845769058036,
+     1.9587614482473832,
+     0.739156737340206,
+     2.7837068591087935
+    ],
+    "error_applied": [
+     true,
+     true,
+     true,
+     true,
+     true,
+     true
+    ],
+    "error_magnitude_l2": [
+     0.2358441086755407,
+     0.34404378699075133,
+     1.2169246792026303,
+     0.3759444755261081,
+     0.7007812515713484,
+     0.7078546033536864
+    ],
+    "error_magnitude_f0": [
+     0.04124715214185137,
+     0.025257531487318463,
+     -0.8783952527894674,
+     -0.2289214196318857,
+     -0.523483781141213,
+     0.3374902417898027
+    ],
+    "error_magnitude_f1": [
+     -0.23220920747710938,
+     0.3431154098406316,
+     0.8422158005697544,
+     -0.2982100473027738,
+     0.4658960113973977,
+     0.6222206009010511
+    ],
+    "acquisition": [
+     "qlognehvi",
+     "qlognehvi",
+     "qlognehvi",
+     "qlognehvi",
+     "qlognehvi",
+     "qlognehvi"
+    ],
+    "acq_opt_failed": [
+     false,
+     false,
+     false,
+     false,
+     false,
+     false
+    ],
+    "seed": [
+     7,
+     7,
+     7,
+     7,
+     7,
+     7
+    ],
+    "run_id": [
+     "t",
+     "t",
+     "t",
+     "t",
+     "t",
+     "t"
+    ],
+    "error_model": [
+     "gaussian",
+     "gaussian",
+     "gaussian",
+     "gaussian",
+     "gaussian",
+     "gaussian"
+    ],
+    "jitter_std": [
+     0.5,
+     0.5,
+     0.5,
+     0.5,
+     0.5,
+     0.5
+    ],
+    "jitter_iteration": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "oracle_model": [
+     "exact",
+     "exact",
+     "exact",
+     "exact",
+     "exact",
+     "exact"
+    ],
+    "objective": [
+     "multi_objective",
+     "multi_objective",
+     "multi_objective",
+     "multi_objective",
+     "multi_objective",
+     "multi_objective"
+    ],
+    "observation_noise": [
+     "learned",
+     "learned",
+     "learned",
+     "learned",
+     "learned",
+     "learned"
+    ],
+    "known_noise_var": [
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25,
+     0.25
+    ],
+    "param_columns": [
+     "x0,x1",
+     "x0,x1",
+     "x0,x1",
+     "x0,x1",
+     "x0,x1",
+     "x0,x1"
+    ],
+    "y_opt": [
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006
+    ],
+    "best_true_so_far": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "regret_inst_true": [
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006
+    ],
+    "regret_cum_true": [
+     0.43708540178519006,
+     0.8741708035703801,
+     1.31125620535557,
+     1.7483416071407603,
+     2.1854270089259504,
+     2.6225124107111406
+    ],
+    "simple_regret_true": [
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006
+    ],
+    "regret_avg_true": [
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.4370854017851901
+    ],
+    "inference_value_true": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "inference_simple_regret_true": [
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006,
+     0.43708540178519006
+    ]
+   }
+  }
+ }
+}

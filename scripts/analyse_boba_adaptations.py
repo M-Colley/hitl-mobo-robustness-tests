@@ -123,6 +123,11 @@ ARMS = {
                 "noisy-input GP under an unnoticed slip", error_model="slip"),
     "studentt": arm("output-boba-adapt-studentt", "output-boba-misclick", "logei,qnei",
                     "Student-t surrogate under misclicks", error_model="misclick"),
+    # Register item B2: the arm above also swaps the RBF kernel for Matern-5/2.
+    # This one keeps the standard kernel, so the likelihood is the only change.
+    "studentt-rbf": arm("output-boba-adapt-studentt-rbf", "output-boba-misclick", "logei,qnei",
+                        "Student-t likelihood with the standard RBF kernel, under misclicks",
+                        error_model="misclick"),
     "fitted-rep10": arm("output-fitted-adapt-rep10", "output-fitted", "logei,qnei",
                         "first ten rated twice, on the three fitted-oracle datasets",
                         seeds="7,8,9,10,11,12,13,14,15,16", relative=True, error_model="gaussian"),
@@ -462,28 +467,32 @@ def main(argv=None) -> None:
                           f"{r.median_extra_ref:.0f}/{r.censored_fraction_ref:.0%}" for r in early.itertuples()))
 
     out = pd.DataFrame(rows)
-    # The pooled p was never corrected anywhere, yet the paper's table stars on it.
-    # One BH family per response over the arms, taking each arm's pooled p once.
-    if len(out):
-        out["pooled_wilcoxon_p_fdr"] = np.nan
-        for response, blk in out.groupby("response"):
-            one = blk.drop_duplicates(subset=["arm"])[["arm", "pooled_wilcoxon_p"]].dropna()
-            if len(one):
-                q = dict(zip(one["arm"], multipletests(one["pooled_wilcoxon_p"], method="fdr_bh")[1]))
-                sel = out["response"] == response
-                out.loc[sel, "pooled_wilcoxon_p_fdr"] = out.loc[sel, "arm"].map(q).astype(float)
     # Merge, never overwrite. A call with --arms used to truncate the file to the
     # arms it ran, which is how the budget-neutral numbers came to exist in no
     # artefact at all. Rows for the arms in THIS call replace their old selves;
     # every other arm is kept exactly as it was.
     recovery_path = args.output_dir / "adaptations_recovery.csv"
-    if recovery_path.is_file() and len(out):
+    if not len(out):
+        print("\nNone of the requested arms has results yet; nothing written.")
+        return
+    if recovery_path.is_file():
         previous = pd.read_csv(recovery_path)
         kept = previous[~previous["arm"].isin(set(out["arm"]))]
         if len(kept):
             print(f"  keeping {kept['arm'].nunique()} arm(s) "
                   f"already in {recovery_path.name}")
         out = pd.concat([kept, out], ignore_index=True)
+    # The pooled p was never corrected anywhere, yet the paper's table stars on it.
+    # One BH family per response over every arm in the merged file, taking each
+    # arm's pooled p once; correcting only the arms of this call made a one-arm
+    # call's q equal its p.
+    out["pooled_wilcoxon_p_fdr"] = np.nan
+    for response, blk in out.groupby("response"):
+        one = blk.drop_duplicates(subset=["arm"])[["arm", "pooled_wilcoxon_p"]].dropna()
+        if len(one):
+            q = dict(zip(one["arm"], multipletests(one["pooled_wilcoxon_p"], method="fdr_bh")[1]))
+            sel = out["response"] == response
+            out.loc[sel, "pooled_wilcoxon_p_fdr"] = out.loc[sel, "arm"].map(q).astype(float)
     out = out.sort_values(["arm", "response", "jitter_std", "jitter_iteration"], kind="stable")
     out.to_csv(recovery_path, index=False)
     # The extra-trials file is merged the same way, and a call that computed no

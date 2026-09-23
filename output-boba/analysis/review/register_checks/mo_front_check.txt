@@ -1,0 +1,12 @@
+140 groups; 0 orphans; problems ['branincurrin', 'carsideimpact', 'dh2', 'dtlz2', 'penicillin', 'vehiclesafety', 'zdt1']
+max |replayed - logged| front hypervolume: 6.821210263296962e-13
+              n   front  dominated  true_nd  recall  short_front  short_all  front_short_exceeds_all
+std  onset                                                                                          
+0.05 0      120  22.000      2.800   24.142   0.783       38.649     38.373                     True
+     20     120  21.917      2.417   24.683   0.786       38.373     38.140                     True
+0.25 0      120  16.750      4.158   19.933   0.560       60.707     56.062                     True
+     20     120  17.583      3.383   22.342   0.587       45.507     42.116                     True
+1.00 0      120  10.875      5.058   15.800   0.292      167.894    140.631                     True
+     20     120  12.717      4.842   18.108   0.353       88.384     57.976                     True
+5.00 0      120   9.217      5.800   13.850   0.163      269.017    205.985                     True
+     20     120   8.342      4.808   15.600   0.147      170.512     66.479                     True

@@ -1,0 +1,31 @@
+Loaded 2,880 paired runs from 3 benchmarks.
+Loaded 2,880 paired runs from 3 benchmarks.
+paired cells: 2400; pooled mean delta +0.0029 median +0.0000; noaug worse in 49.5%
+ehmi         n=  800 mean delta +0.0171 [-0.0034, +0.0370] (seed bootstrap, 10 seeds) median +0.0090 worse 54.4%
+     0.05sigma onset  0: aug +0.026  noaug +0.054  delta +0.028
+     0.05sigma onset 20: aug -0.006  noaug +0.008  delta +0.015
+     0.25sigma onset  0: aug +0.230  noaug +0.276  delta +0.046
+     0.25sigma onset 20: aug +0.052  noaug +0.079  delta +0.027
+        1sigma onset  0: aug +0.753  noaug +0.764  delta +0.010
+        1sigma onset 20: aug +0.098  noaug +0.094  delta -0.004
+        5sigma onset  0: aug +1.010  noaug +1.028  delta +0.017
+        5sigma onset 20: aug +0.105  noaug +0.103  delta -0.002
+opticarvis   n=  800 mean delta +0.0064 [-0.0056, +0.0184] (seed bootstrap, 10 seeds) median +0.0004 worse 50.2%
+     0.05sigma onset  0: aug +0.010  noaug +0.023  delta +0.012
+     0.05sigma onset 20: aug -0.003  noaug +0.018  delta +0.021
+     0.25sigma onset  0: aug +0.103  noaug +0.125  delta +0.023
+     0.25sigma onset 20: aug +0.047  noaug +0.060  delta +0.013
+        1sigma onset  0: aug +0.315  noaug +0.320  delta +0.005
+        1sigma onset 20: aug +0.131  noaug +0.127  delta -0.004
+        5sigma onset  0: aug +0.404  noaug +0.399  delta -0.005
+        5sigma onset 20: aug +0.159  noaug +0.146  delta -0.013
+provoice     n=  800 mean delta -0.0148 [-0.0555, +0.0202] (seed bootstrap, 10 seeds) median +0.0000 worse 43.9%
+     0.05sigma onset  0: aug +0.073  noaug +0.022  delta -0.050
+     0.05sigma onset 20: aug +0.018  noaug +0.020  delta +0.002
+     0.25sigma onset  0: aug +0.113  noaug +0.108  delta -0.004
+     0.25sigma onset 20: aug +0.023  noaug +0.061  delta +0.039
+        1sigma onset  0: aug +0.308  noaug +0.310  delta +0.001
+        1sigma onset 20: aug +0.056  noaug +0.055  delta -0.002
+        5sigma onset  0: aug +0.633  noaug +0.500  delta -0.132
+        5sigma onset 20: aug +0.025  noaug +0.053  delta +0.028
+['ei', 'greedy', 'logei', 'logpi', 'pi', 'qei', 'qnei', 'qpi', 'qucb', 'ucb'] [np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16)] ['gaussian']

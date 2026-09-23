@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_levy_10: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\levy_10
+  - iso_levy_10: output-oracle-iso/data/levy_10
 
 Objectives by dataset:
   iso_levy_10: composite

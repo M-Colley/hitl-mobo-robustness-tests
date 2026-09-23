@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_moving_peaks: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\moving_peaks
+  - iso_moving_peaks: output-oracle-iso/data/moving_peaks
 
 Objectives by dataset:
   iso_moving_peaks: composite

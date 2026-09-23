@@ -2,7 +2,7 @@ Sensor-error simulation configuration
 ============================================================
 
 Datasets:
-  - iso_ackley: C:\Users\markc\Desktop\hitl-mobo-robustness-tests\output-oracle-iso\data\ackley
+  - iso_ackley: output-oracle-iso/data/ackley
 
 Objectives by dataset:
   iso_ackley: composite

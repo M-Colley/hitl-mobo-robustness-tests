@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_moving_peaks",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\moving_peaks",
+    "data_dir": "output-oracle-iso/data/moving_peaks",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

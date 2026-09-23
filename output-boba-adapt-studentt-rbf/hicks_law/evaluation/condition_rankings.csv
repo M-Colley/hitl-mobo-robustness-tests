@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,misclick,0,0.01,studenttrbf,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,26.986494487059975,0.0,True
+hicks_law,value,exact,misclick,0,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,26.97093774794506,0.0,True
+hicks_law,value,exact,misclick,0,0.05,studenttrbf,qnei,5,2,1.3,0.30000000000000004,1.2,4.3948533087598705,0.0,0.08969088385224225,31.36579105670493,0.0,True
+hicks_law,value,exact,misclick,0,0.05,studenttrbf,logei,5,2,1.7,0.7,1.8,23.5492884710236,0.0,0.48059772389844085,50.53578295808357,0.0,False
+hicks_law,value,exact,misclick,0,0.15,studenttrbf,logei,5,2,1.4,0.3999999999999999,1.4,27.07324232966979,17.08890582929956,0.5525151495850977,54.05973681672977,0.0,True
+hicks_law,value,exact,misclick,0,0.15,studenttrbf,qnei,5,2,1.6,0.6000000000000001,1.6,30.900838682790493,29.569117970369206,0.6306293608732754,57.87177643073555,0.0,False
+hicks_law,value,exact,misclick,0,0.4,studenttrbf,logei,5,2,1.4,0.3999999999999999,1.4,50.2990018596016,31.003397986814022,1.026510242032686,77.28549634666157,0.0,True
+hicks_law,value,exact,misclick,0,0.4,studenttrbf,qnei,5,2,1.6,0.6000000000000001,1.6,39.1454270451748,31.43676653605344,0.798886266228057,66.11636479311986,0.0,False
+hicks_law,value,exact,misclick,20,0.01,studenttrbf,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,26.986494487059975,0.0,True
+hicks_law,value,exact,misclick,20,0.01,studenttrbf,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,26.97093774794506,0.0,True
+hicks_law,value,exact,misclick,20,0.05,studenttrbf,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,26.986494487059975,0.0,True
+hicks_law,value,exact,misclick,20,0.05,studenttrbf,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,26.97093774794506,0.0,True
+hicks_law,value,exact,misclick,20,0.15,studenttrbf,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,26.986494487059975,-0.2022940511543064,True
+hicks_law,value,exact,misclick,20,0.15,studenttrbf,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,26.97093774794506,0.0,True
+hicks_law,value,exact,misclick,20,0.4,studenttrbf,logei,5,2,1.5,0.5,1.4,0.0,0.0,0.0,26.986494487059975,0.025029329671234325,True
+hicks_law,value,exact,misclick,20,0.4,studenttrbf,qnei,5,2,1.5,0.5,1.6,0.0,0.0,0.0,26.97093774794506,0.0,True

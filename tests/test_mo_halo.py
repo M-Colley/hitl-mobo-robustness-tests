@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
-import importlib.util
 import json
 import math
 import sys
@@ -32,12 +31,11 @@ import boba_multiobjective as mob  # noqa: E402
 import bo_sensor_error_simulation as sim  # noqa: E402
 import bo_synthetic_error_simulation as syn  # noqa: E402
 
-# The simulator before this build (2026-09-14), where the copy exists.
-BACKUP_SIM = Path(
-    r"C:\Users\markc\AppData\Local\Temp\claude\C--Users-markc-Desktop-hitl-mobo-robustness-tests"
-    r"\a133aa05-04f4-4678-851c-66290dbc1d23\scratchpad\backup_2026-09-14\scripts"
-    r"\bo_sensor_error_simulation.py"
-)
+# The simulator before this build (2026-09-14): the module itself where the copy
+# exists, else its name lists and the default run below, vendored in
+# tests/fixtures/bo_sim_backup_2026-09-14.json (register item D1).
+import _reference_fixtures as ref  # noqa: E402
+
 PROBLEM = "branincurrin"
 SPEC = mob.MO_BENCHMARKS[PROBLEM]
 OUTPUT_NAMES = [sim._objective_output_name(c) for c in SPEC.objective_columns]
@@ -117,13 +115,7 @@ def test_no_acquisition_or_error_model_was_added():
 
 @pytest.fixture(scope="module")
 def backup_module():
-    if not BACKUP_SIM.is_file():
-        pytest.skip("pre-build backup of the simulator not present")
-    spec = importlib.util.spec_from_file_location("bo_sim_backup_halo_2026_09_14", BACKUP_SIM)
-    module = importlib.util.module_from_spec(spec)
-    assert spec.loader is not None
-    spec.loader.exec_module(module)
-    return module
+    return ref.backup_simulator("bo_sim_backup_halo_2026_09_14")
 
 
 def test_pre_existing_names_keep_their_indices(backup_module):
@@ -138,9 +130,15 @@ def test_pre_existing_names_keep_their_indices(backup_module):
 
 def test_a_default_multi_objective_run_reproduces_the_backup_simulator(backup_module):
     current = _run(sim, iterations=6)
-    backup = _run(backup_module, iterations=6)
     assert not HALO_COLUMNS & set(current.columns)
-    pd.testing.assert_frame_equal(_without_timing(current), _without_timing(backup), check_exact=True)
+    if ref.is_live(backup_module):
+        backup = _run(backup_module, iterations=6)
+        pd.testing.assert_frame_equal(_without_timing(current), _without_timing(backup), check_exact=True)
+        ref.assert_matches_backup_run(_without_timing(backup))  # the fixture is not stale
+    else:
+        # The same call on the 2026-09-14 simulator, recorded; exact where the
+        # environment is the fixture's, to 1e-6 relative on floats elsewhere.
+        ref.assert_matches_backup_run(_without_timing(current))
 
 
 # ---------------------------------------------------------------------------

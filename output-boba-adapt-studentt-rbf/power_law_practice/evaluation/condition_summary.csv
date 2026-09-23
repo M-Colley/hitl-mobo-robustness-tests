@@ -1,0 +1,17 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+power_law_practice,value,exact,misclick,0,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.107557824190854,0.0,0
+power_law_practice,value,exact,misclick,0,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.043414054539054,0.0,0
+power_law_practice,value,exact,misclick,0,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,1.8089666859966957,0.0,3.795281954037281,0.0,5.2445607272218755,0.03691768746932032,7.916524510187552,0.0,0
+power_law_practice,value,exact,misclick,0,0.05,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.7969801504631583,0.0,1.935914859147995,-0.16132833335256117,2.552268784742036,0.01626490102986038,6.840394205002211,0.0,0
+power_law_practice,value,exact,misclick,0,0.15,studenttrbf,logei,5,0.0,0.0,0.0,0.0,6.560611908750035,6.618244932126524,6.631989544536367,1.3000575980042632,11.821166219495806,0.13389003895408233,12.668169732940887,0.0,0
+power_law_practice,value,exact,misclick,0,0.15,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,2.996318135445439,0.1427832135766529,5.306499204359128,-0.21662322545658413,7.795947283519726,0.061149349702968134,9.039732189984493,0.0,0
+power_law_practice,value,exact,misclick,0,0.4,studenttrbf,logei,5,0.0,0.0,0.0,0.0,9.030098136721342,8.68308623456621,6.437549526454002,4.139072249652773,13.99788139283686,0.18428771707594577,15.137655960912195,0.0,0
+power_law_practice,value,exact,misclick,0,0.4,studenttrbf,qnei,5,0.0,0.0,0.02823370611270366,0.0,6.685196814956032,4.325492305563747,5.677864780042618,3.102486175777881,11.574388721251081,0.13643258806032718,12.728610869495087,0.02823370611270366,0
+power_law_practice,value,exact,misclick,20,0.01,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.107557824190854,0.0,0
+power_law_practice,value,exact,misclick,20,0.01,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.043414054539054,0.0,0
+power_law_practice,value,exact,misclick,20,0.05,studenttrbf,logei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.107557824190854,0.0,0
+power_law_practice,value,exact,misclick,20,0.05,studenttrbf,qnei,5,-0.0633480688151315,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.043414054539054,0.0,0
+power_law_practice,value,exact,misclick,20,0.15,studenttrbf,logei,5,-0.03018578965805232,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.107557824190854,0.0,0
+power_law_practice,value,exact,misclick,20,0.15,studenttrbf,qnei,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.043414054539054,0.0,0
+power_law_practice,value,exact,misclick,20,0.4,studenttrbf,logei,5,-0.044668098025348345,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.107557824190854,0.0,0
+power_law_practice,value,exact,misclick,20,0.4,studenttrbf,qnei,5,0.1543881386808757,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,6.043414054539054,0.0,0

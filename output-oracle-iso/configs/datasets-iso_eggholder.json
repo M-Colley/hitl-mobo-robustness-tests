@@ -1,7 +1,7 @@
 [
   {
     "name": "iso_eggholder",
-    "data_dir": "C:\\Users\\markc\\Desktop\\hitl-mobo-robustness-tests\\output-oracle-iso\\data\\eggholder",
+    "data_dir": "output-oracle-iso/data/eggholder",
     "oracle_target": "individual",
     "param_columns": [
       "x0",

@@ -10,7 +10,6 @@ from __future__ import annotations
 import importlib.util
 import math
 import pickle
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -33,8 +32,9 @@ sys.modules["bo_synth"] = bo_synth
 assert _spec.loader is not None
 _spec.loader.exec_module(bo_synth)
 
-BOBA_ROOT = Path("C:/Users/markc/Desktop/BOBA")
-HAS_BOBA = (BOBA_ROOT / "bayes_opt" / "simulation.py").exists()
+# BOBA's reference implementations are live where a checkout exists and vendored
+# in tests/fixtures/boba_reference.json everywhere else (register item D1).
+import _reference_fixtures as ref  # noqa: E402
 
 ANALYTIC = [name for name in bb.BOBA_ORDER if bb.BENCHMARKS[name].kind != "stochastic"]
 
@@ -79,60 +79,54 @@ class _FakeTabPFNRegressor:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not HAS_BOBA, reason="BOBA checkout not available on this machine")
+def _max_relative_error(mine: np.ndarray, theirs: np.ndarray) -> float:
+    denom = np.maximum(np.abs(theirs), 1.0)
+    return float(np.max(np.abs(mine - theirs) / denom))
+
+
 @pytest.mark.parametrize("name", ANALYTIC)
 def test_matches_boba_reference_implementation(name: str) -> None:
     """The vendored numpy copy must agree with BOBA's torch original.
 
     Tolerance is 1e-9 relative: the two evaluate the same closed form in the
     same double precision, so anything beyond floating-point reassociation
-    means the copy has drifted.
+    means the copy has drifted. BOBA's values come from its checkout where one
+    exists, and from tests/fixtures/boba_reference.json -- the same call at the
+    same points, recorded -- where none does.
     """
-    import torch
-
-    if str(BOBA_ROOT) not in sys.path:
-        sys.path.insert(0, str(BOBA_ROOT))
-    from bayes_opt import simulation as boba_sim
-
     spec = bb.BENCHMARKS[name]
-    reference = getattr(boba_sim, name)
-    rng = np.random.default_rng(20260906)
-    X = spec.lo + rng.random((40, spec.dim)) * (spec.hi - spec.lo)
-
+    X = ref.parity_points(spec)
     mine = bb.evaluate(name, X)
-    theirs = np.array([float(reference(torch.tensor(row, dtype=torch.double))) for row in X])
-    denom = np.maximum(np.abs(theirs), 1.0)
-    assert np.max(np.abs(mine - theirs) / denom) < 1e-9
+    vendored = ref.fixture_boba_values(name, X)
+    if ref.HAS_BOBA:
+        theirs = ref.live_boba_values(name, X)
+        assert _max_relative_error(vendored, theirs) < 1e-9, (
+            f"{name}: tests/fixtures/boba_reference.json no longer matches the BOBA checkout; "
+            "rerun tests/fixtures/build_reference_fixtures.py boba")
+    else:
+        theirs = vendored
+    assert _max_relative_error(mine, theirs) < 1e-9
 
 
-@pytest.mark.skipif(not HAS_BOBA, reason="BOBA checkout not available on this machine")
 def test_registry_matches_boba_tables() -> None:
     """dims, boxes and recorded optima must match BOBA's parallel_main.py.
 
-    Read out of the source rather than imported: importing parallel_main pulls
-    in the whole BOBA harness.
+    Read out of the source rather than imported (importing parallel_main pulls
+    in the whole BOBA harness) where a checkout exists, else from the fixture.
     """
-    source = (BOBA_ROOT / "parallel_main.py").read_text(encoding="utf-8")
-    namespace: dict[str, object] = {}
-    for table in ("SIMULATION_FUNCTIONS", "BOUNDS", "DIMS", "Y_BEST"):
-        match = re.search(rf"^{table}\s*=\s*\[", source, flags=re.MULTILINE)
-        assert match is not None, f"{table} not found in BOBA/parallel_main.py"
-        start = match.start()
-        depth = 0
-        for offset, char in enumerate(source[start:], start=start):
-            if char == "[":
-                depth += 1
-            elif char == "]":
-                depth -= 1
-                if depth == 0:
-                    end = offset + 1
-                    break
-        exec(source[start:end], {}, namespace)  # noqa: S102 - fixed local file
+    vendored = ref.fixture_boba_tables()
+    if ref.HAS_BOBA:
+        tables = ref.live_boba_tables()
+        assert tables == vendored, (
+            "tests/fixtures/boba_reference.json no longer matches BOBA/parallel_main.py; "
+            "rerun tests/fixtures/build_reference_fixtures.py boba")
+    else:
+        tables = vendored
 
-    names = namespace["SIMULATION_FUNCTIONS"]
-    bounds = namespace["BOUNDS"]
-    dims = namespace["DIMS"]
-    y_best = namespace["Y_BEST"]
+    names = tables["SIMULATION_FUNCTIONS"]
+    bounds = tables["BOUNDS"]
+    dims = tables["DIMS"]
+    y_best = tables["Y_BEST"]
 
     assert list(names) == bb.BOBA_ORDER
     for name, box, spatial_dim, best in zip(names, bounds, dims, y_best):

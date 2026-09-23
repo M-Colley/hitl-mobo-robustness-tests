@@ -1,0 +1,5 @@
+error_model,variant,jitter_std,jitter_iteration,k,tolerance,budget,n_runs,n_landscapes,mean_extra,ci_low,ci_high,median_extra,mean_extra_reached,mean_multiplier,censored_fraction
+gaussian,noise-self_report_conf-r0.6,0.25,0,10,0.01,50,200,20,4.765,3.2947499999999996,6.66025,1.0,3.0366492146596857,1.4764999999999997,0.045
+gaussian,noise-self_report_conf-r0.6,0.25,0,25,0.01,50,200,20,9.89,7.205,13.030124999999996,5.0,4.785276073619632,1.3956,0.185
+gaussian,noise-self_report_conf-r0.6,1.0,0,10,0.01,50,200,20,10.205,7.979625000000001,12.595749999999997,3.0,6.11864406779661,2.0205,0.115
+gaussian,noise-self_report_conf-r0.6,1.0,0,25,0.01,50,200,20,18.61,15.789750000000002,21.474999999999998,24.0,8.508771929824562,1.7444,0.43

@@ -424,7 +424,10 @@ def main(argv=None) -> None:
                       f"gain {r['gain']:+7.3f}  price {r['price']:+7.3f}  recovered {r['recovered']:+6.0%} "
                       f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]{star}")
 
-        if args.no_extra_trials or spec["relative"] or spec["pool"]:
+        # analyse_extra_runs.py reads a whole directory, so an arm that is one
+        # variant among several in its directory (spike sizes, cap modes) would
+        # mix them; those arms have no extra-trial rows.
+        if args.no_extra_trials or spec["relative"] or spec["pool"] or spec.get("variant"):
             continue
         # Extra trials against the STANDARD clean run: the arm's noisy runs and the
         # reference's own noisy runs, both targeting the reference's clean runs.
@@ -483,7 +486,19 @@ def main(argv=None) -> None:
         out = pd.concat([kept, out], ignore_index=True)
     out = out.sort_values(["arm", "response", "jitter_std", "jitter_iteration"], kind="stable")
     out.to_csv(recovery_path, index=False)
-    pd.DataFrame(extra_rows).to_csv(args.output_dir / "adaptations_extra_runs.csv", index=False)
+    # The extra-trials file is merged the same way, and a call that computed no
+    # extra trials (--no-extra-trials, or only relative/pooled arms) leaves it
+    # alone: on 2026-09-22 such calls truncated it to an empty frame, and the
+    # extra-trial numbers of the process-adaptations appendix went with it.
+    extra_path = args.output_dir / "adaptations_extra_runs.csv"
+    extra = pd.DataFrame(extra_rows)
+    if len(extra):
+        if extra_path.is_file() and extra_path.stat().st_size > 10:
+            previous = pd.read_csv(extra_path)
+            if "arm" in previous.columns:
+                extra = pd.concat([previous[~previous["arm"].isin(set(extra["arm"]))], extra],
+                                  ignore_index=True)
+        extra.to_csv(extra_path, index=False)
     print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'} and adaptations_extra_runs.csv")
 
 

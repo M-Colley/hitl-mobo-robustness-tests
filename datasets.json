@@ -15,13 +15,35 @@
       "volume"
     ],
     "objective_map": {
-      "composite": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],
-      "multi_objective": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],
-      "trust": ["Trust"],
-      "understanding": ["Understanding"],
-      "perceived_safety": ["PerceivedSafety"],
-      "aesthetics": ["Aesthetics"],
-      "acceptance": ["Acceptance"]
+      "composite": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "multi_objective": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "trust": [
+        "Trust"
+      ],
+      "understanding": [
+        "Understanding"
+      ],
+      "perceived_safety": [
+        "PerceivedSafety"
+      ],
+      "aesthetics": [
+        "Aesthetics"
+      ],
+      "acceptance": [
+        "Acceptance"
+      ]
     }
   },
   {
@@ -47,8 +69,42 @@
       "OccludedCars"
     ],
     "objective_map": {
-      "composite": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"],
-      "multi_objective": ["Trust", "Understanding", "PerceivedSafety", "Aesthetics", "Acceptance"]
+      "composite": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ],
+      "multi_objective": [
+        "Trust",
+        "Understanding",
+        "PerceivedSafety",
+        "Aesthetics",
+        "Acceptance"
+      ]
+    },
+    "column_ranges": {
+      "Trust": [
+        -1.0,
+        1.0
+      ],
+      "Understanding": [
+        -1.0,
+        1.0
+      ],
+      "PerceivedSafety": [
+        -1.0,
+        1.0
+      ],
+      "Aesthetics": [
+        -1.0,
+        1.0
+      ],
+      "Acceptance": [
+        -1.0,
+        1.0
+      ]
     }
   },
   {
@@ -61,11 +117,25 @@
       "LevelOfAutonomy"
     ],
     "objective_map": {
-      "composite": ["Predictability", "Percieved Usefulness", "-Mental Demand"],
-      "multi_objective": ["Predictability", "Percieved Usefulness", "-Mental Demand"],
-      "predictability": ["Predictability"],
-      "usefulness": ["Percieved Usefulness"],
-      "mental_demand": ["-Mental Demand"]
+      "composite": [
+        "-Predictability",
+        "Percieved Usefulness",
+        "-Mental Demand"
+      ],
+      "multi_objective": [
+        "-Predictability",
+        "Percieved Usefulness",
+        "-Mental Demand"
+      ],
+      "predictability": [
+        "-Predictability"
+      ],
+      "usefulness": [
+        "Percieved Usefulness"
+      ],
+      "mental_demand": [
+        "-Mental Demand"
+      ]
     }
   }
 ]

@@ -83,6 +83,28 @@
         "Aesthetics",
         "Acceptance"
       ]
+    },
+    "column_ranges": {
+      "Trust": [
+        -1.0,
+        1.0
+      ],
+      "Understanding": [
+        -1.0,
+        1.0
+      ],
+      "PerceivedSafety": [
+        -1.0,
+        1.0
+      ],
+      "Aesthetics": [
+        -1.0,
+        1.0
+      ],
+      "Acceptance": [
+        -1.0,
+        1.0
+      ]
     }
   },
   {
@@ -96,17 +118,17 @@
     ],
     "objective_map": {
       "composite": [
-        "Predictability",
+        "-Predictability",
         "Percieved Usefulness",
         "-Mental Demand"
       ],
       "multi_objective": [
-        "Predictability",
+        "-Predictability",
         "Percieved Usefulness",
         "-Mental Demand"
       ],
       "predictability": [
-        "Predictability"
+        "-Predictability"
       ],
       "usefulness": [
         "Percieved Usefulness"

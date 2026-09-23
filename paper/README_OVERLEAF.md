@@ -10,7 +10,7 @@ itself. The build must finish with **zero errors and zero undefined references**
 | file | role |
 |---|---|
 | `main.tex` | the paper; nothing else is `\input` except the tables below |
-| `references.bib` | 39 entries, 38 cited |
+| `references.bib` | 61 entries |
 | `iclr2027_conference.sty`, `.bst` | the **official** ICLR 2027 style, byte-for-byte from `github.com/ICLR/Master-Template/iclr2027` — do not edit |
 | `natbib.sty`, `fancyhdr.sty`, `math_commands.tex` | vendored with the style, as upstream ships them |
 | `tables/*.tex` | generated tables; regenerate with `python scripts/make_boba_paper_tables.py`, never by hand |
@@ -56,13 +56,15 @@ text and read that last line.
 
 - **A DOI.** The reproducibility statement says an archived snapshot with a DOI
   will accompany the camera-ready version; that deposit is yours to make.
-- **Two defects in the fitted-oracle companion's data** (Appendix B, "The error
-  processes in the archival data"): `opticarvis` mixes two rating scales in 40 of
-  586 rows, and `provoice` enters Predictability with the wrong sign. The paper
-  states both and relies instead on the oracle-isolation experiment; fixing
-  `datasets.json` and rerunning the companion arm is a few hours of compute.
-- The references in `references.bib` added on 2026-09-22 were checked against
-  publisher records; the older conference and arXiv entries were not all.
+- The two archival-data defects found on 2026-09-22 (`opticarvis` mixed two
+  rating scales in 40 of 586 rows; `provoice` entered Predictability with the
+  wrong sign) are fixed in `datasets.json`, and the noise anchor and every
+  fitted-oracle arm were rerun on the fixed data on 2026-09-23.
+- The references added on 2026-09-22 and 2026-09-23 were checked against
+  publisher records, and `mechcheck` (profile `paper-anonymous`) found the whole
+  bibliography resolvable except four entries that exist but are not indexed
+  (a tutorial and a handbook chapter among them); the older conference and
+  arXiv entries were not all checked by hand.
 
 The full list of open items is `handover/findings.md` in the repository — it is
 the single register, with severity and status columns.

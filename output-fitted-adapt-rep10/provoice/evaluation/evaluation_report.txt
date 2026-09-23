@@ -28,14 +28,14 @@ Statistical notes
 
 Condition-level omnibus tests
  dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-provoice composite  extra_trees    gaussian                 0    0.014918       10               2            logei  wilcoxon       24.0 0.769531             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                 0    0.074591       10               2             qnei  wilcoxon       26.0 0.921875             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                 0    0.298364       10               2            logei  wilcoxon       22.0 0.625000             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                 0    1.491820       10               2            logei  wilcoxon       24.0 0.769531             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                20    0.014918       10               2            logei  wilcoxon       26.0 0.921875             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                20    0.074591       10               2            logei  wilcoxon       27.0 1.000000             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                20    0.298364       10               2            logei  wilcoxon       23.0 0.695312             1.0          0.001953         False         NaN
-provoice composite  extra_trees    gaussian                20    1.491820       10               2             qnei  wilcoxon       17.0 0.322266             1.0          0.001953         False         NaN
+provoice composite  extra_trees    gaussian                 0    0.022429       10               2            logei  wilcoxon        0.0 0.001953        0.015625          0.001953         False         NaN
+provoice composite  extra_trees    gaussian                 0    0.112147       10               2            logei  wilcoxon       23.0 0.695312        1.000000          0.001953         False         NaN
+provoice composite  extra_trees    gaussian                 0    0.448589       10               2             qnei  wilcoxon       27.0 1.000000        1.000000          0.001953         False         NaN
+provoice composite  extra_trees    gaussian                 0    2.242944       10               2             qnei  wilcoxon       12.0 0.130859        0.500000          0.001953         False         NaN
+provoice composite  extra_trees    gaussian                20    0.022429       10               2            logei  wilcoxon        5.0 0.312500        0.625000          0.031250         False         NaN
+provoice composite  extra_trees    gaussian                20    0.112147       10               2            logei  wilcoxon       10.0 1.000000        1.000000          0.031250         False         NaN
+provoice composite  extra_trees    gaussian                20    0.448589       10               2            logei  wilcoxon        9.0 0.843750        1.000000          0.031250         False         NaN
+provoice composite  extra_trees    gaussian                20    2.242944       10               2             qnei  wilcoxon        2.0 0.187500        0.500000          0.062500          True         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 provoice / composite
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-       qnei                 0.475               1.475                            0.058820                           31.050628               7           8
-      logei                 0.525               1.525                            0.056752                           31.402936               6           8
+      logei               0.45625              1.4125                            0.037417                            8.391342               5           8
+       qnei               0.54375              1.5875                            0.035216                            8.156366               4           8
 

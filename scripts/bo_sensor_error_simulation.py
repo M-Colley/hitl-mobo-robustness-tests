@@ -707,6 +707,13 @@ class DatasetConfig:
     #                  simulator's injected feedback noise then models the
     #                  individual deviation that averaging removes.
     oracle_target: str = "individual"
+    # The range each rating column is logged on, {column: (low, high)}. A row
+    # with any listed column outside its range was logged on another scale and
+    # is dropped, loudly. opticarvis needs it: 40 of its 586 rows carry the raw
+    # instrument values (1-5, 1-7, -3..3) where every other row carries the
+    # value rescaled to [-1, 1], and averaging the two scales puts a spike of
+    # about 4 on a surface that otherwise lies in [-1, 1].
+    column_ranges: dict[str, tuple[float, float]] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1163,6 +1170,17 @@ def load_observations(
         df = _filter_by_id(df, "Group_ID", group_id)
 
     df = df.dropna(subset=dataset.param_columns + _objective_required_columns(objective_columns))
+    if dataset.column_ranges:
+        off_scale = np.zeros(len(df), dtype=bool)
+        for column, (low, high) in dataset.column_ranges.items():
+            if column not in df.columns:
+                continue
+            values = pd.to_numeric(df[column], errors="coerce").to_numpy(float)
+            off_scale |= (values < float(low) - 1e-9) | (values > float(high) + 1e-9)
+        if off_scale.any():
+            print(f"[{dataset.name}] dropping {int(off_scale.sum())} of {len(df)} rows logged outside "
+                  f"their column ranges (another rating scale)", file=sys.stderr)
+            df = df[~off_scale]
     if df.empty:
         raise ValueError("No data remaining after applying user/group filters.")
     return df.reset_index(drop=True)
@@ -1827,6 +1845,15 @@ def parse_dataset_configs(
                 raise ValueError(f"Objective '{key}' for dataset '{name}' must be a list of columns.")
             cleaned_objective_map[str(key)] = [str(col) for col in value]
 
+        column_ranges = entry.get("column_ranges", {}) or {}
+        if not isinstance(column_ranges, dict):
+            raise ValueError(f"Dataset '{name}' column_ranges must be a dict of [low, high].")
+        cleaned_ranges: dict[str, tuple[float, float]] = {}
+        for key, bounds in column_ranges.items():
+            if not isinstance(bounds, (list, tuple)) or len(bounds) != 2:
+                raise ValueError(f"Dataset '{name}' column_ranges['{key}'] must be [low, high].")
+            cleaned_ranges[str(key)] = (float(bounds[0]), float(bounds[1]))
+
         resolved_dirs = resolve_data_dirs([str(path) for path in data_dirs], cache_dir)
         datasets.append(
             DatasetConfig(
@@ -1836,6 +1863,7 @@ def parse_dataset_configs(
                 objective_map=cleaned_objective_map,
                 observation_glob=str(observation_glob),
                 oracle_target=oracle_target,
+                column_ranges=cleaned_ranges,
             )
         )
 

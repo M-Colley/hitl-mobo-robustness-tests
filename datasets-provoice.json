@@ -10,17 +10,17 @@
     ],
     "objective_map": {
       "composite": [
-        "Predictability",
+        "-Predictability",
         "Percieved Usefulness",
         "-Mental Demand"
       ],
       "multi_objective": [
-        "Predictability",
+        "-Predictability",
         "Percieved Usefulness",
         "-Mental Demand"
       ],
       "predictability": [
-        "Predictability"
+        "-Predictability"
       ],
       "usefulness": [
         "Percieved Usefulness"

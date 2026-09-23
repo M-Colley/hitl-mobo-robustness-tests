@@ -6,7 +6,7 @@ Datasets:
 
 Objectives by dataset:
   opticarvis: composite
-    composite: oracles=[gradient_boosting] acquisitions=[logei, qnei]
+    composite: oracles=[extra_trees] acquisitions=[logei, qnei]
 Error models: gaussian
 Requested oracle models: auto
 Seeds: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
@@ -16,7 +16,7 @@ Core settings:
   initial_samples: 5
   candidate_pool: 1000
   jitter_iterations: [0, 20]
-  jitter_stds: [0.018685, 0.093427, 0.373709, 1.868543]
+  jitter_stds: [0.007815, 0.039076, 0.156303, 0.781517]
   incumbent: posterior_mean
   response_clip: none
   response_round: None

@@ -1,0 +1,52 @@
+Sensor-error simulation configuration
+============================================================
+
+Datasets:
+  - provoice: .dataset_cache\ProVoiceData
+
+Objectives by dataset:
+  provoice: composite
+    composite: oracles=[extra_trees] acquisitions=[logei, qnei]
+Error models: gaussian
+Requested oracle models: auto
+Seeds: 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+
+Core settings:
+  iterations: 50
+  initial_samples: 5
+  candidate_pool: 1000
+  jitter_iterations: [0, 20]
+  jitter_stds: [0.014918, 0.074591, 0.298364, 1.49182]
+  incumbent: posterior_mean
+  response_clip: none
+  response_round: None
+  single_error: False
+  baseline_run: True
+
+Oracle settings:
+  oracle_selection_path: output\best_oracle_models.json
+  augmentation: jitter
+  augmentation_repeats: 2
+  augmentation_std: 0.02
+  oracle_fast: False
+
+BO settings:
+  xi: 0.01
+  kappa: 2.0
+  acq_num_restarts: 10
+  acq_raw_samples: 512
+  acq_maxiter: 200
+  acq_mc_samples: 256
+
+Error model parameters:
+  error_bias: 0.2
+  error_spike_prob: 0.1
+  error_spike_std: 0.5
+
+Data filters:
+  user_id: None
+  group_id: None
+
+Normalization:
+  normalize_objective: False
+  objective_weights: None

@@ -149,7 +149,7 @@ $jobs | ForEach-Object { Receive-Job $_ *>> $log }
 $jobs | Remove-Job
 
 "[4/4] GP noise diagnostic..." | Tee-Object -FilePath $log -Append
-& $PYTHON scripts\diagnose_gp_noise.py --input-dir $OUT --per-cell 3 *>> $log
+& $PYTHON scripts\diagnose_gp_noise.py --input-dir $OUT --per-cell 3 --at-iterations 8,15,25,50 *>> $log
 
 "[4/4] Cross-benchmark synthesis..." | Tee-Object -FilePath $log -Append
 & $PYTHON scripts\analyse_boba_robustness.py --input-dir $OUT --output-dir "$OUT\analysis" *>> $log

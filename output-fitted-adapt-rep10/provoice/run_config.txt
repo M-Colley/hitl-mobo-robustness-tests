@@ -16,7 +16,7 @@ Core settings:
   initial_samples: 5
   candidate_pool: 1000
   jitter_iterations: [0, 20]
-  jitter_stds: [0.014918, 0.074591, 0.298364, 1.49182]
+  jitter_stds: [0.022429, 0.112147, 0.448589, 2.242944]
   incumbent: posterior_mean
   response_clip: none
   response_round: None

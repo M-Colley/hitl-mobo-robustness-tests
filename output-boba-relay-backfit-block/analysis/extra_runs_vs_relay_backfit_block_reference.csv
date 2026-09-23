@@ -1,0 +1,5 @@
+error_model,variant,jitter_std,jitter_iteration,k,tolerance,budget,n_runs,n_landscapes,mean_extra,ci_low,ci_high,median_extra,mean_extra_reached,mean_multiplier,censored_fraction
+gaussian,rater-block10-tau2_raterfit-backfit,0.25,0,10,0.01,50,200,20,6.295,4.140000000000001,8.905000000000001,1.0,3.618279569892473,1.6295,0.07
+gaussian,rater-block10-tau2_raterfit-backfit,0.25,0,25,0.01,50,200,20,14.385000000000002,11.43,17.384999999999998,12.0,5.038167938931298,1.5754000000000001,0.345
+gaussian,rater-block10-tau2_raterfit-backfit,1.0,0,10,0.01,50,200,20,15.679999999999998,11.484125,20.165249999999997,6.0,6.326530612244898,2.568,0.265
+gaussian,rater-block10-tau2_raterfit-backfit,1.0,0,25,0.01,50,200,20,23.455000000000005,20.089500000000005,26.984999999999996,28.5,6.232876712328767,1.9382,0.635

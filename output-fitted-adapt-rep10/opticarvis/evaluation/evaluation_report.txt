@@ -27,15 +27,15 @@ Statistical notes
   unless outcomes are explicitly normalized across datasets.
 
 Condition-level omnibus tests
-   dataset objective      oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
-opticarvis composite gradient_boosting    gaussian                 0    0.018685       10               2            logei  wilcoxon       13.0 0.160156        0.427083          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                 0    0.093427       10               2            logei  wilcoxon       11.0 0.105469        0.421875          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                 0    0.373709       10               2            logei  wilcoxon       24.0 0.769531        0.879464          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                 0    1.868543       10               2            logei  wilcoxon       26.0 0.921875        0.921875          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                20    0.018685       10               2            logei  wilcoxon       22.0 0.625000        0.833333          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                20    0.093427       10               2            logei  wilcoxon       20.0 0.492188        0.787500          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                20    0.373709       10               2            logei  wilcoxon       11.0 0.105469        0.421875          0.001953         False         NaN
-opticarvis composite gradient_boosting    gaussian                20    1.868543       10               2             qnei  wilcoxon       17.0 0.322266        0.644531          0.001953         False         NaN
+   dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+opticarvis composite  extra_trees    gaussian                 0    0.007815       10               2            logei  wilcoxon       25.0 0.845703        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                 0    0.039076       10               2            logei  wilcoxon       25.0 0.845703        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                 0    0.156303       10               2            logei  wilcoxon       21.0 0.556641        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                 0    0.781517       10               2            logei  wilcoxon       16.0 0.275391        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                20    0.007815       10               2            logei  wilcoxon       18.0 0.375000        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                20    0.039076       10               2            logei  wilcoxon       18.0 0.375000        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                20    0.156303       10               2            logei  wilcoxon       21.0 0.556641        0.845703          0.001953         False         NaN
+opticarvis composite  extra_trees    gaussian                20    0.781517       10               2            logei  wilcoxon       23.0 0.695312        0.845703          0.001953         False         NaN
 
 Overall acquisition ranking by dataset/objective
 (normalized ranks and per-noisy-iteration excess AUC; pooled across
@@ -43,6 +43,6 @@ error conditions -- treat as a secondary, descriptive aggregate)
 
 opticarvis / composite
 acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
-      logei                0.4125               1.525                           -0.008574                          194.164774               7           8
-       qnei                0.5875               1.475                            0.070397                          193.826845               4           8
+      logei                 0.425             1.53125                            0.023349                           15.040743               8           8
+       qnei                 0.575             1.46875                            0.031125                           15.065733               4           8
 

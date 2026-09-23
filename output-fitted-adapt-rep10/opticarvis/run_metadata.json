@@ -5,7 +5,7 @@
     "jitter_std": null,
     "single_error": false,
     "jitter_iterations": "0,20",
-    "jitter_stds": "0.018685,0.093427,0.373709,1.868543",
+    "jitter_stds": "0.007815,0.039076,0.156303,0.781517",
     "initial_samples": 5,
     "candidate_pool": 1000,
     "objective": "composite",
@@ -39,6 +39,7 @@
     "replicate_first": 10,
     "final_rerate": "0,0",
     "input_noise_model": "none",
+    "likelihood": "gaussian",
     "inference_rule": null,
     "min_oracle_r2": null,
     "user_id": null,
@@ -65,24 +66,24 @@
     "n_jobs": 3,
     "resume": true
   },
-  "runtime_sec": 2500.262962599998,
+  "runtime_sec": 4036.7847423000494,
   "parallel_execution": true,
   "n_workers": 3,
-  "git_commit": "77c6b899c8f4166cdf39b329dcae3d90cc7e00ce",
+  "git_commit": "7ebe30c9f58115521c897c6042a48738ac9f5eb8",
   "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
   "platform": "win32",
   "data_dir_commits": {
     ".dataset_cache\\opticarvis-data": "101aec3c4f3e85c494ece01409317f27e2d24af7"
   },
   "resolved_oracle_cv_r2": {
-    "opticarvis:composite": 0.5180773516473657
+    "opticarvis:composite": -0.09102610649733282
   },
   "failed_seeds": [],
   "effective_jitter_stds": [
-    0.018685,
-    0.093427,
-    0.373709,
-    1.868543
+    0.007815,
+    0.039076,
+    0.156303,
+    0.781517
   ],
   "effective_jitter_iterations": [
     0,
@@ -144,7 +145,7 @@
   ],
   "resolved_oracle_models": {
     "opticarvis:composite": [
-      "gradient_boosting"
+      "extra_trees"
     ]
   },
   "oracle_selection_path": "output\\best_oracle_models.json",

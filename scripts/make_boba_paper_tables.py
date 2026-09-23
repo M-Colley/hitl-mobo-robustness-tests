@@ -371,20 +371,39 @@ def table_noise_anchor(path: Path, out: Path,
             row = est[(est.dataset == dataset) & (est.data_basis == basis) & (est.quantity == quantity)]
             return row.iloc[0] if len(row) else None
 
+        # The fixed composites (one scale for opticarvis, Predictability signed for
+        # provoice) are what datasets.json now feeds the pipeline, so their sigma_f
+        # is the reselected oracle's, from output/noise_anchor.csv; the nugget and
+        # its interval are in rating points and do not depend on the oracle. The
+        # as-logged rows keep the sigma_f they were measured with, for the record.
+        pipeline_sigma = {}
+        if path.exists():
+            pipeline_sigma = pd.read_csv(path).set_index("dataset")["sigma_f"].to_dict()
         rows = []
-        for dataset, basis, label in (("ehmi", "pipeline", "as logged"),
-                                      ("opticarvis", "pipeline", "as logged, two scales mixed"),
-                                      ("opticarvis", "scale_consistent", "one scale"),
-                                      ("provoice", "pipeline", "as logged")):
+        for dataset, basis, label, rescale in (
+                ("ehmi", "pipeline", "as logged", False),
+                ("opticarvis", "pipeline", "as logged, two scales mixed", False),
+                ("opticarvis", "scale_consistent", "one scale", True),
+                ("provoice", "pipeline", "as logged, one sign reversed", False),
+                ("provoice", "sign_corrected", "sign corrected", True)):
             nug = get(dataset, basis, "noise_nn_close_over_sigma_f")
+            nug_pts = get(dataset, basis, "noise_nn_close_ratings")
             upper = get(dataset, basis, "noise_within_session_resid_sd_over_sigma_f")
-            if nug is None:
+            if nug is None or nug_pts is None:
                 raise ValueError(f"archival estimates lack the nugget for {dataset}/{basis}")
+            sigma = float(nug["sigma_f_used"])
+            val, lo, hi = float(nug["estimate"]), float(nug["ci_low"]), float(nug["ci_high"])
+            up = float(upper["estimate"]) if upper is not None else float("nan")
+            if rescale and dataset in pipeline_sigma:
+                new_sigma = float(pipeline_sigma[dataset])
+                val, lo, hi = (float(nug_pts[c]) / new_sigma for c in ("estimate", "ci_low", "ci_high"))
+                up = up * sigma / new_sigma
+                sigma = new_sigma
             weak = " (weak)" if str(nug["identification"]).startswith("weak") else ""
-            up = f"{upper['estimate']:.2f}" if upper is not None else "--"
+            up_txt = f"{up:.2f}" if up == up else "--"
             rows.append(
-                f"\\texttt{{{_tex_escape(dataset)}}} & {label} & {nug['sigma_f_used']:.3f} & "
-                f"{nug['estimate']:.2f} {{\\scriptsize $[{nug['ci_low']:.2f}, {nug['ci_high']:.2f}]$}}{weak} & {up} \\\\"
+                f"\\texttt{{{_tex_escape(dataset)}}} & {label} & {sigma:.3f} & "
+                f"{val:.2f} {{\\scriptsize $[{lo:.2f}, {hi:.2f}]$}}{weak} & {up_txt} \\\\"
             )
         write(out / "noise_anchor.tex", f"""\\begin{{tabular}}{{llrrr}}
 \\toprule

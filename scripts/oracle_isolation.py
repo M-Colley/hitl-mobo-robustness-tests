@@ -15,9 +15,9 @@ gaussian noise at the archival scale (1.0 sigma_f, the median of the measured
 anchors). It then runs the fitted-oracle pipeline on that dataset exactly as the
 companion arm ran it on the real data: oracle family chosen by the same grouped
 cross-validation over the same seven model families, the oracle fitted with the
-same augmentation, the box taken from the data, the optimum estimated by random
-search, the error grid scaled to the FITTED oracle's own sigma_f, and the same
-fraction-of-the-floor-gap metric. The exact pipeline on the same landscape, same
+same augmentation, the box taken from the data, the optimum estimated by the
+best value any clean run reached, the error grid scaled to the FITTED oracle's own sigma_f, and the same
+fraction-of-the-floor-gap metric, on the trajectory and on the deployed design. The exact pipeline on the same landscape, same
 acquisitions, seeds, magnitudes and onset, is read from the main sweep.
 
 If the fitted fraction is well below the exact fraction on the same landscape,
@@ -49,7 +49,7 @@ import boba_benchmarks as bb  # noqa: E402
 ROOT = Path("output-oracle-iso")
 N_PARTICIPANTS = 37          # eHMI's participant count
 TRIALS_PER_PARTICIPANT = 20  # eHMI's trials per participant
-ARCHIVAL_NOISE = 1.0         # in sigma_f; the measured anchors run 0.74 to 3.35, median about 1
+ARCHIVAL_NOISE = 1.0         # in sigma_f; the measured anchors run 0.67 to 1.02 once a logging defect is fixed
 ACQS = ("logei", "qnei", "ucb", "ei")
 FLOORS = ("random", "sobol")
 SEEDS = (7, 8, 9, 10, 11)
@@ -176,14 +176,27 @@ def _paired(directory: Path) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
 
 
-def _fraction(frame: pd.DataFrame, optimum: float) -> pd.DataFrame:
+def _fraction(frame: pd.DataFrame, optimum: float, response: str = RESPONSE) -> pd.DataFrame:
     floor = frame[frame.acquisition.isin(FLOORS)][BASELINE_BEST].mean()
     learners = frame[frame.acquisition.isin(ACQS)].copy()
-    learners["frac"] = learners[RESPONSE] / (optimum - floor)
+    learners["frac"] = learners[response] / (optimum - floor)
     return learners
 
 
+# The trajectory response is the companion arm's; the deployed one is the
+# paper's primary estimand, the excess regret of the design the run would ship
+# at the final trial. Both are differences of two regrets on one oracle, so the
+# oracle's own optimum estimate cancels in the numerator either way.
+RESPONSES = {"": RESPONSE, "_deployed": "final_inference_simple_regret_excess_true"}
+
+
 def analyse(args) -> None:
+    for suffix, response in RESPONSES.items():
+        print(f"\n== {response}")
+        _analyse_one(response, suffix)
+
+
+def _analyse_one(response: str, suffix: str) -> None:
     manifest = pd.read_csv(ROOT / "manifest.csv").set_index("landscape")
     stats = bb.load_stats()
     rows = []
@@ -195,9 +208,9 @@ def analyse(args) -> None:
         fitted = fitted[(fitted.jitter_iteration == 0) & fitted.seed.isin(SEEDS)]
         sigma_f = float(manifest.loc[name, "sigma_f_fitted"])
         fitted["sigma_multiple"] = (fitted["jitter_std"] / sigma_f).round(2)
-        # The fitted design's own optimum: the best any arm reached.
+        # The fitted design's own optimum: the best value any clean run reached.
         opt_fit = float(fitted[BASELINE_BEST].max())
-        f_fit = _fraction(fitted, opt_fit)
+        f_fit = _fraction(fitted, opt_fit, response)
 
         exact = _paired(Path("output-boba") / name)
         exact = exact[(exact.error_model.isin(["gaussian", "none"]) | exact.acquisition.isin(FLOORS))
@@ -205,7 +218,7 @@ def analyse(args) -> None:
                       & exact.jitter_std.round(2).isin(SIGMA_GRID)
                       & (exact.error_model == "gaussian")]
         exact = exact.assign(sigma_multiple=exact["jitter_std"].round(2))
-        f_exact = _fraction(exact, float(stats[name]["opt_z"]))
+        f_exact = _fraction(exact, float(stats[name]["opt_z"]), response)
 
         for s in SIGMA_GRID:
             a = f_fit[f_fit.sigma_multiple == s]["frac"]
@@ -217,7 +230,7 @@ def analyse(args) -> None:
                              "oracle_model": manifest.loc[name, "oracle_model"],
                              "corr_oracle_truth": manifest.loc[name, "corr_oracle_truth"]})
     per = pd.DataFrame(rows)
-    per.to_csv(ROOT / "oracle_isolation_per_landscape.csv", index=False)
+    per.to_csv(ROOT / f"oracle_isolation_per_landscape{suffix}.csv", index=False)
     if per.empty:
         raise SystemExit("nothing to compare yet")
 
@@ -241,7 +254,7 @@ def analyse(args) -> None:
             "spearman_per_landscape": float(spearmanr(fit, ex).statistic),
         })
     summary = pd.DataFrame(summary)
-    summary.to_csv(ROOT / "oracle_isolation_summary.csv", index=False)
+    summary.to_csv(ROOT / f"oracle_isolation_summary{suffix}.csv", index=False)
     print(summary.to_string(index=False, float_format=lambda v: f"{v:+.3f}"))
 
 

@@ -5,7 +5,7 @@
     "jitter_std": null,
     "single_error": false,
     "jitter_iterations": "0,20",
-    "jitter_stds": "0.014918,0.074591,0.298364,1.49182",
+    "jitter_stds": "0.022429,0.112147,0.448589,2.242944",
     "initial_samples": 5,
     "candidate_pool": 1000,
     "objective": "composite",
@@ -39,6 +39,7 @@
     "replicate_first": 10,
     "final_rerate": "0,0",
     "input_noise_model": "none",
+    "likelihood": "gaussian",
     "inference_rule": null,
     "min_oracle_r2": null,
     "user_id": null,
@@ -65,24 +66,24 @@
     "n_jobs": 3,
     "resume": true
   },
-  "runtime_sec": 976.4319269000116,
+  "runtime_sec": 1245.9959981000284,
   "parallel_execution": true,
   "n_workers": 3,
-  "git_commit": "77c6b899c8f4166cdf39b329dcae3d90cc7e00ce",
+  "git_commit": "7ebe30c9f58115521c897c6042a48738ac9f5eb8",
   "python_version": "3.12.9 (tags/v3.12.9:fdb8142, Feb  4 2025, 15:27:58) [MSC v.1942 64 bit (AMD64)]",
   "platform": "win32",
   "data_dir_commits": {
     ".dataset_cache\\ProVoiceData": "9c76fbcee1e6027a3731b544ed84e36a96240354"
   },
   "resolved_oracle_cv_r2": {
-    "provoice:composite": -0.032396896646550655
+    "provoice:composite": -0.06856431534257815
   },
   "failed_seeds": [],
   "effective_jitter_stds": [
-    0.014918,
-    0.074591,
-    0.298364,
-    1.49182
+    0.022429,
+    0.112147,
+    0.448589,
+    2.242944
   ],
   "effective_jitter_iterations": [
     0,
@@ -102,17 +103,17 @@
       ],
       "objective_map": {
         "composite": [
-          "Predictability",
+          "-Predictability",
           "Percieved Usefulness",
           "-Mental Demand"
         ],
         "multi_objective": [
-          "Predictability",
+          "-Predictability",
           "Percieved Usefulness",
           "-Mental Demand"
         ],
         "predictability": [
-          "Predictability"
+          "-Predictability"
         ],
         "usefulness": [
           "Percieved Usefulness"

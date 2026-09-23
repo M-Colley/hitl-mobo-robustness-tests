@@ -99,8 +99,8 @@ def _fit_noise_sd(X: np.ndarray, y: np.ndarray, low: np.ndarray, high: np.ndarra
         outcome_transform=outcome,
     )
     if flat_prior:
-        # BoTorch's default is GammaPrior(1.1, 0.05), whose mass sits far below
-        # the noise levels this study injects. Widening it is the cheapest test
+        # BoTorch's default noise prior puts its mass far below the noise levels
+        # this study injects. Widening it is the cheapest test
         # of whether the prior, rather than the data, is doing the shrinking.
         gp.likelihood.noise_covar.register_prior(
             "noise_prior", GammaPrior(1.0, 0.01), lambda m: m.noise

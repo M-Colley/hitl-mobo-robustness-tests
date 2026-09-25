@@ -11,7 +11,8 @@ kept for the record; the paper now shows the per-landscape split instead):
   decomposition.pdf   the deployed excess split into search and selection loss,
                       per magnitude and onset, the selection share on each bar
   kcurve.pdf          gain over the standard process from a final comparative
-                      sitting of k trials, with intervals, against the oracle
+                      sitting of k trials, with intervals, pooled and at 1 sigma
+                      from the first rating (review/sitting_by_magnitude.csv)
   per_landscape.pdf   the headline cell (1 sigma from the first rating) per
                       landscape: deployed excess as search plus selection loss
   frag_scatter.pdf    the one-shot selection loss of a landscape against the
@@ -243,36 +244,35 @@ def fig_decomposition(decomp: pd.DataFrame, out: Path) -> None:
     _save(fig, out, "decomposition")
 
 
-def fig_kcurve(policies: pd.DataFrame, out: Path) -> None:
+def fig_kcurve(policies: pd.DataFrame, out: Path, by_cell: pd.DataFrame | None = None,
+               cell: str = "1sigma_from_trial_1") -> None:
+    """The pooled k-curve and, when the per-cell table of sitting_by_magnitude.py
+    is given, the same curve at 1 sigma from the first rating, the regime the
+    archival anchor points to. The pooled curve's gain comes from large errors;
+    drawing both keeps a reader from taking the pooled optimum as the advice."""
     fixed = policies[policies.policy.str.startswith("fixed_k")].copy()
     fixed["k"] = fixed.policy.str.replace("fixed_k", "").astype(float)
     fixed = fixed.sort_values("k")
-    oracle = policies[policies.policy == "oracle"].iloc[0]
     fig, ax = plt.subplots(figsize=(WIDTH, 2.0))
     ax.axhline(0, color=INK2, linewidth=0.8)
-    ax.axhline(oracle.gain_vs_standard, color=INK2, linewidth=0.8, linestyle="--")
-    ax.annotate("oracle k per run", (fixed.k.max(), oracle.gain_vs_standard), xytext=(0, 3),
-                textcoords="offset points", ha="right", fontsize=7.5, color=INK2)
-    ax.annotate("standard process", (fixed.k.min(), 0), xytext=(0, -3),
-                textcoords="offset points", ha="left", va="top", fontsize=7.5, color=INK2)
+    ax.annotate("standard process", (fixed.k.max(), 0), xytext=(0, 3),
+                textcoords="offset points", ha="right", va="bottom", fontsize=7.5, color=INK2)
     ax.errorbar(fixed.k, fixed.gain_vs_standard,
                 yerr=[fixed.gain_vs_standard - fixed.gain_lo, fixed.gain_hi - fixed.gain_vs_standard],
-                color=SEARCH, linewidth=1.4, elinewidth=0.8, capsize=2.5, marker="o", markersize=4.5,
-                markeredgecolor="white", markeredgewidth=0.8, label="fixed k, all runs")
-    # The argmax is not resolved: several k share overlapping intervals, so the
-    # label names the flat top rather than a winner. The flat top is the k whose
-    # point estimate is within 0.0025 of the best, the definition the text uses;
-    # held out, the k chosen on seeds 7-11 always falls inside it.
-    best = fixed.loc[fixed.gain_vs_standard.idxmax()]
-    flat = fixed[fixed.gain_vs_standard >= best.gain_vs_standard - 0.0025]
-    ax.annotate(f"k = {flat.k.min():g} to {flat.k.max():g}: +{flat.gain_vs_standard.min():.3f}"
-                f" to +{best.gain_vs_standard:.3f}",
-                (best.k, best.gain_vs_standard), xytext=(0, 14),
-                textcoords="offset points", ha="center", fontsize=7.5, color=INK)
+                color=INK2, linewidth=1.0, linestyle="--", elinewidth=0.6, capsize=2.0, marker="o",
+                markersize=3.5, markeredgecolor="white", markeredgewidth=0.6,
+                label="pooled over magnitudes and onsets")
+    if by_cell is not None:
+        c = by_cell[by_cell.cell == cell].sort_values("k")
+        ax.errorbar(c.k, c.gain_all, yerr=[c.gain_all - c.gain_all_lo, c.gain_all_hi - c.gain_all],
+                    color=SEARCH, linewidth=1.4, elinewidth=0.8, capsize=2.5, marker="o", markersize=4.5,
+                    markeredgecolor="white", markeredgewidth=0.8, label=r"$1\sigma$ from the first rating")
+        ax.legend(frameon=False, loc="lower left")
     ax.set_xticks(fixed.k)
     ax.set_xticklabels([f"{k:g}" for k in fixed.k])
-    _style(ax, "gain over the standard process\n(fraction of achievable improvement)",
-           "trials k spent on the final sitting, of T = 50")
+    # The unit (fraction of the achievable improvement) is in the caption; a
+    # longer two-line label is taller than the 2in canvas and gets clipped.
+    _style(ax, "gain over the\nstandard process", "trials k spent on the final sitting, of T = 50")
     fig.tight_layout()
     _save(fig, out, "kcurve")
 
@@ -339,7 +339,9 @@ def main(argv=None) -> None:
     headline = args.analysis / "review" / "per_landscape_headline.csv"
     if headline.is_file():
         fig_per_landscape(pd.read_csv(headline), args.out)
-    fig_kcurve(pd.read_csv(args.policies or args.analysis / "budget_split_policies.csv"), args.out)
+    by_cell = args.analysis / "review" / "sitting_by_magnitude.csv"
+    fig_kcurve(pd.read_csv(args.policies or args.analysis / "budget_split_policies.csv"), args.out,
+               pd.read_csv(by_cell) if by_cell.is_file() else None)
     rho = fig_frag_scatter(cells, stats, args.out)
     for name in ("dose_response", "decomposition", "per_landscape", "kcurve", "frag_scatter"):
         print(f"wrote {args.out / (name + '.pdf')}")

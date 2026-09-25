@@ -264,3 +264,6 @@ paper/archive/
 paper/README_OVERLEAF.md
 sandbox/
 external_datasets/
+
+# scratch files from the 2026-09-25 audit session (delete)
+output-oracle-iso/*_tmp.csv

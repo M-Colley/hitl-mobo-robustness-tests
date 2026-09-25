@@ -91,3 +91,12 @@ python scripts/analyse_boba_adaptations.py --arms studentt-rbf
 ```
 python scripts/elicitation_compare.py --error-models bias,drift,ceiling,gaussian --magnitudes 1 --iterations 20
 ```
+
+## Added 2026-09-25
+
+```
+python scripts/factor_variance_shares.py            # output-boba/analysis/factor_variance_shares.csv, the factor sentence of Section 4
+python scripts/oracle_isolation_acq_ranking.py      # output-oracle-iso/oracle_isolation_acq_ranking.csv, the acquisition-ranking sentences of Section 4 and Appendix B.5
+python scripts/sitting_by_magnitude.py              # output-boba/analysis/review/sitting_by_magnitude{.csv,_selection.json} and paper/tables/sitting_by_magnitude.tex: the sitting cell by cell (Section 7, Appendix E.3)
+python scripts/make_paper_figures.py                # kcurve.pdf now draws the pooled curve and the 1 sigma, first-rating curve from the file above
+```

@@ -92,7 +92,7 @@ def write(path: Path, body: str) -> None:
 def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = None) -> None:
     """Search loss and deployed loss, one above the other.
 
-    `fragility` is the post-onset per-iteration excess of SEARCH loss, a time
+    `fragility` is the post-onset per-trial excess of SEARCH loss, a time
     average over the optimizer's trajectory. `inference_excess` is the excess of
     the design the study would SHIP, at the final trial; it is not divided by
     opt_z in cell_means, so that is done here. Reporting only the first invites
@@ -108,7 +108,7 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
         raise ValueError(f"no opt_z for {missing}; the deployed row would be on another scale")
     cells = cells.assign(deployed=cells["inference_excess"] / cells["dataset"].map(opt_z))
 
-    labels = {0: "from it.\\ 1", 20: "from it.\\ 21"}
+    labels = {0: "from trial 1", 20: "from trial 21"}
 
     def block(title: str, grid: pd.DataFrame) -> str:
         rows = [f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}{{\\emph{{{title}}}}} \\\\"]
@@ -119,7 +119,7 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
 
     grid = cells.pivot_table(index="jitter_iteration", columns="jitter_std", values="fragility")
     columns = " & ".join(f"${c:g}\\sigma$" for c in grid.columns)
-    blocks = [block("search loss, post-onset per-iteration average", grid)]
+    blocks = [block("search loss, post-onset per-trial average", grid)]
 
     # The final-trial blocks: search loss at T and the deployed design at T, on
     # one time base, so deployed minus search is the selection loss. The search
@@ -322,7 +322,7 @@ def table_benchmarks(out: Path, stats_path: Path) -> None:
         )
     write(out / "benchmarks.tex", f"""\\begin{{tabular}}{{lrrrrrrr}}
 \\toprule
-benchmark & $d$ & $\\mathrm{{opt}}_z$ & sparsity & rugged. & skew & tail & $\\mathrm{{frag}}(1)$ \\\\
+landscape & $d$ & $\\mathrm{{opt}}_z$ & sparsity & rugged. & skew & tail & $\\mathrm{{frag}}(1)$ \\\\
 \\midrule
 {chr(10).join(rows)}
 \\bottomrule
@@ -593,7 +593,7 @@ def table_multiobjective(mo_analysis: Path, out: Path) -> None:
 \\toprule
 & \\multicolumn{{2}}{{c}}{{scalar ({n_sc} landscapes)}} & \\multicolumn{{2}}{{c}}{{multi-objective ({n_mo} problems)}} \\\\
 \\cmidrule(lr){{2-3}} \\cmidrule(lr){{4-5}}
-error & \\multicolumn{{1}}{{c}}{{from it.\\ 1}} & \\multicolumn{{1}}{{c}}{{from it.\\ {int(late) + 1}}} & \\multicolumn{{1}}{{c}}{{from it.\\ 1}} & \\multicolumn{{1}}{{c}}{{from it.\\ {int(late) + 1}}} \\\\
+error & \\multicolumn{{1}}{{c}}{{from trial 1}} & \\multicolumn{{1}}{{c}}{{from trial {int(late) + 1}}} & \\multicolumn{{1}}{{c}}{{from trial 1}} & \\multicolumn{{1}}{{c}}{{from trial {int(late) + 1}}} \\\\
 \\midrule
 {chr(10).join(rows)}
 \\bottomrule
@@ -682,11 +682,11 @@ def table_budget(arms: dict[str, Path], out: Path) -> None:
         columns = columns or [f"${c:g}\\sigma$" for c in grid.columns]
         early, late = grid.index.min(), grid.index.max()
         rows.append(
-            f"{label} & from it.\\ 1 & "
+            f"{label} & from trial 1 & "
             + " & ".join(f"{v * 100:.1f}" for v in grid.loc[early]) + r" \\"
         )
         rows.append(
-            f" & from it.\\ {int(late) + 1} & "
+            f" & from trial {int(late) + 1} & "
             + " & ".join(f"{v * 100:.1f}" for v in grid.loc[late]) + r" \\"
         )
         rows.append(
@@ -718,11 +718,11 @@ def table_arm_dose(arms: dict[str, Path], out: Path, name: str, first_column: st
         columns = columns or [f"${c:g}\\sigma$" for c in grid.columns]
         early, late = grid.index.min(), grid.index.max()
         rows.append(
-            f"{label} & from it.\\ {int(early) + 1} & "
+            f"{label} & from trial {int(early) + 1} & "
             + " & ".join(f"{v * 100:.1f}" for v in grid.loc[early]) + r" \\"
         )
         rows.append(
-            f" & from it.\\ {int(late) + 1} & " + " & ".join(f"{v * 100:.1f}" for v in grid.loc[late]) + r" \\"
+            f" & from trial {int(late) + 1} & " + " & ".join(f"{v * 100:.1f}" for v in grid.loc[late]) + r" \\"
         )
     if not rows:
         print(f"skipped {name} table: no arms found")
@@ -763,7 +763,7 @@ def table_fitted_companion(path: Path, out: Path) -> None:
     header = " & ".join(f"${m:g}\\sigma$" for m in mags)
     write(out / "fitted_companion.tex", f"""\\begin{{tabular}}{{l{'r' * (2 * len(mags))}}}
 \\toprule
-& \\multicolumn{{{len(mags)}}}{{c}}{{error from it.\\ 1}} & \\multicolumn{{{len(mags)}}}{{c}}{{error from it.\\ 21}} \\\\
+& \\multicolumn{{{len(mags)}}}{{c}}{{error from trial 1}} & \\multicolumn{{{len(mags)}}}{{c}}{{error from trial 21}} \\\\
 \\cmidrule(lr){{2-{1 + len(mags)}}} \\cmidrule(lr){{{2 + len(mags)}-{1 + 2 * len(mags)}}}
 arm & {header} & {header} \\\\
 \\midrule
@@ -813,7 +813,7 @@ def table_confirmatory(analysis: Path, out: Path) -> None:
         for k in ("H1", "H2", "H3", "H4")
     )
     rows.append(r"\midrule")
-    rows.append(f"\\multicolumn{{3}}{{l}}{{replicates --- {verdicts.rstrip(';')}}} \\\\")
+    rows.append(f"\\multicolumn{{3}}{{l}}{{replicates: {verdicts.rstrip(';')}}} \\\\")
     write(out / "confirmatory.tex", f"""\\begin{{tabular}}{{lrr}}
 \\toprule
 preregistered quantity & screening & fresh seeds \\\\
@@ -904,7 +904,7 @@ def table_inputerror_dose(analysis: Path, out: Path) -> None:
         rows.append(f"{mag * 100:g}\\% & " + " & ".join(cells) + r" \\")
     groups = " & ".join(f"\\multicolumn{{2}}{{c}}{{{a}}}" for a in arms)
     rules = " ".join(f"\\cmidrule(lr){{{2 + 2 * i}-{3 + 2 * i}}}" for i in range(len(arms)))
-    sub = " & ".join(f"from it.\\ 1 & from it.\\ {int(late) + 1}" for _ in arms)
+    sub = " & ".join(f"from trial 1 & from trial {int(late) + 1}" for _ in arms)
     write(out / "inputerror_dose.tex", f"""\\begin{{tabular}}{{l{'rr' * len(arms)}}}
 \\toprule
 & {groups} \\\\
@@ -937,7 +937,7 @@ def table_inputerror_mechanism(analysis: Path, out: Path) -> None:
     present = [(arm, src, label) for arm, src, label in columns if arm in set(src["arm"])]
     rows = []
     for onset in sorted(mech["jitter_iteration"].unique()):
-        rows.append(f"\\multicolumn{{{len(present) + 1}}}{{l}}{{\\textit{{error from it.\\ {int(onset) + 1}}}}} \\\\")
+        rows.append(f"\\multicolumn{{{len(present) + 1}}}{{l}}{{\\textit{{error from trial {int(onset) + 1}}}}} \\\\")
         for mag in sorted(mech["jitter_std"].unique()):
             cells = [_pct_ci(src[(src.arm == arm) & (src.jitter_std == mag)
                                  & (src.jitter_iteration == onset)])
@@ -976,7 +976,7 @@ def table_inputerror_deployed(analysis: Path, out: Path) -> None:
         rows.append(f"{mag * 100:g}\\% & " + " & ".join(cells) + r" \\")
     write(out / "inputerror_deployed.tex", f"""\\begin{{tabular}}{{lrrrr}}
 \\toprule
-& \\multicolumn{{2}}{{c}}{{from it.\\ 1}} & \\multicolumn{{2}}{{c}}{{from it.\\ {int(late) + 1}}} \\\\
+& \\multicolumn{{2}}{{c}}{{from trial 1}} & \\multicolumn{{2}}{{c}}{{from trial {int(late) + 1}}} \\\\
 \\cmidrule(lr){{2-3}} \\cmidrule(lr){{4-5}}
 \\textsc{{slip}} & \\multicolumn{{1}}{{c}}{{evaluated}} & \\multicolumn{{1}}{{c}}{{deployed}} & \\multicolumn{{1}}{{c}}{{evaluated}} & \\multicolumn{{1}}{{c}}{{deployed}} \\\\
 \\midrule
@@ -1014,11 +1014,11 @@ def table_inputerror_main(analysis: Path, out: Path) -> None:
                  narrow(pick(mech, "floor", mag, early)), narrow(pick(mech, "actual", mag, early)),
                  narrow(pick(mis, "proposed - actual", mag, early))]
         rows.append(f"{mag * 100:g}\\% & " + " & ".join(cells) + r" \\")
-    heads = " & ".join(_centred(h) for h in (f"from it.\\ 1", f"from it.\\ {int(late) + 1}", "from it.\\ 1",
-                                              f"from it.\\ {int(late) + 1}", "floor", "logged", "mislabelling"))
+    heads = " & ".join(_centred(h) for h in (f"from trial 1", f"from trial {int(late) + 1}", "from trial 1",
+                                              f"from trial {int(late) + 1}", "floor", "logged", "mislabelling"))
     write(out / "inputerror_main.tex", f"""\\begin{{tabular}}{{lrrrrrrr}}
 \\toprule
-& \\multicolumn{{2}}{{c}}{{\\textsc{{slip}}}} & \\multicolumn{{2}}{{c}}{{\\textsc{{misclick}}}} & \\multicolumn{{3}}{{c}}{{\\textsc{{slip}} from it.\\ 1, decomposed}} \\\\
+& \\multicolumn{{2}}{{c}}{{\\textsc{{slip}}}} & \\multicolumn{{2}}{{c}}{{\\textsc{{misclick}}}} & \\multicolumn{{3}}{{c}}{{\\textsc{{slip}} from trial 1, decomposed}} \\\\
 \\cmidrule(lr){{2-3}} \\cmidrule(lr){{4-5}} \\cmidrule(lr){{6-8}}
 magnitude & {heads} \\\\
 \\midrule
@@ -1070,7 +1070,7 @@ def table_extra_runs(analysis: Path, out: Path, tolerance: float = 0.01) -> None
         rows.append(f"${mag:g}\\sigma$ & {_extra_cell(a)} & {_extra_cell(b)} \\\\")
     write(out / "extra_runs.tex", f"""\\begin{{tabular}}{{lrr}}
 \\toprule
-& error from it.\\ 1, & error from it.\\ {int(late) + 1}, \\\\
+& error from trial 1, & error from trial {int(late) + 1}, \\\\
 error & match a clean {k_early}-trial study & match a clean {k_late}-trial study \\\\
 \\midrule
 {chr(10).join(rows)}
@@ -1198,7 +1198,7 @@ def table_shortlist(analysis: Path, out: Path, root: Path | None = None) -> None
     """
     root = root or Path(".")
     NL = chr(10)
-    procedures = [("shortlist_m1", "ship 1, the cautious rule"),
+    procedures = [("shortlist_m1", "ship 1, posterior mean less one SD"),
                   ("shortlist_m2", "ship 2"),
                   ("shortlist_m3", "ship 3"),
                   ("shortlist_m5", "ship 5"),
@@ -1240,8 +1240,8 @@ def table_adaptations(analysis: Path, out: Path) -> None:
 
     For each arm and response (trajectory regret; regret of the deployed
     design): the pooled share of the standard process's cost of error that the
-    adaptation recovers, with its landscape-bootstrap interval (a star when the
-    interval excludes zero), and the price the adaptation pays when there is no
+    adaptation recovers, with its landscape-bootstrap interval (a star when the BH-corrected
+    Wilcoxon p is below 0.05), and the price the adaptation pays when there is no
     error, in percent of the achievable improvement. Negative recovery means
     the adapted process does worse under error than the standard one. The
     fitted-oracle datasets have no achievable-improvement scale, so no price.

@@ -35,9 +35,9 @@ STYLE_FILES = ["iclr2027_conference.sty", "iclr2027_conference.bst",
                "natbib.sty", "fancyhdr.sty", "math_commands.tex"]
 TOP_FILES = ["main.tex", "references.bib", "README_OVERLEAF.md"] + STYLE_FILES
 
-# Anything left as a paragraph heading is a submission section; the first of them
-# closes the counted main text.
-FIRST_UNCOUNTED_HEADING = "REPRODUCIBILITY"
+# The statements follow the template's order (AI use, Ethics, Reproducibility);
+# the first of them closes the counted main text.
+FIRST_UNCOUNTED_HEADING = "AIUSE STATEMENT"  # pypdf drops the space after the small-caps "AI"
 
 
 def inputs_of(tex: Path) -> list[str]:
@@ -148,7 +148,7 @@ def measure(pdf: Path) -> str:
         # the previous page and the heading merely opens this one -- which is
         # the layout the limit asks for, not an overflow. Reporting "ends on page
         # i" in that case once read a 9-page paper as a 10-page one.
-        before = re.sub(r"^(\d+\s+)+", "", text[:j].strip())
+        before = re.sub(r"^(\d+\s*)+", "", text[:j].strip())
         before = re.sub(r"^Under review.*?ICLR \d{4}\s*", "", before).strip()
         limit = 9
         if not before:

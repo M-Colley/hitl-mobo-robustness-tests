@@ -1,0 +1,9 @@
+scope,factor,variance_share
+all cells,magnitude,0.24
+all cells,onset,0.17
+all cells,landscape,0.096
+all cells,acquisition,0.036
+all cells,error process,0.002
+"1 sigma, first rating",landscape,0.486
+"1 sigma, first rating",acquisition,0.224
+"1 sigma, first rating",error process,0.019

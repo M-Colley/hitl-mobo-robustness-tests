@@ -256,3 +256,11 @@ output-boba-confirmatory/*
 paper/*.zip
 # Real author block; loaded by main.tex if present, never committed (anonymous mirror).
 paper/authors.tex
+
+# Kept locally, removed from the branch the anonymous mirror follows (2026-09-25)
+handover/
+docs/code-review-2026-06-12.md
+paper/archive/
+paper/README_OVERLEAF.md
+sandbox/
+external_datasets/

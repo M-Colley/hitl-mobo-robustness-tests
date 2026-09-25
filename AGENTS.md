@@ -1,9 +1,5 @@
 # Working in this repository
 
-<!-- HANDOVER-START -->
-> Handover in progress. Start with `handover/README.md`. The `handover/` folder and this block are deleted before submission with `python handover/strip_handover_blocks.py`.
-<!-- HANDOVER-END -->
-
 This file is for whoever works on the repository next, human or agent. `README.md` explains what the project is. This file explains how not to break it and where the traps are. Everything here was learned by hitting it.
 
 ## What the project claims

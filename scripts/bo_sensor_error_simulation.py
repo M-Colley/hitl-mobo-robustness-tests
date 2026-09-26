@@ -49,12 +49,17 @@ import numpy as np
 import pandas as pd
 import torch
 from tqdm import tqdm
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.ensemble import (
     RandomForestRegressor,
     ExtraTreesRegressor,
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
 )
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, ConstantKernel, WhiteKernel
+from sklearn.neural_network import MLPRegressor
+from sklearn.preprocessing import StandardScaler
 try:
     from xgboost import XGBRegressor
 except ImportError:
@@ -334,7 +339,46 @@ ORACLE_MODEL_CHOICES = [
     "extra_trees",
     "gradient_boosting",
     "hist_gradient_boosting",
+    "gaussian_process",
+    "mlp",
 ]
+
+
+class _SmoothOracle(RegressorMixin, BaseEstimator):
+    """A smooth, non-tree oracle: standardised inputs and target around a
+    Gaussian process with an ARD RBF kernel and a white-noise term, or around a
+    two-layer MLP. The tree ensembles the pipeline's model selection picks are
+    piecewise constant; these two ask whether the oracle-isolation result
+    depends on that (the kernel's dimension is only known at fit time, hence
+    the wrapper)."""
+
+    def __init__(self, kind: str = "gaussian_process", seed: int = 0):
+        self.kind = kind
+        self.seed = seed
+
+    def fit(self, X, y):
+        X = np.asarray(X, dtype=float)
+        y = np.asarray(y, dtype=float).reshape(-1)
+        self.x_scaler_ = StandardScaler().fit(X)
+        self.y_mean_, self.y_std_ = float(np.mean(y)), float(np.std(y) or 1.0)
+        Z, t = self.x_scaler_.transform(X), (y - self.y_mean_) / self.y_std_
+        if self.kind == "gaussian_process":
+            d = X.shape[1]
+            kernel = (ConstantKernel(1.0, (1e-2, 1e2)) * RBF(np.ones(d), (1e-2, 1e2))
+                      + WhiteKernel(0.5, (1e-4, 1e1)))
+            self.model_ = GaussianProcessRegressor(kernel=kernel, normalize_y=False,
+                                                   n_restarts_optimizer=1, random_state=self.seed)
+        elif self.kind == "mlp":
+            self.model_ = MLPRegressor(hidden_layer_sizes=(64, 64), alpha=1e-3, early_stopping=True,
+                                       validation_fraction=0.15, max_iter=2000, random_state=self.seed)
+        else:
+            raise ValueError(f"Unknown smooth oracle kind: {self.kind}")
+        self.model_.fit(Z, t)
+        return self
+
+    def predict(self, X):
+        Z = self.x_scaler_.transform(np.asarray(X, dtype=float))
+        return self.model_.predict(Z) * self.y_std_ + self.y_mean_
 
 
 @dataclasses.dataclass
@@ -1537,6 +1581,8 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             n_preprocessing_jobs=1,
             random_state=seed,
         )
+    if oracle_model in ("gaussian_process", "mlp"):
+        return _SmoothOracle(kind=oracle_model, seed=seed)
     raise ValueError(f"Unknown oracle model: {oracle_model}")
 
 

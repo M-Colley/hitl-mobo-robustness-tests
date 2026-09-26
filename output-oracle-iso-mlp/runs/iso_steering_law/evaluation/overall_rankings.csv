@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_steering_law,composite,random,0.21999999999999997,4.8,0.0,29.259136507673634,0.0,3,3
+iso_steering_law,composite,sobol,0.21999999999999997,4.6000000000000005,0.0,26.28731637990136,0.0,3,3
+iso_steering_law,composite,ucb,0.5866666666666666,2.1999999999999997,0.14700243240699332,14.613755847061846,0.0,0,3
+iso_steering_law,composite,logei,0.6133333333333333,3.0666666666666664,0.2069499355357075,19.3465674861841,0.0,0,3
+iso_steering_law,composite,qnei,0.6666666666666666,3.3333333333333335,0.17563895061688192,17.55324267288557,0.0,0,3
+iso_steering_law,composite,ei,0.6933333333333334,3.0,0.17507279114239185,17.39503681127567,0.0,0,3

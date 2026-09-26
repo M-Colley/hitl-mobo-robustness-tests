@@ -1,0 +1,4 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_shekel,composite,gaussian_process,gaussian,0,0.129736,,5,6,qnei,2.0,friedman,5.705882352941178,0.33589766082972217,0.22823529411764715,,True,0.33589766082972217,False
+iso_shekel,composite,gaussian_process,gaussian,0,0.518946,,5,6,qnei,2.2,friedman,7.235294117647055,0.2037210513366313,0.2894117647058822,,True,0.305581577004947,False
+iso_shekel,composite,gaussian_process,gaussian,0,2.594728,,5,6,logei,1.6,friedman,10.88235294117647,0.05376312307683914,0.4352941176470588,,True,0.16128936923051743,False

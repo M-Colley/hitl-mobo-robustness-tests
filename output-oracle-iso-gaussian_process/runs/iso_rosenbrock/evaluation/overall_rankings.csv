@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_rosenbrock,composite,random,0.14,3.6666666666666665,0.0,23.625098785558247,0.0,3,3
+iso_rosenbrock,composite,sobol,0.14,3.8666666666666667,0.0,24.350233980899976,0.0,3,3
+iso_rosenbrock,composite,ucb,0.5466666666666667,2.6666666666666665,0.19286093154012174,21.763529242204836,0.0,0,3
+iso_rosenbrock,composite,qnei,0.6666666666666666,3.3000000000000003,0.22809468285142387,21.814016346325815,0.0,0,3
+iso_rosenbrock,composite,ei,0.68,3.4,0.2529539430590007,23.23002404731383,0.0,0,3
+iso_rosenbrock,composite,logei,0.8266666666666668,4.1000000000000005,0.28390401968984996,24.775617654757948,0.0,0,3

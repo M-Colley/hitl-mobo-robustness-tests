@@ -1,0 +1,16 @@
+{
+  "tournament_k": [
+    2,
+    5,
+    12
+  ],
+  "confirm_k": [
+    2
+  ],
+  "rhos": [
+    1.0
+  ],
+  "slip_look_sd": 0.25,
+  "alpha": 0.05,
+  "lcb_beta": 1.0
+}

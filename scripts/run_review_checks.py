@@ -3,7 +3,9 @@
 The paper quotes numbers these checks compute (the currency-test curvature and
 spline checks, the manipulation intervals, the structural extra-trial zeros,
 the like-for-like Kendall's W, the multi-objective front, the nugget-radius
-sensitivity, the fitted-oracle companion ratio and the augmentation contrast).
+sensitivity, the fitted-oracle companion ratio, the augmentation contrast, the headline on
+landscapes matched to the human studies' opt_z and the oracle-isolation result by
+oracle family).
 Each check is a script under scripts/review_checks/; this runs them in turn and
 writes each one's output to output-boba/analysis/review/register_checks/<name>.txt.
 
@@ -19,7 +21,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-CHECKS = ['currency_curvature', 'manipulation_intervals', 'structural_zeros', 'scalar_w', 'mo_front_check', 'nugget_threshold', 'ehmi_sigmaf', 'c6_ratio', 'aug_contrast_per_dataset']
+CHECKS = ['currency_curvature', 'manipulation_intervals', 'structural_zeros', 'scalar_w', 'mo_front_check', 'nugget_threshold', 'ehmi_sigmaf', 'c6_ratio', 'aug_contrast_per_dataset', 'matched_optz', 'oracle_families', 'anchor_propagation', 'fresh_seed_replication']
 ARGS = {"ehmi_sigmaf": ["datasets.json"], "nugget_threshold": ["datasets.json"]}
 
 

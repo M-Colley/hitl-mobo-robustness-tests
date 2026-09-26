@@ -100,3 +100,18 @@ python scripts/oracle_isolation_acq_ranking.py      # output-oracle-iso/oracle_i
 python scripts/sitting_by_magnitude.py              # output-boba/analysis/review/sitting_by_magnitude{.csv,_selection.json} and paper/tables/sitting_by_magnitude.tex: the sitting cell by cell (Section 7, Appendix E.3)
 python scripts/make_paper_figures.py                # kcurve.pdf now draws the pooled curve and the 1 sigma, first-rating curve from the file above
 ```
+
+## Added 2026-09-26
+
+```
+python scripts/oracle_isolation.py select --family gaussian_process      # the isolation datasets against forced smooth
+python scripts/oracle_isolation.py calibrate --family gaussian_process   # oracles, no jitter augmentation
+powershell -File run_oracle_isolation.ps1 -Family gaussian_process       # output-oracle-iso-gaussian_process
+python scripts/oracle_isolation.py analyse --family gaussian_process
+    # and the same four with --family mlp / -Family mlp (output-oracle-iso-mlp)
+python scripts/replay_end_of_study.py --arms output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/end_of_study_fresh --acquisitions logei,qnei,ucb --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian --stds 0.05,0.25,1.0,5.0 --onsets 0,20 --tournament-k 2,5,12 --confirm-k 2 --rho 1 --rerate-dirs none
+python scripts/rescore_ship_rules.py --input-dir output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/ship_rules_fresh --acquisitions logei,ei,qei,pi,logpi,qpi,ucb,qucb,qnei,greedy --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian
+python scripts/run_review_checks.py --only oracle_families,anchor_propagation,fresh_seed_replication,matched_optz
+    # the three-family isolation table, the anchor interval propagated, the untouched-seed test
+```
+

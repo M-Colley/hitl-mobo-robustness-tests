@@ -1,0 +1,24 @@
+== tree ensemble (selected): 20 landscapes; models {'gradient_boosting': 15, 'extra_trees': 3, 'catboost': 2}
+   fidelity median 0.840 range [0.453, 0.935]; sigma_f range [0.78, 1.21]; grouped CV R2 median 0.512 range [0.240, 0.809]
+   trajectory 0.25sigma  fitted  0.0184  exact  0.1436  ratio 0.128 [-0.146, 0.357]  lower 16/20  p 0.00059  spearman(fidelity, ratio) +0.31
+   trajectory  1.0sigma  fitted  0.1771  exact  0.5792  ratio 0.306 [0.202, 0.518]  lower 18/20  p 0.00026  spearman(fidelity, ratio) -0.13
+   trajectory  5.0sigma  fitted  0.3941  exact  1.1275  ratio 0.350 [0.217, 0.592]  lower 16/20  p 0.00059  spearman(fidelity, ratio) -0.55
+   deployed   0.25sigma  fitted  0.1124  exact  0.7605  ratio 0.148 [0.079, 0.527]  lower 14/20  p 0.0056  spearman(fidelity, ratio) -0.02
+   deployed    1.0sigma  fitted  0.6506  exact  2.5561  ratio 0.255 [0.145, 0.776]  lower 15/20  p 0.014  spearman(fidelity, ratio) -0.50
+   deployed    5.0sigma  fitted  1.6484  exact  8.7264  ratio 0.189 [0.092, 0.555]  lower 14/20  p 0.019  spearman(fidelity, ratio) -0.53
+== gaussian_process: 20 landscapes; models {'gaussian_process': 20}
+   fidelity median 0.864 range [0.157, 0.988]; sigma_f range [0.40, 1.22]; grouped CV R2 median 0.561 range [0.105, 0.833]
+   trajectory 0.25sigma  fitted  0.1682  exact  0.1436  ratio 1.172 [0.793, 1.866]  lower 7/20  p 0.37  spearman(fidelity, ratio) -0.08
+   trajectory  1.0sigma  fitted  0.5459  exact  0.5792  ratio 0.943 [0.748, 1.215]  lower 10/20  p 0.7  spearman(fidelity, ratio) +0.13
+   trajectory  5.0sigma  fitted  0.9162  exact  1.1275  ratio 0.813 [0.633, 1.098]  lower 11/20  p 0.37  spearman(fidelity, ratio) -0.12
+   deployed   0.25sigma  fitted  0.3356  exact  0.7605  ratio 0.441 [0.303, 1.062]  lower 9/20  p 0.62  spearman(fidelity, ratio) -0.16
+   deployed    1.0sigma  fitted  1.3671  exact  2.5561  ratio 0.535 [0.339, 1.140]  lower 10/20  p 0.62  spearman(fidelity, ratio) +0.12
+   deployed    5.0sigma  fitted  3.2878  exact  8.7264  ratio 0.377 [0.198, 0.924]  lower 11/20  p 0.67  spearman(fidelity, ratio) -0.13
+== mlp: 20 landscapes; models {'mlp': 20}
+   fidelity median 0.842 range [0.033, 0.978]; sigma_f range [0.27, 1.95]; grouped CV R2 median 0.510 range [0.018, 0.830]
+   trajectory 0.25sigma  fitted  0.1134  exact  0.1436  ratio 0.790 [0.477, 1.331]  lower 12/20  p 0.78  spearman(fidelity, ratio) +0.18
+   trajectory  1.0sigma  fitted  0.4438  exact  0.5792  ratio 0.766 [0.533, 1.209]  lower 10/20  p 0.9  spearman(fidelity, ratio) -0.53
+   trajectory  5.0sigma  fitted  0.7456  exact  1.1275  ratio 0.661 [0.460, 1.014]  lower 11/20  p 0.39  spearman(fidelity, ratio) -0.50
+   deployed   0.25sigma  fitted  0.2091  exact  0.7605  ratio 0.275 [0.167, 0.948]  lower 12/20  p 0.28  spearman(fidelity, ratio) -0.23
+   deployed    1.0sigma  fitted  0.8908  exact  2.5561  ratio 0.349 [0.208, 0.981]  lower 9/20  p 0.62  spearman(fidelity, ratio) -0.20
+   deployed    5.0sigma  fitted  2.4908  exact  8.7264  ratio 0.285 [0.158, 0.799]  lower 10/20  p 0.29  spearman(fidelity, ratio) -0.40

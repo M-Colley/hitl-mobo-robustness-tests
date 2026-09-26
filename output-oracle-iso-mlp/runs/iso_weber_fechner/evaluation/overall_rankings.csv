@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_weber_fechner,composite,random,0.17333333333333334,4.5,0.0,25.35688392927854,0.0,3,3
+iso_weber_fechner,composite,sobol,0.17333333333333334,4.7,0.0,21.795367047342392,0.0,3,3
+iso_weber_fechner,composite,ucb,0.52,2.9333333333333336,0.167073139583977,17.189402083578397,0.0,0,3
+iso_weber_fechner,composite,qnei,0.5466666666666667,2.1666666666666665,0.11393862554148608,14.091075271251576,0.0,0,3
+iso_weber_fechner,composite,ei,0.7466666666666667,3.1,0.20774586848852358,18.44974694430307,0.0,0,3
+iso_weber_fechner,composite,logei,0.84,3.6,0.2136291172921845,18.930873169419144,0.0,0,3

@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_power_law_practice,composite,random,0.13333333333333333,5.0,0.0,29.84585846149933,0.0,3,3
+iso_power_law_practice,composite,sobol,0.13333333333333333,4.133333333333334,0.0,24.58780268469103,0.0,3,3
+iso_power_law_practice,composite,ucb,0.39999999999999997,1.6333333333333335,0.11159096321449648,14.024763176902416,0.0,1,3
+iso_power_law_practice,composite,qnei,0.7333333333333334,2.9333333333333336,0.22690807119012202,18.43353113415888,0.0,0,3
+iso_power_law_practice,composite,logei,0.7866666666666667,3.5,0.3125645014082012,22.683679138652494,0.0,0,3
+iso_power_law_practice,composite,ei,0.8133333333333335,3.7999999999999994,0.33075282379697885,23.664026870125912,0.0,0,3

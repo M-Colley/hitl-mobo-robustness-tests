@@ -29,6 +29,17 @@ between the paper's two arms is a difference between landscapes, not oracles.
     python scripts/oracle_isolation.py calibrate
     (run run_oracle_isolation.ps1)
     python scripts/oracle_isolation.py analyse
+
+The pipeline's model selection picks tree ensembles on all twenty datasets. To
+ask whether the result depends on that, --family forces one smooth oracle
+family on the same synthetic datasets, with no selection and no jitter
+augmentation (a tree-ensemble heuristic; a GP refitted on the tripled data every
+run is also too slow), and writes to output-oracle-iso-<family>:
+
+    python scripts/oracle_isolation.py select --family gaussian_process
+    python scripts/oracle_isolation.py calibrate --family gaussian_process
+    (run run_oracle_isolation.ps1 -Family gaussian_process)
+    python scripts/oracle_isolation.py analyse --family gaussian_process
 """
 from __future__ import annotations
 
@@ -47,6 +58,9 @@ if str(SCRIPT_DIR) not in sys.path:
 import boba_benchmarks as bb  # noqa: E402
 
 ROOT = Path("output-oracle-iso")
+DATA_ROOT = ROOT  # the synthetic datasets and their configs, shared by every family
+FAMILY: str | None = None
+AUGMENTATION = "jitter"
 N_PARTICIPANTS = 37          # eHMI's participant count
 TRIALS_PER_PARTICIPANT = 20  # eHMI's trials per participant
 ARCHIVAL_NOISE = 1.0         # in sigma_f; the measured anchors run 0.67 to 1.02 once a logging defect is fixed
@@ -118,8 +132,9 @@ def select(args) -> None:
         if out.is_file() and not args.force:
             continue
         cmd = [sys.executable, str(SCRIPT_DIR / "select_best_oracle_model.py"),
-               "--dataset-config", str(ROOT / "configs" / f"datasets-iso_{name}.json"),
-               "--objective", "composite", "--oracle-models", MODELS,
+               "--dataset-config", str(DATA_ROOT / "configs" / f"datasets-iso_{name}.json"),
+               "--objective", "composite", "--oracle-models", FAMILY or MODELS,
+               "--oracle-augmentation", AUGMENTATION,
                "--cv-folds", "5", "--output-path", str(out)]
         print(f"[select] {name}", flush=True)
         subprocess.run(cmd, check=True, capture_output=True, text=True)
@@ -134,7 +149,7 @@ def calibrate(args) -> None:
     import bo_sensor_error_simulation as sim
     rows = []
     for name in landscapes():
-        cfg = ROOT / "configs" / f"datasets-iso_{name}.json"
+        cfg = DATA_ROOT / "configs" / f"datasets-iso_{name}.json"
         selection = sim.load_oracle_selection(ROOT / "selection" / f"iso_{name}.json")
         dataset = sim.parse_dataset_configs(None, cfg, Path(".dataset_cache"))[0]
         model = selection[(dataset.name, "composite")]["best_model"]
@@ -143,7 +158,7 @@ def calibrate(args) -> None:
         oracle = sim.build_oracle(
             df=frame, objective="composite", objective_columns=["value"],
             param_columns=dataset.param_columns, seed=7, normalize=False, weights=None,
-            oracle_model=model, oracle_augmentation="jitter", oracle_augment_repeats=2,
+            oracle_model=model, oracle_augmentation=AUGMENTATION, oracle_augment_repeats=2,
             oracle_augment_std=0.02, oracle_fast=False, oracle_target=dataset.oracle_target)
         bounds = sim.bounds_from_data(frame, dataset.param_columns)
         X = np.random.default_rng(7).uniform(bounds.low, bounds.high, size=(20_000, len(dataset.param_columns)))
@@ -262,7 +277,12 @@ def main(argv=None) -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("step", choices=["make-data", "select", "calibrate", "analyse"])
     p.add_argument("--force", action="store_true")
+    p.add_argument("--family", default=None, help="force one oracle family (gaussian_process, mlp)")
     args = p.parse_args(argv)
+    global ROOT, FAMILY, AUGMENTATION
+    if args.family:
+        FAMILY, AUGMENTATION = args.family, "none"
+        ROOT = Path(f"output-oracle-iso-{args.family}")
     {"make-data": make_data, "select": select, "calibrate": calibrate, "analyse": analyse}[args.step](args)
 
 

@@ -8,9 +8,10 @@ BibTeX exits 0, LaTeX reports no error, and the log carries no undefined
 citation or reference. What it then zips is that verified directory, so the zip
 and the test are the same bytes.
 
-It also measures where the main text ends -- ICLR 2027 allows a strict 9 pages
-at submission -- and prints it, because that number decides whether the bundle
-is submittable and nobody should have to open the PDF to learn it.
+It also measures where the main text ends and prints it. TMLR sets no page
+limit, but a paper's length should be justified by its content and an unusually
+long main text (appendices not counted) slows the review, so the number is worth
+seeing without opening the PDF.
 
     python paper/build_overleaf_bundle.py
     python paper/build_overleaf_bundle.py --out paper/my-bundle.zip
@@ -27,17 +28,17 @@ import zipfile
 from pathlib import Path
 
 PAPER = Path(__file__).resolve().parent
-DEFAULT_OUT = PAPER / "hitl-noisy-feedback-iclr2027.zip"
+DEFAULT_OUT = PAPER / "hitl-noisy-feedback-tmlr.zip"
 
 # Exactly what a submission needs, nothing that Overleaf regenerates. Figures are
-# collected from the sources in stage().
-STYLE_FILES = ["iclr2027_conference.sty", "iclr2027_conference.bst",
-               "natbib.sty", "fancyhdr.sty", "math_commands.tex"]
+# collected from the sources in stage(). The three style files are the official
+# ones from https://github.com/JmlrOrg/tmlr-style-file; tmlr.sty loads natbib.
+STYLE_FILES = ["tmlr.sty", "tmlr.bst", "fancyhdr.sty"]
 TOP_FILES = ["main.tex", "references.bib", "README_OVERLEAF.md"] + STYLE_FILES
 
-# The statements follow the template's order (AI use, Ethics, Reproducibility);
-# the first of them closes the counted main text.
-FIRST_UNCOUNTED_HEADING = "AIUSE STATEMENT"  # pypdf drops the space after the small-caps "AI"
+# The statements (AI use, broader impact, reproducibility) follow the main text;
+# the first of them closes the main text that the length refers to.
+FIRST_UNCOUNTED_HEADING = re.compile(r"AI\s*USE\s*STATEMENT")
 
 
 def inputs_of(tex: Path) -> list[str]:
@@ -140,28 +141,23 @@ def measure(pdf: Path) -> str:
     reader = PdfReader(str(pdf))
     for i, page in enumerate(reader.pages, 1):
         text = (page.extract_text() or "")
-        j = text.upper().find(FIRST_UNCOUNTED_HEADING)
-        if j < 0:
+        match = FIRST_UNCOUNTED_HEADING.search(text.upper())
+        if not match:
             continue
-        # What precedes the heading on its page, minus the style's margin line
-        # numbers and running header. If that is empty, the counted text ended on
-        # the previous page and the heading merely opens this one -- which is
-        # the layout the limit asks for, not an overflow. Reporting "ends on page
-        # i" in that case once read a 9-page paper as a 10-page one.
+        j = match.start()
+        # What precedes the heading on its page, minus the running header. If that
+        # is empty, the main text ended on the previous page and the heading merely
+        # opens this one; reporting "ends on page i" in that case once read a
+        # 9-page paper as a 10-page one.
         before = re.sub(r"^(\d+\s*)+", "", text[:j].strip())
-        before = re.sub(r"^Under review.*?ICLR \d{4}\s*", "", before).strip()
-        limit = 9
+        before = re.sub(r"^Under review as submission to TMLR\s*", "", before).strip()
         if not before:
-            counted = i - 1
-            verdict = "FITS" if counted <= limit else f"OVER by {counted - limit} page(s)"
-            return (f"main text ends at the bottom of page {counted}; the first uncounted "
-                    f"section opens page {i} of {len(reader.pages)} -- {verdict} the strict "
-                    f"{limit}-page ICLR 2027 submission limit")
+            return (f"main text ends at the bottom of page {i - 1}; the statements open page {i} "
+                    f"of {len(reader.pages)} (TMLR sets no page limit)")
         frac = j / max(1, len(text))
-        verdict = "FITS" if i <= limit else f"OVER by about {i - limit - 1 + frac:.1f} page(s)"
-        return (f"main text ends {frac * 100:.0f}% down page {i} of {len(reader.pages)} -- "
-                f"{verdict} the strict {limit}-page ICLR 2027 submission limit")
-    return f"{len(reader.pages)} pages; the '{FIRST_UNCOUNTED_HEADING}' heading was not found"
+        return (f"main text ends {frac * 100:.0f}% down page {i} of {len(reader.pages)}, "
+                f"about {i - 1 + frac:.1f} pages (TMLR sets no page limit)")
+    return f"{len(reader.pages)} pages; the AI use statement heading was not found"
 
 
 def main(argv=None) -> None:

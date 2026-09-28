@@ -61,7 +61,7 @@ def test_inputerror_dose_table_has_one_row_per_magnitude(tmp_path):
     tex = (tmp_path / "inputerror_dose.tex").read_text(encoding="utf-8")
     magnitude_rows = [line for line in tex.splitlines() if "\\%" in line]
     assert len(magnitude_rows) == 4
-    assert "from it.\\ 21" in tex
+    assert "from trial 21" in tex
 
 
 def test_inputerror_deployed_table_pairs_evaluated_with_deployed(tmp_path):
@@ -122,7 +122,7 @@ def test_inputerror_mechanism_table_has_one_block_per_onset(tmp_path):
         tmp_path / "inputerror_mislabel.csv", index=False)
     mt.table_inputerror_mechanism(tmp_path, tmp_path)
     tex = (tmp_path / "inputerror_mechanism.tex").read_text(encoding="utf-8")
-    assert tex.count("error from it.") == 2
+    assert tex.count("error from trial") == 2
     body = [l for l in tex.splitlines() if l.split("&")[0].strip().endswith("\\%")]
     assert len(body) == 4 and all(l.count("&") == 4 for l in body)
 

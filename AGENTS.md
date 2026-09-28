@@ -91,6 +91,6 @@ Not settled. The human is simulated. The best fitted oracle has held-out R² of 
 
 1. Run `python -m pytest tests/ -q` and keep the log.
 2. Run `python scripts/check_paper.py --paper paper`. It checks inputs, references and table shapes, and it does not compile the document.
-3. Compile the paper (`pdflatex`, `bibtex`, `pdflatex` twice) and check that the main text through Limitations ends on page 9. `python paper/build_overleaf_bundle.py` does this in a clean directory, collects the figures, and prints FITS or OVER; the zip it writes is the Overleaf upload.
+3. Compile the paper (`pdflatex`, `bibtex`, `pdflatex` twice). It is a TMLR submission in the official TMLR style: no page limit, but an unusually long main text slows the review, so check where the main text through Limitations ends. `python paper/build_overleaf_bundle.py` does this in a clean directory, collects the figures, and prints the length; the zip it writes is the Overleaf upload.
 4. Regenerate tables with `python scripts/make_boba_paper_tables.py --analysis output-boba/analysis` after any analysis change. Never edit generated files in `paper/tables/`.
 5. Regenerate figures with `python scripts/make_paper_figures.py` after any analysis change, and look at the PNGs it writes beside the PDFs before committing.

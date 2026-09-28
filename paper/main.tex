@@ -1,50 +1,57 @@
-% ICLR 2027 submission.
+% TMLR submission.
 %
-% The style files in this directory are the OFFICIAL ones, downloaded from
-% https://github.com/ICLR/Master-Template/tree/master/iclr2027 -- do not edit
-% them. iclr2027_conference_ORIGINAL.tex is the upstream instructions file, kept
-% for reference only; it is not part of this submission. The 2027 style differs
-% from 2026 only in the running header; the .bst is byte-identical.
+% tmlr.sty, tmlr.bst and fancyhdr.sty are the official files from
+% https://github.com/JmlrOrg/tmlr-style-file (downloaded 2026-09-28) -- do not
+% edit them. The package option decides what the style prints:
+%   \usepackage{tmlr}             anonymous submission (this file; TMLR is double blind)
+%   \usepackage[preprint]{tmlr}   de-anonymised, no TMLR header (arXiv)
+%   \usepackage[accepted]{tmlr}   camera-ready; also set \month, \year, \openreview below
 %
-% Limits (iclr2027_conference_ORIGINAL.tex): a STRICT 9 pages of main text at
-% submission, 10 at rebuttal/camera-ready; references, the AI use statement, the
-% ethics and reproducibility statements and the appendix do not count.
+% TMLR sets no page limit, but a paper's length should be justified by its
+% content, and an unusually long main text (appendices not counted) slows the
+% review. The submission must not link to any version that names the authors.
 %
 % Every table under tables/ is GENERATED. Do not edit them by hand:
 %   python scripts/make_boba_paper_tables.py --analysis output-boba/analysis
 %
 %   cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
 
-\documentclass{article}
-\usepackage{iclr2027_conference,times}
+\documentclass[10pt]{article}
+\usepackage{tmlr}
 
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{placeins}
 \usepackage{xcolor}
+\usepackage{array}
 \usepackage{hyperref}
 \usepackage{url}
+\hypersetup{colorlinks=true, linkcolor=blue!55!black, citecolor=blue!55!black, urlcolor=blue!55!black}
 
 \newcommand{\optz}{\mathrm{opt}_z}
 \newcommand{\frag}{\mathrm{frag}}
 
-\title{What Noisy Feedback Costs Bayesian\\ Optimization, and Where the Cost Sits}
+\title{What Noisy Feedback Costs Bayesian Optimization, and Where the Cost Sits}
 
-% Authors must not appear in the submitted version; keep \iclrfinalcopy
-% commented out until camera-ready. The real author block is paper/authors.tex,
-% which is git-ignored so that the anonymised repository mirror never carries
-% the names; without that file the anonymous block below is used. The style
-% prints "Anonymous authors" in either case until \iclrfinalcopy is set.
-\InputIfFileExists{authors}{}{\author{Anonymous authors \\ Anonymous affiliation}}
+% Authors must not appear in the submitted version. The real author block is
+% paper/authors.tex, which is git-ignored so that the anonymised repository
+% mirror never carries the names; without that file the anonymous block below is
+% used. The tmlr package prints "Anonymous authors" in either case until the
+% preprint or accepted option is set.
+\InputIfFileExists{authors}{}{\author{Anonymous authors}}
 
-%\iclrfinalcopy % Uncomment for camera-ready ONLY, never for submission.
+% Camera-ready only (with \usepackage[accepted]{tmlr}):
+%\def\month{MM}
+%\def\year{YYYY}
+%\def\openreview{\url{https://openreview.net/forum?id=XXXX}}
+
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-Human-in-the-loop Bayesian optimization is often evaluated against regression oracles fitted to archival data, which confounds noisy feedback with the oracle's error. We measure it without an oracle, pairing noisy runs under four error processes on twenty analytic landscapes with identically seeded clean twins. At a rating error of one landscape standard deviation from the first rating, the deployed design loses $29.7\%$ $[26.6, 32.9]$ of the achievable improvement, and $42\%$ $[34, 50]$ of that loss is selection, the gap to the run's best visited design. Tree-ensemble oracles fitted to synthetic ratings of these landscapes report about a quarter of the loss, smooth oracles of equal fidelity no consistent understatement. No search-side change we tested reduced it. A final comparative sitting of two designs, sized on other seeds, recovers a tenth of it on held-out and untouched seeds. If the rater noise of three human studies transfers to this scale, the loss is $22$--$32\%$.
+Human-in-the-loop Bayesian optimization is often evaluated against regression oracles fitted to archival data, which confounds noisy feedback with the oracle's error. We measure it on twenty analytic landscapes, pairing noisy runs under four error processes with identically seeded clean twins. At rating error of one landscape standard deviation from the first rating, the deployed design loses $29.7\%$ of the achievable improvement, and $42\%$ $[34, 50]$ of that loss is selection, the gap to the run's best visited design. Tree-ensemble oracles fitted to synthetic ratings of these landscapes report about a quarter of the loss, smooth oracles of equal fidelity no consistent understatement. No search-side change we tested reduced it. A final comparative sitting of two designs recovers a tenth of it on held-out and untouched seeds, and modelling a known fault, such as gross outliers, about half. If the rater noise of three human studies transfers, the loss is $22$--$32\%$.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
@@ -59,7 +66,7 @@ In this work, we replace the fitted oracle with analytic objectives. On an analy
 \begin{enumerate}\setlength{\itemsep}{1pt}\setlength{\parskip}{0pt}
   \item \textbf{A protocol with no fitted oracle, and what error costs HITL optimization.} Twenty analytic landscapes with verified optima, four error processes at two onsets, identically seeded clean twins, and a model-free control. On the same landscapes, a tree-ensemble oracle fitted to synthetic archival ratings, the common evaluation design, reports about a quarter of the deployed loss at $1\sigma$ from the first rating, while Gaussian-process and MLP oracles of equal fidelity show no consistent understatement. That loss is $29.7\%$ of the achievable improvement, between $18\%$ and $47\%$ on every landscape, and $22$--$32\%$ at the rater noise of three human studies if their unit transfers (Section~\ref{sec:cost}).
   \item \textbf{Where the cost sits.} Deployed regret splits into search loss and selection loss (Section~\ref{sec:decomp}). Under the standard ship rule, at $1\sigma$ selection is $42\%$ of the cost of error, rising to $83\%$ for a large error arriving late, and it is zero under exact observation. Most search-side changes we ran move both terms, and none leads to a gain on the deployed design.
-  \item \textbf{What helps, by how much, and what does not.} We test three procedures that act on the final decision, a comparative sitting, a cautious ship rule and confirmation before a claim of improvement. Every choice among variants is re-made on training seeds and scored on held-out ones. At $1\sigma$ from the first rating, a sitting of two designs gains $0.030$ $[0.012, 0.050]$ of the achievable improvement on held-out seeds, about a tenth of the loss, and survives Holm's correction over the nine sitting sizes in that cell. On ten seeds that no choice had seen it gains $0.028$ $[0.006, 0.049]$ in the same cell, and the cautious rule and the confirmation test replicate there too. Sittings of sixteen trials or more lose there, and pooled over magnitudes neither the sitting nor the cautious rule survives a family-wise correction (Section~\ref{sec:budget}).
+  \item \textbf{What helps, by how much, and what does not.} We test three procedures that act on the final decision, a comparative sitting, a cautious ship rule and confirmation before a claim of improvement. Every choice among variants is re-made on training seeds and scored on held-out ones. At $1\sigma$ from the first rating, a sitting of two designs gains $0.030$ $[0.012, 0.050]$ of the achievable improvement on held-out seeds, about a tenth of the loss, and survives Holm's correction over the nine sitting sizes in that cell. On ten seeds that no choice had seen it gains $0.028$ $[0.006, 0.049]$ in the same cell, and the cautious rule and the confirmation test replicate there too. Sittings of sixteen trials or more lose there, and pooled over magnitudes neither the sitting nor the cautious rule survives a family-wise correction (Section~\ref{sec:budget}). Where the fault is known, a model of it recovers more: refitting on the ratings' ranks recovers half the cost of gross faults, and per-rater offsets a third of the cost of alternating raters (\autoref{tab:remedies}).
 \end{enumerate}
 
 \section{Related work}
@@ -121,11 +128,11 @@ Appendix~\ref{sec:controls} details three controls: the model-free floors never 
 \label{fig:dose}
 \end{figure}
 
-\textbf{The late onset looks cheap on the trajectory for a mechanical reason.} There, $1\sigma$ error from trial 21 costs $2.8\%$ against $14.1\%$ from the first rating, an onset ratio (cost from the first rating over cost from trial 21) of $5.0\times$. But a noisy run and its clean twin share every design until the error arrives, so the post-onset excess can never exceed the improvement the clean run still makes after that point. In $27\%$ of late-onset runs at $1\sigma$ it sits on that bound throughout (Appendix~\ref{app:onsetbound}). The bound is $5.3\times$ smaller at the late onset, and divided by it, error from trial 21 destroys $43\%$ $[34, 51]$ of the improvement still available and error from the first rating $41\%$ $[36, 45]$, a ratio of $0.95$ $[0.78, 1.20]$. The deployed design is not bounded this way: there error from trial 21 still costs $13.6\%$ at $1\sigma$, about half the cost from the first rating.
+\textbf{The late onset looks cheap on the trajectory for a mechanical reason.} There, $1\sigma$ error from trial 21 costs $2.8\%$ against $14.1\%$ from the first rating, an onset ratio (cost from the first rating over cost from trial 21) of $5.0\times$. But a noisy run and its clean twin share every design until the error arrives, so the post-onset excess can never exceed the improvement the clean run still makes after that point. In $27\%$ of late-onset runs at $1\sigma$ it sits on that bound throughout (Appendix~\ref{app:onsetbound}). The bound is $5.3\times$ smaller at the late onset, and divided by it, error from trial 21 destroys $43\%$ $[34, 51]$ of the improvement still available and error from the first rating $41\%$ $[36, 45]$, a ratio of $0.95$ $[0.78, 1.20]$. The bound also produces the growth of the onset effect with the budget, from $2.3\times$ at $T = 25$ to $11.7\times$ at $T = 100$ (Appendix~\ref{sec:designchoices}). The deployed design is not bounded this way: there error from trial 21 still costs $13.6\%$ at $1\sigma$, about half the cost from the first rating.
 
 Of the five factors, the magnitude matters most: over the $6{,}400$ cell means of the model-based sweep it accounts for $24\%$ of the variance of the trajectory loss, the onset for $17\%$, the landscape for $10\%$, the acquisition for $4\%$ and the error process for $0.2\%$ (main-effect shares; the rest is interaction), and within the $1\sigma$, first-rating cell the landscape accounts for $49\%$ and the acquisition for $22\%$. The error process's small share is partly built in, since \textsc{bias} from the first rating is \textsc{gaussian} plus an offset the standardised GP cannot see.
 
-\paragraph{Is $1\sigma$ a lot?} Within-rater noise in three published human studies \citep{colley2025ehmi, jansen2025opticarvis, susak2026provoice} is estimated as a nearest-neighbour nugget \citep{cressie1993statistics} over ratings of close designs by the same participant and expressed in $\sigma_f$, the spread of each study's fitted objective. It is $0.74$ $[0.48, 0.97]$, $1.11$ $[0.81, 1.40]$ and $0.60$ $[0.00, 0.90]$ $\sigma_f$, with participant-bootstrap intervals (\autoref{tab:anchor}); $\sigma_f$ plays the part the landscape SD plays in the sweep. Two logging defects had inflated the second and third estimates (Appendix~\ref{app:archival}); once fixed, neither study's oracle predicts held-out ratings, so their $\sigma_f$ is fragile. Participants are noisy from their first rating, so on the rows of \autoref{tab:dose} for error from the first rating these studies would lose $22$--$32\%$ on the deployed design, interpolating log-linearly and taking $\sigma_f$ as the landscape SD ($0$--$42\%$ with each nugget's own interval propagated; Appendix~\ref{app:archival}). The nugget can understate the noise, and the within-session residual bounds it at $1.2$--$2.4\sigma_f$, where the loss would reach up to about half. The anchor fixes the range of interest.
+\paragraph{Is $1\sigma$ a lot?} Within-rater noise in three published human studies \citep{colley2025ehmi, jansen2025opticarvis, susak2026provoice} is estimated as a nearest-neighbour nugget \citep{cressie1993statistics} over ratings of close designs by the same participant and expressed in $\sigma_f$, the spread of each study's fitted objective. It is $0.74$ $[0.48, 0.97]$, $1.11$ $[0.81, 1.40]$ and $0.60$ $[0.00, 0.90]$ $\sigma_f$, with participant-bootstrap intervals (\autoref{tab:anchor}); $\sigma_f$ plays the part the landscape SD plays in the sweep. Two logging defects had inflated the second and third estimates to $3.35$ and $1.02$ (Appendix~\ref{app:archival}); once fixed, neither study's oracle predicts held-out ratings, so their $\sigma_f$ is fragile (another oracle family puts the second estimate at $0.67$). Participants are noisy from their first rating, so on the rows of \autoref{tab:dose} for error from the first rating these studies would lose $22$--$32\%$ on the deployed design, interpolating log-linearly and taking $\sigma_f$ as the landscape SD. With each nugget's participant-bootstrap interval propagated as well, the three studies' ranges are $17$--$32\%$, $24$--$42\%$ and $0$--$31\%$ (Appendix~\ref{app:archival}). The nugget can understate the noise, and the within-session residual bounds it at $1.2$--$2.4\sigma_f$, where the loss would reach up to about half. The anchor fixes the range of interest.
 
 \paragraph{Does a fitted oracle understate it?} The fitted-oracle design is the common alternative, and its own companion arm on the three archival datasets reports a third to a half of the cost measured here from the first rating (Appendix~\ref{sec:fitted}). But three human objectives set against twenty analytic ones are different landscapes. We therefore hold the landscape fixed and change only the oracle. For each landscape, we build a synthetic archival dataset as an archival study would produce it ($37$ participants, each rating the first $20$ designs of a clean BO run once, with noise at $1\sigma_f$). We fit an oracle to it using the pipeline's own model selection, whose seven candidate families are all tree ensembles (it picks gradient boosting on $15$ landscapes, extra trees on $3$, CatBoost on $2$). We then rerun the experiment against that oracle, with the error scaled by its own $\sigma_f$ and regret measured relative to the best value any clean run reached. On the deployed design at $1\sigma$ it reports $0.25$ $[0.14, 0.78]$ of what the exact objective on the same landscape shows, less on $15$ of the $20$ landscapes (Wilcoxon $p = 0.014$). On the trajectory the ratio is $0.31$ $[0.20, 0.52]$, less on $18$ of $20$ ($p = 0.0003$), and the ratios at $0.25\sigma$ and $5\sigma$ are similar or smaller. The oracles are not poor (median correlation $0.84$ with the true landscape), and on the deployed design, the better ones understate more (Spearman $-0.50$). On the trajectory, it ranks neither the landscapes (its per-landscape cost correlates $0.11$ with the exact one) nor the acquisitions: the most robust acquisition of a landscape agrees between the arms in $13$ of $60$ cells, about the $15$ expected by chance (Appendix~\ref{sec:fitted}). A tree ensemble is piecewise constant, so we repeated the experiment with two smooth oracle families forced in its place. A Gaussian process, whose grouped cross-validated fit beats the selected tree ensemble on $15$ of the $20$ landscapes, reports $0.94$ $[0.75, 1.22]$ of the exact trajectory cost. It understates the deployed loss on only $10$ of the $20$ landscapes, and a two-layer MLP behaves similarly (Appendix~\ref{sec:fitted}). The consistent understatement belongs to the tree ensembles, so what a fitted-oracle study reports depends on the oracle families its model selection offers.
 
@@ -143,7 +150,7 @@ Write $x^\star$ for the optimum, $V$ for the designs a run visited and $d$ for t
 \end{equation}
 \autoref{eq:decomp} is an accounting identity, useful as a pair of counterfactuals. Selection loss is the amount that a ship rule that knew the true value of every visited design would recover without a single new trial, so it bounds the most that any change to how a study chooses can gain. Search loss is what would remain with that perfect choice, so it bounds what a better search can gain on the deployed design. The selection term is zero under exact observation (the best-rated visited design is then the best visited design). That is why it never appears in a noiseless experiment, and why a study that reports its best-rated design is safe only there. As a check, the largest selection loss over the $2{,}000$ clean runs of the ten model-based acquisitions is exactly zero.
 
-\textbf{A large part of what error costs is selection, and how large depends on the error.} Against the identically seeded clean twin, the selection share rises with the magnitude and with the lateness of the onset, from $31\%$ $[20, 44]$ at $0.05\sigma$ from the first rating to $83\%$ $[75, 90]$ at $5\sigma$ from trial 21 (\autoref{tab:dose}). At $1\sigma$ from the first rating the deployed loss of $0.297$ splits into $0.173$ of search loss and $0.124$ of selection loss, so selection is $41.8\%$ $[34.1, 50.4]$; per landscape it runs from $4\%$ (Shekel) to $85\%$ (Powell) (\autoref{fig:perlandscape}).
+\textbf{A large part of what error costs is selection, and how large depends on the error.} Against the identically seeded clean twin, the selection share rises with the magnitude and with the lateness of the onset, from $31\%$ $[20, 44]$ at $0.05\sigma$ from the first rating to $83\%$ $[75, 90]$ at $5\sigma$ from trial 21 (\autoref{tab:dose}). At $1\sigma$ from the first rating the deployed loss of $0.297$ splits into $0.173$ of search loss and $0.124$ of selection loss, so selection is $41.8\%$ $[34.1, 50.4]$; per landscape it runs from $4\%$ (Shekel) to $85\%$ (Powell) (\autoref{fig:perlandscape}). Pooling every cell would give $61.8\%$, but that pool is dominated by the $5\sigma$ cells and we do not use it.
 
 \begin{figure}[t]
 \centering
@@ -152,7 +159,7 @@ Write $x^\star$ for the optimum, $V$ for the designs a run visited and $d$ for t
 \label{fig:perlandscape}
 \end{figure}
 
-\textbf{Search-side changes mostly move both terms, and none nets a gain.} Six search-side changes (augmented EI, Thompson sampling, a lower-confidence-bound incumbent, minimum-distance proposals, a slip-aware acquisition and redistributed rating effort) ran as their own arms, with the human trials fixed, each scored against the standard process on the same cells and acquisitions (Appendix~\ref{app:budgetneutral}). None lowers the deployed loss, and, split by \autoref{eq:decomp}, they fail: Thompson sampling \citep{thompson1933likelihood, russo2018tutorial} raises search loss by $5.7$ and selection loss by $7.7$ points relative to the achievable improvement. Minimum-distance proposals lower search loss by $1.9$ $[0.2, 3.7]$ and raise selection loss by $5.7$, a better search that ships a worse design. A lower-confidence-bound incumbent, the one change that lowers selection loss ($2.2$ $[0.7, 4.0]$), raises search loss by $7.6$.
+\textbf{Search-side changes mostly move both terms, and none nets a gain.} Six search-side changes (augmented EI, Thompson sampling, a lower-confidence-bound incumbent, minimum-distance proposals, a slip-aware acquisition and redistributed rating effort) ran as their own arms, with the human trials fixed, each scored against the standard process on the same cells and acquisitions (Appendix~\ref{app:budgetneutral}). None lowers the deployed loss, and, split by \autoref{eq:decomp}, they fail: Thompson sampling \citep{thompson1933likelihood, russo2018tutorial} raises search loss by $5.7$ and selection loss by $7.7$ points relative to the achievable improvement. Minimum-distance proposals lower search loss by $1.9$ $[0.2, 3.7]$ and raise selection loss by $5.7$, a better search that ships a worse design. A lower-confidence-bound incumbent, the one change that lowers selection loss ($2.2$ $[0.7, 4.0]$), raises search loss by $7.6$. Redistributing rating effort across trials raises selection loss by $4.6$ to $10.4$ points, only one interval excluding zero.
 
 \textbf{A noise-aware ship rule recovers little, except where the surrogate fits.} Under \textsc{gaussian} error at $0.25\sigma$ and above, four other ship rules recover from $-1.4\%$ (the mean rating) to $+10.1\%$ (the posterior mean less two latent SDs, the cautious rule of Section~\ref{sec:budget}) of the deployed loss. The posterior-mean maximiser recovers $+0.7\%$ $[-4, +6]$, although at $n = 50$ the GP's noise estimate has largely recovered ($0.85$ of the injected SD). On the six laws that rule recovers $+11.5\%$ $[6, 16]$ and beats the best observed rating on all six, so even where the surrogate fits it leaves about nine tenths of the deployed loss in place; on the thirteen classical functions it recovers $-3.3\%$. The GP's fit shows: on clean runs of the ten rugged classical functions, it reads their roughness as noise (fitted noise SD $0.30$ where the truth is zero, against $0.03$ on the laws), and its $R^2$ at fresh points is $-0.24$ against $0.67$. Across landscapes its leave-one-out fit predicts the rule's gain at Spearman $0.62$. The posterior does not inherit the error in general. It is misspecified where the landscape is rugged, and misled by structured error, losing even on the laws under large late \textsc{drift} ($-15.9\%$; Appendix~\ref{app:smooth}).
 
@@ -188,14 +195,53 @@ If much of the cost is selection and a better ship rule recovers little, the rem
 
 \textbf{A cautious ship rule, at no extra trial.} Shipping the visited design with the highest posterior mean less two latent SDs, a kriging-quantile rule \citep{picheny2013quantile}, recovers $10.1\%$ $[4.6, 15.9]$ of the deployed loss under \textsc{gaussian} error at $0.25\sigma$ and above, $10.7\%$ $[5, 16]$ on the held-out seeds and $13.9\%$ $[11, 17]$ on the six laws (Appendix~\ref{app:smooth}). On the untouched seeds 27--36 it recovers $9.6\%$ $[5.3, 13.4]$. It pays a fixed price of $0.015$ whether or not error is present, so it should not be used without an estimate of the rater's noise.
 
-\textbf{Confirm before claiming.} A study also claims that its design beats where it started. The standard process claims an improvement in $98\%$ of runs, and $15.7\%$ of runs make a false claim, $42.7\%$ at $5\sigma$ from the first rating (\textsc{gaussian} error, LogEI, qNEI and UCB). Spending four final trials rating the chosen and the initial design twice each and claiming only if a one-sided paired $t$-test at $\alpha = 0.05$ prefers the chosen one takes the false-claim rate to $0.5\%$. The test has a price. Claiming on the fresh mean alone detects $88\%$ of the real improvements, and the test cuts that to $51\%$, and to $26\%$ at $1\sigma$ from the first rating (Appendix~\ref{app:endofstudy}). On seeds 27--36 the false-claim rate falls from $15.5\%$ to $0.6\%$ at the same $51\%$ power.
+\textbf{Confirm before claiming.} A study also claims that its design beats where it started. The standard process claims an improvement in $98\%$ of runs, and $15.7\%$ of runs make a false claim, $42.7\%$ at $5\sigma$ from the first rating (\textsc{gaussian} error, LogEI, qNEI and UCB). Spending four final trials rating the chosen and the initial design twice each and claiming only if a one-sided paired $t$-test at $\alpha = 0.05$ prefers the chosen one takes the false-claim rate to $0.5\%$. Of that $15.2$-point reduction the fresh ratings supply $9.1$ points ($60\%$) and the test $6.1$. The test has a price. Claiming on the fresh mean alone detects $88\%$ of the real improvements, and the test cuts that to $51\%$, and to $26\%$ at $1\sigma$ from the first rating (Appendix~\ref{app:endofstudy}). On seeds 27--36 the false-claim rate falls from $15.5\%$ to $0.6\%$ at the same $51\%$ power.
 
 \textbf{Pooled over magnitudes, neither the sitting nor the cautious rule survives a family-wise correction.} On the held-out seeds, under \textsc{gaussian} error with LogEI, qNEI and UCB, the pooled sitting over the top five gains on $15$ of $20$ landscapes and the cautious rule on $16$. With a Wilcoxon test across landscapes and Holm's correction \citep{holm1979simple} over the $27$ procedures of that family, neither survives (adjusted $p = 0.09$ and $0.06$), and with Holm over all $41$ procedures no fixed $k$ gains. Of the fixes that spend no trials (Appendix~\ref{app:remedies}), choosing on the ratings' ranks recovers $51\%$ $[36, 63]$ of the cost when $15\%$ of trials carry a gross fault ($49\%$ $[34, 63]$ on held-out seeds) and nothing when none do.
+
+\textbf{Where the fault is known, a model of it recovers more.} The procedures above assume nothing about the error. When the kind of fault is known, an explicit model of how the rating was produced does better, and \autoref{tab:remedies} collects every remedy that helped, by the fault it answers (Appendices~\ref{app:budgetneutral}--\ref{app:detector}). Refitting the surrogate on the ratings' ranks is the most general of them: it assumes nothing about the fault, costs $1\%$ on the main sweep, and recovers about half the cost of gross faults and over a third of the cost of a saturating scale. The others need the fault named in advance. Every change to the search failed, as did a heavy-tailed likelihood, replication, re-rating the incumbent, the knowledge gradient and giving the GP the true noise variance (\autoref{tab:adapt}, \autoref{tab:budgetneutral}).
+
+\begin{table}[t]
+\centering
+\caption{What helps a faulty rater, by fault: the share of the standard process's cost of error on the deployed design that each remedy recovers, a ratio of landscape means with a landscape-bootstrap interval, unless stated. Seeds 7--11 unless stated; ``held out'' is seeds 12--16, ``untouched'' seeds 27--36. Each row's source is in the last column; remedies that did not help are listed in the text.}
+\label{tab:remedies}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{4.0cm}>{\raggedright\arraybackslash}p{5.2cm}l}
+\toprule
+fault & remedy & recovered & source \\
+\midrule
+\textsc{gaussian} noise, $1\sigma$ from the first rating & final sitting of two designs & $12\%$ $[5, 18]$ held out; $11\%$ $[2, 18]$ untouched & \autoref{tab:sittingcell} \\
+\addlinespace
+\textsc{gaussian} noise, $0.25\sigma$ and above & cautious ship rule (posterior mean less two SDs) & $10.1\%$ $[4.6, 15.9]$; $9.6\%$ $[5.3, 13.4]$ untouched; price $0.015$ & Section~\ref{sec:budget} \\
+\addlinespace
+false claims of improvement & four confirmation trials and a paired $t$-test & false claims $15.7\%$ $\to$ $0.5\%$ ($0.6\%$ untouched), at $51\%$ power & Appendix~\ref{app:endofstudy} \\
+\addlinespace
+large error arriving mid-study ($5\sigma$ from trial 21) & detect it (CUSUM) and freeze & $42\%$ $[25, 59]$ to $64\%$ $[51, 75]$ held out; saves $21$--$24$ trials & Appendix~\ref{app:detector} \\
+ & final sitting of sixteen & $+0.227$ $[0.147, 0.321]$ of the achievable improvement held out & \autoref{tab:sittingcell} \\
+\addlinespace
+gross faults ($15\%$ of trials, $20$ SDs) & refit on the ratings' ranks & $51\%$ $[36, 63]$; $49\%$ $[34, 63]$ held out & Appendix~\ref{app:remedies} \\
+ & relevance-pursuit likelihood & $38\%$ $[24, 51]$; no gain at $5\%$ of trials & \autoref{tab:budgetneutral} \\
+ & clip ratings to the observed range & $22\%$ $[4, 38]$ ($35\%$ $[23, 46]$ at $5\%$ of trials); price zero & \autoref{tab:budgetneutral} \\
+\addlinespace
+saturating scale (cap at the $0.9$ quantile) & refit on the ratings' ranks & $36\%$ $[29, 43]$; $38\%$ $[31, 45]$ held out & Appendix~\ref{app:remedies} \\
+ & re-anchor the cap to the best design so far & $25\%$ $[17, 32]$ & \autoref{tab:budgetneutral} \\
+\addlinespace
+rater offsets, raters alternating & per-rater offsets in the GP & $32\%$ $[23, 40]$; $5\%$ $[-5, 14]$ for block handovers & \autoref{tab:budgetneutral} \\
+\addlinespace
+a slip filed against the proposed design & log the design the person experienced & about half the cost of a $5\%$ slip, two fifths of a $15\%$ slip & \autoref{tab:inputerror} \\
+\addlinespace
+halo error across objectives & backfit the shared factor & $25\%$ $[7, 50]$ & \autoref{tab:budgetneutral} \\
+\addlinespace
+noise that varies by trial & self-reported confidence as a variance & $31\%$ only if the report tracks the error almost perfectly; $12\%$ at a rank correlation of $0.6$, no gain below & Appendix~\ref{app:remedies} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Discussion}
 \label{sec:discussion}
 
-If the rater noise measured in three human studies transfers to the landscape scale, feedback error costs the deployed design $22$--$32\%$ of the improvement it could have had, compared to a clean run that ships within $13\%$ of the optimum. The oracle-isolation result bears on evaluations that treat a tree-ensemble oracle fitted to human ratings as the ground truth, the construction of Section~\ref{sec:intro}. On the same landscapes such an oracle reported about a quarter of the deployed loss the exact objective showed at $1\sigma$, and a Gaussian-process or MLP oracle of equal fidelity did not understate consistently. Three consequences follow from this. Report the deployed design, since the trajectory ranks acquisitions differently and inflates the onset effect (the rankings correlate at $0.59$, and the onset ratio is $5\times$ against $2.2\times$). Estimate the rater's noise relative to the objective's spread before the study. The magnitude decides more than the kind of error does, and with the onset it decides the useful size of a final sitting. And spend the end of the budget on the decision. A confirmation test before any claim of improvement cuts false claims thirtyfold. At moderate noise from the first rating a sitting of two designs recovers about a tenth of the loss, and larger sittings pay when the noise is large or arrives late. Two mechanisms remain open: the growth of the cost with $\optz$ beyond what a scale-free error allows (Appendix~\ref{sec:manipulation}), and the incumbent's opposite effects on the deployed design and the trajectory (Appendix~\ref{sec:incumbent}).
+If the rater noise measured in three human studies transfers to the landscape scale, feedback error costs the deployed design $22$--$32\%$ of the improvement it could have had, compared to a clean run that ships within $13\%$ of the optimum (a deployed regret of $0.425$ at $1\sigma$, less the $0.297$ excess). The oracle-isolation result bears on evaluations that treat a tree-ensemble oracle fitted to human ratings as the ground truth, the construction of Section~\ref{sec:intro}. On the same landscapes such an oracle reported about a quarter of the deployed loss the exact objective showed at $1\sigma$, and a Gaussian-process or MLP oracle of equal fidelity did not understate consistently. Three consequences follow from this. Report the deployed design, since the trajectory ranks acquisitions differently and inflates the onset effect (the rankings correlate at $0.59$, and the onset ratio is $5\times$ against $2.2\times$). Estimate the rater's noise relative to the objective's spread before the study. The magnitude decides more than the kind of error does, and with the onset it decides the useful size of a final sitting. A one-shot predictor computed from the objective adds to the magnitude on the trajectory loss without replacing it, and a clean ten-trial pilot approximates that predictor (Appendices~\ref{app:mediation} and~\ref{app:pilot}). And spend the end of the budget on the decision. A confirmation test before any claim of improvement cuts false claims thirtyfold. At moderate noise from the first rating a sitting of two designs recovers about a tenth of the loss, and larger sittings pay when the noise is large or arrives late. Where the kind of fault is known, model it: the largest recoveries in this paper come from explicit models of gross faults, saturation and rater offsets (\autoref{tab:remedies}). Two mechanisms remain open: the growth of the cost with $\optz$ beyond what a scale-free error allows (Appendix~\ref{sec:manipulation}), and the incumbent's opposite effects on the deployed design and the trajectory (Appendix~\ref{sec:incumbent}).
 
 \paragraph{Limitations.} The landscapes are analytic and the raters simulated. The loss appears on every landscape and, from the first rating, is as large on the six laws as on the classical functions ($32.7\%$ against $27.8\%$ at $1\sigma$, Appendix~\ref{app:smooth}). Its transfer to people rests on the noise ratio the archival studies measure. They place it at about $0.6$ to $1.1\sigma_f$, inside the sweep, and identify the serial structure less well. The anchor passes through a fitted objective's $\sigma_f$, and the cost at a given magnitude also depends on a landscape's $\optz$ (Appendix~\ref{sec:currency}), which the anchor does not carry. An anchor from repeated ratings is future work. The four main processes are additive and unbounded. A scale capped at the landscape's $0.9$ quantile, which they omit, costs $185\%$ more (Appendix~\ref{app:budgetneutral}), so the headline may understate the loss on scales that saturate. The oracle-isolation arm covers three oracle families, fitted to synthetic ratings of analytic landscapes. The procedures of Section~\ref{sec:budget} were chosen from families of variants. Held-out seeds and landscape splits bound the optimism of those choices at $0.006$ of the achievable improvement for $k$ and $3.5$ points of recovery for the sitting, with the family-wise tests beside them (Appendix~\ref{app:heldout}). The per-magnitude analysis of the sitting followed the pooled one. In the reported cell its choice of $k$ agrees in both seed directions and replicates on ten untouched seeds ($p = 0.02$), and over all eight cells Holm's adjusted $p$ is $0.23$. Of the observation-model remedies the rank rule is scored on held-out seeds, and clipping, relevance pursuit and per-rater offsets ran on five seeds. The sitting model cancels shared error and has no order effects, which a real sitting would counterbalance. The multi-objective arm cannot separate the hypervolume acquisitions, and the preregistered replication is void on its own control rule; its seeds serve instead as an untouched test set for the end-of-run procedures (Appendix~\ref{app:heldout}).
 
@@ -205,14 +251,13 @@ We have not used generative AI tools for translation, and the formulation and pr
 
 We have reviewed all AI-assisted work. The authors set the research questions, chose among the proposed designs, and take responsibility for the final content of this work, including text, claims or artifacts produced with the aid of generative AI.
 
-% Recommended by the ICLR 2027 template; does not count toward the page limit.
-\subsection*{Ethics statement}
+\subsection*{Broader impact statement}
 This work collects no new human data. The three human studies it draws on \citep{colley2025ehmi, jansen2025opticarvis, susak2026provoice} are published archival rating datasets, used here only to estimate within-rater noise and the parameters of the error processes (Section~\ref{sec:cost}, Appendix~\ref{app:archival}) and as fitted-oracle companions (Appendix~\ref{sec:fitted}); no participant is identifiable from any quantity we report. The original publications state that two of the studies followed their university's ethics-committee guidelines under local regulations that required no additional formal approval, and that the third received institutional ethics approval. In all three, participants gave informed consent, were compensated, and agreed to the anonymised publication of their data, which the original authors released openly. We use only those released ratings, within the terms of their publication. The analytic landscapes involve no human participants. We foresee no direct negative societal impact: the paper's recommendations (confirm a claimed improvement before reporting it, and spend part of a human-feedback budget on identification) reduce the rate of false improvement claims rather than raise it.
 
 \subsection*{Reproducibility statement}
 Software and compute: BoTorch 0.18.2 on PyTorch 2.13 (a CUDA build, though the simulator uses the CPU only), Python 3.12 on Windows 11. A run costs about $21$ worker-seconds and the main sweep about $470$ worker-hours on a 24-worker machine. Code, run settings, and the analysis outputs that every table and figure is read from are in the anonymised repository at \url{https://anonymous.4open.science/r/hitl-mobo-robustness-tests-17E2/}.
 
-\bibliographystyle{iclr2027_conference}
+\bibliographystyle{tmlr}
 \bibliography{references}
 
 \clearpage

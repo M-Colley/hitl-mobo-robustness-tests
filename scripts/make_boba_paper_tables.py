@@ -773,10 +773,10 @@ arm & {header} & {header} \\\\
 
 
 def table_confirmatory(analysis: Path, out: Path) -> None:
-    """Preregistered claims, screening estimate beside the fresh-seed estimate.
+    """The claims planned in advance, screening estimate beside the fresh-seed estimate.
 
     The verdict column reports the SENSITIVITY analysis, because the
-    preregistered run is void on a control failure and a void run has no
+    run planned in advance is void on a control failure and a void run has no
     per-claim verdict to report. The caption has to say so; the table cannot.
     """
     path = analysis / "confirmatory_results.json"
@@ -816,7 +816,7 @@ def table_confirmatory(analysis: Path, out: Path) -> None:
     rows.append(f"\\multicolumn{{3}}{{l}}{{replicates: {verdicts.rstrip(';')}}} \\\\")
     write(out / "confirmatory.tex", f"""\\begin{{tabular}}{{lrr}}
 \\toprule
-preregistered quantity & screening & fresh seeds \\\\
+quantity planned in advance & screening & fresh seeds \\\\
 \\midrule
 {chr(10).join(rows)}
 \\bottomrule
@@ -1391,7 +1391,7 @@ def main(argv: list[str] | None = None) -> None:
         "misclick": (Path("output-boba-misclick/analysis"), "misclick", ""),
     }, args.out)
     table_fitted_companion(Path("output-fitted/analysis/fitted_vs_synthetic.csv"), args.out)
-    # The SENSITIVITY run, not the preregistered one: the preregistered run is
+    # The SENSITIVITY run, not the one planned in advance: that run is
     # void on a control failure, so it has no per-claim verdict. Section text
     # and caption both say so.
     table_confirmatory(Path("output-boba-confirmatory/analysis-sensitivity"), args.out)

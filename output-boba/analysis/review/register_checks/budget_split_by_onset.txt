@@ -1,0 +1,1456 @@
+The derived budget rule by onset, and with a decision point after the onset.
+
+T = 50; the simulator corrupts trial t when t > onset (onsets 0 and 20). LogEI and qNEI, the four response-error processes (gaussian, bias, drift, ar1), four magnitudes, seeds 7-16; 20 landscapes.
+
+====================================================================================================
+decide-once rule: one decision at n0 = T - 30 = 20   [budget_split_derived.csv, rho = 1]
+  grid 2,3,5,8,12,16,20,25,30; one decision at n0 = T - 30 = 20; 12,800 runs scored, 0 dropped for a failed fit
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0802 0.1421 0.4706 2.5059
+    20               0.0733 0.0733 0.0733 0.0733
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.838 0.847 0.634 0.483
+    20               0.772 0.776 0.774 0.777
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.162                 3.000                     0.243
+                     0.25                0.153                 3.000                     0.204
+                     1.00                0.366                 5.000                     0.302
+                     5.00                0.517                 5.000                     0.377
+    20               0.05                0.228                 5.000                     0.301
+                     0.25                0.224                 5.000                     0.318
+                     1.00                0.226                 5.000                     0.321
+                     5.00                0.223                 5.000                     0.275
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.226, onset 20 0.859
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 1.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.738
+      gain derived     -0.00492 [-0.02206, +0.01096]
+      gain fixed_k8    +0.02177 [+0.00897, +0.03432]
+      gain fixed_k12   +0.02074 [+0.00682, +0.03464]
+      gain fixed_k16   +0.02167 [+0.00171, +0.04225]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.13813 [+0.11226, +0.16356]
+      derived minus fixed_k8    -0.02668 [-0.03851, -0.01517]
+      derived minus fixed_k12   -0.02565 [-0.04025, -0.01110]
+      derived minus fixed_k16   -0.02658 [-0.04553, -0.00747]
+      derived minus always_pm   +0.00817 [+0.00254, +0.01368]
+      derived minus always_lcb  -0.00571 [-0.00896, -0.00250]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.700
+      gain derived     +0.00440 [-0.01416, +0.02180]
+      gain fixed_k8    +0.01343 [+0.00029, +0.02787]
+      gain fixed_k12   +0.00362 [-0.00865, +0.01757]
+      gain fixed_k16   -0.00584 [-0.02148, +0.01053]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.12993 [+0.10422, +0.15525]
+      derived minus fixed_k8    -0.00903 [-0.02101, +0.00239]
+      derived minus fixed_k12   +0.00078 [-0.01373, +0.01404]
+      derived minus fixed_k16   +0.01024 [-0.00657, +0.02617]
+      derived minus always_pm   +0.00821 [+0.00115, +0.01542]
+      derived minus always_lcb  -0.00408 [-0.00875, +0.00014]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.775
+      gain derived     -0.01423 [-0.03190, +0.00355]
+      gain fixed_k8    +0.03011 [+0.01641, +0.04445]
+      gain fixed_k12   +0.03786 [+0.01981, +0.05632]
+      gain fixed_k16   +0.04918 [+0.02360, +0.07597]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.14632 [+0.11838, +0.17440]
+      derived minus fixed_k8    -0.04434 [-0.05820, -0.02975]
+      derived minus fixed_k12   -0.05209 [-0.06994, -0.03428]
+      derived minus fixed_k16   -0.06340 [-0.08630, -0.03929]
+      derived minus always_pm   +0.00814 [+0.00167, +0.01562]
+      derived minus always_lcb  -0.00733 [-0.01400, -0.00030]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.740
+      gain derived     -0.00304 [-0.02254, +0.01626]
+      gain fixed_k8    +0.02085 [+0.00940, +0.03299]
+      gain fixed_k12   +0.02429 [+0.01064, +0.03817]
+      gain fixed_k16   +0.02131 [+0.00378, +0.03875]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.13702 [+0.11213, +0.16060]
+      derived minus fixed_k8    -0.02389 [-0.03867, -0.00888]
+      derived minus fixed_k12   -0.02733 [-0.04353, -0.01138]
+      derived minus fixed_k16   -0.02436 [-0.04443, -0.00533]
+      derived minus always_pm   +0.01003 [+0.00369, +0.01639]
+      derived minus always_lcb  -0.00468 [-0.00917, -0.00046]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.693
+      gain derived     +0.00462 [-0.01568, +0.02451]
+      gain fixed_k8    +0.01480 [+0.00054, +0.02987]
+      gain fixed_k12   +0.00562 [-0.00862, +0.02089]
+      gain fixed_k16   -0.01021 [-0.02656, +0.00751]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.12829 [+0.10286, +0.15304]
+      derived minus fixed_k8    -0.01018 [-0.02517, +0.00287]
+      derived minus fixed_k12   -0.00100 [-0.01821, +0.01463]
+      derived minus fixed_k16   +0.01482 [-0.00582, +0.03389]
+      derived minus always_pm   +0.01024 [+0.00195, +0.01852]
+      derived minus always_lcb  -0.00280 [-0.00734, +0.00218]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.787
+      gain derived     -0.01070 [-0.03296, +0.01243]
+      gain fixed_k8    +0.02690 [+0.01457, +0.04006]
+      gain fixed_k12   +0.04296 [+0.02621, +0.06059]
+      gain fixed_k16   +0.05283 [+0.03120, +0.07505]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.14575 [+0.11963, +0.17258]
+      derived minus fixed_k8    -0.03760 [-0.05658, -0.01778]
+      derived minus fixed_k12   -0.05366 [-0.07153, -0.03599]
+      derived minus fixed_k16   -0.06354 [-0.08479, -0.04147]
+      derived minus always_pm   +0.00982 [+0.00331, +0.01737]
+      derived minus always_lcb  -0.00657 [-0.01417, +0.00052]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.735
+      gain derived     -0.00679 [-0.02225, +0.00650]
+      gain fixed_k8    +0.02269 [+0.00659, +0.03936]
+      gain fixed_k12   +0.01719 [+0.00115, +0.03349]
+      gain fixed_k16   +0.02202 [-0.00102, +0.04760]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.13923 [+0.11124, +0.16795]
+      derived minus fixed_k8    -0.02948 [-0.04096, -0.01775]
+      derived minus fixed_k12   -0.02398 [-0.03918, -0.00917]
+      derived minus fixed_k16   -0.02881 [-0.04977, -0.00717]
+      derived minus always_pm   +0.00632 [+0.00033, +0.01198]
+      derived minus always_lcb  -0.00673 [-0.01052, -0.00299]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.708
+      gain derived     +0.00418 [-0.01417, +0.02104]
+      gain fixed_k8    +0.01206 [-0.00237, +0.02853]
+      gain fixed_k12   +0.00162 [-0.01161, +0.01766]
+      gain fixed_k16   -0.00148 [-0.01907, +0.01833]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.13157 [+0.10459, +0.15857]
+      derived minus fixed_k8    -0.00788 [-0.02136, +0.00443]
+      derived minus fixed_k12   +0.00256 [-0.01371, +0.01736]
+      derived minus fixed_k16   +0.00566 [-0.01219, +0.02293]
+      derived minus always_pm   +0.00618 [-0.00123, +0.01401]
+      derived minus always_lcb  -0.00537 [-0.01276, +0.00172]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.763
+      gain derived     -0.01775 [-0.03325, -0.00362]
+      gain fixed_k8    +0.03332 [+0.01418, +0.05283]
+      gain fixed_k12   +0.03276 [+0.01182, +0.05352]
+      gain fixed_k16   +0.04552 [+0.01457, +0.07895]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.14690 [+0.11646, +0.17867]
+      derived minus fixed_k8    -0.05108 [-0.06573, -0.03480]
+      derived minus fixed_k12   -0.05051 [-0.07102, -0.02992]
+      derived minus fixed_k16   -0.06327 [-0.09180, -0.03430]
+      derived minus always_pm   +0.00646 [-0.00126, +0.01509]
+      derived minus always_lcb  -0.00810 [-0.01497, +0.00010]
+  by magnitude and onset (all seeds; deployed-design gain over the standard process):
+    0.05 sigma, onset  0: derived -0.02257 [-0.04291, -0.00618] (k=12 -0.0184), pm share 0.838; minus fixed_k8 -0.00936 [-0.02439, +0.00254]; minus fixed_k12 -0.00413 [-0.01947, +0.00869]; minus always_pm +0.00233 [-0.00065, +0.00620]
+    0.05 sigma, onset 20: derived -0.02025 [-0.03720, -0.00588] (k=12 -0.0199), pm share 0.772; minus fixed_k8 -0.00534 [-0.01706, +0.00537]; minus fixed_k12 -0.00039 [-0.01271, +0.01127]; minus always_pm +0.00154 [-0.00034, +0.00386]
+    0.25 sigma, onset  0: derived -0.01037 [-0.02583, +0.00279] (k=12 -0.0166), pm share 0.847; minus fixed_k8 -0.00149 [-0.01254, +0.00806]; minus fixed_k12 +0.00627 [-0.00575, +0.01699]; minus always_pm +0.00195 [-0.00122, +0.00629]
+    0.25 sigma, onset 20: derived -0.01499 [-0.03397, +0.00107] (k=12 -0.0108), pm share 0.776; minus fixed_k8 -0.00822 [-0.02105, +0.00376]; minus fixed_k12 -0.00418 [-0.01758, +0.00863]; minus always_pm +0.00080 [-0.00169, +0.00324]
+    1 sigma, onset  0: derived +0.01287 [-0.00561, +0.02962] (k=12 -0.0099), pm share 0.634; minus fixed_k8 +0.00138 [-0.01412, +0.01525]; minus fixed_k12 +0.02275 [+0.00406, +0.03934]; minus always_pm +0.00017 [-0.00604, +0.00653]
+    1 sigma, onset 20: derived -0.00333 [-0.02128, +0.01290] (k=12 +0.0192), pm share 0.774; minus fixed_k8 -0.02038 [-0.03621, -0.00575]; minus fixed_k12 -0.02249 [-0.04207, -0.00362]; minus always_pm -0.00005 [-0.00784, +0.00587]
+    5 sigma, onset  0: derived +0.03766 [+0.00838, +0.06908] (k=12 +0.0594), pm share 0.483; minus fixed_k8 -0.02666 [-0.05039, -0.00367]; minus fixed_k12 -0.02176 [-0.05054, +0.00605]; minus always_pm +0.02837 [+0.00556, +0.05434]
+    5 sigma, onset 20: derived -0.01834 [-0.05857, +0.02439] (k=12 +0.1630), pm share 0.777; minus fixed_k8 -0.14342 [-0.18752, -0.10196]; minus fixed_k12 -0.18129 [-0.23943, -0.12863]; minus always_pm +0.03027 [+0.00997, +0.05516]
+  without the 5 sigma cell from trial 21 (the cell that carries the pooled gain of k = 12; deployed-design gain over the standard process):
+    seeds   all, both onsets (11,200 runs): gain derived -0.00300 [-0.02082, +0.01327]; fixed_k8 +0.00701 [-0.00412, +0.01809]; fixed_k12 +0.00042 [-0.01100, +0.01221]; derived minus fixed_k8 -0.01001 [-0.02162, +0.00065]; derived minus fixed_k12 -0.00342 [-0.01715, +0.00927]
+    seeds   all, onset 20 (0.05, 0.25, 1 sigma) (4,800 runs): gain derived -0.01286 [-0.02986, +0.00194]; fixed_k8 -0.00155 [-0.01064, +0.00748]; fixed_k12 -0.00384 [-0.01490, +0.00689]; derived minus fixed_k8 -0.01131 [-0.02320, +0.00002]; derived minus fixed_k12 -0.00902 [-0.02268, +0.00414]
+    seeds 12-16, both onsets (5,600 runs): gain derived -0.00213 [-0.01821, +0.01236]; fixed_k8 +0.00514 [-0.00720, +0.01740]; fixed_k12 -0.00196 [-0.01516, +0.01115]; derived minus fixed_k8 -0.00726 [-0.01754, +0.00295]; derived minus fixed_k12 -0.00016 [-0.01356, +0.01257]
+    seeds 12-16, onset 20 (0.05, 0.25, 1 sigma) (2,400 runs): gain derived -0.01053 [-0.02534, +0.00186]; fixed_k8 -0.00410 [-0.01630, +0.00666]; fixed_k12 -0.00673 [-0.02191, +0.00713]; derived minus fixed_k8 -0.00644 [-0.01718, +0.00538]; derived minus fixed_k12 -0.00380 [-0.01764, +0.01145]
+  gains at 0.05 sigma, where the error costs least (deployed-design gain over the standard process; not a price, the clean-twin prices are at the end):
+    seeds   all, 0.05 sigma, onset all: gain derived -0.02141 [-0.04008, -0.00586]; fixed_k8 -0.01406 [-0.02200, -0.00670]; fixed_k12 -0.01915 [-0.02906, -0.00998]; always_pm -0.02335 [-0.04451, -0.00566]; always_lcb -0.02280 [-0.04590, -0.00439]
+    seeds   all, 0.05 sigma, onset   0: gain derived -0.02257 [-0.04291, -0.00618]; fixed_k8 -0.01322 [-0.02066, -0.00647]; fixed_k12 -0.01844 [-0.02746, -0.00977]; always_pm -0.02491 [-0.04792, -0.00596]; always_lcb -0.02454 [-0.05015, -0.00433]
+    seeds   all, 0.05 sigma, onset  20: gain derived -0.02025 [-0.03720, -0.00588]; fixed_k8 -0.01491 [-0.02411, -0.00670]; fixed_k12 -0.01986 [-0.03080, -0.00976]; always_pm -0.02179 [-0.04114, -0.00555]; always_lcb -0.02106 [-0.04162, -0.00445]
+    seeds 12-16, 0.05 sigma, onset all: gain derived -0.01872 [-0.03655, -0.00476]; fixed_k8 -0.01469 [-0.02401, -0.00630]; fixed_k12 -0.01928 [-0.03126, -0.00905]; always_pm -0.02001 [-0.04012, -0.00455]; always_lcb -0.01925 [-0.03929, -0.00355]
+    seeds 12-16, 0.05 sigma, onset   0: gain derived -0.02108 [-0.04238, -0.00444]; fixed_k8 -0.01273 [-0.01969, -0.00612]; fixed_k12 -0.01697 [-0.02537, -0.00866]; always_pm -0.02179 [-0.04440, -0.00397]; always_lcb -0.02159 [-0.04456, -0.00340]
+    seeds 12-16, 0.05 sigma, onset  20: gain derived -0.01636 [-0.03115, -0.00467]; fixed_k8 -0.01664 [-0.03042, -0.00587]; fixed_k12 -0.02159 [-0.03796, -0.00849]; always_pm -0.01824 [-0.03603, -0.00449]; always_lcb -0.01691 [-0.03467, -0.00341]
+  by landscape group (is the deficit where the surrogate is misspecified?):
+  six laws (6 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.02826 [+0.01756, +0.04065], pm share 0.698; minus fixed_k8 +0.01105 [-0.00367, +0.02509]; minus fixed_k12 +0.02322 [+0.00982, +0.03526]; minus always_pm -0.00886 [-0.01419, -0.00253]
+    onset 20: derived +0.00957 [-0.00674, +0.02364], pm share 0.685; minus fixed_k8 -0.02827 [-0.04530, -0.01704]; minus fixed_k12 -0.03616 [-0.06264, -0.01294]; minus always_pm +0.00195 [-0.01012, +0.01688]
+  ten rugged classical (10 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived -0.01764 [-0.04341, +0.01032], pm share 0.718; minus fixed_k8 -0.01862 [-0.03791, -0.00135]; minus fixed_k12 -0.01012 [-0.03265, +0.01184]; minus always_pm +0.01495 [+0.00543, +0.02461]
+    onset 20: derived -0.03983 [-0.05887, -0.02050], pm share 0.874; minus fixed_k8 -0.05207 [-0.07045, -0.02857]; minus fixed_k12 -0.05418 [-0.07961, -0.02314]; minus always_pm +0.00608 [+0.00082, +0.01206]
+  four others (4 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.02369 [+0.00263, +0.04475], pm share 0.659; minus fixed_k8 -0.01516 [-0.02781, -0.00251]; minus fixed_k12 -0.00563 [-0.01575, +0.00787]; minus always_pm +0.01693 [+0.01015, +0.02371]
+    onset 20: derived +0.01408 [-0.02840, +0.05655], pm share 0.661; minus fixed_k8 -0.04910 [-0.08019, -0.00934]; minus fixed_k12 -0.07073 [-0.09653, -0.03639]; minus always_pm +0.02258 [+0.00180, +0.04335]
+  across landscapes: Spearman correlation of the rule's per-landscape paired gain with the surrogate's fit (positive: the rule does better where the GP fits):
+    onset  0, derived minus fixed_k8  : vs clean sobol_r2 rho +0.37 (p 0.107, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.20 (p 0.391, n 20)
+    onset  0, derived minus fixed_k12 : vs clean sobol_r2 rho +0.12 (p 0.600, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.20 (p 0.391, n 20)
+    onset  0, derived minus always_pm : vs clean sobol_r2 rho -0.29 (p 0.222, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.14 (p 0.561, n 20)
+    onset 20, derived minus fixed_k8  : vs clean sobol_r2 rho +0.14 (p 0.556, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.03 (p 0.890, n 20)
+    onset 20, derived minus fixed_k12 : vs clean sobol_r2 rho -0.07 (p 0.777, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.10 (p 0.668, n 20)
+    onset 20, derived minus always_pm : vs clean sobol_r2 rho -0.17 (p 0.482, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.02 (p 0.937, n 20)
+  counterfactual: every pm choice replaced by lcb, sitting choices kept (deployed-design gain over the standard process, and minus each comparator):
+    seeds   all, onset all: +0.00289 [-0.01416, +0.01854]; minus fixed_k8 -0.01888 [-0.02928, -0.00866]; minus fixed_k12 -0.01785 [-0.03058, -0.00492]; minus always_lcb +0.00210 [-0.00149, +0.00549]
+    seeds   all, onset   0: +0.00898 [-0.00956, +0.02684]; minus fixed_k8 -0.00445 [-0.01498, +0.00516]; minus fixed_k12 +0.00536 [-0.00876, +0.01742]; minus always_lcb +0.00050 [-0.00461, +0.00602]
+    seeds   all, onset  20: -0.00319 [-0.02056, +0.01330]; minus fixed_k8 -0.03330 [-0.04514, -0.02095]; minus fixed_k12 -0.04105 [-0.05667, -0.02502]; minus always_lcb +0.00370 [-0.00086, +0.00858]
+    seeds 12-16, onset all: +0.00030 [-0.01550, +0.01399]; minus fixed_k8 -0.02239 [-0.03201, -0.01197]; minus fixed_k12 -0.01689 [-0.03063, -0.00328]; minus always_lcb +0.00036 [-0.00432, +0.00471]
+    seeds 12-16, onset   0: +0.00805 [-0.01055, +0.02529]; minus fixed_k8 -0.00401 [-0.01601, +0.00673]; minus fixed_k12 +0.00643 [-0.00836, +0.02030]; minus always_lcb -0.00150 [-0.00883, +0.00605]
+    seeds 12-16, onset  20: -0.00744 [-0.02175, +0.00580]; minus fixed_k8 -0.04077 [-0.05349, -0.02655]; minus fixed_k12 -0.04020 [-0.05834, -0.02154]; minus always_lcb +0.00221 [-0.00358, +0.00869]
+  counterfactual: the search credit read from the best true value instead of the best rating (clairvoyant; the stored scores re-ranked, nothing refitted):
+  12,800 runs; share that ship the posterior-mean design, by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.782 0.755 0.610 0.280
+    20               0.772 0.776 0.774 0.777
+    seeds   all, onset all: -0.00329 [-0.01986, +0.01252]; minus fixed_k8 -0.02506 [-0.03618, -0.01422]; minus fixed_k12 -0.02403 [-0.03785, -0.01034]
+    seeds   all, onset   0: +0.00764 [-0.01073, +0.02422]; minus fixed_k8 -0.00579 [-0.01678, +0.00413]; minus fixed_k12 +0.00402 [-0.00938, +0.01586]
+    seeds   all, onset  20: -0.01423 [-0.03190, +0.00355]; minus fixed_k8 -0.04434 [-0.05820, -0.02975]; minus fixed_k12 -0.05209 [-0.06994, -0.03428]
+    seeds 12-16, onset all: -0.00480 [-0.02008, +0.00834]; minus fixed_k8 -0.02750 [-0.03876, -0.01595]; minus fixed_k12 -0.02199 [-0.03687, -0.00724]
+    seeds 12-16, onset   0: +0.00815 [-0.00934, +0.02511]; minus fixed_k8 -0.00391 [-0.01845, +0.00898]; minus fixed_k12 +0.00653 [-0.01000, +0.02193]
+    seeds 12-16, onset  20: -0.01775 [-0.03325, -0.00362]; minus fixed_k8 -0.05108 [-0.06573, -0.03480]; minus fixed_k12 -0.05051 [-0.07102, -0.02992]
+  reproduction of the held-out numbers of heldout_remedies.csv:
+  pooled held-out derived gain here -0.006787 [-0.022248, +0.006498]; heldout_remedies.csv mean_gain_test -0.006787 (reproduced); heldout_remedies.md: | derived rule, rho = 1, test seeds 12-16 | -0.007 [-0.022, +0.006] |
+  fixed_k12 minus derived on seeds 12-16: here +0.023975 [+0.009169, +0.039185], heldout_remedies.csv +0.023975 [+0.009169, +0.039185]: reproduced
+  the search term at each decision point n: the recent gain per trial in the best rating (what the rule credits) against the same gain in the best true value (what the search found), by onset x magnitude, at every n = T - k of the grid (the sequential rule's decision points; n = 20 is this rule's, 25 the capped grid's):
+  12,800 runs; rate per trial in units of opt_z (x 1000), landscape means; 'x' = rated / true (ratio of landscape means):
+    onset  sigma    n=20 rated/true (x)     n=25 rated/true (x)     n=30 rated/true (x)     n=34 rated/true (x)     n=38 rated/true (x)     n=42 rated/true (x)     n=45 rated/true (x)     n=47 rated/true (x)     n=48 rated/true (x)  
+        0   0.05   16.71/15.78 ( 1.1)   10.05/ 9.46 ( 1.1)    6.24/ 5.79 ( 1.1)    4.54/ 4.17 ( 1.1)    3.25/ 2.93 ( 1.1)    2.35/ 2.01 ( 1.2)    2.05/ 1.69 ( 1.2)    1.96/ 1.54 ( 1.3)    2.00/ 1.55 ( 1.3)
+        0   0.25   20.61/15.09 ( 1.4)   13.17/ 9.23 ( 1.4)    8.77/ 6.22 ( 1.4)    6.69/ 4.76 ( 1.4)    5.26/ 3.47 ( 1.5)    3.98/ 2.51 ( 1.6)    3.64/ 2.09 ( 1.7)    2.92/ 1.79 ( 1.6)    2.83/ 1.72 ( 1.6)
+        0      1   22.17/11.61 ( 1.9)   17.73/ 8.94 ( 2.0)   17.08/ 6.62 ( 2.6)   14.19/ 5.46 ( 2.6)   10.70/ 4.40 ( 2.4)   10.38/ 3.76 ( 2.8)    9.20/ 3.40 ( 2.7)    8.92/ 3.22 ( 2.8)    8.53/ 3.18 ( 2.7)
+        0      5   78.23/ 6.55 (11.9)   52.71/ 4.96 (10.6)   36.62/ 3.94 ( 9.3)   39.64/ 3.75 (10.6)   37.98/ 3.28 (11.6)   24.45/ 2.87 ( 8.5)   28.01/ 2.59 (10.8)   33.17/ 2.51 (13.2)   31.45/ 2.41 (13.1)
+       20   0.05   16.66/16.66 ( 1.0)   10.81/ 9.62 ( 1.1)    7.46/ 5.67 ( 1.3)    5.21/ 4.23 ( 1.2)    3.86/ 2.97 ( 1.3)    2.90/ 2.23 ( 1.3)    2.40/ 1.89 ( 1.3)    2.13/ 1.73 ( 1.2)    1.90/ 1.58 ( 1.2)
+       20   0.25   16.66/16.66 ( 1.0)   16.03/ 9.53 ( 1.7)   14.88/ 5.21 ( 2.9)    9.38/ 3.71 ( 2.5)    7.27/ 2.67 ( 2.7)    6.30/ 2.11 ( 3.0)    5.72/ 1.67 ( 3.4)    5.33/ 1.56 ( 3.4)    4.97/ 1.46 ( 3.4)
+       20      1   16.66/16.66 ( 1.0)   49.76/ 8.86 ( 5.6)   59.24/ 4.06 (14.6)   27.61/ 2.72 (10.1)   14.98/ 2.12 ( 7.1)   15.74/ 1.68 ( 9.4)   13.29/ 1.40 ( 9.5)   12.73/ 1.19 (10.7)   12.95/ 1.19 (10.9)
+       20      5   16.66/16.66 ( 1.0)  247.38/ 8.00 (30.9)  316.66/ 2.37 (133.6)  118.86/ 1.10 (108.2)   99.29/ 0.81 (122.8)   76.46/ 0.62 (122.6)   69.80/ 0.52 (135.3)   53.82/ 0.47 (114.2)   50.86/ 0.46 (110.8)
+  the same ratio (rated / true) by process:
+    n                     20   25    30    34    38    42    45    47    48
+    process  onset sd                                                      
+    ar1      0     0.05  1.1  1.1   1.1   1.1   1.1   1.1   1.2   1.3   1.3
+                   0.25  1.3  1.2   1.2   1.2   1.3   1.4   1.3   1.4   1.4
+                   1.00  1.8  1.9   2.8   2.7   3.2   3.7   3.2   2.3   2.2
+                   5.00 13.3 15.5  12.0  13.4  13.9   8.6   8.2   4.0   3.5
+             20    0.05  1.0  1.0   1.1   1.1   1.2   1.3   1.2   1.2   1.1
+                   0.25  1.0  1.4   2.0   1.8   2.0   2.2   2.7   2.7   2.6
+                   1.00  1.0  3.4   9.1   9.5   6.2   7.0   5.7   6.8   7.8
+                   5.00  1.0 13.4  55.7  74.4  83.4 105.4 146.6 122.1 103.8
+    bias     0     0.05  1.1  1.1   1.1   1.1   1.1   1.1   1.1   1.1   1.1
+                   0.25  1.5  1.3   1.4   1.4   1.4   1.4   1.5   1.5   1.5
+                   1.00  1.7  1.2   1.5   2.0   2.3   1.8   1.8   1.9   1.6
+                   5.00 10.9  4.8   5.3   4.0   3.4   5.1   8.5  19.5  19.0
+             20    0.05  1.0  1.3   1.5   1.3   1.3   1.2   1.2   1.1   1.1
+                   0.25  1.0  2.3   4.2   2.9   3.1   3.2   3.4   3.3   3.5
+                   1.00  1.0  9.0  23.6   9.9   8.8  10.4   9.0   8.8   9.1
+                   5.00  1.0 54.4 272.8 118.7  98.2  60.0  71.8  52.6  62.8
+    drift    0     0.05  1.1  1.1   1.1   1.1   1.2   1.3   1.4   1.5   1.5
+                   0.25  1.4  1.7   1.7   1.7   2.1   2.2   2.8   2.4   2.3
+                   1.00  2.3  2.5   3.4   3.4   2.4   5.0   4.8   6.1   6.1
+                   5.00 12.1 10.5  18.9  23.9  28.2  19.2  27.5  28.8  25.7
+             20    0.05  1.0  1.1   1.3   1.3   1.3   1.3   1.4   1.4   1.3
+                   0.25  1.0  1.5   2.8   3.0   3.0   3.4   4.2   4.3   3.8
+                   1.00  1.0  6.0  17.1  14.2  10.4  11.3  13.8  14.8  14.1
+                   5.00  1.0 26.6 120.1 131.7 243.5 298.8 306.0 235.7 246.8
+    gaussian 0     0.05  1.1  1.1   1.1   1.1   1.0   1.1   1.2   1.2   1.2
+                   0.25  1.4  1.5   1.3   1.3   1.4   1.3   1.4   1.3   1.3
+                   1.00  1.8  2.3   2.7   2.4   1.9   1.2   1.2   1.0   1.2
+                   5.00 11.2 11.4   3.8   3.0   3.6   4.3   3.6   5.3   8.4
+             20    0.05  1.0  1.1   1.2   1.2   1.3   1.3   1.3   1.3   1.2
+                   0.25  1.0  1.5   2.4   2.5   2.8   3.3   3.3   3.4   3.6
+                   1.00  1.0  4.3  10.6   7.6   4.4   9.3   9.5  11.9  12.0
+                   5.00  1.0 32.0 156.9 120.3  81.6  85.3  39.7  65.3  53.6
+
+====================================================================================================
+grid capped at k = 25: one decision at n0 = 25   [budget_split_derived_kmax25.csv, rho = 1]
+  grid 2,3,5,8,12,16,20,25; one decision at n0 = T - 25 = 25; 12,800 runs scored, 0 dropped for a failed fit
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0770 0.1829 0.5919 2.9243
+    20               0.0719 0.1213 0.2480 0.8332
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.729 0.752 0.566 0.388
+    20               0.782 0.828 0.890 0.932
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.271                 3.000                     0.258
+                     0.25                0.248                 3.000                     0.209
+                     1.00                0.434                 5.000                     0.323
+                     5.00                0.612                 5.000                     0.414
+    20               0.05                0.218                 3.000                     0.226
+                     0.25                0.172                 3.000                     0.229
+                     1.00                0.110                 3.000                     0.290
+                     5.00                0.068                 3.000                     0.330
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.139, onset 20 0.652
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.733
+      gain derived     -0.00447 [-0.02042, +0.01065]
+      gain fixed_k8    +0.02177 [+0.00897, +0.03432]
+      gain fixed_k12   +0.02074 [+0.00682, +0.03464]
+      gain fixed_k16   +0.02167 [+0.00171, +0.04225]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.13813 [+0.11226, +0.16356]
+      derived minus fixed_k8    -0.02624 [-0.03770, -0.01486]
+      derived minus fixed_k12   -0.02521 [-0.03961, -0.01042]
+      derived minus fixed_k16   -0.02614 [-0.04443, -0.00699]
+      derived minus always_pm   +0.00862 [+0.00350, +0.01348]
+      derived minus always_lcb  -0.00526 [-0.00889, -0.00164]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.609
+      gain derived     +0.00792 [-0.00989, +0.02445]
+      gain fixed_k8    +0.01343 [+0.00029, +0.02787]
+      gain fixed_k12   +0.00362 [-0.00865, +0.01757]
+      gain fixed_k16   -0.00584 [-0.02148, +0.01053]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.12993 [+0.10422, +0.15525]
+      derived minus fixed_k8    -0.00551 [-0.01683, +0.00527]
+      derived minus fixed_k12   +0.00431 [-0.00933, +0.01679]
+      derived minus fixed_k16   +0.01377 [-0.00218, +0.02830]
+      derived minus always_pm   +0.01173 [+0.00356, +0.01960]
+      derived minus always_lcb  -0.00056 [-0.00548, +0.00440]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.858
+      gain derived     -0.01686 [-0.03317, -0.00174]
+      gain fixed_k8    +0.03011 [+0.01641, +0.04445]
+      gain fixed_k12   +0.03786 [+0.01981, +0.05632]
+      gain fixed_k16   +0.04918 [+0.02360, +0.07597]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.14632 [+0.11838, +0.17440]
+      derived minus fixed_k8    -0.04697 [-0.06142, -0.03204]
+      derived minus fixed_k12   -0.05472 [-0.07289, -0.03528]
+      derived minus fixed_k16   -0.06604 [-0.09034, -0.03956]
+      derived minus always_pm   +0.00550 [+0.00262, +0.00842]
+      derived minus always_lcb  -0.00997 [-0.01559, -0.00503]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.720
+      gain derived     -0.00198 [-0.02100, +0.01625]
+      gain fixed_k8    +0.02085 [+0.00940, +0.03299]
+      gain fixed_k12   +0.02429 [+0.01064, +0.03817]
+      gain fixed_k16   +0.02131 [+0.00378, +0.03875]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.13702 [+0.11213, +0.16060]
+      derived minus fixed_k8    -0.02283 [-0.03663, -0.00907]
+      derived minus fixed_k12   -0.02627 [-0.04092, -0.01124]
+      derived minus fixed_k16   -0.02329 [-0.04203, -0.00476]
+      derived minus always_pm   +0.01109 [+0.00488, +0.01771]
+      derived minus always_lcb  -0.00362 [-0.00783, +0.00053]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.593
+      gain derived     +0.01099 [-0.00829, +0.02996]
+      gain fixed_k8    +0.01480 [+0.00054, +0.02987]
+      gain fixed_k12   +0.00562 [-0.00862, +0.02089]
+      gain fixed_k16   -0.01021 [-0.02656, +0.00751]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.12829 [+0.10286, +0.15304]
+      derived minus fixed_k8    -0.00380 [-0.01618, +0.00738]
+      derived minus fixed_k12   +0.00538 [-0.01012, +0.02010]
+      derived minus fixed_k16   +0.02120 [+0.00276, +0.03795]
+      derived minus always_pm   +0.01661 [+0.00584, +0.02821]
+      derived minus always_lcb  +0.00358 [-0.00311, +0.01037]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.847
+      gain derived     -0.01495 [-0.03660, +0.00456]
+      gain fixed_k8    +0.02690 [+0.01457, +0.04006]
+      gain fixed_k12   +0.04296 [+0.02621, +0.06059]
+      gain fixed_k16   +0.05283 [+0.03120, +0.07505]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.14575 [+0.11963, +0.17258]
+      derived minus fixed_k8    -0.04185 [-0.06063, -0.02263]
+      derived minus fixed_k12   -0.05791 [-0.07563, -0.04032]
+      derived minus fixed_k16   -0.06779 [-0.09000, -0.04518]
+      derived minus always_pm   +0.00557 [+0.00196, +0.00926]
+      derived minus always_lcb  -0.01082 [-0.01671, -0.00552]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.747
+      gain derived     -0.00696 [-0.02118, +0.00601]
+      gain fixed_k8    +0.02269 [+0.00659, +0.03936]
+      gain fixed_k12   +0.01719 [+0.00115, +0.03349]
+      gain fixed_k16   +0.02202 [-0.00102, +0.04760]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.13923 [+0.11124, +0.16795]
+      derived minus fixed_k8    -0.02965 [-0.04248, -0.01615]
+      derived minus fixed_k12   -0.02415 [-0.03977, -0.00852]
+      derived minus fixed_k16   -0.02898 [-0.05127, -0.00659]
+      derived minus always_pm   +0.00614 [+0.00181, +0.01045]
+      derived minus always_lcb  -0.00691 [-0.01097, -0.00309]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.624
+      gain derived     +0.00485 [-0.01213, +0.02067]
+      gain fixed_k8    +0.01206 [-0.00237, +0.02853]
+      gain fixed_k12   +0.00162 [-0.01161, +0.01766]
+      gain fixed_k16   -0.00148 [-0.01907, +0.01833]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.13157 [+0.10459, +0.15857]
+      derived minus fixed_k8    -0.00721 [-0.01915, +0.00436]
+      derived minus fixed_k12   +0.00324 [-0.01082, +0.01685]
+      derived minus fixed_k16   +0.00633 [-0.01056, +0.02238]
+      derived minus always_pm   +0.00685 [-0.00005, +0.01314]
+      derived minus always_lcb  -0.00469 [-0.01013, +0.00073]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.869
+      gain derived     -0.01878 [-0.03238, -0.00596]
+      gain fixed_k8    +0.03332 [+0.01418, +0.05283]
+      gain fixed_k12   +0.03276 [+0.01182, +0.05352]
+      gain fixed_k16   +0.04552 [+0.01457, +0.07895]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.14690 [+0.11646, +0.17867]
+      derived minus fixed_k8    -0.05210 [-0.07037, -0.03265]
+      derived minus fixed_k12   -0.05154 [-0.07465, -0.02818]
+      derived minus fixed_k16   -0.06430 [-0.09673, -0.03156]
+      derived minus always_pm   +0.00544 [+0.00255, +0.00851]
+      derived minus always_lcb  -0.00912 [-0.01592, -0.00375]
+  by magnitude and onset (all seeds; deployed-design gain over the standard process):
+    0.05 sigma, onset  0: derived -0.02012 [-0.03940, -0.00521] (k=12 -0.0184), pm share 0.729; minus fixed_k8 -0.00690 [-0.02099, +0.00361]; minus fixed_k12 -0.00168 [-0.01609, +0.00972]; minus always_pm +0.00479 [+0.00017, +0.01083]
+    0.05 sigma, onset 20: derived -0.01964 [-0.03630, -0.00541] (k=12 -0.0199), pm share 0.782; minus fixed_k8 -0.00472 [-0.01586, +0.00595]; minus fixed_k12 +0.00023 [-0.01167, +0.01160]; minus always_pm +0.00215 [+0.00017, +0.00497]
+    0.25 sigma, onset  0: derived -0.01107 [-0.02837, +0.00299] (k=12 -0.0166), pm share 0.752; minus fixed_k8 -0.00219 [-0.01465, +0.00846]; minus fixed_k12 +0.00556 [-0.00800, +0.01731]; minus always_pm +0.00124 [-0.00099, +0.00377]
+    0.25 sigma, onset 20: derived -0.01288 [-0.03188, +0.00284] (k=12 -0.0108), pm share 0.828; minus fixed_k8 -0.00610 [-0.01913, +0.00579]; minus fixed_k12 -0.00207 [-0.01548, +0.01089]; minus always_pm +0.00292 [+0.00095, +0.00507]
+    1 sigma, onset  0: derived +0.01195 [-0.00546, +0.02873] (k=12 -0.0099), pm share 0.566; minus fixed_k8 +0.00045 [-0.01376, +0.01431]; minus fixed_k12 +0.02182 [+0.00463, +0.03823]; minus always_pm -0.00076 [-0.00696, +0.00633]
+    1 sigma, onset 20: derived -0.00112 [-0.01789, +0.01487] (k=12 +0.0192), pm share 0.890; minus fixed_k8 -0.01817 [-0.03405, -0.00129]; minus fixed_k12 -0.02028 [-0.04028, +0.00084]; minus always_pm +0.00216 [-0.00136, +0.00594]
+    5 sigma, onset  0: derived +0.05094 [+0.02245, +0.08224] (k=12 +0.0594), pm share 0.388; minus fixed_k8 -0.01338 [-0.03883, +0.01045]; minus fixed_k12 -0.00848 [-0.03983, +0.02095]; minus always_pm +0.04165 [+0.01642, +0.06739]
+    5 sigma, onset 20: derived -0.03383 [-0.06229, -0.00315] (k=12 +0.1630), pm share 0.932; minus fixed_k8 -0.15890 [-0.20458, -0.11795]; minus fixed_k12 -0.19678 [-0.25710, -0.14225]; minus always_pm +0.01478 [+0.00636, +0.02407]
+  without the 5 sigma cell from trial 21 (the cell that carries the pooled gain of k = 12; deployed-design gain over the standard process):
+    seeds   all, both onsets (11,200 runs): gain derived -0.00028 [-0.01726, +0.01507]; fixed_k8 +0.00701 [-0.00412, +0.01809]; fixed_k12 +0.00042 [-0.01100, +0.01221]; derived minus fixed_k8 -0.00729 [-0.01859, +0.00316]; derived minus fixed_k12 -0.00070 [-0.01391, +0.01144]
+    seeds   all, onset 20 (0.05, 0.25, 1 sigma) (4,800 runs): gain derived -0.01121 [-0.02781, +0.00331]; fixed_k8 -0.00155 [-0.01064, +0.00748]; fixed_k12 -0.00384 [-0.01490, +0.00689]; derived minus fixed_k8 -0.00966 [-0.02156, +0.00160]; derived minus fixed_k12 -0.00737 [-0.02112, +0.00585]
+    seeds 12-16, both onsets (5,600 runs): gain derived -0.00080 [-0.01670, +0.01348]; fixed_k8 +0.00514 [-0.00720, +0.01740]; fixed_k12 -0.00196 [-0.01516, +0.01115]; derived minus fixed_k8 -0.00594 [-0.01656, +0.00465]; derived minus fixed_k12 +0.00116 [-0.01183, +0.01349]
+    seeds 12-16, onset 20 (0.05, 0.25, 1 sigma) (2,400 runs): gain derived -0.00834 [-0.02378, +0.00506]; fixed_k8 -0.00410 [-0.01630, +0.00666]; fixed_k12 -0.00673 [-0.02191, +0.00713]; derived minus fixed_k8 -0.00424 [-0.01590, +0.00828]; derived minus fixed_k12 -0.00161 [-0.01673, +0.01422]
+  gains at 0.05 sigma, where the error costs least (deployed-design gain over the standard process; not a price, the clean-twin prices are at the end):
+    seeds   all, 0.05 sigma, onset all: gain derived -0.01988 [-0.03784, -0.00522]; fixed_k8 -0.01406 [-0.02200, -0.00670]; fixed_k12 -0.01915 [-0.02906, -0.00998]; always_pm -0.02335 [-0.04451, -0.00566]; always_lcb -0.02280 [-0.04590, -0.00439]
+    seeds   all, 0.05 sigma, onset   0: gain derived -0.02012 [-0.03940, -0.00521]; fixed_k8 -0.01322 [-0.02066, -0.00647]; fixed_k12 -0.01844 [-0.02746, -0.00977]; always_pm -0.02491 [-0.04792, -0.00596]; always_lcb -0.02454 [-0.05015, -0.00433]
+    seeds   all, 0.05 sigma, onset  20: gain derived -0.01964 [-0.03630, -0.00541]; fixed_k8 -0.01491 [-0.02411, -0.00670]; fixed_k12 -0.01986 [-0.03080, -0.00976]; always_pm -0.02179 [-0.04114, -0.00555]; always_lcb -0.02106 [-0.04162, -0.00445]
+    seeds 12-16, 0.05 sigma, onset all: gain derived -0.01768 [-0.03539, -0.00429]; fixed_k8 -0.01469 [-0.02401, -0.00630]; fixed_k12 -0.01928 [-0.03126, -0.00905]; always_pm -0.02001 [-0.04012, -0.00455]; always_lcb -0.01925 [-0.03929, -0.00355]
+    seeds 12-16, 0.05 sigma, onset   0: gain derived -0.01906 [-0.04050, -0.00307]; fixed_k8 -0.01273 [-0.01969, -0.00612]; fixed_k12 -0.01697 [-0.02537, -0.00866]; always_pm -0.02179 [-0.04440, -0.00397]; always_lcb -0.02159 [-0.04456, -0.00340]
+    seeds 12-16, 0.05 sigma, onset  20: gain derived -0.01631 [-0.03048, -0.00452]; fixed_k8 -0.01664 [-0.03042, -0.00587]; fixed_k12 -0.02159 [-0.03796, -0.00849]; always_pm -0.01824 [-0.03603, -0.00449]; always_lcb -0.01691 [-0.03467, -0.00341]
+  by landscape group (is the deficit where the surrogate is misspecified?):
+  six laws (6 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.03240 [+0.02270, +0.04204], pm share 0.589; minus fixed_k8 +0.01518 [+0.00682, +0.02320]; minus fixed_k12 +0.02736 [+0.01849, +0.03492]; minus always_pm -0.00472 [-0.01437, +0.00717]
+    onset 20: derived +0.01057 [-0.00454, +0.02436], pm share 0.817; minus fixed_k8 -0.02727 [-0.04578, -0.00980]; minus fixed_k12 -0.03516 [-0.06243, -0.00628]; minus always_pm +0.00295 [-0.00200, +0.00920]
+  ten rugged classical (10 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived -0.01529 [-0.03847, +0.00932], pm share 0.640; minus fixed_k8 -0.01627 [-0.03274, -0.00065]; minus fixed_k12 -0.00776 [-0.02791, +0.01331]; minus always_pm +0.01731 [+0.00698, +0.02811]
+    onset 20: derived -0.03820 [-0.05905, -0.01768], pm share 0.884; minus fixed_k8 -0.05045 [-0.06909, -0.02684]; minus fixed_k12 -0.05256 [-0.07826, -0.02166]; minus always_pm +0.00770 [+0.00343, +0.01209]
+  four others (4 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.02922 [-0.00416, +0.05228], pm share 0.561; minus fixed_k8 -0.00963 [-0.03049, +0.01281]; minus fixed_k12 -0.00010 [-0.02296, +0.02866]; minus always_pm +0.02246 [+0.01600, +0.03170]
+    onset 20: derived -0.00467 [-0.02864, +0.01930], pm share 0.855; minus fixed_k8 -0.06785 [-0.08826, -0.03933]; minus fixed_k12 -0.08948 [-0.10791, -0.06375]; minus always_pm +0.00383 [+0.00056, +0.00707]
+  across landscapes: Spearman correlation of the rule's per-landscape paired gain with the surrogate's fit (positive: the rule does better where the GP fits):
+    onset  0, derived minus fixed_k8  : vs clean sobol_r2 rho +0.26 (p 0.259, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.14 (p 0.569, n 20)
+    onset  0, derived minus fixed_k12 : vs clean sobol_r2 rho +0.09 (p 0.719, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.19 (p 0.431, n 20)
+    onset  0, derived minus always_pm : vs clean sobol_r2 rho -0.32 (p 0.171, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.08 (p 0.738, n 20)
+    onset 20, derived minus fixed_k8  : vs clean sobol_r2 rho +0.13 (p 0.574, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.00 (p 0.990, n 20)
+    onset 20, derived minus fixed_k12 : vs clean sobol_r2 rho -0.02 (p 0.940, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.01 (p 0.965, n 20)
+    onset 20, derived minus always_pm : vs clean sobol_r2 rho -0.05 (p 0.835, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.03 (p 0.900, n 20)
+  counterfactual: every pm choice replaced by lcb, sitting choices kept (deployed-design gain over the standard process, and minus each comparator):
+    seeds   all, onset all: +0.00439 [-0.01243, +0.01985]; minus fixed_k8 -0.01738 [-0.02758, -0.00739]; minus fixed_k12 -0.01635 [-0.02927, -0.00337]; minus always_lcb +0.00359 [+0.00031, +0.00708]
+    seeds   all, onset   0: +0.01176 [-0.00642, +0.02976]; minus fixed_k8 -0.00167 [-0.01212, +0.00757]; minus fixed_k12 +0.00814 [-0.00542, +0.02021]; minus always_lcb +0.00328 [-0.00190, +0.00882]
+    seeds   all, onset  20: -0.00299 [-0.02001, +0.01250]; minus fixed_k8 -0.03310 [-0.04472, -0.02071]; minus fixed_k12 -0.04085 [-0.05641, -0.02440]; minus always_lcb +0.00391 [+0.00148, +0.00636]
+    seeds 12-16, onset all: +0.00219 [-0.01296, +0.01564]; minus fixed_k8 -0.02050 [-0.03098, -0.00913]; minus fixed_k12 -0.01500 [-0.02869, -0.00108]; minus always_lcb +0.00225 [-0.00097, +0.00541]
+    seeds 12-16, onset   0: +0.00942 [-0.00920, +0.02698]; minus fixed_k8 -0.00264 [-0.01349, +0.00774]; minus fixed_k12 +0.00780 [-0.00552, +0.02077]; minus always_lcb -0.00013 [-0.00508, +0.00459]
+    seeds 12-16, onset  20: -0.00504 [-0.01775, +0.00651]; minus fixed_k8 -0.03836 [-0.05325, -0.02209]; minus fixed_k12 -0.03780 [-0.05703, -0.01735]; minus always_lcb +0.00462 [+0.00190, +0.00754]
+  counterfactual: the search credit read from the best true value instead of the best rating (clairvoyant; the stored scores re-ranked, nothing refitted):
+  12,800 runs; share that ship the posterior-mean design, by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.666 0.642 0.524 0.234
+    20               0.675 0.668 0.656 0.531
+    seeds   all, onset all: +0.00379 [-0.01461, +0.02096]; minus fixed_k8 -0.01798 [-0.03034, -0.00632]; minus fixed_k12 -0.01695 [-0.03217, -0.00266]
+    seeds   all, onset   0: +0.00692 [-0.01219, +0.02490]; minus fixed_k8 -0.00651 [-0.01850, +0.00411]; minus fixed_k12 +0.00330 [-0.01172, +0.01648]
+    seeds   all, onset  20: +0.00065 [-0.01892, +0.02001]; minus fixed_k8 -0.02946 [-0.04380, -0.01584]; minus fixed_k12 -0.03720 [-0.05451, -0.01953]
+    seeds 12-16, onset all: +0.00238 [-0.01402, +0.01742]; minus fixed_k8 -0.02031 [-0.03261, -0.00774]; minus fixed_k12 -0.01481 [-0.03057, +0.00057]
+    seeds 12-16, onset   0: +0.00495 [-0.01326, +0.02212]; minus fixed_k8 -0.00711 [-0.01922, +0.00500]; minus fixed_k12 +0.00333 [-0.01105, +0.01754]
+    seeds 12-16, onset  20: -0.00019 [-0.01589, +0.01558]; minus fixed_k8 -0.03351 [-0.04794, -0.01893]; minus fixed_k12 -0.03295 [-0.05263, -0.01343]
+
+====================================================================================================
+sequential rule: a decision at each T - k   [budget_split_derived_decision_sequential.csv, rho = 1]
+  grid 2,3,5,8,12,16,20,25,30; a decision at each T - k; 12,800 runs scored, 0 dropped for a failed fit
+  fits that failed at some decision point: 0 (runs dropped for failing at every point: see above)
+  where the rule decided (trial n = T - k at which it committed; T - 2 = 48 also when it shipped with no sitting), share of runs by onset:
+    decided_at          20    25    30    34    38    42    45    47    48
+    jitter_iteration                                                      
+    0                0.008 0.008 0.025 0.045 0.083 0.127 0.157 0.138 0.409
+    20               0.008 0.004 0.004 0.018 0.049 0.099 0.149 0.151 0.517
+  onset 0: 0.000 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  onset 20: 0.008 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0729 0.2366 0.7993 3.7384
+    20               0.0688 0.2059 0.6801 2.8538
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.402 0.356 0.265 0.133
+    20               0.388 0.463 0.407 0.274
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.598                 5.000                     0.324
+                     0.25                0.644                 5.000                     0.324
+                     1.00                0.735                 5.000                     0.411
+                     5.00                0.868                 8.000                     0.555
+    20               0.05                0.612                 3.000                     0.263
+                     0.25                0.537                 3.000                     0.268
+                     1.00                0.593                 5.000                     0.289
+                     5.00                0.726                 5.000                     0.352
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.010, onset 20 0.048
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.336
+      gain derived     +0.00910 [-0.00298, +0.02100]
+      gain fixed_k8    +0.02177 [+0.00897, +0.03432]
+      gain fixed_k12   +0.02074 [+0.00682, +0.03464]
+      gain fixed_k16   +0.02167 [+0.00171, +0.04225]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.13813 [+0.11226, +0.16356]
+      derived minus fixed_k8    -0.01267 [-0.01930, -0.00526]
+      derived minus fixed_k12   -0.01164 [-0.02161, -0.00086]
+      derived minus fixed_k16   -0.01257 [-0.02716, +0.00320]
+      derived minus always_pm   +0.02218 [+0.01248, +0.03200]
+      derived minus always_lcb  +0.00830 [+0.00098, +0.01597]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.289
+      gain derived     +0.01087 [-0.00477, +0.02594]
+      gain fixed_k8    +0.01343 [+0.00029, +0.02787]
+      gain fixed_k12   +0.00362 [-0.00865, +0.01757]
+      gain fixed_k16   -0.00584 [-0.02148, +0.01053]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.12993 [+0.10422, +0.15525]
+      derived minus fixed_k8    -0.00256 [-0.01046, +0.00437]
+      derived minus fixed_k12   +0.00725 [-0.00329, +0.01673]
+      derived minus fixed_k16   +0.01671 [+0.00373, +0.02882]
+      derived minus always_pm   +0.01468 [+0.00334, +0.02594]
+      derived minus always_lcb  +0.00239 [-0.00514, +0.01017]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.383
+      gain derived     +0.00732 [-0.00319, +0.01746]
+      gain fixed_k8    +0.03011 [+0.01641, +0.04445]
+      gain fixed_k12   +0.03786 [+0.01981, +0.05632]
+      gain fixed_k16   +0.04918 [+0.02360, +0.07597]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.14632 [+0.11838, +0.17440]
+      derived minus fixed_k8    -0.02279 [-0.03196, -0.01297]
+      derived minus fixed_k12   -0.03054 [-0.04421, -0.01598]
+      derived minus fixed_k16   -0.04185 [-0.06290, -0.02027]
+      derived minus always_pm   +0.02969 [+0.02018, +0.03966]
+      derived minus always_lcb  +0.01422 [+0.00574, +0.02378]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.335
+      gain derived     +0.00832 [-0.00570, +0.02251]
+      gain fixed_k8    +0.02085 [+0.00940, +0.03299]
+      gain fixed_k12   +0.02429 [+0.01064, +0.03817]
+      gain fixed_k16   +0.02131 [+0.00378, +0.03875]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.13702 [+0.11213, +0.16060]
+      derived minus fixed_k8    -0.01253 [-0.02030, -0.00456]
+      derived minus fixed_k12   -0.01597 [-0.02568, -0.00544]
+      derived minus fixed_k16   -0.01300 [-0.02625, +0.00150]
+      derived minus always_pm   +0.02139 [+0.00929, +0.03388]
+      derived minus always_lcb  +0.00668 [-0.00291, +0.01643]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.299
+      gain derived     +0.00972 [-0.00869, +0.02842]
+      gain fixed_k8    +0.01480 [+0.00054, +0.02987]
+      gain fixed_k12   +0.00562 [-0.00862, +0.02089]
+      gain fixed_k16   -0.01021 [-0.02656, +0.00751]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.12829 [+0.10286, +0.15304]
+      derived minus fixed_k8    -0.00507 [-0.01620, +0.00453]
+      derived minus fixed_k12   +0.00411 [-0.00937, +0.01595]
+      derived minus fixed_k16   +0.01993 [+0.00405, +0.03383]
+      derived minus always_pm   +0.01534 [+0.00198, +0.02896]
+      derived minus always_lcb  +0.00231 [-0.00773, +0.01214]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.370
+      gain derived     +0.00691 [-0.00556, +0.01944]
+      gain fixed_k8    +0.02690 [+0.01457, +0.04006]
+      gain fixed_k12   +0.04296 [+0.02621, +0.06059]
+      gain fixed_k16   +0.05283 [+0.03120, +0.07505]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.14575 [+0.11963, +0.17258]
+      derived minus fixed_k8    -0.01999 [-0.02844, -0.01065]
+      derived minus fixed_k12   -0.03605 [-0.04820, -0.02313]
+      derived minus fixed_k16   -0.04593 [-0.06260, -0.02768]
+      derived minus always_pm   +0.02743 [+0.01423, +0.04165]
+      derived minus always_lcb  +0.01104 [-0.00113, +0.02460]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.337
+      gain derived     +0.00988 [-0.00279, +0.02266]
+      gain fixed_k8    +0.02269 [+0.00659, +0.03936]
+      gain fixed_k12   +0.01719 [+0.00115, +0.03349]
+      gain fixed_k16   +0.02202 [-0.00102, +0.04760]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.13923 [+0.11124, +0.16795]
+      derived minus fixed_k8    -0.01282 [-0.02127, -0.00372]
+      derived minus fixed_k12   -0.00731 [-0.01737, +0.00352]
+      derived minus fixed_k16   -0.01214 [-0.03029, +0.00579]
+      derived minus always_pm   +0.02298 [+0.01250, +0.03376]
+      derived minus always_lcb  +0.00993 [+0.00142, +0.01855]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.278
+      gain derived     +0.01201 [-0.00285, +0.02754]
+      gain fixed_k8    +0.01206 [-0.00237, +0.02853]
+      gain fixed_k12   +0.00162 [-0.01161, +0.01766]
+      gain fixed_k16   -0.00148 [-0.01907, +0.01833]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.13157 [+0.10459, +0.15857]
+      derived minus fixed_k8    -0.00005 [-0.00573, +0.00615]
+      derived minus fixed_k12   +0.01040 [+0.00152, +0.01860]
+      derived minus fixed_k16   +0.01349 [+0.00150, +0.02509]
+      derived minus always_pm   +0.01401 [+0.00066, +0.02823]
+      derived minus always_lcb  +0.00247 [-0.00774, +0.01270]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.396
+      gain derived     +0.00774 [-0.00384, +0.01906]
+      gain fixed_k8    +0.03332 [+0.01418, +0.05283]
+      gain fixed_k12   +0.03276 [+0.01182, +0.05352]
+      gain fixed_k16   +0.04552 [+0.01457, +0.07895]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.14690 [+0.11646, +0.17867]
+      derived minus fixed_k8    -0.02559 [-0.03988, -0.01143]
+      derived minus fixed_k12   -0.02502 [-0.04328, -0.00744]
+      derived minus fixed_k16   -0.03778 [-0.06538, -0.01119]
+      derived minus always_pm   +0.03195 [+0.02255, +0.04097]
+      derived minus always_lcb  +0.01739 [+0.00895, +0.02612]
+  by magnitude and onset (all seeds; deployed-design gain over the standard process):
+    0.05 sigma, onset  0: derived -0.01423 [-0.02685, -0.00411] (k=12 -0.0184), pm share 0.402; minus fixed_k8 -0.00101 [-0.00865, +0.00591]; minus fixed_k12 +0.00422 [-0.00396, +0.01284]; minus always_pm +0.01068 [+0.00144, +0.02284]
+    0.05 sigma, onset 20: derived -0.01484 [-0.02734, -0.00451] (k=12 -0.0199), pm share 0.388; minus fixed_k8 +0.00007 [-0.00751, +0.00774]; minus fixed_k12 +0.00502 [-0.00389, +0.01416]; minus always_pm +0.00694 [+0.00086, +0.01420]
+    0.25 sigma, onset  0: derived -0.00546 [-0.01795, +0.00496] (k=12 -0.0166), pm share 0.356; minus fixed_k8 +0.00342 [-0.00380, +0.00983]; minus fixed_k12 +0.01117 [+0.00189, +0.01999]; minus always_pm +0.00685 [-0.00025, +0.01505]
+    0.25 sigma, onset 20: derived -0.00570 [-0.01780, +0.00462] (k=12 -0.0108), pm share 0.463; minus fixed_k8 +0.00107 [-0.00610, +0.00887]; minus fixed_k12 +0.00511 [-0.00267, +0.01395]; minus always_pm +0.01009 [+0.00204, +0.01944]
+    1 sigma, onset  0: derived +0.01525 [+0.00057, +0.02854] (k=12 -0.0099), pm share 0.265; minus fixed_k8 +0.00376 [-0.00624, +0.01348]; minus fixed_k12 +0.02512 [+0.01191, +0.03744]; minus always_pm +0.00255 [-0.00757, +0.01372]
+    1 sigma, onset 20: derived +0.01337 [+0.00255, +0.02510] (k=12 +0.0192), pm share 0.407; minus fixed_k8 -0.00367 [-0.01279, +0.00698]; minus fixed_k12 -0.00578 [-0.01896, +0.00951]; minus always_pm +0.01665 [+0.00651, +0.02850]
+    5 sigma, onset  0: derived +0.04792 [+0.01326, +0.08485] (k=12 +0.0594), pm share 0.133; minus fixed_k8 -0.01640 [-0.03466, +0.00008]; minus fixed_k12 -0.01150 [-0.03774, +0.01306]; minus always_pm +0.03863 [+0.00538, +0.07287]
+    5 sigma, onset 20: derived +0.03646 [+0.01836, +0.05751] (k=12 +0.1630), pm share 0.274; minus fixed_k8 -0.08862 [-0.11924, -0.06069]; minus fixed_k12 -0.12649 [-0.17269, -0.08333]; minus always_pm +0.08507 [+0.06154, +0.10839]
+  without the 5 sigma cell from trial 21 (the cell that carries the pooled gain of k = 12; deployed-design gain over the standard process):
+    seeds   all, both onsets (11,200 runs): gain derived +0.00519 [-0.00782, +0.01739]; fixed_k8 +0.00701 [-0.00412, +0.01809]; fixed_k12 +0.00042 [-0.01100, +0.01221]; derived minus fixed_k8 -0.00182 [-0.00843, +0.00441]; derived minus fixed_k12 +0.00476 [-0.00434, +0.01336]
+    seeds   all, onset 20 (0.05, 0.25, 1 sigma) (4,800 runs): gain derived -0.00239 [-0.01345, +0.00750]; fixed_k8 -0.00155 [-0.01064, +0.00748]; fixed_k12 -0.00384 [-0.01490, +0.00689]; derived minus fixed_k8 -0.00084 [-0.00732, +0.00593]; derived minus fixed_k12 +0.00145 [-0.00715, +0.01093]
+    seeds 12-16, both onsets (5,600 runs): gain derived +0.00583 [-0.00629, +0.01733]; fixed_k8 +0.00514 [-0.00720, +0.01740]; fixed_k12 -0.00196 [-0.01516, +0.01115]; derived minus fixed_k8 +0.00069 [-0.00505, +0.00727]; derived minus fixed_k12 +0.00779 [-0.00111, +0.01688]
+    seeds 12-16, onset 20 (0.05, 0.25, 1 sigma) (2,400 runs): gain derived -0.00242 [-0.01351, +0.00745]; fixed_k8 -0.00410 [-0.01630, +0.00666]; fixed_k12 -0.00673 [-0.02191, +0.00713]; derived minus fixed_k8 +0.00167 [-0.00612, +0.01085]; derived minus fixed_k12 +0.00431 [-0.00700, +0.01743]
+  gains at 0.05 sigma, where the error costs least (deployed-design gain over the standard process; not a price, the clean-twin prices are at the end):
+    seeds   all, 0.05 sigma, onset all: gain derived -0.01454 [-0.02701, -0.00429]; fixed_k8 -0.01406 [-0.02200, -0.00670]; fixed_k12 -0.01915 [-0.02906, -0.00998]; always_pm -0.02335 [-0.04451, -0.00566]; always_lcb -0.02280 [-0.04590, -0.00439]
+    seeds   all, 0.05 sigma, onset   0: gain derived -0.01423 [-0.02685, -0.00411]; fixed_k8 -0.01322 [-0.02066, -0.00647]; fixed_k12 -0.01844 [-0.02746, -0.00977]; always_pm -0.02491 [-0.04792, -0.00596]; always_lcb -0.02454 [-0.05015, -0.00433]
+    seeds   all, 0.05 sigma, onset  20: gain derived -0.01484 [-0.02734, -0.00451]; fixed_k8 -0.01491 [-0.02411, -0.00670]; fixed_k12 -0.01986 [-0.03080, -0.00976]; always_pm -0.02179 [-0.04114, -0.00555]; always_lcb -0.02106 [-0.04162, -0.00445]
+    seeds 12-16, 0.05 sigma, onset all: gain derived -0.01306 [-0.02456, -0.00371]; fixed_k8 -0.01469 [-0.02401, -0.00630]; fixed_k12 -0.01928 [-0.03126, -0.00905]; always_pm -0.02001 [-0.04012, -0.00455]; always_lcb -0.01925 [-0.03929, -0.00355]
+    seeds 12-16, 0.05 sigma, onset   0: gain derived -0.01212 [-0.02306, -0.00293]; fixed_k8 -0.01273 [-0.01969, -0.00612]; fixed_k12 -0.01697 [-0.02537, -0.00866]; always_pm -0.02179 [-0.04440, -0.00397]; always_lcb -0.02159 [-0.04456, -0.00340]
+    seeds 12-16, 0.05 sigma, onset  20: gain derived -0.01399 [-0.02597, -0.00414]; fixed_k8 -0.01664 [-0.03042, -0.00587]; fixed_k12 -0.02159 [-0.03796, -0.00849]; always_pm -0.01824 [-0.03603, -0.00449]; always_lcb -0.01691 [-0.03467, -0.00341]
+  by landscape group (is the deficit where the surrogate is misspecified?):
+  six laws (6 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.02448 [+0.01212, +0.03684], pm share 0.339; minus fixed_k8 +0.00726 [+0.00214, +0.01214]; minus fixed_k12 +0.01944 [+0.01214, +0.02751]; minus always_pm -0.01264 [-0.02806, +0.00390]
+    onset 20: derived +0.02370 [+0.01116, +0.03720], pm share 0.441; minus fixed_k8 -0.01414 [-0.02720, -0.00234]; minus fixed_k12 -0.02203 [-0.04434, +0.00120]; minus always_pm +0.01609 [+0.00591, +0.02689]
+  ten rugged classical (10 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived -0.00774 [-0.02777, +0.01555], pm share 0.282; minus fixed_k8 -0.00873 [-0.02202, +0.00396]; minus fixed_k12 -0.00022 [-0.01601, +0.01683]; minus always_pm +0.02485 [+0.01149, +0.03883]
+    onset 20: derived -0.00925 [-0.02002, +0.00127], pm share 0.367; minus fixed_k8 -0.02149 [-0.03381, -0.00752]; minus fixed_k12 -0.02360 [-0.04190, -0.00209]; minus always_pm +0.03666 [+0.02065, +0.05192]
+  four others (4 landscapes; all seeds; with this few clusters the intervals are rough):
+    onset  0: derived +0.03698 [+0.01963, +0.06134], pm share 0.230; minus fixed_k8 -0.00187 [-0.00776, +0.00546]; minus fixed_k12 +0.00766 [-0.00568, +0.01984]; minus always_pm +0.03022 [+0.01903, +0.04221]
+    onset 20: derived +0.02417 [+0.00940, +0.03677], pm share 0.338; minus fixed_k8 -0.03901 [-0.05846, -0.01948]; minus fixed_k12 -0.06064 [-0.07906, -0.04629]; minus always_pm +0.03267 [+0.02218, +0.04553]
+  across landscapes: Spearman correlation of the rule's per-landscape paired gain with the surrogate's fit (positive: the rule does better where the GP fits):
+    onset  0, derived minus fixed_k8  : vs clean sobol_r2 rho +0.08 (p 0.734, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.13 (p 0.582, n 20)
+    onset  0, derived minus fixed_k12 : vs clean sobol_r2 rho -0.14 (p 0.565, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho +0.14 (p 0.556, n 20)
+    onset  0, derived minus always_pm : vs clean sobol_r2 rho -0.40 (p 0.079, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.23 (p 0.336, n 20)
+    onset 20, derived minus fixed_k8  : vs clean sobol_r2 rho -0.06 (p 0.801, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.27 (p 0.246, n 20)
+    onset 20, derived minus fixed_k12 : vs clean sobol_r2 rho -0.17 (p 0.466, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.17 (p 0.486, n 20)
+    onset 20, derived minus always_pm : vs clean sobol_r2 rho -0.08 (p 0.734, n 20); vs 1sd onset-0 loo_lpd_frac_achievable rho -0.08 (p 0.743, n 20)
+  counterfactual: every pm choice replaced by lcb, sitting choices kept (deployed-design gain over the standard process, and minus each comparator):
+    seeds   all, onset all: +0.01253 [+0.00014, +0.02461]; minus fixed_k8 -0.00924 [-0.01513, -0.00273]; minus fixed_k12 -0.00821 [-0.01745, +0.00175]; minus always_lcb +0.01173 [+0.00406, +0.01974]
+    seeds   all, onset   0: +0.01283 [-0.00258, +0.02790]; minus fixed_k8 -0.00060 [-0.00765, +0.00572]; minus fixed_k12 +0.00922 [-0.00093, +0.01814]; minus always_lcb +0.00435 [-0.00371, +0.01259]
+    seeds   all, onset  20: +0.01222 [+0.00096, +0.02300]; minus fixed_k8 -0.01789 [-0.02549, -0.00956]; minus fixed_k12 -0.02564 [-0.03807, -0.01221]; minus always_lcb +0.01911 [+0.01097, +0.02821]
+    seeds 12-16, onset all: +0.01276 [-0.00007, +0.02549]; minus fixed_k8 -0.00993 [-0.01754, -0.00164]; minus fixed_k12 -0.00443 [-0.01407, +0.00560]; minus always_lcb +0.01282 [+0.00448, +0.02131]
+    seeds 12-16, onset   0: +0.01327 [-0.00134, +0.02877]; minus fixed_k8 +0.00121 [-0.00408, +0.00693]; minus fixed_k12 +0.01166 [+0.00306, +0.01961]; minus always_lcb +0.00373 [-0.00672, +0.01421]
+    seeds 12-16, onset  20: +0.01225 [+0.00081, +0.02393]; minus fixed_k8 -0.02108 [-0.03325, -0.00834]; minus fixed_k12 -0.02051 [-0.03700, -0.00413]; minus always_lcb +0.02190 [+0.01373, +0.03016]
+
+====================================================================================================
+decide-once rule, rho = 0.5   [budget_split_derived_rho0.5.csv, rho = 0.5]
+  grid 2,3,5,8,12,16,20,25,30; one decision at n0 = T - 30 = 20; 12,800 runs scored, 0 dropped for a failed fit
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0401 0.0711 0.2353 1.2530
+    20               0.0366 0.0366 0.0366 0.0366
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.764 0.773 0.517 0.381
+    20               0.689 0.693 0.688 0.690
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.236                 8.000                     0.505
+                     0.25                0.227                 8.000                     0.551
+                     1.00                0.483                12.000                     0.653
+                     5.00                0.619                16.000                     0.723
+    20               0.05                0.311                 8.000                     0.555
+                     0.25                0.307                 8.000                     0.544
+                     1.00                0.312                 8.000                     0.544
+                     5.00                0.310                 8.000                     0.550
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.124, onset 20 0.769
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 1.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.649
+      gain derived     +0.00450 [-0.01329, +0.02140]
+      gain fixed_k8    +0.04180 [+0.02731, +0.05615]
+      gain fixed_k12   +0.04553 [+0.02890, +0.06216]
+      gain fixed_k16   +0.05095 [+0.02831, +0.07203]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.14524 [+0.11859, +0.17120]
+      derived minus fixed_k8    -0.03730 [-0.05004, -0.02481]
+      derived minus fixed_k12   -0.04103 [-0.05691, -0.02542]
+      derived minus fixed_k16   -0.04646 [-0.06597, -0.02671]
+      derived minus always_pm   +0.01758 [+0.00992, +0.02552]
+      derived minus always_lcb  +0.00370 [-0.00175, +0.00920]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.609
+      gain derived     +0.01301 [-0.00530, +0.03102]
+      gain fixed_k8    +0.03302 [+0.01806, +0.04835]
+      gain fixed_k12   +0.03006 [+0.01368, +0.04645]
+      gain fixed_k16   +0.02714 [+0.00729, +0.04598]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.13953 [+0.11228, +0.16590]
+      derived minus fixed_k8    -0.02002 [-0.03041, -0.00976]
+      derived minus fixed_k12   -0.01705 [-0.03097, -0.00420]
+      derived minus fixed_k16   -0.01414 [-0.03067, +0.00125]
+      derived minus always_pm   +0.01681 [+0.00596, +0.02847]
+      derived minus always_lcb  +0.00453 [-0.00229, +0.01185]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.690
+      gain derived     -0.00401 [-0.02407, +0.01629]
+      gain fixed_k8    +0.05057 [+0.03549, +0.06570]
+      gain fixed_k12   +0.06100 [+0.04128, +0.08070]
+      gain fixed_k16   +0.07476 [+0.04821, +0.10085]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.15095 [+0.12300, +0.17909]
+      derived minus fixed_k8    -0.05459 [-0.07172, -0.03769]
+      derived minus fixed_k12   -0.06502 [-0.08558, -0.04433]
+      derived minus fixed_k16   -0.07877 [-0.10248, -0.05331]
+      derived minus always_pm   +0.01836 [+0.00968, +0.02837]
+      derived minus always_lcb  +0.00288 [-0.00618, +0.01224]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.639
+      gain derived     +0.00696 [-0.01351, +0.02670]
+      gain fixed_k8    +0.04164 [+0.02857, +0.05531]
+      gain fixed_k12   +0.04758 [+0.03260, +0.06244]
+      gain fixed_k16   +0.05073 [+0.03076, +0.06978]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.14473 [+0.11886, +0.16924]
+      derived minus fixed_k8    -0.03469 [-0.04813, -0.02121]
+      derived minus fixed_k12   -0.04062 [-0.05660, -0.02488]
+      derived minus fixed_k16   -0.04377 [-0.06350, -0.02452]
+      derived minus always_pm   +0.02003 [+0.01050, +0.03099]
+      derived minus always_lcb  +0.00532 [-0.00123, +0.01246]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.605
+      gain derived     +0.01568 [-0.00481, +0.03512]
+      gain fixed_k8    +0.03472 [+0.01837, +0.05212]
+      gain fixed_k12   +0.03067 [+0.01427, +0.04666]
+      gain fixed_k16   +0.02418 [+0.00417, +0.04315]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.13885 [+0.11175, +0.16503]
+      derived minus fixed_k8    -0.01905 [-0.03069, -0.00751]
+      derived minus fixed_k12   -0.01499 [-0.02933, -0.00243]
+      derived minus fixed_k16   -0.00850 [-0.02704, +0.00811]
+      derived minus always_pm   +0.02130 [+0.00730, +0.03677]
+      derived minus always_lcb  +0.00826 [-0.00057, +0.01794]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.674
+      gain derived     -0.00176 [-0.02411, +0.02230]
+      gain fixed_k8    +0.04857 [+0.03644, +0.06083]
+      gain fixed_k12   +0.06449 [+0.04803, +0.08208]
+      gain fixed_k16   +0.07728 [+0.05486, +0.10017]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.15061 [+0.12395, +0.17795]
+      derived minus fixed_k8    -0.05032 [-0.06921, -0.03123]
+      derived minus fixed_k12   -0.06625 [-0.08730, -0.04534]
+      derived minus fixed_k16   -0.07904 [-0.10344, -0.05378]
+      derived minus always_pm   +0.01876 [+0.00936, +0.02935]
+      derived minus always_lcb  +0.00238 [-0.00729, +0.01223]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.659
+      gain derived     +0.00203 [-0.01454, +0.01852]
+      gain fixed_k8    +0.04195 [+0.02473, +0.05933]
+      gain fixed_k12   +0.04348 [+0.02407, +0.06365]
+      gain fixed_k16   +0.05117 [+0.02630, +0.07698]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.14575 [+0.11763, +0.17418]
+      derived minus fixed_k8    -0.03992 [-0.05352, -0.02570]
+      derived minus fixed_k12   -0.04145 [-0.05942, -0.02409]
+      derived minus fixed_k16   -0.04914 [-0.06954, -0.02773]
+      derived minus always_pm   +0.01514 [+0.00724, +0.02445]
+      derived minus always_lcb  +0.00209 [-0.00481, +0.00949]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.612
+      gain derived     +0.01033 [-0.00830, +0.02810]
+      gain fixed_k8    +0.03132 [+0.01657, +0.04749]
+      gain fixed_k12   +0.02945 [+0.01263, +0.04883]
+      gain fixed_k16   +0.03010 [+0.00951, +0.05141]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.14021 [+0.11293, +0.16707]
+      derived minus fixed_k8    -0.02099 [-0.03245, -0.00909]
+      derived minus fixed_k12   -0.01912 [-0.03505, -0.00375]
+      derived minus fixed_k16   -0.01977 [-0.03619, -0.00290]
+      derived minus always_pm   +0.01233 [+0.00084, +0.02375]
+      derived minus always_lcb  +0.00079 [-0.00822, +0.01045]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.706
+      gain derived     -0.00627 [-0.02542, +0.01433]
+      gain fixed_k8    +0.05258 [+0.03246, +0.07269]
+      gain fixed_k12   +0.05751 [+0.03419, +0.08150]
+      gain fixed_k16   +0.07224 [+0.04059, +0.10408]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.15129 [+0.12073, +0.18341]
+      derived minus fixed_k8    -0.05885 [-0.07853, -0.03876]
+      derived minus fixed_k12   -0.06378 [-0.08696, -0.04085]
+      derived minus fixed_k16   -0.07851 [-0.10474, -0.04890]
+      derived minus always_pm   +0.01795 [+0.00692, +0.03217]
+      derived minus always_lcb  +0.00339 [-0.00819, +0.01791]
+
+====================================================================================================
+grid capped at k = 25, rho = 0.5   [budget_split_derived_kmax25_rho0.5.csv, rho = 0.5]
+  grid 2,3,5,8,12,16,20,25; one decision at n0 = T - 25 = 25; 12,800 runs scored, 0 dropped for a failed fit
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0385 0.0914 0.2959 1.4622
+    20               0.0360 0.0606 0.1240 0.4166
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.622 0.652 0.455 0.282
+    20               0.662 0.741 0.831 0.902
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.378                 8.000                     0.557
+                     0.25                0.348                 8.000                     0.531
+                     1.00                0.545                12.000                     0.654
+                     5.00                0.718                16.000                     0.738
+    20               0.05                0.338                 5.000                     0.468
+                     0.25                0.259                 8.000                     0.501
+                     1.00                0.169                 5.000                     0.481
+                     5.00                0.098                 8.000                     0.503
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.070, onset 20 0.536
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.643
+      gain derived     +0.00500 [-0.00919, +0.01813]
+      gain fixed_k8    +0.04180 [+0.02731, +0.05615]
+      gain fixed_k12   +0.04553 [+0.02890, +0.06216]
+      gain fixed_k16   +0.05095 [+0.02831, +0.07203]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.14524 [+0.11859, +0.17120]
+      derived minus fixed_k8    -0.03680 [-0.04742, -0.02558]
+      derived minus fixed_k12   -0.04053 [-0.05438, -0.02637]
+      derived minus fixed_k16   -0.04595 [-0.06286, -0.02701]
+      derived minus always_pm   +0.01809 [+0.01003, +0.02669]
+      derived minus always_lcb  +0.00421 [-0.00137, +0.01030]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.503
+      gain derived     +0.02079 [+0.00407, +0.03706]
+      gain fixed_k8    +0.03302 [+0.01806, +0.04835]
+      gain fixed_k12   +0.03006 [+0.01368, +0.04645]
+      gain fixed_k16   +0.02714 [+0.00729, +0.04598]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.13953 [+0.11228, +0.16590]
+      derived minus fixed_k8    -0.01223 [-0.02110, -0.00366]
+      derived minus fixed_k12   -0.00927 [-0.01971, +0.00030]
+      derived minus fixed_k16   -0.00635 [-0.01902, +0.00643]
+      derived minus always_pm   +0.02460 [+0.01044, +0.03936]
+      derived minus always_lcb  +0.01231 [+0.00163, +0.02339]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.784
+      gain derived     -0.01079 [-0.02670, +0.00414]
+      gain fixed_k8    +0.05057 [+0.03549, +0.06570]
+      gain fixed_k12   +0.06100 [+0.04128, +0.08070]
+      gain fixed_k16   +0.07476 [+0.04821, +0.10085]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.15095 [+0.12300, +0.17909]
+      derived minus fixed_k8    -0.06137 [-0.07701, -0.04494]
+      derived minus fixed_k12   -0.07180 [-0.09176, -0.05111]
+      derived minus fixed_k16   -0.08556 [-0.11067, -0.05862]
+      derived minus always_pm   +0.01157 [+0.00749, +0.01602]
+      derived minus always_lcb  -0.00390 [-0.01001, +0.00138]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.626
+      gain derived     +0.00772 [-0.00803, +0.02316]
+      gain fixed_k8    +0.04164 [+0.02857, +0.05531]
+      gain fixed_k12   +0.04758 [+0.03260, +0.06244]
+      gain fixed_k16   +0.05073 [+0.03076, +0.06978]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.14473 [+0.11886, +0.16924]
+      derived minus fixed_k8    -0.03393 [-0.04369, -0.02415]
+      derived minus fixed_k12   -0.03986 [-0.05199, -0.02769]
+      derived minus fixed_k16   -0.04301 [-0.05932, -0.02607]
+      derived minus always_pm   +0.02079 [+0.00946, +0.03266]
+      derived minus always_lcb  +0.00608 [-0.00095, +0.01425]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.491
+      gain derived     +0.02219 [+0.00586, +0.04054]
+      gain fixed_k8    +0.03472 [+0.01837, +0.05212]
+      gain fixed_k12   +0.03067 [+0.01427, +0.04666]
+      gain fixed_k16   +0.02418 [+0.00417, +0.04315]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.13885 [+0.11175, +0.16503]
+      derived minus fixed_k8    -0.01253 [-0.02295, -0.00142]
+      derived minus fixed_k12   -0.00847 [-0.01858, +0.00134]
+      derived minus fixed_k16   -0.00199 [-0.01529, +0.01191]
+      derived minus always_pm   +0.02781 [+0.00853, +0.04793]
+      derived minus always_lcb  +0.01478 [+0.00087, +0.03000]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.760
+      gain derived     -0.00676 [-0.02597, +0.01179]
+      gain fixed_k8    +0.04857 [+0.03644, +0.06083]
+      gain fixed_k12   +0.06449 [+0.04803, +0.08208]
+      gain fixed_k16   +0.07728 [+0.05486, +0.10017]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.15061 [+0.12395, +0.17795]
+      derived minus fixed_k8    -0.05533 [-0.07173, -0.04000]
+      derived minus fixed_k12   -0.07125 [-0.08940, -0.05326]
+      derived minus fixed_k16   -0.08404 [-0.10677, -0.06105]
+      derived minus always_pm   +0.01376 [+0.00706, +0.02082]
+      derived minus always_lcb  -0.00263 [-0.00954, +0.00450]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.661
+      gain derived     +0.00228 [-0.01185, +0.01501]
+      gain fixed_k8    +0.04195 [+0.02473, +0.05933]
+      gain fixed_k12   +0.04348 [+0.02407, +0.06365]
+      gain fixed_k16   +0.05117 [+0.02630, +0.07698]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.14575 [+0.11763, +0.17418]
+      derived minus fixed_k8    -0.03967 [-0.05334, -0.02502]
+      derived minus fixed_k12   -0.04120 [-0.05985, -0.02261]
+      derived minus fixed_k16   -0.04889 [-0.07082, -0.02651]
+      derived minus always_pm   +0.01539 [+0.00936, +0.02164]
+      derived minus always_lcb  +0.00233 [-0.00339, +0.00777]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.514
+      gain derived     +0.01939 [+0.00153, +0.03594]
+      gain fixed_k8    +0.03132 [+0.01657, +0.04749]
+      gain fixed_k12   +0.02945 [+0.01263, +0.04883]
+      gain fixed_k16   +0.03010 [+0.00951, +0.05141]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.14021 [+0.11293, +0.16707]
+      derived minus fixed_k8    -0.01193 [-0.02244, -0.00210]
+      derived minus fixed_k12   -0.01006 [-0.02403, +0.00220]
+      derived minus fixed_k16   -0.01071 [-0.02539, +0.00308]
+      derived minus always_pm   +0.02139 [+0.00952, +0.03363]
+      derived minus always_lcb  +0.00984 [-0.00004, +0.02019]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.807
+      gain derived     -0.01483 [-0.02867, -0.00066]
+      gain fixed_k8    +0.05258 [+0.03246, +0.07269]
+      gain fixed_k12   +0.05751 [+0.03419, +0.08150]
+      gain fixed_k16   +0.07224 [+0.04059, +0.10408]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.15129 [+0.12073, +0.18341]
+      derived minus fixed_k8    -0.06741 [-0.08871, -0.04496]
+      derived minus fixed_k12   -0.07234 [-0.09745, -0.04563]
+      derived minus fixed_k16   -0.08707 [-0.11960, -0.05464]
+      derived minus always_pm   +0.00939 [+0.00511, +0.01366]
+      derived minus always_lcb  -0.00517 [-0.01272, +0.00094]
+
+====================================================================================================
+sequential rule, rho = 0.5   [budget_split_derived_decision_sequential_rho0.5.csv, rho = 0.5]
+  grid 2,3,5,8,12,16,20,25,30; a decision at each T - k; 12,800 runs scored, 0 dropped for a failed fit
+  fits that failed at some decision point: 0 (runs dropped for failing at every point: see above)
+  where the rule decided (trial n = T - k at which it committed; T - 2 = 48 also when it shipped with no sitting), share of runs by onset:
+    decided_at          20    25    30    34    38    42    45    47    48
+    jitter_iteration                                                      
+    0                0.044 0.085 0.121 0.118 0.131 0.132 0.107 0.079 0.182
+    20               0.022 0.020 0.024 0.095 0.134 0.168 0.146 0.107 0.283
+  onset 0: 0.000 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  onset 20: 0.022 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0376 0.1155 0.3776 1.7521
+    20               0.0351 0.0988 0.3230 1.3586
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.218 0.171 0.126 0.023
+    20               0.215 0.276 0.236 0.150
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.782                 8.000                     0.641
+                     0.25                0.829                 8.000                     0.624
+                     1.00                0.874                12.000                     0.756
+                     5.00                0.977                16.000                     0.868
+    20               0.05                0.785                 8.000                     0.560
+                     0.25                0.724                 8.000                     0.566
+                     1.00                0.764                 8.000                     0.621
+                     5.00                0.850                 8.000                     0.623
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.001, onset 20 0.016
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.177
+      gain derived     +0.03288 [+0.01970, +0.04611]
+      gain fixed_k8    +0.04180 [+0.02731, +0.05615]
+      gain fixed_k12   +0.04553 [+0.02890, +0.06216]
+      gain fixed_k16   +0.05095 [+0.02831, +0.07203]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.14524 [+0.11859, +0.17120]
+      derived minus fixed_k8    -0.00891 [-0.01343, -0.00414]
+      derived minus fixed_k12   -0.01265 [-0.02001, -0.00483]
+      derived minus fixed_k16   -0.01807 [-0.02962, -0.00554]
+      derived minus always_pm   +0.04597 [+0.03059, +0.06195]
+      derived minus always_lcb  +0.03209 [+0.02018, +0.04530]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.135
+      gain derived     +0.02926 [+0.01479, +0.04426]
+      gain fixed_k8    +0.03302 [+0.01806, +0.04835]
+      gain fixed_k12   +0.03006 [+0.01368, +0.04645]
+      gain fixed_k16   +0.02714 [+0.00729, +0.04598]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.13953 [+0.11228, +0.16590]
+      derived minus fixed_k8    -0.00377 [-0.00892, +0.00104]
+      derived minus fixed_k12   -0.00080 [-0.00709, +0.00573]
+      derived minus fixed_k16   +0.00212 [-0.00655, +0.01193]
+      derived minus always_pm   +0.03306 [+0.01460, +0.05213]
+      derived minus always_lcb  +0.02078 [+0.00689, +0.03646]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.219
+      gain derived     +0.03651 [+0.02302, +0.05028]
+      gain fixed_k8    +0.05057 [+0.03549, +0.06570]
+      gain fixed_k12   +0.06100 [+0.04128, +0.08070]
+      gain fixed_k16   +0.07476 [+0.04821, +0.10085]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.15095 [+0.12300, +0.17909]
+      derived minus fixed_k8    -0.01406 [-0.02072, -0.00765]
+      derived minus fixed_k12   -0.02449 [-0.03535, -0.01400]
+      derived minus fixed_k16   -0.03825 [-0.05461, -0.02094]
+      derived minus always_pm   +0.05888 [+0.04458, +0.07271]
+      derived minus always_lcb  +0.04341 [+0.03162, +0.05559]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.172
+      gain derived     +0.03230 [+0.01935, +0.04554]
+      gain fixed_k8    +0.04164 [+0.02857, +0.05531]
+      gain fixed_k12   +0.04758 [+0.03260, +0.06244]
+      gain fixed_k16   +0.05073 [+0.03076, +0.06978]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.14473 [+0.11886, +0.16924]
+      derived minus fixed_k8    -0.00935 [-0.01457, -0.00437]
+      derived minus fixed_k12   -0.01528 [-0.02283, -0.00728]
+      derived minus fixed_k16   -0.01843 [-0.02924, -0.00588]
+      derived minus always_pm   +0.04537 [+0.02874, +0.06341]
+      derived minus always_lcb  +0.03066 [+0.01742, +0.04581]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.137
+      gain derived     +0.03101 [+0.01632, +0.04672]
+      gain fixed_k8    +0.03472 [+0.01837, +0.05212]
+      gain fixed_k12   +0.03067 [+0.01427, +0.04666]
+      gain fixed_k16   +0.02418 [+0.00417, +0.04315]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.13885 [+0.11175, +0.16503]
+      derived minus fixed_k8    -0.00371 [-0.01141, +0.00311]
+      derived minus fixed_k12   +0.00034 [-0.00809, +0.00873]
+      derived minus fixed_k16   +0.00683 [-0.00325, +0.01815]
+      derived minus always_pm   +0.03663 [+0.01444, +0.06005]
+      derived minus always_lcb  +0.02360 [+0.00693, +0.04162]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.207
+      gain derived     +0.03359 [+0.01980, +0.04820]
+      gain fixed_k8    +0.04857 [+0.03644, +0.06083]
+      gain fixed_k12   +0.06449 [+0.04803, +0.08208]
+      gain fixed_k16   +0.07728 [+0.05486, +0.10017]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.15061 [+0.12395, +0.17795]
+      derived minus fixed_k8    -0.01498 [-0.02346, -0.00757]
+      derived minus fixed_k12   -0.03090 [-0.04269, -0.02042]
+      derived minus fixed_k16   -0.04370 [-0.05983, -0.02718]
+      derived minus always_pm   +0.05411 [+0.03890, +0.07051]
+      derived minus always_lcb  +0.03772 [+0.02378, +0.05328]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.182
+      gain derived     +0.03347 [+0.01937, +0.04883]
+      gain fixed_k8    +0.04195 [+0.02473, +0.05933]
+      gain fixed_k12   +0.04348 [+0.02407, +0.06365]
+      gain fixed_k16   +0.05117 [+0.02630, +0.07698]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.14575 [+0.11763, +0.17418]
+      derived minus fixed_k8    -0.00848 [-0.01459, -0.00231]
+      derived minus fixed_k12   -0.01001 [-0.01897, -0.00097]
+      derived minus fixed_k16   -0.01770 [-0.03035, -0.00364]
+      derived minus always_pm   +0.04658 [+0.03039, +0.06236]
+      derived minus always_lcb  +0.03353 [+0.02071, +0.04607]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.133
+      gain derived     +0.02750 [+0.01218, +0.04506]
+      gain fixed_k8    +0.03132 [+0.01657, +0.04749]
+      gain fixed_k12   +0.02945 [+0.01263, +0.04883]
+      gain fixed_k16   +0.03010 [+0.00951, +0.05141]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.14021 [+0.11293, +0.16707]
+      derived minus fixed_k8    -0.00382 [-0.00988, +0.00256]
+      derived minus fixed_k12   -0.00195 [-0.00861, +0.00485]
+      derived minus fixed_k16   -0.00260 [-0.01109, +0.00688]
+      derived minus always_pm   +0.02950 [+0.01166, +0.04744]
+      derived minus always_lcb  +0.01796 [+0.00362, +0.03243]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.231
+      gain derived     +0.03944 [+0.02502, +0.05552]
+      gain fixed_k8    +0.05258 [+0.03246, +0.07269]
+      gain fixed_k12   +0.05751 [+0.03419, +0.08150]
+      gain fixed_k16   +0.07224 [+0.04059, +0.10408]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.15129 [+0.12073, +0.18341]
+      derived minus fixed_k8    -0.01314 [-0.02195, -0.00438]
+      derived minus fixed_k12   -0.01808 [-0.03092, -0.00528]
+      derived minus fixed_k16   -0.03280 [-0.05264, -0.01180]
+      derived minus always_pm   +0.06365 [+0.04662, +0.08096]
+      derived minus always_lcb  +0.04909 [+0.03524, +0.06259]
+
+====================================================================================================
+DIAGNOSTIC grid capped at k = 25, search credit from the true value   [budget_split_derived_kmax25_truerate.csv, rho = 1]
+  grid 2,3,5,8,12,16,20,25; one decision at n0 = T - 25 = 25; 12,800 runs scored, 0 dropped for a failed fit
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0770 0.1829 0.5919 2.9243
+    20               0.0719 0.1213 0.2480 0.8332
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.666 0.642 0.524 0.234
+    20               0.675 0.668 0.656 0.531
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.334                 5.000                     0.264
+                     0.25                0.358                 3.000                     0.243
+                     1.00                0.476                 3.000                     0.286
+                     5.00                0.766                 5.000                     0.367
+    20               0.05                0.325                 3.000                     0.262
+                     0.25                0.332                 3.000                     0.218
+                     1.00                0.344                 3.000                     0.269
+                     5.00                0.469                 3.000                     0.304
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.084, onset 20 0.384
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.575
+      gain derived     +0.00379 [-0.01461, +0.02096]
+      gain fixed_k8    +0.02177 [+0.00897, +0.03432]
+      gain fixed_k12   +0.02074 [+0.00682, +0.03464]
+      gain fixed_k16   +0.02167 [+0.00171, +0.04225]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.13813 [+0.11226, +0.16356]
+      derived minus fixed_k8    -0.01798 [-0.03034, -0.00632]
+      derived minus fixed_k12   -0.01695 [-0.03217, -0.00266]
+      derived minus fixed_k16   -0.01788 [-0.03561, -0.00016]
+      derived minus always_pm   +0.01688 [+0.00939, +0.02483]
+      derived minus always_lcb  +0.00300 [-0.00195, +0.00804]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.517
+      gain derived     +0.00692 [-0.01219, +0.02490]
+      gain fixed_k8    +0.01343 [+0.00029, +0.02787]
+      gain fixed_k12   +0.00362 [-0.00865, +0.01757]
+      gain fixed_k16   -0.00584 [-0.02148, +0.01053]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.12993 [+0.10422, +0.15525]
+      derived minus fixed_k8    -0.00651 [-0.01850, +0.00411]
+      derived minus fixed_k12   +0.00330 [-0.01172, +0.01648]
+      derived minus fixed_k16   +0.01276 [-0.00395, +0.02769]
+      derived minus always_pm   +0.01073 [+0.00243, +0.01917]
+      derived minus always_lcb  -0.00156 [-0.00607, +0.00317]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.632
+      gain derived     +0.00065 [-0.01892, +0.02001]
+      gain fixed_k8    +0.03011 [+0.01641, +0.04445]
+      gain fixed_k12   +0.03786 [+0.01981, +0.05632]
+      gain fixed_k16   +0.04918 [+0.02360, +0.07597]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.14632 [+0.11838, +0.17440]
+      derived minus fixed_k8    -0.02946 [-0.04380, -0.01584]
+      derived minus fixed_k12   -0.03720 [-0.05451, -0.01953]
+      derived minus fixed_k16   -0.04852 [-0.07068, -0.02542]
+      derived minus always_pm   +0.02302 [+0.01357, +0.03358]
+      derived minus always_lcb  +0.00755 [+0.00013, +0.01488]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.573
+      gain derived     +0.00520 [-0.01588, +0.02566]
+      gain fixed_k8    +0.02085 [+0.00940, +0.03299]
+      gain fixed_k12   +0.02429 [+0.01064, +0.03817]
+      gain fixed_k16   +0.02131 [+0.00378, +0.03875]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.13702 [+0.11213, +0.16060]
+      derived minus fixed_k8    -0.01565 [-0.03079, -0.00105]
+      derived minus fixed_k12   -0.01909 [-0.03498, -0.00413]
+      derived minus fixed_k16   -0.01612 [-0.03516, +0.00201]
+      derived minus always_pm   +0.01827 [+0.01001, +0.02698]
+      derived minus always_lcb  +0.00356 [-0.00216, +0.00888]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.509
+      gain derived     +0.00889 [-0.01146, +0.02894]
+      gain fixed_k8    +0.01480 [+0.00054, +0.02987]
+      gain fixed_k12   +0.00562 [-0.00862, +0.02089]
+      gain fixed_k16   -0.01021 [-0.02656, +0.00751]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.12829 [+0.10286, +0.15304]
+      derived minus fixed_k8    -0.00590 [-0.01905, +0.00527]
+      derived minus fixed_k12   +0.00328 [-0.01356, +0.01853]
+      derived minus fixed_k16   +0.01910 [-0.00014, +0.03620]
+      derived minus always_pm   +0.01451 [+0.00273, +0.02816]
+      derived minus always_lcb  +0.00148 [-0.00575, +0.00918]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.636
+      gain derived     +0.00150 [-0.02356, +0.02537]
+      gain fixed_k8    +0.02690 [+0.01457, +0.04006]
+      gain fixed_k12   +0.04296 [+0.02621, +0.06059]
+      gain fixed_k16   +0.05283 [+0.03120, +0.07505]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.14575 [+0.11963, +0.17258]
+      derived minus fixed_k8    -0.02540 [-0.04591, -0.00487]
+      derived minus fixed_k12   -0.04146 [-0.06027, -0.02347]
+      derived minus fixed_k16   -0.05134 [-0.07498, -0.02959]
+      derived minus always_pm   +0.02202 [+0.01288, +0.03155]
+      derived minus always_lcb  +0.00563 [-0.00274, +0.01410]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.577
+      gain derived     +0.00238 [-0.01402, +0.01742]
+      gain fixed_k8    +0.02269 [+0.00659, +0.03936]
+      gain fixed_k12   +0.01719 [+0.00115, +0.03349]
+      gain fixed_k16   +0.02202 [-0.00102, +0.04760]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.13923 [+0.11124, +0.16795]
+      derived minus fixed_k8    -0.02031 [-0.03261, -0.00774]
+      derived minus fixed_k12   -0.01481 [-0.03057, +0.00057]
+      derived minus fixed_k16   -0.01964 [-0.03902, -0.00028]
+      derived minus always_pm   +0.01548 [+0.00806, +0.02398]
+      derived minus always_lcb  +0.00243 [-0.00265, +0.00803]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.524
+      gain derived     +0.00495 [-0.01326, +0.02212]
+      gain fixed_k8    +0.01206 [-0.00237, +0.02853]
+      gain fixed_k12   +0.00162 [-0.01161, +0.01766]
+      gain fixed_k16   -0.00148 [-0.01907, +0.01833]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.13157 [+0.10459, +0.15857]
+      derived minus fixed_k8    -0.00711 [-0.01922, +0.00500]
+      derived minus fixed_k12   +0.00333 [-0.01105, +0.01754]
+      derived minus fixed_k16   +0.00643 [-0.01009, +0.02224]
+      derived minus always_pm   +0.00694 [-0.00051, +0.01396]
+      derived minus always_lcb  -0.00460 [-0.00952, +0.00003]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.629
+      gain derived     -0.00019 [-0.01589, +0.01558]
+      gain fixed_k8    +0.03332 [+0.01418, +0.05283]
+      gain fixed_k12   +0.03276 [+0.01182, +0.05352]
+      gain fixed_k16   +0.04552 [+0.01457, +0.07895]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.14690 [+0.11646, +0.17867]
+      derived minus fixed_k8    -0.03351 [-0.04794, -0.01893]
+      derived minus fixed_k12   -0.03295 [-0.05263, -0.01343]
+      derived minus fixed_k16   -0.04571 [-0.07265, -0.01826]
+      derived minus always_pm   +0.02403 [+0.01355, +0.03690]
+      derived minus always_lcb  +0.00947 [+0.00193, +0.01786]
+  by magnitude and onset (all seeds; deployed-design gain over the standard process):
+    0.05 sigma, onset  0: derived -0.02049 [-0.04040, -0.00518] (k=12 -0.0184), pm share 0.666; minus fixed_k8 -0.00727 [-0.02211, +0.00354]; minus fixed_k12 -0.00204 [-0.01712, +0.00965]; minus always_pm +0.00442 [+0.00008, +0.01015]
+    0.05 sigma, onset 20: derived -0.01944 [-0.03618, -0.00527] (k=12 -0.0199), pm share 0.675; minus fixed_k8 -0.00453 [-0.01562, +0.00617]; minus fixed_k12 +0.00042 [-0.01146, +0.01175]; minus always_pm +0.00235 [+0.00030, +0.00516]
+    0.25 sigma, onset  0: derived -0.01083 [-0.02835, +0.00347] (k=12 -0.0166), pm share 0.642; minus fixed_k8 -0.00195 [-0.01475, +0.00878]; minus fixed_k12 +0.00581 [-0.00806, +0.01749]; minus always_pm +0.00149 [-0.00098, +0.00398]
+    0.25 sigma, onset 20: derived -0.01271 [-0.03159, +0.00311] (k=12 -0.0108), pm share 0.668; minus fixed_k8 -0.00593 [-0.01864, +0.00591]; minus fixed_k12 -0.00190 [-0.01510, +0.01086]; minus always_pm +0.00309 [+0.00069, +0.00558]
+    1 sigma, onset  0: derived +0.01242 [-0.00693, +0.03089] (k=12 -0.0099), pm share 0.524; minus fixed_k8 +0.00092 [-0.01489, +0.01523]; minus fixed_k12 +0.02229 [+0.00352, +0.03873]; minus always_pm -0.00028 [-0.00617, +0.00628]
+    1 sigma, onset 20: derived +0.00509 [-0.01067, +0.02061] (k=12 +0.0192), pm share 0.656; minus fixed_k8 -0.01196 [-0.02547, +0.00188]; minus fixed_k12 -0.01406 [-0.03094, +0.00387]; minus always_pm +0.00837 [+0.00088, +0.01589]
+    5 sigma, onset  0: derived +0.04658 [+0.01688, +0.08022] (k=12 +0.0594), pm share 0.234; minus fixed_k8 -0.01774 [-0.04376, +0.00618]; minus fixed_k12 -0.01284 [-0.04594, +0.01830]; minus always_pm +0.03729 [+0.01106, +0.06505]
+    5 sigma, onset 20: derived +0.02967 [-0.01451, +0.07873] (k=12 +0.1630), pm share 0.531; minus fixed_k8 -0.09540 [-0.13856, -0.05764]; minus fixed_k12 -0.13328 [-0.18941, -0.08142]; minus always_pm +0.07829 [+0.04480, +0.11538]
+  validation: re-ranking budget_split_derived_kmax25.csv with the true-value rate picks the same policy as this refit in 1.0000 of 12,800 runs
+
+====================================================================================================
+DIAGNOSTIC sequential rule, search credit from the true value   [budget_split_derived_decision_sequential_truerate.csv, rho = 1]
+  grid 2,3,5,8,12,16,20,25,30; a decision at each T - k; 12,800 runs scored, 0 dropped for a failed fit
+  fits that failed at some decision point: 0 (runs dropped for failing at every point: see above)
+  where the rule decided (trial n = T - k at which it committed; T - 2 = 48 also when it shipped with no sitting), share of runs by onset:
+    decided_at          20    25    30    34    38    42    45    47    48
+    jitter_iteration                                                      
+    0                0.008 0.010 0.024 0.047 0.088 0.135 0.181 0.159 0.348
+    20               0.008 0.012 0.017 0.030 0.075 0.142 0.182 0.167 0.366
+  onset 0: 0.000 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  onset 20: 0.008 of runs committed at a trial n <= onset, i.e. before any error had been rated
+  median sitting SD the rule assumes (objective units), by onset x magnitude:
+    jitter_std         0.05   0.25   1.00   5.00
+    jitter_iteration                            
+    0                0.0728 0.2367 0.8005 3.7376
+    20               0.0686 0.2025 0.6670 2.7511
+  share of runs that ship the posterior-mean design (k_hat = pm), by onset x magnitude:
+    jitter_std        0.05  0.25  1.00  5.00
+    jitter_iteration                        
+    0                0.336 0.288 0.212 0.068
+    20               0.321 0.292 0.177 0.104
+  the sittings it buys, by onset x magnitude (share of runs that buy one; among those, the median k and the share with k >= 8):
+                                 share_sitting  median_k_of_sittings  share_of_sittings_k_ge_8
+    jitter_iteration jitter_std                                                               
+    0                0.05                0.664                 5.000                     0.326
+                     0.25                0.712                 5.000                     0.332
+                     1.00                0.787                 5.000                     0.390
+                     5.00                0.932                 8.000                     0.523
+    20               0.05                0.679                 5.000                     0.323
+                     0.25                0.708                 5.000                     0.333
+                     1.00                0.823                 5.000                     0.359
+                     5.00                0.896                 5.000                     0.435
+  share of base runs (landscape x acquisition x seed x process x onset) whose choice is the same at all four magnitudes: onset 0 0.004, onset 20 0.021
+  share of base runs whose fit is identical at all four magnitudes (same sitting SD and no-trial scores to 1e-9): onset 0 0.000, onset 20 0.000
+  deployed-design gain over the standard process (regret / opt_z, landscape means, landscape bootstrap), by seeds and onset:
+  seeds all:
+    onset all (12,800 runs, 20 landscapes): pm share 0.225
+      gain derived     +0.01558 [+0.00255, +0.02848]
+      gain fixed_k8    +0.02177 [+0.00897, +0.03432]
+      gain fixed_k12   +0.02074 [+0.00682, +0.03464]
+      gain fixed_k16   +0.02167 [+0.00171, +0.04225]
+      gain always_pm   -0.01309 [-0.03225, +0.00472]
+      gain always_lcb  +0.00079 [-0.01794, +0.01797]
+      gain oracle      +0.13813 [+0.11226, +0.16356]
+      derived minus fixed_k8    -0.00619 [-0.01233, +0.00011]
+      derived minus fixed_k12   -0.00516 [-0.01443, +0.00424]
+      derived minus fixed_k16   -0.00609 [-0.02016, +0.00830]
+      derived minus always_pm   +0.02866 [+0.01829, +0.03866]
+      derived minus always_lcb  +0.01478 [+0.00724, +0.02252]
+    onset   0 (6,400 runs, 20 landscapes): pm share 0.226
+      gain derived     +0.01234 [-0.00247, +0.02673]
+      gain fixed_k8    +0.01343 [+0.00029, +0.02787]
+      gain fixed_k12   +0.00362 [-0.00865, +0.01757]
+      gain fixed_k16   -0.00584 [-0.02148, +0.01053]
+      gain always_pm   -0.00381 [-0.02609, +0.01648]
+      gain always_lcb  +0.00848 [-0.01307, +0.02733]
+      gain oracle      +0.12993 [+0.10422, +0.15525]
+      derived minus fixed_k8    -0.00109 [-0.00852, +0.00557]
+      derived minus fixed_k12   +0.00872 [-0.00154, +0.01787]
+      derived minus fixed_k16   +0.01818 [+0.00505, +0.03034]
+      derived minus always_pm   +0.01615 [+0.00488, +0.02753]
+      derived minus always_lcb  +0.00386 [-0.00378, +0.01209]
+    onset  20 (6,400 runs, 20 landscapes): pm share 0.224
+      gain derived     +0.01881 [+0.00503, +0.03257]
+      gain fixed_k8    +0.03011 [+0.01641, +0.04445]
+      gain fixed_k12   +0.03786 [+0.01981, +0.05632]
+      gain fixed_k16   +0.04918 [+0.02360, +0.07597]
+      gain always_pm   -0.02237 [-0.03995, -0.00584]
+      gain always_lcb  -0.00689 [-0.02481, +0.00931]
+      gain oracle      +0.14632 [+0.11838, +0.17440]
+      derived minus fixed_k8    -0.01130 [-0.01779, -0.00437]
+      derived minus fixed_k12   -0.01905 [-0.03016, -0.00716]
+      derived minus fixed_k16   -0.03036 [-0.04939, -0.01081]
+      derived minus always_pm   +0.04118 [+0.02944, +0.05244]
+      derived minus always_lcb  +0.02571 [+0.01707, +0.03433]
+  seeds 7-11:
+    onset all (6,400 runs, 20 landscapes): pm share 0.220
+      gain derived     +0.01243 [-0.00228, +0.02654]
+      gain fixed_k8    +0.02085 [+0.00940, +0.03299]
+      gain fixed_k12   +0.02429 [+0.01064, +0.03817]
+      gain fixed_k16   +0.02131 [+0.00378, +0.03875]
+      gain always_pm   -0.01307 [-0.03536, +0.00751]
+      gain always_lcb  +0.00164 [-0.01936, +0.02084]
+      gain oracle      +0.13702 [+0.11213, +0.16060]
+      derived minus fixed_k8    -0.00842 [-0.01577, -0.00176]
+      derived minus fixed_k12   -0.01186 [-0.02150, -0.00205]
+      derived minus fixed_k16   -0.00889 [-0.02261, +0.00514]
+      derived minus always_pm   +0.02550 [+0.01091, +0.03926]
+      derived minus always_lcb  +0.01079 [-0.00198, +0.02186]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.225
+      gain derived     +0.00981 [-0.00747, +0.02720]
+      gain fixed_k8    +0.01480 [+0.00054, +0.02987]
+      gain fixed_k12   +0.00562 [-0.00862, +0.02089]
+      gain fixed_k16   -0.01021 [-0.02656, +0.00751]
+      gain always_pm   -0.00562 [-0.02991, +0.01693]
+      gain always_lcb  +0.00741 [-0.01476, +0.02712]
+      gain oracle      +0.12829 [+0.10286, +0.15304]
+      derived minus fixed_k8    -0.00498 [-0.01503, +0.00358]
+      derived minus fixed_k12   +0.00420 [-0.00834, +0.01534]
+      derived minus fixed_k16   +0.02002 [+0.00499, +0.03327]
+      derived minus always_pm   +0.01543 [+0.00136, +0.02946]
+      derived minus always_lcb  +0.00240 [-0.00766, +0.01194]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.215
+      gain derived     +0.01504 [-0.00069, +0.03012]
+      gain fixed_k8    +0.02690 [+0.01457, +0.04006]
+      gain fixed_k12   +0.04296 [+0.02621, +0.06059]
+      gain fixed_k16   +0.05283 [+0.03120, +0.07505]
+      gain always_pm   -0.02052 [-0.04327, +0.00042]
+      gain always_lcb  -0.00413 [-0.02705, +0.01745]
+      gain oracle      +0.14575 [+0.11963, +0.17258]
+      derived minus fixed_k8    -0.01185 [-0.01875, -0.00496]
+      derived minus fixed_k12   -0.02792 [-0.04039, -0.01587]
+      derived minus fixed_k16   -0.03779 [-0.05665, -0.01954]
+      derived minus always_pm   +0.03556 [+0.01667, +0.05174]
+      derived minus always_lcb  +0.01917 [+0.00240, +0.03409]
+  seeds 12-16:
+    onset all (6,400 runs, 20 landscapes): pm share 0.230
+      gain derived     +0.01872 [+0.00417, +0.03339]
+      gain fixed_k8    +0.02269 [+0.00659, +0.03936]
+      gain fixed_k12   +0.01719 [+0.00115, +0.03349]
+      gain fixed_k16   +0.02202 [-0.00102, +0.04760]
+      gain always_pm   -0.01311 [-0.03027, +0.00222]
+      gain always_lcb  -0.00006 [-0.01715, +0.01502]
+      gain oracle      +0.13923 [+0.11124, +0.16795]
+      derived minus fixed_k8    -0.00397 [-0.01132, +0.00348]
+      derived minus fixed_k12   +0.00154 [-0.00871, +0.01148]
+      derived minus fixed_k16   -0.00329 [-0.01898, +0.01273]
+      derived minus always_pm   +0.03183 [+0.02103, +0.04310]
+      derived minus always_lcb  +0.01878 [+0.01078, +0.02724]
+    onset   0 (3,200 runs, 20 landscapes): pm share 0.228
+      gain derived     +0.01487 [+0.00102, +0.02921]
+      gain fixed_k8    +0.01206 [-0.00237, +0.02853]
+      gain fixed_k12   +0.00162 [-0.01161, +0.01766]
+      gain fixed_k16   -0.00148 [-0.01907, +0.01833]
+      gain always_pm   -0.00200 [-0.02224, +0.01689]
+      gain always_lcb  +0.00955 [-0.01144, +0.02889]
+      gain oracle      +0.13157 [+0.10459, +0.15857]
+      derived minus fixed_k8    +0.00281 [-0.00377, +0.00962]
+      derived minus fixed_k12   +0.01325 [+0.00434, +0.02158]
+      derived minus fixed_k16   +0.01635 [+0.00327, +0.02959]
+      derived minus always_pm   +0.01686 [+0.00402, +0.03023]
+      derived minus always_lcb  +0.00532 [-0.00479, +0.01547]
+    onset  20 (3,200 runs, 20 landscapes): pm share 0.232
+      gain derived     +0.02258 [+0.00632, +0.04032]
+      gain fixed_k8    +0.03332 [+0.01418, +0.05283]
+      gain fixed_k12   +0.03276 [+0.01182, +0.05352]
+      gain fixed_k16   +0.04552 [+0.01457, +0.07895]
+      gain always_pm   -0.02422 [-0.03907, -0.01084]
+      gain always_lcb  -0.00966 [-0.02376, +0.00288]
+      gain oracle      +0.14690 [+0.11646, +0.17867]
+      derived minus fixed_k8    -0.01074 [-0.02069, -0.00089]
+      derived minus fixed_k12   -0.01018 [-0.02511, +0.00408]
+      derived minus fixed_k16   -0.02294 [-0.04387, -0.00167]
+      derived minus always_pm   +0.04680 [+0.03306, +0.06200]
+      derived minus always_lcb  +0.03224 [+0.02116, +0.04461]
+  by magnitude and onset (all seeds; deployed-design gain over the standard process):
+    0.05 sigma, onset  0: derived -0.01394 [-0.02627, -0.00411] (k=12 -0.0184), pm share 0.336; minus fixed_k8 -0.00072 [-0.00801, +0.00601]; minus fixed_k12 +0.00450 [-0.00331, +0.01288]; minus always_pm +0.01097 [+0.00142, +0.02333]
+    0.05 sigma, onset 20: derived -0.01480 [-0.02724, -0.00463] (k=12 -0.0199), pm share 0.321; minus fixed_k8 +0.00011 [-0.00753, +0.00771]; minus fixed_k12 +0.00507 [-0.00382, +0.01408]; minus always_pm +0.00699 [+0.00071, +0.01434]
+    0.25 sigma, onset  0: derived -0.00497 [-0.01686, +0.00529] (k=12 -0.0166), pm share 0.288; minus fixed_k8 +0.00391 [-0.00305, +0.01011]; minus fixed_k12 +0.01166 [+0.00332, +0.01978]; minus always_pm +0.00734 [+0.00022, +0.01585]
+    0.25 sigma, onset 20: derived -0.00448 [-0.01576, +0.00567] (k=12 -0.0108), pm share 0.292; minus fixed_k8 +0.00229 [-0.00393, +0.00929]; minus fixed_k12 +0.00633 [-0.00072, +0.01444]; minus always_pm +0.01131 [+0.00290, +0.02149]
+    1 sigma, onset  0: derived +0.01369 [-0.00110, +0.02737] (k=12 -0.0099), pm share 0.212; minus fixed_k8 +0.00220 [-0.00970, +0.01381]; minus fixed_k12 +0.02356 [+0.00985, +0.03708]; minus always_pm +0.00099 [-0.00916, +0.01204]
+    1 sigma, onset 20: derived +0.02176 [+0.00880, +0.03568] (k=12 +0.0192), pm share 0.177; minus fixed_k8 +0.00471 [-0.00253, +0.01286]; minus fixed_k12 +0.00260 [-0.00816, +0.01483]; minus always_pm +0.02504 [+0.01201, +0.03860]
+    5 sigma, onset  0: derived +0.05458 [+0.02163, +0.08883] (k=12 +0.0594), pm share 0.068; minus fixed_k8 -0.00974 [-0.02437, +0.00358]; minus fixed_k12 -0.00484 [-0.02892, +0.01835]; minus always_pm +0.04529 [+0.01357, +0.08114]
+    5 sigma, onset 20: derived +0.07277 [+0.04478, +0.10835] (k=12 +0.1630), pm share 0.104; minus fixed_k8 -0.05231 [-0.06958, -0.03661]; minus fixed_k12 -0.09018 [-0.12296, -0.05853]; minus always_pm +0.12138 [+0.08620, +0.15872]
+
+====================================================================================================
+the price of each rule without error: trt_clean - ref_clean on the clean twins (budget_split.py --twin clean; regret / opt_z, landscape means, landscape bootstrap; positive = regret added)
+  decide-once rule [budget_split_price_clean.csv]:
+    seeds   all (400 clean twins, 0 failed fits; pm share 0.775, lcb share 0.000): price derived +0.02485 [+0.00813, +0.04728]; fixed_k8 +0.01498 [+0.00723, +0.02382]; fixed_k12 +0.02188 [+0.01100, +0.03317]; fixed_k16 +0.02849 [+0.01420, +0.04403]; always_pm +0.02710 [+0.00904, +0.05012]; always_lcb +0.02221 [+0.00739, +0.04279]
+      derived minus fixed_k8 +0.00987 [-0.00126, +0.02560]; derived minus fixed_k12 +0.00297 [-0.01063, +0.02020]; derived minus fixed_k16 -0.00365 [-0.01990, +0.01540]; derived minus always_pm -0.00225 [-0.00706, +0.00103]; derived minus always_lcb +0.00264 [-0.00079, +0.00732]
+    seeds  7-11 (200 clean twins, 0 failed fits; pm share 0.790, lcb share 0.000): price derived +0.02762 [+0.00909, +0.05034]; fixed_k8 +0.01432 [+0.00653, +0.02301]; fixed_k12 +0.02017 [+0.00876, +0.03290]; fixed_k16 +0.02446 [+0.01078, +0.03905]; always_pm +0.02726 [+0.00862, +0.05011]; always_lcb +0.02333 [+0.00802, +0.04306]
+      derived minus fixed_k8 +0.01331 [-0.00209, +0.03314]; derived minus fixed_k12 +0.00746 [-0.01047, +0.02871]; derived minus fixed_k16 +0.00316 [-0.01511, +0.02562]; derived minus always_pm +0.00037 [-0.00059, +0.00192]; derived minus always_lcb +0.00430 [+0.00009, +0.01021]
+    seeds 12-16 (200 clean twins, 0 failed fits; pm share 0.760, lcb share 0.000): price derived +0.02207 [+0.00667, +0.04469]; fixed_k8 +0.01564 [+0.00635, +0.02702]; fixed_k12 +0.02360 [+0.01084, +0.03819]; fixed_k16 +0.03252 [+0.01482, +0.05311]; always_pm +0.02695 [+0.00835, +0.05266]; always_lcb +0.02108 [+0.00639, +0.04272]
+      derived minus fixed_k8 +0.00643 [-0.00289, +0.01886]; derived minus fixed_k12 -0.00153 [-0.01557, +0.01307]; derived minus fixed_k16 -0.01045 [-0.02881, +0.00847]; derived minus always_pm -0.00487 [-0.01442, +0.00135]; derived minus always_lcb +0.00099 [-0.00273, +0.00473]
+  sequential rule [budget_split_price_decision_sequential_clean.csv]:
+    seeds   all (400 clean twins, 0 failed fits; pm share 0.343, lcb share 0.000): price derived +0.01740 [+0.00631, +0.03128]; fixed_k8 +0.01498 [+0.00723, +0.02382]; fixed_k12 +0.02188 [+0.01100, +0.03317]; fixed_k16 +0.02849 [+0.01420, +0.04403]; always_pm +0.02710 [+0.00904, +0.05012]; always_lcb +0.02221 [+0.00739, +0.04279]
+      derived minus fixed_k8 +0.00242 [-0.00416, +0.01050]; derived minus fixed_k12 -0.00448 [-0.01468, +0.00554]; derived minus fixed_k16 -0.01110 [-0.02494, +0.00243]; derived minus always_pm -0.00970 [-0.01937, -0.00223]; derived minus always_lcb -0.00481 [-0.01262, +0.00056]
+    seeds  7-11 (200 clean twins, 0 failed fits; pm share 0.355, lcb share 0.000): price derived +0.01379 [+0.00544, +0.02442]; fixed_k8 +0.01432 [+0.00653, +0.02301]; fixed_k12 +0.02017 [+0.00876, +0.03290]; fixed_k16 +0.02446 [+0.01078, +0.03905]; always_pm +0.02726 [+0.00862, +0.05011]; always_lcb +0.02333 [+0.00802, +0.04306]
+      derived minus fixed_k8 -0.00053 [-0.00820, +0.00715]; derived minus fixed_k12 -0.00638 [-0.01727, +0.00304]; derived minus fixed_k16 -0.01067 [-0.02301, +0.00057]; derived minus always_pm -0.01347 [-0.02837, -0.00266]; derived minus always_lcb -0.00954 [-0.02230, -0.00107]
+    seeds 12-16 (200 clean twins, 0 failed fits; pm share 0.330, lcb share 0.000): price derived +0.02101 [+0.00683, +0.04173]; fixed_k8 +0.01564 [+0.00635, +0.02702]; fixed_k12 +0.02360 [+0.01084, +0.03819]; fixed_k16 +0.03252 [+0.01482, +0.05311]; always_pm +0.02695 [+0.00835, +0.05266]; always_lcb +0.02108 [+0.00639, +0.04272]
+      derived minus fixed_k8 +0.00536 [-0.00233, +0.01600]; derived minus fixed_k12 -0.00259 [-0.01573, +0.01019]; derived minus fixed_k16 -0.01152 [-0.02953, +0.00638]; derived minus always_pm -0.00594 [-0.01478, +0.00134]; derived minus always_lcb -0.00008 [-0.00380, +0.00398]
+    where it committed on the clean twins (trial n; 48 also when it shipped with no sitting): 20 0.007, 25 0.013, 30 0.020, 34 0.018, 38 0.068, 42 0.125, 45 0.130, 47 0.135, 48 0.485

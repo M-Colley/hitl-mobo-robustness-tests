@@ -1,0 +1,62 @@
+Share of the achievable improvement: fitted mean_s(excess_s) / mean_s(y_opt_s - mean_f,s) against exact excess / opt_z.
+
+== exact arm: best clean value over opt_z (mean over seeds 7-11, the six acquisitions): median 0.997, range [0.456, 1.000]; below 0.9 on shekel 0.456, michalewicz 0.717, schwefel 0.812, rastrigin 0.847, ackley 0.874, moving_peaks 0.884
+
+== tree: achievable improvement of the fitted oracle (oracle units), mean over seeds: median 3.62, range [2.46, 18.85]; opt_z of the same landscapes median 3.06, range [0.76, 56.77]
+   mean_f check: |mean_f - mean over the 100 clean floor designs| at most 0.191 sigma_f of the seed; A from the refit mean over A from the floor designs in [0.984, 1.015]; best-clean A over y_opt A median 0.832, range [0.701, 0.972]
+   the family's own A over sigma_f * opt_z (per-seed sigma_f): median 1.267, range [0.277, 3.190]; above 1 on 14/20; with the seed-7 sigma_f median 1.265, range [0.275, 3.198]; best-clean A over sigma_f * opt_z median 1.048, range [0.234, 2.237]
+   trajectory oracle          0.25s 0.274 [-0.154, 0.830] median 0.251 lower 12/20 p 0.09; 1s 0.716 [0.559, 0.932] median 0.722 lower 15/20 p 0.03; 5s 0.797 [0.702, 0.911] median 0.866 lower 15/20 p 0.017
+   trajectory best_clean      0.25s 0.332 [-0.181, 0.988] median 0.320 lower 11/20 p 0.25; 1s 0.836 [0.645, 1.095] median 0.868 lower 12/20 p 0.25; 5s 0.923 [0.816, 1.070] median 1.028 lower 9/20 p 0.62
+   trajectory empirical       0.25s 0.273 [-0.153, 0.827] median 0.251 lower 12/20 p 0.09; 1s 0.714 [0.558, 0.928] median 0.725 lower 15/20 p 0.03; 5s 0.794 [0.701, 0.909] median 0.865 lower 15/20 p 0.012
+   trajectory visited         0.25s 0.271 [-0.155, 0.827] median 0.251 lower 12/20 p 0.09; 1s 0.713 [0.556, 0.928] median 0.719 lower 15/20 p 0.027; 5s 0.794 [0.699, 0.909] median 0.865 lower 15/20 p 0.014
+   trajectory sigma_f         0.25s 0.414 [-0.200, 1.203] median 0.280 lower 11/20 p 0.28; 1s 0.835 [0.622, 1.138] median 0.830 lower 14/20 p 0.23; 5s 0.949 [0.783, 1.195] median 0.846 lower 12/20 p 0.73
+   trajectory sigma_f_seed7   0.25s 0.409 [-0.203, 1.196] median 0.279 lower 11/20 p 0.29; 1s 0.833 [0.621, 1.133] median 0.815 lower 14/20 p 0.23; 5s 0.948 [0.782, 1.191] median 0.840 lower 11/20 p 0.78
+   trajectory both_best_clean 0.25s 0.304 [-0.161, 0.935] median 0.306 lower 12/20 p 0.15; 1s 0.760 [0.609, 0.945] median 0.795 lower 13/20 p 0.053; 5s 0.841 [0.762, 0.951] median 0.913 lower 15/20 p 0.024
+   floor share (floor gap / achievable improvement): fitted median 0.469 [0.320, 0.789], with the best-clean optimum 0.345; exact median 0.315 [0.011, 0.914]; fitted share above the exact on 16/20 landscapes
+   deployed   oracle          0.25s 0.764 [0.406, 1.204] median 0.915 lower 10/20 p 0.47; 1s 1.017 [0.884, 1.192] median 0.917 lower 12/20 p 0.87; 5s 0.901 [0.812, 1.004] median 0.920 lower 12/20 p 0.15
+   deployed   best_clean      0.25s 0.945 [0.510, 1.482] median 1.173 lower 9/20 p 0.99; 1s 1.229 [1.062, 1.445] median 1.127 lower 6/20 p 0.033; 5s 1.073 [0.975, 1.188] median 1.116 lower 8/20 p 0.19
+   deployed   empirical       0.25s 0.763 [0.408, 1.202] median 0.921 lower 10/20 p 0.47; 1s 1.015 [0.882, 1.188] median 0.918 lower 12/20 p 0.81; 5s 0.899 [0.810, 1.001] median 0.926 lower 12/20 p 0.14
+   deployed   visited         0.25s 0.760 [0.403, 1.195] median 0.915 lower 10/20 p 0.45; 1s 1.013 [0.881, 1.187] median 0.917 lower 12/20 p 0.87; 5s 0.898 [0.810, 1.000] median 0.915 lower 13/20 p 0.12
+   deployed   sigma_f         0.25s 1.148 [0.620, 1.796] median 1.382 lower 9/20 p 0.6; 1s 1.390 [1.069, 1.805] median 1.149 lower 8/20 p 0.097; 5s 1.179 [1.005, 1.403] median 0.989 lower 10/20 p 0.5
+   deployed   sigma_f_seed7   0.25s 1.142 [0.618, 1.784] median 1.390 lower 8/20 p 0.57; 1s 1.386 [1.070, 1.798] median 1.150 lower 8/20 p 0.09; 5s 1.177 [1.004, 1.401] median 0.991 lower 10/20 p 0.5
+   deployed   both_best_clean 0.25s 0.885 [0.475, 1.382] median 1.169 lower 9/20 p 0.84; 1s 1.119 [0.975, 1.297] median 1.053 lower 8/20 p 0.2; 5s 0.989 [0.926, 1.068] median 1.013 lower 9/20 p 0.73
+
+== GP: achievable improvement of the fitted oracle (oracle units), mean over seeds: median 2.55, range [1.23, 15.66]; opt_z of the same landscapes median 3.06, range [0.76, 56.77]
+   mean_f check: |mean_f - mean over the 100 clean floor designs| at most 0.595 sigma_f of the seed; A from the refit mean over A from the floor designs in [0.967, 1.019]; best-clean A over y_opt A median 1.000, range [0.460, 1.076]
+   the family's own A over sigma_f * opt_z (per-seed sigma_f): median 0.970, range [0.532, 1.771]; above 1 on 9/20; with the seed-7 sigma_f median 0.943, range [0.532, 1.664]; best-clean A over sigma_f * opt_z median 0.924, range [0.244, 1.660]
+   trajectory oracle          0.25s 1.296 [0.664, 2.505] median 1.184 lower 7/20 p 0.18; 1s 1.112 [0.892, 1.422] median 1.067 lower 8/20 p 0.35; 5s 1.022 [0.882, 1.224] median 1.095 lower 9/20 p 0.73
+   trajectory best_clean      0.25s 1.400 [0.705, 2.725] median 1.197 lower 7/20 p 0.19; 1s 1.142 [0.942, 1.433] median 1.064 lower 8/20 p 0.23; 5s 1.063 [0.933, 1.257] median 1.106 lower 9/20 p 0.35
+   trajectory empirical       0.25s 1.283 [0.661, 2.485] median 1.186 lower 7/20 p 0.18; 1s 1.107 [0.888, 1.418] median 1.050 lower 8/20 p 0.37; 5s 1.017 [0.874, 1.218] median 1.073 lower 9/20 p 0.78
+   trajectory visited         0.25s 1.285 [0.659, 2.481] median 1.184 lower 7/20 p 0.2; 1s 1.099 [0.884, 1.397] median 1.064 lower 8/20 p 0.37; 5s 1.012 [0.872, 1.211] median 1.093 lower 9/20 p 0.78
+   trajectory sigma_f         0.25s 1.522 [0.726, 2.986] median 1.150 lower 8/20 p 0.2; 1s 1.188 [0.862, 1.662] median 1.039 lower 9/20 p 0.45; 5s 1.052 [0.813, 1.390] median 1.036 lower 10/20 p 0.7
+   trajectory sigma_f_seed7   0.25s 1.475 [0.711, 2.910] median 1.150 lower 8/20 p 0.22; 1s 1.174 [0.851, 1.647] median 1.039 lower 9/20 p 0.5; 5s 1.037 [0.805, 1.377] median 1.025 lower 10/20 p 0.84
+   trajectory both_best_clean 0.25s 1.283 [0.661, 2.473] median 1.158 lower 7/20 p 0.2; 1s 1.038 [0.822, 1.328] median 1.064 lower 8/20 p 0.52; 5s 0.968 [0.818, 1.161] median 1.001 lower 10/20 p 0.99
+   floor share (floor gap / achievable improvement): fitted median 0.299 [0.035, 0.838], with the best-clean optimum 0.301; exact median 0.315 [0.011, 0.914]; fitted share above the exact on 8/20 landscapes
+   deployed   oracle          0.25s 1.289 [0.708, 1.954] median 1.287 lower 6/20 p 0.22; 1s 1.166 [0.980, 1.368] median 1.130 lower 6/20 p 0.12; 5s 1.017 [0.921, 1.117] median 1.063 lower 9/20 p 0.67
+   deployed   best_clean      0.25s 1.372 [0.750, 2.117] median 1.251 lower 6/20 p 0.15; 1s 1.192 [1.028, 1.371] median 1.158 lower 6/20 p 0.07; 5s 1.050 [0.962, 1.148] median 1.076 lower 9/20 p 0.39
+   deployed   empirical       0.25s 1.279 [0.707, 1.935] median 1.294 lower 6/20 p 0.2; 1s 1.160 [0.974, 1.363] median 1.136 lower 7/20 p 0.16; 5s 1.011 [0.916, 1.109] median 1.060 lower 9/20 p 0.76
+   deployed   visited         0.25s 1.276 [0.708, 1.940] median 1.237 lower 6/20 p 0.22; 1s 1.152 [0.973, 1.343] median 1.127 lower 6/20 p 0.14; 5s 1.007 [0.911, 1.106] median 1.022 lower 10/20 p 0.87
+   deployed   sigma_f         0.25s 1.583 [0.842, 2.423] median 1.316 lower 8/20 p 0.26; 1s 1.322 [0.988, 1.699] median 1.094 lower 9/20 p 0.26; 5s 1.097 [0.907, 1.296] median 1.091 lower 9/20 p 0.47
+   deployed   sigma_f_seed7   0.25s 1.534 [0.824, 2.319] median 1.316 lower 8/20 p 0.28; 1s 1.300 [0.965, 1.675] median 1.094 lower 9/20 p 0.28; 5s 1.079 [0.897, 1.275] median 0.998 lower 10/20 p 0.57
+   deployed   both_best_clean 0.25s 1.284 [0.700, 1.974] median 1.208 lower 7/20 p 0.26; 1s 1.085 [0.910, 1.274] median 1.086 lower 8/20 p 0.43; 5s 0.967 [0.868, 1.064] median 1.000 lower 10/20 p 0.87
+
+== MLP: achievable improvement of the fitted oracle (oracle units), mean over seeds: median 2.27, range [0.92, 14.04]; opt_z of the same landscapes median 3.06, range [0.76, 56.77]
+   mean_f check: |mean_f - mean over the 100 clean floor designs| at most 0.265 sigma_f of the seed; A from the refit mean over A from the floor designs in [0.969, 1.030]; best-clean A over y_opt A median 1.000, range [0.931, 1.055]
+   the family's own A over sigma_f * opt_z (per-seed sigma_f): median 0.994, range [0.116, 2.168]; above 1 on 10/20; with the seed-7 sigma_f median 1.050, range [0.127, 3.087]; best-clean A over sigma_f * opt_z median 0.992, range [0.108, 2.150]
+   trajectory oracle          0.25s 1.271 [0.858, 1.964] median 1.119 lower 7/20 p 0.22; 1s 1.411 [1.150, 1.755] median 1.479 lower 5/20 p 0.0032; 5s 1.222 [1.069, 1.442] median 1.214 lower 6/20 p 0.017
+   trajectory best_clean      0.25s 1.275 [0.863, 1.961] median 1.114 lower 7/20 p 0.25; 1s 1.408 [1.149, 1.757] median 1.479 lower 5/20 p 0.0042; 5s 1.221 [1.067, 1.440] median 1.215 lower 6/20 p 0.021
+   trajectory empirical       0.25s 1.266 [0.853, 1.953] median 1.106 lower 7/20 p 0.23; 1s 1.408 [1.150, 1.750] median 1.495 lower 5/20 p 0.0042; 5s 1.220 [1.068, 1.438] median 1.220 lower 6/20 p 0.014
+   trajectory visited         0.25s 1.265 [0.856, 1.954] median 1.114 lower 7/20 p 0.25; 1s 1.399 [1.139, 1.740] median 1.477 lower 5/20 p 0.0042; 5s 1.212 [1.061, 1.432] median 1.214 lower 6/20 p 0.027
+   trajectory sigma_f         0.25s 1.153 [0.670, 2.071] median 0.825 lower 10/20 p 0.87; 1s 1.268 [0.966, 1.738] median 1.102 lower 7/20 p 0.15; 5s 1.095 [0.856, 1.455] median 1.066 lower 9/20 p 0.62
+   trajectory sigma_f_seed7   0.25s 1.230 [0.670, 2.310] median 0.831 lower 10/20 p 0.84; 1s 1.339 [0.982, 1.924] median 1.115 lower 7/20 p 0.12; 5s 1.145 [0.871, 1.597] median 1.051 lower 8/20 p 0.47
+   trajectory both_best_clean 0.25s 1.168 [0.792, 1.802] median 1.020 lower 8/20 p 0.43; 1s 1.280 [1.074, 1.549] median 1.268 lower 6/20 p 0.014; 5s 1.112 [0.998, 1.281] median 1.135 lower 7/20 p 0.15
+   floor share (floor gap / achievable improvement): fitted median 0.255 [0.063, 0.687], with the best-clean optimum 0.257; exact median 0.315 [0.011, 0.914]; fitted share above the exact on 7/20 landscapes
+   deployed   oracle          0.25s 1.164 [0.960, 1.427] median 1.176 lower 7/20 p 0.09; 1s 1.206 [1.053, 1.372] median 1.229 lower 5/20 p 0.019; 5s 1.115 [1.013, 1.239] median 1.102 lower 6/20 p 0.11
+   deployed   best_clean      0.25s 1.157 [0.957, 1.415] median 1.136 lower 7/20 p 0.097; 1s 1.202 [1.049, 1.372] median 1.198 lower 5/20 p 0.019; 5s 1.114 [1.007, 1.246] median 1.099 lower 6/20 p 0.12
+   deployed   empirical       0.25s 1.164 [0.962, 1.419] median 1.197 lower 7/20 p 0.083; 1s 1.205 [1.050, 1.369] median 1.235 lower 5/20 p 0.017; 5s 1.114 [1.012, 1.237] median 1.103 lower 6/20 p 0.11
+   deployed   visited         0.25s 1.150 [0.951, 1.408] median 1.128 lower 7/20 p 0.11; 1s 1.193 [1.043, 1.359] median 1.188 lower 5/20 p 0.021; 5s 1.105 [1.003, 1.230] median 1.092 lower 6/20 p 0.14
+   deployed   sigma_f         0.25s 1.241 [0.877, 1.684] median 1.097 lower 9/20 p 0.43; 1s 1.173 [0.911, 1.503] median 1.205 lower 9/20 p 0.73; 5s 1.063 [0.893, 1.266] median 0.995 lower 10/20 p 0.96
+   deployed   sigma_f_seed7   0.25s 1.328 [0.892, 1.900] median 1.066 lower 9/20 p 0.5; 1s 1.260 [0.933, 1.705] median 1.257 lower 9/20 p 0.6; 5s 1.120 [0.905, 1.415] median 0.970 lower 10/20 p 0.99
+   deployed   both_best_clean 0.25s 1.082 [0.876, 1.339] median 1.039 lower 9/20 p 0.45; 1s 1.094 [0.977, 1.226] median 1.162 lower 6/20 p 0.13; 5s 1.027 [0.958, 1.094] median 1.021 lower 8/20 p 0.5
+
+The family comparison under every estimator: scripts/review_checks/oracle_families.py

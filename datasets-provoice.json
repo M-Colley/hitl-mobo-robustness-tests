@@ -2,6 +2,7 @@
   {
     "name": "provoice",
     "data_dir": "https://github.com/JSusak/ProVoiceData",
+    "data_commit": "9c76fbcee1e6027a3731b544ed84e36a96240354",
     "param_columns": [
       "InterventionLightingTransparency",
       "AuditoryAlertVolume",

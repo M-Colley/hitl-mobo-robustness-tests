@@ -224,7 +224,10 @@ def replay_stem_rows(task: dict) -> pd.DataFrame:
     for rec in task["runs"]:
         path = Path(rec["path"])
         noisy = eos.read_run(path, arm.iterations)
-        sd_fn = eos.sitting_sd_fn(arm, rec["error_model"], rec["jitter_std"], rec["jitter_iteration"], settings)
+        # The run's own variant carries a spike run's probability and size; an
+        # empty variant falls back on the stem's one spike variant (build_tasks).
+        sd_fn = eos.sitting_sd_fn(arm, rec["error_model"], rec["jitter_std"], rec["jitter_iteration"], settings,
+                                  variant=rec["variant"] or None)
         noisy_out = replay_run(noisy, arm, settings, bounds, sd_fn, ks)
         base = {"arm": arm.name, "dataset": task["dataset"], "acquisition": task["acquisition"],
                 "seed": task["seed"], "error_model": rec["error_model"], "jitter_std": rec["jitter_std"],

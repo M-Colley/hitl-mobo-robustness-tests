@@ -63,6 +63,9 @@ def main(argv: list[str] | None = None) -> None:
     calibration = calibration[calibration["objective"] == args.objective]
     selection = sim.load_oracle_selection(args.oracle_selection_path)
     datasets = sim.parse_dataset_configs(None, args.dataset_config, Path(".dataset_cache"))
+    # The commit of the archival data each row was computed from (the cached
+    # clone's HEAD; datasets.json pins it), so the anchor names its data.
+    provenance = sim.dataset_provenance(datasets)
     landscape = bb.load_stats(args.stats_path)
 
     rows: list[dict] = []
@@ -118,6 +121,9 @@ def main(argv: list[str] | None = None) -> None:
             "rating_noise_sd": float(sd_hat),
             "rating_noise_estimator": estimator,
             "noise_in_landscape_sd": float(sd_hat) / sd if sd > 0 else np.nan,
+            # Last, so every column a consumer reads by name keeps its place.
+            "data_commit": ";".join(str(entry["commit"]) for entry in
+                                    provenance[dataset.name]["data_dirs"]),
         })
 
     table = pd.DataFrame(rows)

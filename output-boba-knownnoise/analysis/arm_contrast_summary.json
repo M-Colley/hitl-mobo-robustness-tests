@@ -1,0 +1,14 @@
+{
+  "reference": "output-boba",
+  "treatment": "output-boba-knownnoise",
+  "paired_cells": 4800,
+  "benchmarks": 20,
+  "mean_reference": 0.05696591397656356,
+  "mean_treatment": 0.05501341895930518,
+  "overall_share_removed": 0.03427479488982943,
+  "overall_share_suppressed": "",
+  "near_zero_reference": 0.01,
+  "conditions_share_suppressed": 3,
+  "conditions_tested": 8,
+  "conditions_significant_fdr": 0
+}

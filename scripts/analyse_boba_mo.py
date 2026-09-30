@@ -26,7 +26,12 @@ denominators differ by a lot, so quoting one arm's published fraction against
 the other's manufactures a difference. So it is done two ways instead: (1) both
 arms recomputed against the floor denominator, identically; and (2) the onset
 ratio, which is a ratio of two costs on the same landscape and therefore free of
-the denominator altogether.
+the denominator on each landscape. Pooled over landscapes it is a ratio of
+means, so the denominator still weights the landscapes: the scalar arm's
+gaussian ratio at 1 sigma is 9.6x on the floor gap and 5.5x on opt_z
+(onset_bound.csv). Both arms' ratios are also bounded by the clean run's
+improvement after the onset; scripts/review_checks/mo_onset_bound.py divides
+each by that bound (mo_onset_bound.csv).
 
     python scripts/analyse_boba_mo.py
 """
@@ -56,7 +61,10 @@ BOOTSTRAP_REPS = 2000
 BOOTSTRAP_SEED = 20260909
 # Below this the clean run barely beats a design that reads nothing, so error has
 # nothing to destroy and a null is guaranteed rather than earned. The scalar
-# suite's weakest admissible landscape (Rosenbrock) sits at 0.176.
+# suite's weakest admissible landscape (Rosenbrock) sits at 0.176. The scalar
+# screen is 0.10 (analyse_boba_robustness.py, ceiling_free), so this one is
+# stricter; on this suite the two drop the same problem: DH2 sits at 0.0 and the
+# next lowest, Penicillin, at 0.197 (mo_headroom.csv).
 HEADROOM_MIN = 0.15
 
 
@@ -294,7 +302,7 @@ def main(argv=None) -> None:
     print("\n  multi-objective arm, floor denominator:")
     print("  " + dose.to_string(float_format=lambda v: f"{v:+.4f}").replace("\n", "\n  "))
 
-    print("\n  onset ratio (early onset / late onset) -- denominator-free:")
+    print("\n  onset ratio (early onset / late onset) -- denominator-free per problem, weighted by it when pooled:")
     for label, table in (("scalar", sc_dose), ("multi-objective", dose)):
         early, late = table.columns[0], table.columns[-1]
         ratio = table[early] / table[late]

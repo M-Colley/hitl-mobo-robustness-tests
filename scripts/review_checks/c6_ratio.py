@@ -3,17 +3,19 @@
 #   python scripts/run_review_checks.py
 """C6: the fitted-oracle companion's ratio of known-function to fitted cost at 1 sigma from the first
 rating, with an interval from resampling the landscapes and the datasets independently."""
-import os, sys, json
+import os, sys
 from pathlib import Path
 import numpy as np, pandas as pd
 REPO = Path(__file__).resolve().parents[2]; os.chdir(REPO)
 sys.path.insert(0, str(REPO / "scripts"))
-import analyse_fitted_companion as fc, analyse_boba_robustness as ab
+import analyse_fitted_companion as fc, analyse_boba_robustness as ab, boba_benchmarks as bb
 fitted = fc.relative_magnitude(ab.load_paired(REPO / "output-fitted"))
 fitted = fc.floor_fraction(fitted, fc.fitted_optimum(fitted))
 synth = ab.load_paired(REPO / "output-boba"); synth = synth[synth.error_model == "gaussian"]
-meta = json.loads((REPO / "output-boba" / "run_metadata.json").read_text(encoding="utf-8"))
-optz = pd.Series({k: float(v["opt_z"]) for k, v in meta["landscape_stats"].items()})
+# opt_z from the tracked statistics file, not the git-ignored run_metadata.json (which records
+# local paths); the two agree exactly on the main sweep's twenty landscapes.
+optz = pd.Series({k: float(v["opt_z"]) for k, v in bb.load_stats(bb.DEFAULT_STATS_PATH).items()
+                  if isinstance(v, dict) and "opt_z" in v})
 synth = fc.floor_fraction(synth, optz); synth["sigma_multiple"] = synth["jitter_std"].round(2)
 f = fitted[(fitted.sigma_multiple == 1.0) & (fitted.jitter_iteration == 0)].groupby("dataset")["frac"].mean()
 s = synth[(synth.jitter_std == 1.0) & (synth.jitter_iteration == 0)].groupby("dataset")["frac"].mean()

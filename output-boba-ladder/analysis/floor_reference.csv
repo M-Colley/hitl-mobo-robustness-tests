@@ -1,0 +1,17 @@
+error_model,jitter_std,jitter_iteration,acquisition,mean_absolute_loss,mean_fragility
+gaussian,0.05,0,random,0.7900990828976804,0.0
+gaussian,0.05,0,sobol,0.7900870374268201,0.0
+gaussian,0.05,20,random,0.7645845783779305,0.0
+gaussian,0.05,20,sobol,0.7654371223983155,0.0
+gaussian,0.25,0,random,0.7900990828976804,0.0
+gaussian,0.25,0,sobol,0.7900870374268201,0.0
+gaussian,0.25,20,random,0.7645845783779305,0.0
+gaussian,0.25,20,sobol,0.7654371223983155,0.0
+gaussian,1.0,0,random,0.7900990828976804,0.0
+gaussian,1.0,0,sobol,0.7900870374268201,0.0
+gaussian,1.0,20,random,0.7645845783779305,0.0
+gaussian,1.0,20,sobol,0.7654371223983155,0.0
+gaussian,5.0,0,random,0.7900990828976804,0.0
+gaussian,5.0,0,sobol,0.7900870374268201,0.0
+gaussian,5.0,20,random,0.7645845783779305,0.0
+gaussian,5.0,20,sobol,0.7654371223983155,0.0

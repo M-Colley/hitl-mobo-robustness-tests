@@ -6,18 +6,33 @@ trials do I have to budget to end up where a clean study would have ended up?
 This script answers it directly from the paired trajectories.
 
 For a noisy run and its identically seeded clean run, with R(t) the best-so-far
-TRUE simple regret after t trials:
+TRUE simple regret after t trials and s the tolerance (a fraction of opt_z, in
+regret units):
 
-    tau(k) = min{ t : R_noisy(t) <= R_clean(k) }        extra(k) = tau(k) - k
+    target    = R_clean(k) + s
+    origin(k) = min{ t : R_clean(t) <= target }         (at most k)
+    tau(k)    = min{ t : R_noisy(t) <= target }         the reach trial
+    extra(k)  = tau(k) - origin(k)
 
 is the number of extra trials the noisy run needs to reach the point the clean
-run had reached after k trials. R is the true regret of the best point actually
-evaluated, so this is the optimizer's real progress, not what it believes.
+run had reached after k trials. It is counted from origin, the trial at which
+the CLEAN run itself first got there, not from k: best-so-far regret sits on
+plateaus, so a run identical to the clean one would otherwise read as ahead by
+the length of the plateau (extra_trials). R is the true regret of the best point
+actually evaluated, so this is the optimizer's real progress, not what it believes.
 
 A noisy run that never gets there within its budget T is CENSORED. Its extra is
-counted as T - k, so every mean reported here is a lower bound, and the censored
-fraction is reported beside it. Use a k well inside the budget (k = 25 of 50, or
-k = 50 of 100) so that censoring stays rare.
+counted as T - origin and its reach trial as T, so every mean reported here is a
+lower bound, and the censored fraction is reported beside it. Use a k well inside
+the budget (k = 25 of 50, or k = 50 of 100) so that censoring stays rare.
+
+Per run the table carries clean_origin (the origin above), reach_trial
+(= origin + extra) and reach_over_k (= reach_trial / k, the noisy run's budget
+as a multiple of the clean k-trial study's). The column ``multiplier`` is
+(k + extra) / k, which adds the extra trials to k rather than to origin; it is
+kept for the scripts that read it and is NOT the reach trial over k. The summary
+gives the median origin, reach trial and reach over k beside the median extra;
+like the median extra they are exact while fewer than half the runs are censored.
 
 Model-free floors are excluded: in the response-error arms their extra is zero
 by construction, and in the input-error arms they are not a learner.
@@ -136,12 +151,21 @@ def extra_trials(clean: np.ndarray, noisy: np.ndarray, k: int, slack: float = 0.
     identical run scores exactly zero. ``slack`` (in regret units) lets the
     noisy run stop that far short of the target; ties count as reached.
     """
+    origin = clean_origin(clean, k, slack)
     target = clean[k - 1] + 1e-12 + slack
-    origin = int(np.flatnonzero(clean <= target)[0]) + 1
     hit = np.flatnonzero(noisy <= target)
     if len(hit) == 0:
         return float(len(noisy) - origin), True
     return float(hit[0] + 1 - origin), False
+
+
+def clean_origin(clean: np.ndarray, k: int, slack: float = 0.0) -> int:
+    """The 1-based trial at which the clean run first came within ``slack`` of its k-trial regret.
+
+    The origin extra_trials counts from; at most k by construction.
+    """
+    target = clean[k - 1] + 1e-12 + slack
+    return int(np.flatnonzero(clean <= target)[0]) + 1
 
 
 def per_run_table(input_dir: Path, ks: list[int], tolerances: list[float],
@@ -177,10 +201,13 @@ def per_run_table(input_dir: Path, ks: list[int], tolerances: list[float],
             for tol in tolerances:
                 slack = tol * opt_z.get(run["dataset"], 0.0)
                 extra, censored = extra_trials(clean[:T], noisy[:T], k, slack)
+                origin = clean_origin(clean[:T], k, slack)
                 rows.append({**{c: run[c] for c in ("dataset", "acquisition", "seed", "error_model",
                                                        "jitter_std", "jitter_iteration", "variant")},
                              "budget": T, "k": k, "tolerance": tol, "extra": extra,
-                             "censored": censored, "multiplier": (k + extra) / k})
+                             "censored": censored, "multiplier": (k + extra) / k,
+                             "clean_origin": origin, "reach_trial": origin + extra,
+                             "reach_over_k": (origin + extra) / k})
     if not rows:
         raise SystemExit(f"no paired runs found under {input_dir}")
     return pd.DataFrame(rows)
@@ -223,6 +250,12 @@ def summarise(runs: pd.DataFrame) -> pd.DataFrame:
             if (~cell["censored"]).any() else np.nan,
             "mean_multiplier": float(cell["multiplier"].mean()),
             "censored_fraction": float(cell["censored"].mean()),
+            # Appended last so every earlier column keeps its position. Exact,
+            # like median_extra, while fewer than half the runs are censored.
+            **({"median_clean_origin": float(cell["clean_origin"].median()),
+                "median_reach_trial": float(cell["reach_trial"].median()),
+                "median_reach_over_k": float(cell["reach_over_k"].median())}
+               if "reach_trial" in cell else {}),
         })
     return pd.DataFrame(rows).sort_values(keys).reset_index(drop=True)
 

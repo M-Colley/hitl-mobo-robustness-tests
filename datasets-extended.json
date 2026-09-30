@@ -2,6 +2,7 @@
   {
     "name": "ehmi",
     "data_dir": "https://github.com/M-Colley/ehmi-optimization-chi25-data",
+    "data_commit": "232eb6bbb2a72c9542c81d318b6ea008fb5a75d7",
     "oracle_target": "mean",
     "param_columns": [
       "verticalPosition",
@@ -49,6 +50,7 @@
   {
     "name": "opticarvis",
     "data_dir": "https://github.com/M-Colley/opticarvis-data",
+    "data_commit": "101aec3c4f3e85c494ece01409317f27e2d24af7",
     "observation_glob": "data/S_*ObservationsPerEvaluation.csv",
     "param_columns": [
       "Trajectory",
@@ -110,6 +112,7 @@
   {
     "name": "provoice",
     "data_dir": "https://github.com/JSusak/ProVoiceData",
+    "data_commit": "9c76fbcee1e6027a3731b544ed84e36a96240354",
     "param_columns": [
       "InterventionLightingTransparency",
       "AuditoryAlertVolume",

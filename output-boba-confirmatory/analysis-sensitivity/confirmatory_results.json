@@ -1,0 +1,150 @@
+{
+  "void": false,
+  "controls": [
+    [
+      "model-free floor exactly zero",
+      true,
+      "max |excess| = 0.000e+00"
+    ],
+    [
+      "seed panel balanced",
+      true,
+      "seeds per cell: [10]"
+    ],
+    [
+      "no benchmark below 0.10 headroom",
+      true,
+      "below threshold: none"
+    ],
+    [
+      "zero acquisition fallbacks",
+      true,
+      "0 fallbacks"
+    ]
+  ],
+  "results": {
+    "H1": {
+      "confirmatory": {
+        "beta_frag": 0.686100875876554,
+        "beta_frag_ci": [
+          0.2600094036403372,
+          0.7860468086080922
+        ],
+        "beta_noise": -0.07169385592698806,
+        "beta_noise_ci": [
+          -0.13316217173935635,
+          0.08897313447027205
+        ],
+        "r2_descriptors": 0.47721400915499834,
+        "r2_both": 0.6569994093049856,
+        "delta_r2": 0.17978540014998723,
+        "H1a": true,
+        "H1b": true,
+        "H1c": true,
+        "confirmed": true
+      },
+      "screening": {
+        "beta_frag": 0.6542864124760708,
+        "beta_frag_ci": [
+          0.2696457395405172,
+          0.7271201141467166
+        ],
+        "beta_noise": -0.06228263407014774,
+        "beta_noise_ci": [
+          -0.11973985663518705,
+          0.08396441027699669
+        ],
+        "r2_descriptors": 0.5083424140707857,
+        "r2_both": 0.6650271712864164,
+        "delta_r2": 0.1566847572156307,
+        "H1a": true,
+        "H1b": true,
+        "H1c": true,
+        "confirmed": true
+      }
+    },
+    "H2": {
+      "confirmatory": {
+        "onset0": 0.15348317465295688,
+        "onset20": 0.030618155626823247,
+        "ratio": 5.012815811756371,
+        "p": 3.814697265625e-06,
+        "n_benchmarks": 19,
+        "confirmed": true
+      },
+      "screening": {
+        "onset0": 0.15399704578844375,
+        "onset20": 0.028321281291455877,
+        "ratio": 5.437502781164864,
+        "p": 7.62939453125e-06,
+        "n_benchmarks": 19,
+        "confirmed": true
+      }
+    },
+    "H3": {
+      "confirmatory": {
+        "robust_mean_rank": 4.1118421052631575,
+        "fragile_mean_rank": 6.984649122807017,
+        "p_raw": 0.0078125,
+        "kendall_w": 0.2719803746854379,
+        "H3a_direction": true,
+        "H3b": true,
+        "p_fdr": 0.0078125,
+        "H3a": true,
+        "confirmed": true
+      },
+      "screening": {
+        "robust_mean_rank": 4.243421052631579,
+        "fragile_mean_rank": 7.262061403508772,
+        "p_raw": 0.0078125,
+        "kendall_w": 0.30929668992967074,
+        "H3a_direction": true,
+        "H3b": true
+      }
+    },
+    "H4": {
+      "confirmatory": {
+        "grid": {
+          "0.05": {
+            "0": 0.0099,
+            "20": 0.0028
+          },
+          "0.25": {
+            "0": 0.0571,
+            "20": 0.0123
+          },
+          "1.0": {
+            "0": 0.1535,
+            "20": 0.0306
+          },
+          "5.0": {
+            "0": 0.2304,
+            "20": 0.0513
+          }
+        },
+        "confirmed": true
+      },
+      "screening": {
+        "grid": {
+          "0.05": {
+            "0": 0.0099,
+            "20": 0.0044
+          },
+          "0.25": {
+            "0": 0.0601,
+            "20": 0.0135
+          },
+          "1.0": {
+            "0": 0.154,
+            "20": 0.0283
+          },
+          "5.0": {
+            "0": 0.2265,
+            "20": 0.0501
+          }
+        },
+        "confirmed": true
+      }
+    }
+  }
+}

@@ -1,0 +1,22 @@
+seed 7 against the manifests: max |sigma_f - manifest| 1.1e-15, max |corr - manifest| 3.3e-16
+
+== tree: sigma_f(seed)/sigma_f(seed 7) over seeds 8-11 in [0.936, 1.084] (median 0.996); outside [0.8, 1.25] on 0/80 landscape-seeds (0.0%), on 0 landscapes
+   the nominal 1 sigma was 0.92 to 1.07 sigma_f of the oracle actually used (so 0.25 sigma was 0.23-0.27 and 5 sigma 4.61-5.34)
+   corr(oracle, truth) per seed: range over all seeds [0.453, 0.935]; largest within-landscape spread 0.051 (moving_peaks); median of the per-landscape seed means 0.846
+
+== gaussian_process: sigma_f(seed)/sigma_f(seed 7) over seeds 8-11 in [0.566, 1.086] (median 1.000); outside [0.8, 1.25] on 6/80 landscape-seeds (7.5%), on 3 landscapes
+     michalewicz          seeds with ratio outside the band: 0.74/0.70/0.57
+     rastrigin            seeds with ratio outside the band: 0.70/0.70
+     schwefel             seeds with ratio outside the band: 0.64
+   the nominal 1 sigma was 0.92 to 1.77 sigma_f of the oracle actually used (so 0.25 sigma was 0.23-0.44 and 5 sigma 4.60-8.83)
+   corr(oracle, truth) per seed: range over all seeds [0.157, 0.988]; largest within-landscape spread 0.201 (schwefel); median of the per-landscape seed means 0.864
+
+== mlp: sigma_f(seed)/sigma_f(seed 7) over seeds 8-11 in [0.695, 1.977] (median 1.008); outside [0.8, 1.25] on 12/80 landscape-seeds (15.0%), on 6 landscapes
+     ackley               seeds with ratio outside the band: 1.35
+     eggholder            seeds with ratio outside the band: 0.69
+     levy_10              seeds with ratio outside the band: 0.71
+     powell               seeds with ratio outside the band: 1.64/1.61/1.75
+     power_law_practice   seeds with ratio outside the band: 1.26/1.34/0.78
+     schwefel             seeds with ratio outside the band: 1.98/1.58/1.55
+   the nominal 1 sigma was 0.51 to 1.44 sigma_f of the oracle actually used (so 0.25 sigma was 0.13-0.36 and 5 sigma 2.53-7.20)
+   corr(oracle, truth) per seed: range over all seeds [-0.008, 0.987]; largest within-landscape spread 0.251 (power_law_practice); median of the per-landscape seed means 0.858

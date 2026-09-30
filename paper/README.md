@@ -25,8 +25,16 @@ git-ignored `archive/iclr2027_template/`.
 ## Building
 
 ```bash
-cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main
+cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main && pdflatex main
 ```
+
+From a clean directory (no `.aux`), two passes after `bibtex` are not enough:
+the log still says "Label(s) may have changed. Rerun to get cross-references
+right." A third pass clears it. Before using the PDF, check that `main.log`
+carries no "Rerun" or "may have changed" line, and run `pdflatex main` again if
+it does. `build_overleaf_bundle.py` does this itself: after `bibtex` it repeats
+`pdflatex` until the log no longer asks for a rerun (at most four passes) and
+fails if it still does.
 
 The paper compiles under TeX Live 2026 (`pdflatex` at
 `C:/texlive/2026/bin/windows`, not on the shell `PATH`) with no errors,
@@ -50,8 +58,14 @@ sweep's analysis CSVs, so the paper cannot drift from the data:
 python scripts/make_boba_paper_tables.py --analysis output-boba/analysis
 ```
 
+One generated table has its own producer: `tables/sitting_by_magnitude.tex` is
+written by `python scripts/sitting_by_magnitude.py` (together with its CSV and
+JSON outputs under `output-boba/analysis/review/`), not by
+`make_boba_paper_tables.py`, so rerun it after any change to the sitting's
+inputs.
+
 `tables/benchmarks_wrapper.tex` is the one hand-written file in `tables/`: the
 caption and float around the generated `benchmarks.tex`. The tables written
 directly in `main.tex` (among them the remedies table of Section 7 and the
 oracle-isolation and held-out tables of the appendix) quote numbers whose
-producers are recorded in `COMMANDS.md`.
+producers are recorded in `COMMANDS.md`, in the order they must run.

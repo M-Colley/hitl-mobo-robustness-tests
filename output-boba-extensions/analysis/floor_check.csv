@@ -1,0 +1,13 @@
+acquisition,dataset,max_abs_excess_auc,max_abs_excess_final,runs
+random,bump_a16_w0.05,0.0,0.0,160
+random,bump_a16_w0.15,0.0,0.0,160
+random,bump_a4_w0.05,0.0,0.0,160
+random,bump_a4_w0.15,0.0,0.0,160
+random,levy_4d,0.0,0.0,160
+random,levy_7d,0.0,0.0,160
+sobol,bump_a16_w0.05,0.0,0.0,160
+sobol,bump_a16_w0.15,0.0,0.0,160
+sobol,bump_a4_w0.05,0.0,0.0,160
+sobol,bump_a4_w0.15,0.0,0.0,160
+sobol,levy_4d,0.0,0.0,160
+sobol,levy_7d,0.0,0.0,160

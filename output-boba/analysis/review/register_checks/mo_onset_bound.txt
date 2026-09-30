@@ -1,0 +1,39 @@
+Loaded 1,680 paired runs from 7 benchmarks.
+Loaded 76,800 paired runs from 20 benchmarks.
+multi-objective arm: 1,120 pairs from 7 problems (1s)
+multi-objective problems passing the headroom screen: ['branincurrin', 'carsideimpact', 'dtlz2', 'penicillin', 'vehiclesafety', 'zdt1']
+multi-objective: 1,120 of 1,120 pairs matched to the paired tables, max |diff| search 2.3e-13, deployed 5.7e-14
+main: 16,000 of 16,000 pairs matched to the paired tables, max |diff| search 4.4e-14, deployed 7.1e-15
+scalar: bound violations 0, smallest share of pairs with an identical prefix 1.000
+multi-objective: bound violations 0, smallest share of pairs with an identical prefix 1.000
+E reproduces mo_vs_scalar.csv to 3.3e-16
+
+floor-gap units, gaussian error, learners; E = excess, B = bound (% of the floor gap), E/B = share of the bound lost (%); from trial 1 / from trial 21
+
+scalar (20 landscapes)
+  0.05 sigma  E 10.2 [3.6, 18.7] / 2.8 [1.3, 4.6]  B 273.7 [131.4, 454.5] / 22.5 [15.8, 29.9]  E/B 3.7 [2.6, 4.3] / 12.5 [6.8, 20.4]
+              raw 3.64x [2.14, 5.58]  bound 12.17x [6.72, 18.35]  normalised 0.30x [0.18, 0.49]
+  0.25 sigma  E 44.3 [22.9, 70.0] / 6.5 [4.0, 9.4]  B 273.7 [131.4, 454.5] / 22.5 [15.8, 29.9]  E/B 16.2 [13.2, 19.9] / 28.9 [21.1, 37.8]
+              raw 6.82x [4.31, 9.89]  bound 12.17x [6.72, 18.35]  normalised 0.56x [0.40, 0.88]
+     1 sigma  E 99.0 [53.6, 157.5] / 10.3 [7.2, 13.4]  B 273.7 [131.4, 454.5] / 22.5 [15.8, 29.9]  E/B 36.2 [33.0, 42.7] / 45.8 [38.3, 54.2]
+              raw 9.62x [5.65, 14.45]  bound 12.17x [6.72, 18.35]  normalised 0.79x [0.66, 1.00]
+     5 sigma  E 148.4 [79.0, 238.0] / 16.5 [11.4, 22.1]  B 273.7 [131.4, 454.5] / 22.5 [15.8, 29.9]  E/B 54.2 [50.3, 62.3] / 73.3 [68.5, 77.8]
+              raw 9.00x [5.41, 13.14]  bound 12.17x [6.72, 18.35]  normalised 0.74x [0.69, 0.85]
+
+multi-objective (6 problems)
+  0.05 sigma  E 1.4 [0.1, 2.7] / 0.5 [-0.7, 1.9]  B 105.8 [77.1, 131.9] / 15.1 [5.2, 29.7]  E/B 1.4 [0.1, 2.9] / 3.1 [-10.6, 8.3]
+              raw 3.04x [-30.10, 23.73]  bound 7.01x [2.61, 25.05]  normalised 0.43x [-3.83, 3.05]
+  0.25 sigma  E 13.6 [7.8, 19.3] / 3.7 [-0.4, 9.5]  B 105.8 [77.1, 131.9] / 15.1 [5.2, 29.7]  E/B 12.8 [6.1, 24.5] / 24.2 [-7.2, 35.0]
+              raw 3.71x [-38.05, 36.49]  bound 7.01x [2.61, 25.05]  normalised 0.53x [-2.29, 2.27]
+     1 sigma  E 49.1 [42.1, 55.8] / 10.7 [2.2, 23.9]  B 105.8 [77.1, 131.9] / 15.1 [5.2, 29.7]  E/B 46.4 [36.3, 61.4] / 71.0 [39.1, 82.3]
+              raw 4.58x [1.88, 21.98]  bound 7.01x [2.61, 25.05]  normalised 0.65x [0.54, 1.01]
+     5 sigma  E 72.3 [54.1, 90.6] / 13.0 [3.3, 27.5]  B 105.8 [77.1, 131.9] / 15.1 [5.2, 29.7]  E/B 68.3 [52.7, 80.8] / 86.4 [59.7, 94.2]
+              raw 5.54x [2.02, 24.38]  bound 7.01x [2.61, 25.05]  normalised 0.79x [0.67, 0.98]
+
+multi-objective against scalar, raw onset ratio on a log scale = bound part + normalised part (point estimates)
+  0.05 sigma  raw 3.04x / 3.64x  log gap -0.180 = bound -0.552 + normalised +0.372; share of the gap in the bound 3.07
+  0.25 sigma  raw 3.71x / 6.82x  log gap -0.609 = bound -0.552 + normalised -0.058; share of the gap in the bound 0.91
+     1 sigma  raw 4.58x / 9.62x  log gap -0.742 = bound -0.552 + normalised -0.190; share of the gap in the bound 0.74
+     5 sigma  raw 5.54x / 9.00x  log gap -0.484 = bound -0.552 + normalised +0.067; share of the gap in the bound 1.14
+
+Wrote output-boba/analysis/review/mo_onset_bound.csv

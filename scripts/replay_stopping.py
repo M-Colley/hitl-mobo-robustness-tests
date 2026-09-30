@@ -944,7 +944,17 @@ def main(argv=None) -> None:
     if bad:
         raise SystemExit(f"the replayed standard process disagrees with the logged inference regret in "
                          f"{len(bad)} logs, e.g. {bad[:3]}; these are not standard-process runs")
-    metadata: dict = dict(args={k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
+    def _portable(v):
+        # A path inside the repository is recorded relative to it, so the tracked
+        # metadata names no local directory.
+        if not isinstance(v, Path):
+            return v
+        try:
+            return v.resolve().relative_to(Path(__file__).resolve().parents[1]).as_posix()
+        except ValueError:
+            return str(v)
+
+    metadata: dict = dict(args={k: _portable(v) for k, v in vars(args).items()},
                           config=cfg, T=T, n_logs=int(len(runs)),
                           log_check_max_abs=float(max(cache.records[f]["log_check_max_abs"] for f in runs["file"])))
 

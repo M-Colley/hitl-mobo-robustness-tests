@@ -1,0 +1,959 @@
+The final sitting under the shared and the sequential rating process.
+
+Every sitting number in the paper models the sitting as simultaneous: the drift
+ramp and the AR(1) state are held fixed across its looks, so they cancel
+(replay_end_of_study.py --sitting-process shared). Under the simulator's own
+per-trial definitions they do not stay fixed over k trials. The sequential
+replays (--sitting-process sequential) continue both through trials T-k+1..T,
+the AR(1) state from the run's logged error at trial T-k, with the candidates
+shown in a random order per run (and, as a sensitivity, best-ranked first).
+Gaussian and bias are unchanged by construction, which this checks row by row.
+
+Inputs (all read-only): the shared replays end_of_study_ksweep and
+end_of_study_kwide, the sequential end_of_study_ksweep_seq and
+end_of_study_kwide_seq, and the rank-order end_of_study_ksweep_seqrank and
+end_of_study_kwide_seqrank (drift and ar1 only), all under output-boba/analysis;
+for the confirmation claims end_of_study (shared) against end_of_study_ksweep_seq;
+for code-estimands-10 end_of_study_slipsd{0,0.1,0.25,0.5}; for code-estimands-9
+output-boba-spike/analysis/{hitl_remedies,end_of_study_spikesd,hitl_remedies_spikesd}
+and their _heldout twins. The block "Every sitting value the paper prints" re-runs
+the paper's own producers in-process on each replay set: sitting_by_magnitude.run
+(tab:sittingcell and App. H; ship_rules_per_run.csv for the LCB1 reference) and
+heldout_remedies' k-curve scoring (budget_split.score_policies with
+budget_split_derived*.csv, the derived budget rule, the tab:heldout k row with its
+landscape-split column, the optimism of the choice of k, and the Holm family of
+App. H). Its shared side must reproduce
+review/sitting_by_magnitude_selection.json, review/sitting_by_magnitude_gaussian_selection.json
+and review/heldout_remedies.csv before any sequential value is printed.
+The rows are those of sitting_by_magnitude.py and the k-curve: tournament,
+candidates by the posterior mean less one latent SD, the best look ships, looks
+at the full idiosyncratic SD (rho = 1), LogEI and qNEI, the four main processes.
+Gains are (ref_noisy - regret_noisy) / opt_z: the deployed design's regret at the
+final trial, standard process minus sitting, in units of the achievable
+improvement. A gain is a mean over landscapes of landscape means, with a
+landscape bootstrap (2,000 draws; the landscapes share their random numbers,
+so the bootstrap treats correlated clusters as independent). A share of the cost
+is a ratio of landscape means. Differences between processes are paired: the
+same runs, the same fresh draws. The shared replays hold LogEI and qNEI (and
+the input arms), the sequential ones also UCB; every comparison here is on the
+runs both hold.
+
+shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True; drift and ar1 rows whose shipped design changed: 22.3%
+
+Reproduction of the paper's shared-model cells (seeds 12-16, pooled over processes):
+  1sigma_from_trial_1 k=2: pooled +0.0303; gaussian +0.0420, bias +0.0468, drift +0.0209, ar1 +0.0116
+  1sigma_from_trial_1 k=16: pooled -0.0160; gaussian -0.0188, bias -0.0047, drift -0.0352, ar1 -0.0055
+  5sigma_from_trial_21 k=16: pooled +0.2271; gaussian +0.2102, bias +0.1091, drift +0.3455, ar1 +0.2438
+  1sigma_from_trial_21 k=16: pooled +0.0110; gaussian -0.0137, bias +0.0134, drift +0.0142, ar1 +0.0299
+  5sigma_from_trial_1 k=2: pooled +0.0643; gaussian +0.0729, bias +0.0556, drift +0.0887, ar1 +0.0400
+  5sigma_from_trial_1 k=16: pooled +0.0605; gaussian +0.0171, bias +0.0034, drift +0.1219, ar1 +0.0996
+
+=== Sequential process, candidates shown in a random order per run ===
+
+1sigma_from_trial_1, all seeds 7-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    2 gaussian      +0.034 [+0.017, +0.051]    +0.034 [+0.017, +0.052]    +0.000 [+0.000, +0.000]    15/15   
+    2 bias          +0.035 [+0.014, +0.058]    +0.035 [+0.015, +0.056]    +0.000 [+0.000, +0.000]    15/15   
+    2 drift         +0.018 [+0.007, +0.030]    +0.018 [+0.007, +0.030]    +0.000 [+0.000, +0.000]    14/14   
+    2 ar1           +0.016 [+0.002, +0.029]    +0.020 [+0.006, +0.034]    +0.004 [+0.001, +0.008]    14/15   
+    2 pooled        +0.026 [+0.013, +0.039]    +0.027 [+0.014, +0.041]    +0.001 [+0.000, +0.002]    14/14   
+    2 share of the cost of error, pooled     shared +10.3% [+5%, +15%], sequential +10.7% [+6%, +16%] (cost 0.250)
+    3 gaussian      +0.024 [+0.003, +0.047]    +0.024 [+0.001, +0.046]    +0.000 [+0.000, +0.000]    14/14   
+    3 bias          +0.033 [+0.011, +0.055]    +0.033 [+0.012, +0.055]    +0.000 [+0.000, +0.000]    15/15   
+    3 drift         +0.011 [-0.002, +0.026]    +0.012 [-0.001, +0.025]    +0.001 [-0.000, +0.002]    11/11   
+    3 ar1           +0.020 [+0.001, +0.039]    +0.021 [+0.004, +0.038]    +0.002 [-0.003, +0.006]    14/14   
+    3 pooled        +0.022 [+0.007, +0.037]    +0.023 [+0.008, +0.039]    +0.001 [-0.001, +0.002]    14/14   
+    3 share of the cost of error, pooled     shared +8.8% [+3%, +15%], sequential +9.0% [+3%, +15%] (cost 0.250)
+    5 gaussian      +0.030 [+0.009, +0.051]    +0.030 [+0.010, +0.052]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.021 [-0.001, +0.043]    +0.021 [-0.001, +0.043]    +0.000 [+0.000, +0.000]    13/13   
+    5 drift         +0.013 [-0.002, +0.028]    +0.013 [-0.001, +0.026]    -0.000 [-0.001, +0.000]    12/12   
+    5 ar1           +0.009 [-0.007, +0.028]    +0.016 [+0.000, +0.032]    +0.007 [-0.000, +0.015]    11/13   
+    5 pooled        +0.018 [+0.004, +0.033]    +0.020 [+0.006, +0.034]    +0.002 [-0.000, +0.004]    13/14   
+    5 share of the cost of error, pooled     shared +7.3% [+2%, +13%], sequential +7.9% [+2%, +13%] (cost 0.250)
+    8 gaussian      +0.021 [-0.000, +0.045]    +0.021 [+0.001, +0.043]    +0.000 [+0.000, +0.000]    14/14   
+    8 bias          +0.020 [-0.005, +0.044]    +0.020 [-0.005, +0.044]    +0.000 [+0.000, +0.000]    12/12   
+    8 drift         -0.014 [-0.028, +0.001]    -0.013 [-0.027, +0.002]    +0.000 [-0.002, +0.003]     6/7    
+    8 ar1           +0.019 [-0.004, +0.040]    +0.016 [-0.005, +0.037]    -0.002 [-0.009, +0.005]    13/12   
+    8 pooled        +0.011 [-0.005, +0.027]    +0.011 [-0.005, +0.027]    -0.000 [-0.003, +0.002]    11/11   
+    8 share of the cost of error, pooled     shared +4.6% [-2%, +10%], sequential +4.4% [-2%, +10%] (cost 0.250)
+   12 gaussian      -0.018 [-0.043, +0.005]    -0.018 [-0.042, +0.005]    +0.000 [+0.000, +0.000]     7/7    
+   12 bias          -0.007 [-0.028, +0.016]    -0.007 [-0.028, +0.015]    +0.000 [+0.000, +0.000]     9/9    
+   12 drift         -0.018 [-0.036, +0.000]    -0.020 [-0.038, -0.001]    -0.002 [-0.007, +0.003]     7/7    
+   12 ar1           +0.003 [-0.016, +0.023]    +0.013 [-0.008, +0.032]    +0.011 [+0.002, +0.021]    10/14   
+   12 pooled        -0.010 [-0.026, +0.006]    -0.008 [-0.024, +0.009]    +0.002 [-0.000, +0.005]     6/9    
+   12 share of the cost of error, pooled     shared -3.9% [-11%, +2%], sequential -3.1% [-10%, +3%] (cost 0.250)
+   16 gaussian      -0.022 [-0.054, +0.010]    -0.022 [-0.053, +0.010]    +0.000 [+0.000, +0.000]     7/7    
+   16 bias          -0.031 [-0.055, -0.005]    -0.031 [-0.056, -0.007]    +0.000 [+0.000, +0.000]     5/5    
+   16 drift         -0.045 [-0.067, -0.023]    -0.046 [-0.069, -0.022]    -0.001 [-0.005, +0.004]     4/5    
+   16 ar1           -0.002 [-0.025, +0.019]    -0.007 [-0.030, +0.015]    -0.005 [-0.014, +0.002]    10/9    
+   16 pooled        -0.025 [-0.046, -0.006]    -0.027 [-0.046, -0.007]    -0.002 [-0.004, +0.001]     5/5    
+   16 share of the cost of error, pooled     shared -10.0% [-19%, -2%], sequential -10.6% [-20%, -2%] (cost 0.250)
+   20 gaussian      -0.065 [-0.097, -0.036]    -0.065 [-0.098, -0.035]    +0.000 [+0.000, +0.000]     2/2    
+   20 bias          -0.061 [-0.089, -0.032]    -0.061 [-0.089, -0.033]    +0.000 [+0.000, +0.000]     3/3    
+   20 drift         -0.054 [-0.083, -0.027]    -0.056 [-0.085, -0.030]    -0.002 [-0.005, +0.001]     6/5    
+   20 ar1           -0.014 [-0.042, +0.009]    -0.028 [-0.053, -0.005]    -0.014 [-0.026, -0.002]     8/5    
+   20 pooled        -0.049 [-0.073, -0.027]    -0.052 [-0.076, -0.032]    -0.004 [-0.007, -0.001]     5/3    
+   20 share of the cost of error, pooled     shared -19.4% [-30%, -11%], sequential -20.9% [-31%, -12%] (cost 0.250)
+   25 gaussian      -0.087 [-0.124, -0.052]    -0.087 [-0.125, -0.054]    +0.000 [+0.000, +0.000]     2/2    
+   25 bias          -0.086 [-0.125, -0.050]    -0.086 [-0.129, -0.049]    +0.000 [+0.000, +0.000]     2/2    
+   25 drift         -0.100 [-0.131, -0.069]    -0.101 [-0.130, -0.072]    -0.001 [-0.009, +0.008]     2/1    
+   25 ar1           -0.036 [-0.069, -0.005]    -0.063 [-0.092, -0.035]    -0.027 [-0.041, -0.012]     5/3    
+   25 pooled        -0.077 [-0.106, -0.050]    -0.084 [-0.113, -0.057]    -0.007 [-0.010, -0.004]     2/1    
+   25 share of the cost of error, pooled     shared -30.8% [-45%, -19%], sequential -33.6% [-47%, -22%] (cost 0.250)
+   30 gaussian      -0.139 [-0.185, -0.097]    -0.139 [-0.183, -0.096]    +0.000 [+0.000, +0.000]     1/1    
+   30 bias          -0.147 [-0.195, -0.103]    -0.147 [-0.195, -0.102]    +0.000 [+0.000, +0.000]     1/1    
+   30 drift         -0.136 [-0.171, -0.103]    -0.129 [-0.165, -0.093]    +0.008 [-0.001, +0.019]     0/0    
+   30 ar1           -0.078 [-0.117, -0.044]    -0.092 [-0.132, -0.057]    -0.014 [-0.026, -0.002]     3/2    
+   30 pooled        -0.125 [-0.161, -0.093]    -0.127 [-0.163, -0.094]    -0.002 [-0.007, +0.004]     0/0    
+   30 share of the cost of error, pooled     shared -50.0% [-67%, -36%], sequential -50.6% [-67%, -36%] (cost 0.250)
+
+1sigma_from_trial_1, held-out seeds 12-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    2 gaussian      +0.042 [+0.018, +0.065]    +0.042 [+0.018, +0.066]    +0.000 [+0.000, +0.000]    16/16   
+    2 bias          +0.047 [+0.015, +0.086]    +0.047 [+0.013, +0.087]    +0.000 [+0.000, +0.000]    17/17   
+    2 drift         +0.021 [+0.006, +0.038]    +0.021 [+0.006, +0.039]    +0.000 [+0.000, +0.000]    13/13   
+    2 ar1           +0.012 [-0.005, +0.027]    +0.015 [-0.001, +0.032]    +0.004 [+0.002, +0.006]    14/14   
+    2 pooled        +0.030 [+0.013, +0.049]    +0.031 [+0.013, +0.049]    +0.001 [+0.000, +0.001]    14/14   
+    2 share of the cost of error, pooled     shared +11.6% [+5%, +18%], sequential +12.0% [+6%, +19%] (cost 0.261)
+    3 gaussian      +0.028 [-0.004, +0.061]    +0.028 [-0.002, +0.061]    +0.000 [+0.000, +0.000]    11/11   
+    3 bias          +0.050 [+0.010, +0.092]    +0.050 [+0.012, +0.091]    +0.000 [+0.000, +0.000]    14/14   
+    3 drift         +0.011 [-0.006, +0.029]    +0.013 [-0.004, +0.030]    +0.001 [+0.000, +0.004]    11/11   
+    3 ar1           +0.011 [-0.012, +0.038]    +0.012 [-0.010, +0.034]    +0.001 [-0.005, +0.009]    12/13   
+    3 pooled        +0.025 [+0.003, +0.047]    +0.026 [+0.002, +0.050]    +0.001 [-0.001, +0.002]    13/13   
+    3 share of the cost of error, pooled     shared +9.6% [+1%, +18%], sequential +9.8% [+2%, +19%] (cost 0.261)
+    5 gaussian      +0.041 [+0.018, +0.067]    +0.041 [+0.019, +0.065]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.040 [+0.006, +0.078]    +0.040 [+0.004, +0.079]    +0.000 [+0.000, +0.000]    14/14   
+    5 drift         +0.018 [-0.001, +0.038]    +0.019 [+0.000, +0.039]    +0.000 [-0.002, +0.003]    14/14   
+    5 ar1           -0.000 [-0.021, +0.021]    +0.004 [-0.015, +0.026]    +0.004 [-0.005, +0.015]    10/11   
+    5 pooled        +0.025 [+0.006, +0.045]    +0.026 [+0.007, +0.046]    +0.001 [-0.001, +0.004]    12/13   
+    5 share of the cost of error, pooled     shared +9.5% [+2%, +17%], sequential +10.0% [+3%, +17%] (cost 0.261)
+    8 gaussian      +0.022 [-0.005, +0.054]    +0.022 [-0.007, +0.052]    +0.000 [+0.000, +0.000]    14/14   
+    8 bias          +0.034 [-0.009, +0.081]    +0.034 [-0.010, +0.080]    +0.000 [+0.000, +0.000]    13/13   
+    8 drift         -0.011 [-0.033, +0.013]    -0.010 [-0.034, +0.012]    +0.001 [-0.004, +0.006]     8/8    
+    8 ar1           +0.010 [-0.014, +0.032]    +0.010 [-0.014, +0.033]    +0.001 [-0.007, +0.009]    12/14   
+    8 pooled        +0.014 [-0.008, +0.038]    +0.014 [-0.006, +0.036]    +0.000 [-0.002, +0.003]    12/12   
+    8 share of the cost of error, pooled     shared +5.3% [-3%, +13%], sequential +5.4% [-3%, +13%] (cost 0.261)
+   12 gaussian      -0.022 [-0.053, +0.009]    -0.022 [-0.052, +0.009]    +0.000 [+0.000, +0.000]     8/8    
+   12 bias          +0.017 [-0.022, +0.056]    +0.017 [-0.022, +0.053]    +0.000 [+0.000, +0.000]     9/9    
+   12 drift         -0.017 [-0.035, +0.000]    -0.018 [-0.034, -0.000]    -0.001 [-0.006, +0.003]     7/6    
+   12 ar1           -0.016 [-0.039, +0.008]    +0.004 [-0.026, +0.032]    +0.020 [+0.004, +0.035]     8/11   
+   12 pooled        -0.009 [-0.029, +0.011]    -0.005 [-0.025, +0.014]    +0.005 [+0.000, +0.009]     9/9    
+   12 share of the cost of error, pooled     shared -3.6% [-12%, +4%], sequential -1.8% [-10%, +6%] (cost 0.261)
+   16 gaussian      -0.019 [-0.055, +0.017]    -0.019 [-0.054, +0.016]    +0.000 [+0.000, +0.000]     9/9    
+   16 bias          -0.005 [-0.045, +0.040]    -0.005 [-0.046, +0.038]    +0.000 [+0.000, +0.000]     9/9    
+   16 drift         -0.035 [-0.060, -0.010]    -0.041 [-0.064, -0.019]    -0.006 [-0.013, -0.001]     6/5    
+   16 ar1           -0.006 [-0.035, +0.023]    -0.021 [-0.052, +0.011]    -0.015 [-0.029, -0.003]     8/8    
+   16 pooled        -0.016 [-0.041, +0.008]    -0.021 [-0.045, +0.002]    -0.005 [-0.009, -0.002]     6/5    
+   16 share of the cost of error, pooled     shared -6.1% [-16%, +3%], sequential -8.2% [-18%, +1%] (cost 0.261)
+   20 gaussian      -0.069 [-0.116, -0.029]    -0.069 [-0.114, -0.026]    +0.000 [+0.000, +0.000]     4/4    
+   20 bias          -0.035 [-0.073, +0.008]    -0.035 [-0.073, +0.009]    +0.000 [+0.000, +0.000]     5/5    
+   20 drift         -0.044 [-0.077, -0.013]    -0.046 [-0.080, -0.015]    -0.002 [-0.007, +0.002]     6/7    
+   20 ar1           -0.033 [-0.067, +0.001]    -0.047 [-0.079, -0.017]    -0.015 [-0.031, +0.003]     7/6    
+   20 pooled        -0.045 [-0.069, -0.023]    -0.049 [-0.074, -0.024]    -0.004 [-0.009, +0.000]     4/4    
+   20 share of the cost of error, pooled     shared -17.2% [-26%, -8%], sequential -18.9% [-28%, -10%] (cost 0.261)
+   25 gaussian      -0.094 [-0.139, -0.050]    -0.094 [-0.138, -0.051]    +0.000 [+0.000, +0.000]     3/3    
+   25 bias          -0.069 [-0.116, -0.019]    -0.069 [-0.117, -0.020]    +0.000 [+0.000, +0.000]     4/4    
+   25 drift         -0.072 [-0.104, -0.044]    -0.078 [-0.116, -0.045]    -0.006 [-0.020, +0.006]     3/2    
+   25 ar1           -0.066 [-0.107, -0.028]    -0.080 [-0.115, -0.045]    -0.013 [-0.034, +0.008]     3/3    
+   25 pooled        -0.075 [-0.107, -0.046]    -0.080 [-0.108, -0.053]    -0.005 [-0.011, +0.000]     3/3    
+   25 share of the cost of error, pooled     shared -28.8% [-40%, -18%], sequential -30.7% [-42%, -21%] (cost 0.261)
+   30 gaussian      -0.151 [-0.209, -0.098]    -0.151 [-0.206, -0.099]    +0.000 [+0.000, +0.000]     1/1    
+   30 bias          -0.117 [-0.171, -0.060]    -0.117 [-0.174, -0.059]    +0.000 [+0.000, +0.000]     3/3    
+   30 drift         -0.120 [-0.167, -0.078]    -0.112 [-0.159, -0.070]    +0.009 [-0.001, +0.020]     2/3    
+   30 ar1           -0.118 [-0.166, -0.073]    -0.112 [-0.163, -0.060]    +0.007 [-0.011, +0.026]     1/3    
+   30 pooled        -0.127 [-0.161, -0.095]    -0.123 [-0.161, -0.085]    +0.004 [-0.003, +0.011]     1/2    
+   30 share of the cost of error, pooled     shared -48.5% [-63%, -35%], sequential -47.0% [-63%, -33%] (cost 0.261)
+
+5sigma_from_trial_21, all seeds 7-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    8 gaussian      +0.197 [+0.121, +0.288]    +0.197 [+0.119, +0.282]    +0.000 [+0.000, +0.000]    19/19   
+    8 bias          -0.002 [-0.057, +0.050]    -0.002 [-0.058, +0.050]    +0.000 [+0.000, +0.000]    10/10   
+    8 drift         +0.151 [+0.090, +0.232]    +0.153 [+0.091, +0.236]    +0.002 [-0.004, +0.009]    20/20   
+    8 ar1           +0.154 [+0.115, +0.192]    +0.153 [+0.114, +0.193]    -0.001 [-0.023, +0.023]    20/20   
+    8 pooled        +0.125 [+0.092, +0.163]    +0.125 [+0.093, +0.164]    +0.000 [-0.005, +0.006]    20/20   
+    8 share of the cost of error, pooled     shared +22.9% [+18%, +27%], sequential +22.9% [+18%, +27%] (cost 0.547)
+   12 gaussian      +0.199 [+0.105, +0.312]    +0.199 [+0.105, +0.309]    +0.000 [+0.000, +0.000]    18/18   
+   12 bias          +0.000 [-0.065, +0.072]    +0.000 [-0.067, +0.071]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.281 [+0.193, +0.372]    +0.285 [+0.197, +0.386]    +0.004 [-0.004, +0.015]    19/19   
+   12 ar1           +0.172 [+0.119, +0.231]    +0.164 [+0.109, +0.221]    -0.008 [-0.031, +0.014]    19/20   
+   12 pooled        +0.163 [+0.113, +0.215]    +0.162 [+0.109, +0.217]    -0.001 [-0.006, +0.004]    19/19   
+   12 share of the cost of error, pooled     shared +29.8% [+23%, +36%], sequential +29.7% [+22%, +36%] (cost 0.547)
+   16 gaussian      +0.221 [+0.121, +0.355]    +0.221 [+0.123, +0.351]    +0.000 [+0.000, +0.000]    18/18   
+   16 bias          +0.165 [+0.081, +0.252]    +0.165 [+0.085, +0.248]    +0.000 [+0.000, +0.000]    18/18   
+   16 drift         +0.307 [+0.197, +0.422]    +0.306 [+0.198, +0.420]    -0.001 [-0.016, +0.016]    19/19   
+   16 ar1           +0.210 [+0.154, +0.264]    +0.211 [+0.153, +0.271]    +0.002 [-0.018, +0.025]    19/18   
+   16 pooled        +0.226 [+0.155, +0.300]    +0.226 [+0.155, +0.295]    +0.000 [-0.006, +0.007]    20/18   
+   16 share of the cost of error, pooled     shared +41.3% [+32%, +49%], sequential +41.3% [+32%, +49%] (cost 0.547)
+   20 gaussian      +0.180 [+0.087, +0.302]    +0.180 [+0.088, +0.312]    +0.000 [+0.000, +0.000]    15/15   
+   20 bias          +0.227 [+0.141, +0.321]    +0.227 [+0.141, +0.329]    +0.000 [+0.000, +0.000]    19/19   
+   20 drift         +0.297 [+0.191, +0.409]    +0.301 [+0.190, +0.414]    +0.004 [-0.015, +0.022]    19/19   
+   20 ar1           +0.197 [+0.134, +0.262]    +0.197 [+0.136, +0.254]    -0.001 [-0.031, +0.032]    18/19   
+   20 pooled        +0.225 [+0.149, +0.305]    +0.226 [+0.151, +0.306]    +0.001 [-0.006, +0.008]    18/18   
+   20 share of the cost of error, pooled     shared +41.2% [+31%, +50%], sequential +41.4% [+31%, +51%] (cost 0.547)
+
+5sigma_from_trial_21, held-out seeds 12-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    8 gaussian      +0.203 [+0.109, +0.307]    +0.203 [+0.109, +0.306]    +0.000 [+0.000, +0.000]    17/17   
+    8 bias          -0.034 [-0.120, +0.031]    -0.034 [-0.122, +0.031]    +0.000 [+0.000, +0.000]    10/10   
+    8 drift         +0.216 [+0.114, +0.337]    +0.213 [+0.110, +0.328]    -0.003 [-0.010, +0.004]    19/19   
+    8 ar1           +0.197 [+0.123, +0.275]    +0.213 [+0.142, +0.284]    +0.016 [-0.011, +0.042]    18/18   
+    8 pooled        +0.146 [+0.093, +0.198]    +0.149 [+0.101, +0.203]    +0.003 [-0.005, +0.010]    19/19   
+    8 share of the cost of error, pooled     shared +26.2% [+19%, +32%], sequential +26.8% [+20%, +32%] (cost 0.556)
+   12 gaussian      +0.204 [+0.104, +0.310]    +0.204 [+0.108, +0.311]    +0.000 [+0.000, +0.000]    17/17   
+   12 bias          -0.086 [-0.190, +0.003]    -0.086 [-0.192, -0.001]    +0.000 [+0.000, +0.000]     7/7    
+   12 drift         +0.269 [+0.151, +0.391]    +0.273 [+0.145, +0.411]    +0.003 [-0.009, +0.018]    18/18   
+   12 ar1           +0.218 [+0.138, +0.300]    +0.206 [+0.126, +0.296]    -0.013 [-0.040, +0.016]    18/18   
+   12 pooled        +0.151 [+0.096, +0.206]    +0.149 [+0.091, +0.206]    -0.002 [-0.010, +0.007]    19/18   
+   12 share of the cost of error, pooled     shared +27.2% [+20%, +33%], sequential +26.8% [+19%, +34%] (cost 0.556)
+   16 gaussian      +0.210 [+0.104, +0.333]    +0.210 [+0.101, +0.345]    +0.000 [+0.000, +0.000]    16/16   
+   16 bias          +0.109 [-0.003, +0.210]    +0.109 [+0.003, +0.216]    +0.000 [+0.000, +0.000]    14/14   
+   16 drift         +0.346 [+0.210, +0.513]    +0.327 [+0.177, +0.493]    -0.019 [-0.048, +0.008]    19/18   
+   16 ar1           +0.244 [+0.167, +0.328]    +0.258 [+0.178, +0.341]    +0.014 [-0.011, +0.042]    18/18   
+   16 pooled        +0.227 [+0.140, +0.321]    +0.226 [+0.145, +0.320]    -0.001 [-0.012, +0.009]    19/18   
+   16 share of the cost of error, pooled     shared +40.8% [+30%, +50%], sequential +40.6% [+29%, +50%] (cost 0.556)
+   20 gaussian      +0.197 [+0.100, +0.320]    +0.197 [+0.105, +0.313]    +0.000 [+0.000, +0.000]    17/17   
+   20 bias          +0.195 [+0.091, +0.312]    +0.195 [+0.091, +0.320]    +0.000 [+0.000, +0.000]    16/16   
+   20 drift         +0.349 [+0.192, +0.524]    +0.342 [+0.177, +0.537]    -0.006 [-0.039, +0.026]    17/17   
+   20 ar1           +0.226 [+0.142, +0.315]    +0.244 [+0.151, +0.344]    +0.018 [-0.037, +0.082]    17/17   
+   20 pooled        +0.242 [+0.157, +0.343]    +0.245 [+0.157, +0.344]    +0.003 [-0.009, +0.015]    18/19   
+   20 share of the cost of error, pooled     shared +43.4% [+31%, +54%], sequential +44.0% [+32%, +54%] (cost 0.556)
+
+1sigma_from_trial_21, all seeds 7-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    3 gaussian      +0.020 [+0.004, +0.038]    +0.020 [+0.004, +0.038]    +0.000 [+0.000, +0.000]    14/14   
+    3 bias          +0.016 [+0.005, +0.027]    +0.016 [+0.005, +0.027]    +0.000 [+0.000, +0.000]    16/16   
+    3 drift         +0.016 [+0.003, +0.029]    +0.016 [+0.003, +0.029]    +0.001 [-0.000, +0.002]    14/15   
+    3 ar1           +0.025 [+0.010, +0.041]    +0.029 [+0.016, +0.043]    +0.004 [-0.000, +0.010]    15/15   
+    3 pooled        +0.019 [+0.009, +0.030]    +0.021 [+0.011, +0.030]    +0.001 [+0.000, +0.003]    16/16   
+    3 share of the cost of error, pooled     shared +13.0% [+7%, +19%], sequential +13.8% [+8%, +20%] (cost 0.149)
+    5 gaussian      +0.023 [+0.002, +0.046]    +0.023 [+0.001, +0.046]    +0.000 [+0.000, +0.000]    16/16   
+    5 bias          +0.005 [-0.007, +0.017]    +0.005 [-0.006, +0.017]    +0.000 [+0.000, +0.000]    10/10   
+    5 drift         +0.020 [+0.003, +0.037]    +0.019 [+0.003, +0.036]    -0.000 [-0.002, +0.001]    13/13   
+    5 ar1           +0.033 [+0.016, +0.049]    +0.033 [+0.018, +0.048]    +0.000 [-0.004, +0.005]    15/16   
+    5 pooled        +0.020 [+0.008, +0.033]    +0.020 [+0.008, +0.032]    -0.000 [-0.001, +0.001]    15/15   
+    5 share of the cost of error, pooled     shared +13.5% [+6%, +20%], sequential +13.5% [+6%, +20%] (cost 0.149)
+    8 gaussian      +0.019 [-0.003, +0.039]    +0.019 [-0.000, +0.042]    +0.000 [+0.000, +0.000]    13/13   
+    8 bias          -0.003 [-0.014, +0.007]    -0.003 [-0.014, +0.008]    +0.000 [+0.000, +0.000]     8/8    
+    8 drift         +0.023 [+0.005, +0.040]    +0.022 [+0.005, +0.040]    -0.000 [-0.003, +0.002]    15/15   
+    8 ar1           +0.029 [+0.010, +0.050]    +0.027 [+0.007, +0.048]    -0.002 [-0.009, +0.005]    14/14   
+    8 pooled        +0.017 [+0.004, +0.031]    +0.016 [+0.003, +0.030]    -0.001 [-0.003, +0.001]    14/13   
+    8 share of the cost of error, pooled     shared +11.4% [+3%, +19%], sequential +11.0% [+2%, +19%] (cost 0.149)
+   12 gaussian      +0.012 [-0.006, +0.031]    +0.012 [-0.006, +0.031]    +0.000 [+0.000, +0.000]    11/11   
+   12 bias          +0.013 [-0.004, +0.029]    +0.013 [-0.005, +0.029]    +0.000 [+0.000, +0.000]    11/11   
+   12 drift         +0.019 [-0.004, +0.043]    +0.020 [-0.003, +0.044]    +0.000 [-0.005, +0.005]    15/15   
+   12 ar1           +0.032 [+0.014, +0.049]    +0.029 [+0.010, +0.047]    -0.003 [-0.012, +0.005]    17/17   
+   12 pooled        +0.019 [+0.003, +0.035]    +0.018 [+0.002, +0.035]    -0.001 [-0.002, +0.001]    14/14   
+   12 share of the cost of error, pooled     shared +12.8% [+2%, +22%], sequential +12.4% [+2%, +21%] (cost 0.149)
+   16 gaussian      -0.007 [-0.029, +0.014]    -0.007 [-0.029, +0.014]    +0.000 [+0.000, +0.000]    10/10   
+   16 bias          +0.021 [-0.001, +0.040]    +0.021 [-0.000, +0.040]    +0.000 [+0.000, +0.000]    16/16   
+   16 drift         +0.021 [-0.004, +0.044]    +0.019 [-0.007, +0.041]    -0.002 [-0.006, +0.003]    14/14   
+   16 ar1           +0.035 [+0.007, +0.062]    +0.030 [+0.003, +0.058]    -0.005 [-0.014, +0.003]    15/16   
+   16 pooled        +0.017 [-0.005, +0.036]    +0.016 [-0.005, +0.035]    -0.002 [-0.004, +0.000]    13/13   
+   16 share of the cost of error, pooled     shared +11.6% [-2%, +22%], sequential +10.6% [-5%, +22%] (cost 0.149)
+
+1sigma_from_trial_21, held-out seeds 12-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    3 gaussian      +0.014 [-0.008, +0.041]    +0.014 [-0.008, +0.041]    +0.000 [+0.000, +0.000]    13/13   
+    3 bias          +0.018 [+0.003, +0.032]    +0.018 [+0.003, +0.033]    +0.000 [+0.000, +0.000]    15/15   
+    3 drift         +0.013 [-0.006, +0.031]    +0.014 [-0.002, +0.031]    +0.001 [-0.001, +0.005]    14/14   
+    3 ar1           +0.020 [+0.004, +0.038]    +0.028 [+0.010, +0.047]    +0.008 [+0.005, +0.012]    15/16   
+    3 pooled        +0.016 [+0.004, +0.029]    +0.019 [+0.007, +0.031]    +0.002 [+0.001, +0.003]    14/16   
+    3 share of the cost of error, pooled     shared +11.0% [+3%, +19%], sequential +12.5% [+4%, +20%] (cost 0.148)
+    5 gaussian      +0.022 [-0.005, +0.053]    +0.022 [-0.004, +0.054]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.006 [-0.012, +0.024]    +0.006 [-0.012, +0.024]    +0.000 [+0.000, +0.000]    11/11   
+    5 drift         +0.017 [-0.002, +0.036]    +0.016 [-0.004, +0.036]    -0.002 [-0.005, +0.002]    13/13   
+    5 ar1           +0.022 [+0.002, +0.045]    +0.023 [+0.001, +0.045]    +0.001 [-0.006, +0.008]    14/15   
+    5 pooled        +0.017 [+0.002, +0.031]    +0.017 [+0.003, +0.030]    -0.000 [-0.002, +0.002]    14/13   
+    5 share of the cost of error, pooled     shared +11.4% [+2%, +20%], sequential +11.2% [+2%, +19%] (cost 0.148)
+    8 gaussian      +0.012 [-0.018, +0.045]    +0.012 [-0.019, +0.045]    +0.000 [+0.000, +0.000]    12/12   
+    8 bias          -0.007 [-0.020, +0.006]    -0.007 [-0.020, +0.005]    +0.000 [+0.000, +0.000]     9/9    
+    8 drift         +0.020 [-0.004, +0.046]    +0.019 [-0.005, +0.046]    -0.000 [-0.005, +0.004]    13/12   
+    8 ar1           +0.028 [+0.007, +0.050]    +0.036 [+0.014, +0.061]    +0.009 [-0.000, +0.017]    13/15   
+    8 pooled        +0.013 [-0.002, +0.030]    +0.015 [+0.000, +0.032]    +0.002 [-0.000, +0.004]    12/13   
+    8 share of the cost of error, pooled     shared +9.0% [-1%, +18%], sequential +10.4% [-0%, +20%] (cost 0.148)
+   12 gaussian      +0.008 [-0.018, +0.035]    +0.008 [-0.018, +0.036]    +0.000 [+0.000, +0.000]    10/10   
+   12 bias          +0.009 [-0.015, +0.034]    +0.009 [-0.015, +0.034]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.015 [-0.017, +0.050]    +0.021 [-0.011, +0.054]    +0.006 [-0.002, +0.014]    13/14   
+   12 ar1           +0.033 [+0.003, +0.063]    +0.035 [+0.008, +0.064]    +0.002 [-0.009, +0.013]    15/15   
+   12 pooled        +0.016 [-0.004, +0.036]    +0.018 [-0.003, +0.039]    +0.002 [-0.001, +0.005]    13/13   
+   12 share of the cost of error, pooled     shared +11.0% [-3%, +22%], sequential +12.4% [-2%, +24%] (cost 0.148)
+   16 gaussian      -0.014 [-0.042, +0.017]    -0.014 [-0.043, +0.018]    +0.000 [+0.000, +0.000]     9/9    
+   16 bias          +0.013 [-0.019, +0.041]    +0.013 [-0.017, +0.043]    +0.000 [+0.000, +0.000]    13/13   
+   16 drift         +0.014 [-0.016, +0.042]    +0.011 [-0.018, +0.039]    -0.003 [-0.010, +0.003]    12/12   
+   16 ar1           +0.030 [-0.001, +0.061]    +0.017 [-0.015, +0.048]    -0.013 [-0.026, -0.001]    14/12   
+   16 pooled        +0.011 [-0.014, +0.034]    +0.007 [-0.018, +0.028]    -0.004 [-0.007, -0.001]    13/11   
+   16 share of the cost of error, pooled     shared +7.4% [-10%, +20%], sequential +4.6% [-13%, +19%] (cost 0.148)
+
+5sigma_from_trial_1, all seeds 7-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    5 gaussian      +0.058 [+0.006, +0.122]    +0.058 [+0.006, +0.121]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.045 [-0.004, +0.108]    +0.045 [-0.004, +0.103]    +0.000 [+0.000, +0.000]    12/12   
+    5 drift         +0.068 [+0.037, +0.102]    +0.067 [+0.036, +0.101]    -0.001 [-0.003, +0.001]    17/17   
+    5 ar1           +0.080 [+0.043, +0.128]    +0.093 [+0.053, +0.140]    +0.012 [-0.006, +0.032]    17/17   
+    5 pooled        +0.063 [+0.034, +0.097]    +0.066 [+0.035, +0.103]    +0.003 [-0.001, +0.007]    19/19   
+    5 share of the cost of error, pooled     shared +8.3% [+5%, +12%], sequential +8.7% [+5%, +13%] (cost 0.753)
+    8 gaussian      +0.056 [-0.001, +0.131]    +0.056 [-0.002, +0.132]    +0.000 [+0.000, +0.000]    13/13   
+    8 bias          +0.067 [+0.013, +0.129]    +0.067 [+0.013, +0.124]    +0.000 [+0.000, +0.000]    15/15   
+    8 drift         +0.051 [+0.003, +0.103]    +0.054 [+0.009, +0.104]    +0.003 [-0.005, +0.011]    14/14   
+    8 ar1           +0.083 [+0.032, +0.136]    +0.092 [+0.054, +0.134]    +0.009 [-0.024, +0.055]    19/18   
+    8 pooled        +0.064 [+0.031, +0.102]    +0.067 [+0.034, +0.103]    +0.003 [-0.006, +0.015]    16/17   
+    8 share of the cost of error, pooled     shared +8.5% [+4%, +13%], sequential +8.9% [+5%, +13%] (cost 0.753)
+   12 gaussian      +0.050 [-0.015, +0.122]    +0.050 [-0.016, +0.124]    +0.000 [+0.000, +0.000]    14/14   
+   12 bias          +0.055 [+0.007, +0.113]    +0.055 [+0.007, +0.113]    +0.000 [+0.000, +0.000]    15/15   
+   12 drift         +0.055 [+0.005, +0.112]    +0.051 [-0.001, +0.102]    -0.004 [-0.014, +0.003]    15/14   
+   12 ar1           +0.076 [+0.032, +0.125]    +0.082 [+0.043, +0.123]    +0.005 [-0.023, +0.030]    15/16   
+   12 pooled        +0.059 [+0.027, +0.094]    +0.060 [+0.028, +0.095]    +0.000 [-0.007, +0.007]    17/17   
+   12 share of the cost of error, pooled     shared +7.9% [+4%, +12%], sequential +7.9% [+4%, +12%] (cost 0.753)
+
+5sigma_from_trial_1, held-out seeds 12-16 (sequential = random order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    5 gaussian      +0.076 [+0.012, +0.141]    +0.076 [+0.015, +0.144]    +0.000 [+0.000, +0.000]    15/15   
+    5 bias          +0.028 [-0.026, +0.087]    +0.028 [-0.022, +0.089]    +0.000 [+0.000, +0.000]    11/11   
+    5 drift         +0.097 [+0.040, +0.168]    +0.095 [+0.037, +0.164]    -0.002 [-0.007, +0.001]    14/14   
+    5 ar1           +0.062 [+0.020, +0.102]    +0.084 [+0.049, +0.117]    +0.022 [-0.006, +0.054]    13/15   
+    5 pooled        +0.066 [+0.029, +0.110]    +0.071 [+0.032, +0.113]    +0.005 [-0.001, +0.012]    17/17   
+    5 share of the cost of error, pooled     shared +8.7% [+4%, +14%], sequential +9.4% [+5%, +15%] (cost 0.753)
+    8 gaussian      +0.040 [-0.023, +0.111]    +0.040 [-0.026, +0.114]    +0.000 [+0.000, +0.000]    10/10   
+    8 bias          +0.035 [-0.011, +0.081]    +0.035 [-0.011, +0.083]    +0.000 [+0.000, +0.000]    12/12   
+    8 drift         +0.079 [-0.011, +0.175]    +0.082 [-0.015, +0.174]    +0.003 [-0.014, +0.021]    13/14   
+    8 ar1           +0.076 [+0.046, +0.108]    +0.064 [+0.023, +0.105]    -0.012 [-0.041, +0.013]    17/15   
+    8 pooled        +0.058 [+0.017, +0.102]    +0.055 [+0.018, +0.095]    -0.002 [-0.010, +0.005]    17/16   
+    8 share of the cost of error, pooled     shared +7.6% [+3%, +13%], sequential +7.3% [+2%, +12%] (cost 0.753)
+   12 gaussian      +0.035 [-0.041, +0.108]    +0.035 [-0.040, +0.105]    +0.000 [+0.000, +0.000]    14/14   
+   12 bias          +0.034 [-0.037, +0.129]    +0.034 [-0.033, +0.135]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.077 [-0.061, +0.194]    +0.065 [-0.074, +0.185]    -0.012 [-0.028, -0.001]    15/15   
+   12 ar1           +0.045 [-0.015, +0.095]    +0.077 [+0.029, +0.131]    +0.033 [+0.004, +0.063]    15/16   
+   12 pooled        +0.048 [+0.003, +0.093]    +0.053 [+0.007, +0.106]    +0.005 [-0.002, +0.013]    17/16   
+   12 share of the cost of error, pooled     shared +6.3% [+0%, +12%], sequential +7.0% [+1%, +13%] (cost 0.753)
+
+Largest move of a gain, sequential (random order) minus shared, over the cells and sizes above:
+  pooled  max |diff| 0.007 (1sigma_from_trial_1, all seeds, k=25: -0.077 -> -0.084); sign changes 0 of 42
+  drift   max |diff| 0.019 (5sigma_from_trial_21, seeds 12-16, k=16: +0.346 -> +0.327); sign changes 0 of 42
+  ar1     max |diff| 0.033 (5sigma_from_trial_1, seeds 12-16, k=12: +0.045 -> +0.077); sign changes 2 of 42
+
+Pooled over the four magnitudes, both onsets and the four processes, all seeds (sequential = random order, rho = 1)
+  k= 2  shared +0.010 [-0.003, +0.022]  sequential +0.011 [-0.001, +0.023]  diff +0.001 [+0.000, +0.001]   | without 5sigma from trial 21: shared +0.008 [-0.005, +0.020]  sequential +0.009 [-0.004, +0.020]
+  k= 3  shared +0.015 [+0.004, +0.026]  sequential +0.015 [+0.004, +0.026]  diff -0.000 [-0.001, +0.001]   | without 5sigma from trial 21: shared +0.010 [-0.000, +0.021]  sequential +0.010 [-0.001, +0.020]
+  k= 5  shared +0.020 [+0.008, +0.033]  sequential +0.020 [+0.008, +0.034]  diff +0.000 [-0.000, +0.001]   | without 5sigma from trial 21: shared +0.009 [-0.001, +0.020]  sequential +0.010 [-0.001, +0.021]
+  k= 8  shared +0.022 [+0.010, +0.034]  sequential +0.022 [+0.009, +0.035]  diff +0.000 [-0.001, +0.002]   | without 5sigma from trial 21: shared +0.007 [-0.003, +0.018]  sequential +0.007 [-0.004, +0.019]
+  k=12  shared +0.021 [+0.006, +0.035]  sequential +0.021 [+0.006, +0.034]  diff -0.000 [-0.001, +0.001]   | without 5sigma from trial 21: shared +0.000 [-0.011, +0.011]  sequential +0.000 [-0.011, +0.012]
+  k=16  shared +0.022 [+0.001, +0.040]  sequential +0.020 [+0.002, +0.040]  diff -0.001 [-0.003, +0.000]   | without 5sigma from trial 21: shared -0.007 [-0.023, +0.007]  sequential -0.009 [-0.022, +0.005]
+  k=20  shared +0.009 [-0.015, +0.032]  sequential +0.006 [-0.017, +0.028]  diff -0.002 [-0.004, -0.001]   | without 5sigma from trial 21: shared -0.022 [-0.043, -0.005]  sequential -0.025 [-0.044, -0.010]
+  k=25  shared -0.022 [-0.050, +0.003]  sequential -0.024 [-0.051, +0.000]  diff -0.002 [-0.004, -0.001]   | without 5sigma from trial 21: shared -0.048 [-0.074, -0.026]  sequential -0.050 [-0.078, -0.028]
+  k=30  shared -0.054 [-0.089, -0.023]  sequential -0.053 [-0.091, -0.021]  diff +0.000 [-0.003, +0.004]   | without 5sigma from trial 21: shared -0.080 [-0.116, -0.051]  sequential -0.081 [-0.117, -0.052]
+
+Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (shared; sitting_by_magnitude.analyse_cell)
+  pooled                   k=12 held-out gain +0.017 [+0.001, +0.033] on 14/20, Holm p over k 0.291, share +7.6%; per process gaussian +0.020, bias -0.012, drift +0.034, ar1 +0.027; k=12 all seeds +0.021; k chosen on 12-16 8
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share -211.9%; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.018; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  6/20, Holm p over k 0.056, share -405.6%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 5 held-out gain -0.006 [-0.014, +0.003] on 10/20, Holm p over k 1.000, share -13.3%; per process gaussian -0.001, bias -0.006, drift -0.014, ar1 -0.000; k=12 all seeds -0.017; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share -19.0%; per process gaussian -0.004, bias -0.009, drift -0.003, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
+  1sigma_from_trial_1      k= 2 held-out gain +0.030 [+0.012, +0.050] on 14/20, Holm p over k 0.029, share +11.6%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.012; k=12 all seeds -0.010; k chosen on 12-16 2
+  1sigma_from_trial_21     k=16 held-out gain +0.011 [-0.012, +0.033] on 13/20, Holm p over k 0.884, share +7.4%; per process gaussian -0.014, bias +0.013, drift +0.014, ar1 +0.030; k=12 all seeds +0.019; k chosen on 12-16 5
+  5sigma_from_trial_1      k= 8 held-out gain +0.058 [+0.017, +0.102] on 17/20, Holm p over k 0.029, share +7.6%; per process gaussian +0.040, bias +0.035, drift +0.079, ar1 +0.076; k=12 all seeds +0.059; k chosen on 12-16 5
+  5sigma_from_trial_21     k=16 held-out gain +0.227 [+0.147, +0.321] on 19/20, Holm p over k 0.000, share +40.8%; per process gaussian +0.210, bias +0.109, drift +0.346, ar1 +0.244; k=12 all seeds +0.163; k chosen on 12-16 20
+
+Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (sequential, random order; sitting_by_magnitude.analyse_cell)
+  pooled                   k=12 held-out gain +0.018 [+0.001, +0.034] on 13/20, Holm p over k 0.266, share +8.0%; per process gaussian +0.020, bias -0.012, drift +0.033, ar1 +0.031; k=12 all seeds +0.021; k chosen on 12-16 8
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share -211.0%; per process gaussian -0.013, bias -0.010, drift -0.006, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.099, share -403.1%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 3 held-out gain -0.005 [-0.015, +0.004] on 10/20, Holm p over k 1.000, share -11.7%; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.001; k=12 all seeds -0.017; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 3 held-out gain -0.003 [-0.012, +0.005] on 11/20, Holm p over k 1.000, share -9.1%; per process gaussian -0.001, bias -0.004, drift +0.001, ar1 -0.007; k=12 all seeds -0.011; k chosen on 12-16 3
+  1sigma_from_trial_1      k= 2 held-out gain +0.031 [+0.013, +0.051] on 14/20, Holm p over k 0.022, share +12.0%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.015; k=12 all seeds -0.008; k chosen on 12-16 2
+  1sigma_from_trial_21     k=16 held-out gain +0.007 [-0.017, +0.029] on 11/20, Holm p over k 0.865, share +4.6%; per process gaussian -0.014, bias +0.013, drift +0.011, ar1 +0.017; k=12 all seeds +0.018; k chosen on 12-16 3
+  5sigma_from_trial_1      k= 8 held-out gain +0.055 [+0.017, +0.096] on 16/20, Holm p over k 0.050, share +7.3%; per process gaussian +0.040, bias +0.035, drift +0.082, ar1 +0.064; k=12 all seeds +0.060; k chosen on 12-16 2
+  5sigma_from_trial_21     k=16 held-out gain +0.226 [+0.142, +0.320] on 18/20, Holm p over k 0.000, share +40.6%; per process gaussian +0.210, bias +0.109, drift +0.327, ar1 +0.258; k=12 all seeds +0.162; k chosen on 12-16 20
+
+=== Sequential process, candidates shown best-ranked first (drift and ar1 replayed; gaussian and bias from the random-order replay, identical by construction) ===
+
+1sigma_from_trial_1, all seeds 7-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    2 gaussian      +0.034 [+0.017, +0.051]    +0.034 [+0.017, +0.052]    +0.000 [+0.000, +0.000]    15/15   
+    2 bias          +0.035 [+0.014, +0.058]    +0.035 [+0.015, +0.056]    +0.000 [+0.000, +0.000]    15/15   
+    2 drift         +0.018 [+0.007, +0.030]    +0.018 [+0.007, +0.031]    +0.000 [+0.000, +0.001]    14/14   
+    2 ar1           +0.016 [+0.002, +0.029]    +0.020 [+0.005, +0.033]    +0.004 [+0.001, +0.007]    14/15   
+    2 pooled        +0.026 [+0.013, +0.039]    +0.027 [+0.014, +0.041]    +0.001 [+0.000, +0.002]    14/14   
+    2 share of the cost of error, pooled     shared +10.3% [+5%, +15%], sequential +10.7% [+6%, +16%] (cost 0.250)
+    3 gaussian      +0.024 [+0.003, +0.047]    +0.024 [+0.001, +0.046]    +0.000 [+0.000, +0.000]    14/14   
+    3 bias          +0.033 [+0.011, +0.055]    +0.033 [+0.012, +0.055]    +0.000 [+0.000, +0.000]    15/15   
+    3 drift         +0.011 [-0.002, +0.026]    +0.011 [-0.003, +0.025]    -0.000 [-0.000, +0.000]    11/11   
+    3 ar1           +0.020 [+0.001, +0.039]    +0.020 [+0.002, +0.039]    +0.000 [-0.002, +0.003]    14/14   
+    3 pooled        +0.022 [+0.007, +0.037]    +0.022 [+0.008, +0.038]    +0.000 [-0.001, +0.001]    14/14   
+    3 share of the cost of error, pooled     shared +8.8% [+3%, +15%], sequential +8.8% [+3%, +15%] (cost 0.250)
+    5 gaussian      +0.030 [+0.009, +0.051]    +0.030 [+0.010, +0.052]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.021 [-0.001, +0.043]    +0.021 [-0.001, +0.043]    +0.000 [+0.000, +0.000]    13/13   
+    5 drift         +0.013 [-0.002, +0.028]    +0.011 [-0.002, +0.024]    -0.002 [-0.005, +0.000]    12/12   
+    5 ar1           +0.009 [-0.007, +0.028]    +0.014 [-0.003, +0.031]    +0.005 [-0.001, +0.012]    11/12   
+    5 pooled        +0.018 [+0.004, +0.033]    +0.019 [+0.005, +0.034]    +0.001 [-0.001, +0.002]    13/13   
+    5 share of the cost of error, pooled     shared +7.3% [+2%, +13%], sequential +7.6% [+2%, +13%] (cost 0.250)
+    8 gaussian      +0.021 [-0.000, +0.045]    +0.021 [+0.001, +0.043]    +0.000 [+0.000, +0.000]    14/14   
+    8 bias          +0.020 [-0.005, +0.044]    +0.020 [-0.005, +0.044]    +0.000 [+0.000, +0.000]    12/12   
+    8 drift         -0.014 [-0.028, +0.001]    -0.012 [-0.027, +0.003]    +0.001 [-0.002, +0.004]     6/7    
+    8 ar1           +0.019 [-0.004, +0.040]    +0.012 [-0.010, +0.031]    -0.007 [-0.017, +0.002]    13/12   
+    8 pooled        +0.011 [-0.005, +0.027]    +0.010 [-0.006, +0.026]    -0.001 [-0.004, +0.001]    11/11   
+    8 share of the cost of error, pooled     shared +4.6% [-2%, +10%], sequential +4.0% [-3%, +10%] (cost 0.250)
+   12 gaussian      -0.018 [-0.043, +0.005]    -0.018 [-0.042, +0.005]    +0.000 [+0.000, +0.000]     7/7    
+   12 bias          -0.007 [-0.028, +0.016]    -0.007 [-0.028, +0.015]    +0.000 [+0.000, +0.000]     9/9    
+   12 drift         -0.018 [-0.036, +0.000]    -0.022 [-0.042, -0.001]    -0.005 [-0.010, +0.001]     7/7    
+   12 ar1           +0.003 [-0.016, +0.023]    +0.003 [-0.019, +0.022]    +0.000 [-0.012, +0.011]    10/12   
+   12 pooled        -0.010 [-0.026, +0.006]    -0.011 [-0.027, +0.006]    -0.001 [-0.004, +0.001]     6/6    
+   12 share of the cost of error, pooled     shared -3.9% [-11%, +2%], sequential -4.4% [-12%, +2%] (cost 0.250)
+   16 gaussian      -0.022 [-0.054, +0.010]    -0.022 [-0.053, +0.010]    +0.000 [+0.000, +0.000]     7/7    
+   16 bias          -0.031 [-0.055, -0.005]    -0.031 [-0.056, -0.007]    +0.000 [+0.000, +0.000]     5/5    
+   16 drift         -0.045 [-0.067, -0.023]    -0.046 [-0.068, -0.022]    -0.000 [-0.006, +0.005]     4/4    
+   16 ar1           -0.002 [-0.025, +0.019]    -0.018 [-0.040, +0.002]    -0.016 [-0.025, -0.008]    10/6    
+   16 pooled        -0.025 [-0.046, -0.006]    -0.029 [-0.048, -0.010]    -0.004 [-0.007, -0.001]     5/4    
+   16 share of the cost of error, pooled     shared -10.0% [-19%, -2%], sequential -11.6% [-21%, -3%] (cost 0.250)
+   20 gaussian      -0.065 [-0.097, -0.036]    -0.065 [-0.098, -0.035]    +0.000 [+0.000, +0.000]     2/2    
+   20 bias          -0.061 [-0.089, -0.032]    -0.061 [-0.089, -0.033]    +0.000 [+0.000, +0.000]     3/3    
+   20 drift         -0.054 [-0.083, -0.027]    -0.063 [-0.091, -0.035]    -0.008 [-0.013, -0.004]     6/4    
+   20 ar1           -0.014 [-0.042, +0.009]    -0.038 [-0.064, -0.014]    -0.024 [-0.036, -0.013]     8/4    
+   20 pooled        -0.049 [-0.073, -0.027]    -0.057 [-0.080, -0.036]    -0.008 [-0.011, -0.005]     5/2    
+   20 share of the cost of error, pooled     shared -19.4% [-30%, -11%], sequential -22.6% [-33%, -14%] (cost 0.250)
+   25 gaussian      -0.087 [-0.124, -0.052]    -0.087 [-0.125, -0.054]    +0.000 [+0.000, +0.000]     2/2    
+   25 bias          -0.086 [-0.125, -0.050]    -0.086 [-0.129, -0.049]    +0.000 [+0.000, +0.000]     2/2    
+   25 drift         -0.100 [-0.131, -0.069]    -0.108 [-0.140, -0.077]    -0.009 [-0.016, -0.002]     2/2    
+   25 ar1           -0.036 [-0.069, -0.005]    -0.084 [-0.113, -0.059]    -0.049 [-0.067, -0.031]     5/2    
+   25 pooled        -0.077 [-0.106, -0.050]    -0.091 [-0.120, -0.065]    -0.014 [-0.020, -0.009]     2/1    
+   25 share of the cost of error, pooled     shared -30.8% [-45%, -19%], sequential -36.5% [-50%, -25%] (cost 0.250)
+   30 gaussian      -0.139 [-0.185, -0.097]    -0.139 [-0.183, -0.096]    +0.000 [+0.000, +0.000]     1/1    
+   30 bias          -0.147 [-0.195, -0.103]    -0.147 [-0.195, -0.102]    +0.000 [+0.000, +0.000]     1/1    
+   30 drift         -0.136 [-0.171, -0.103]    -0.138 [-0.174, -0.103]    -0.002 [-0.009, +0.007]     0/0    
+   30 ar1           -0.078 [-0.117, -0.044]    -0.098 [-0.138, -0.063]    -0.020 [-0.039, -0.003]     3/3    
+   30 pooled        -0.125 [-0.161, -0.093]    -0.131 [-0.166, -0.099]    -0.005 [-0.011, -0.000]     0/0    
+   30 share of the cost of error, pooled     shared -50.0% [-67%, -36%], sequential -52.1% [-69%, -38%] (cost 0.250)
+
+1sigma_from_trial_1, held-out seeds 12-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    2 gaussian      +0.042 [+0.018, +0.065]    +0.042 [+0.018, +0.066]    +0.000 [+0.000, +0.000]    16/16   
+    2 bias          +0.047 [+0.015, +0.086]    +0.047 [+0.013, +0.087]    +0.000 [+0.000, +0.000]    17/17   
+    2 drift         +0.021 [+0.006, +0.038]    +0.021 [+0.006, +0.039]    +0.000 [+0.000, +0.000]    13/13   
+    2 ar1           +0.012 [-0.005, +0.027]    +0.016 [-0.001, +0.033]    +0.004 [+0.001, +0.008]    14/14   
+    2 pooled        +0.030 [+0.013, +0.049]    +0.031 [+0.013, +0.049]    +0.001 [+0.000, +0.002]    14/14   
+    2 share of the cost of error, pooled     shared +11.6% [+5%, +18%], sequential +12.0% [+6%, +19%] (cost 0.261)
+    3 gaussian      +0.028 [-0.004, +0.061]    +0.028 [-0.002, +0.061]    +0.000 [+0.000, +0.000]    11/11   
+    3 bias          +0.050 [+0.010, +0.092]    +0.050 [+0.012, +0.091]    +0.000 [+0.000, +0.000]    14/14   
+    3 drift         +0.011 [-0.006, +0.029]    +0.011 [-0.006, +0.029]    +0.000 [+0.000, +0.000]    11/11   
+    3 ar1           +0.011 [-0.012, +0.038]    +0.013 [-0.010, +0.036]    +0.002 [-0.002, +0.007]    12/13   
+    3 pooled        +0.025 [+0.003, +0.047]    +0.026 [+0.002, +0.049]    +0.001 [-0.001, +0.002]    13/12   
+    3 share of the cost of error, pooled     shared +9.6% [+1%, +18%], sequential +9.8% [+2%, +19%] (cost 0.261)
+    5 gaussian      +0.041 [+0.018, +0.067]    +0.041 [+0.019, +0.065]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.040 [+0.006, +0.078]    +0.040 [+0.004, +0.079]    +0.000 [+0.000, +0.000]    14/14   
+    5 drift         +0.018 [-0.001, +0.038]    +0.016 [-0.002, +0.035]    -0.003 [-0.008, +0.002]    14/14   
+    5 ar1           -0.000 [-0.021, +0.021]    +0.009 [-0.013, +0.033]    +0.009 [-0.001, +0.020]    10/13   
+    5 pooled        +0.025 [+0.006, +0.045]    +0.027 [+0.007, +0.047]    +0.002 [-0.001, +0.004]    12/14   
+    5 share of the cost of error, pooled     shared +9.5% [+2%, +17%], sequential +10.2% [+3%, +17%] (cost 0.261)
+    8 gaussian      +0.022 [-0.005, +0.054]    +0.022 [-0.007, +0.052]    +0.000 [+0.000, +0.000]    14/14   
+    8 bias          +0.034 [-0.009, +0.081]    +0.034 [-0.010, +0.080]    +0.000 [+0.000, +0.000]    13/13   
+    8 drift         -0.011 [-0.033, +0.013]    -0.009 [-0.033, +0.014]    +0.002 [-0.002, +0.006]     8/8    
+    8 ar1           +0.010 [-0.014, +0.032]    +0.003 [-0.020, +0.027]    -0.006 [-0.019, +0.006]    12/10   
+    8 pooled        +0.014 [-0.008, +0.038]    +0.013 [-0.008, +0.034]    -0.001 [-0.004, +0.002]    12/12   
+    8 share of the cost of error, pooled     shared +5.3% [-3%, +13%], sequential +4.9% [-4%, +12%] (cost 0.261)
+   12 gaussian      -0.022 [-0.053, +0.009]    -0.022 [-0.052, +0.009]    +0.000 [+0.000, +0.000]     8/8    
+   12 bias          +0.017 [-0.022, +0.056]    +0.017 [-0.022, +0.053]    +0.000 [+0.000, +0.000]     9/9    
+   12 drift         -0.017 [-0.035, +0.000]    -0.020 [-0.037, -0.001]    -0.003 [-0.011, +0.006]     7/7    
+   12 ar1           -0.016 [-0.039, +0.008]    -0.009 [-0.037, +0.020]    +0.007 [-0.004, +0.020]     8/10   
+   12 pooled        -0.009 [-0.029, +0.011]    -0.008 [-0.029, +0.012]    +0.001 [-0.002, +0.004]     9/7    
+   12 share of the cost of error, pooled     shared -3.6% [-12%, +4%], sequential -3.2% [-12%, +5%] (cost 0.261)
+   16 gaussian      -0.019 [-0.055, +0.017]    -0.019 [-0.054, +0.016]    +0.000 [+0.000, +0.000]     9/9    
+   16 bias          -0.005 [-0.045, +0.040]    -0.005 [-0.046, +0.038]    +0.000 [+0.000, +0.000]     9/9    
+   16 drift         -0.035 [-0.060, -0.010]    -0.039 [-0.060, -0.018]    -0.004 [-0.012, +0.004]     6/5    
+   16 ar1           -0.006 [-0.035, +0.023]    -0.022 [-0.056, +0.009]    -0.017 [-0.031, -0.003]     8/8    
+   16 pooled        -0.016 [-0.041, +0.008]    -0.021 [-0.045, +0.003]    -0.005 [-0.010, -0.001]     6/6    
+   16 share of the cost of error, pooled     shared -6.1% [-16%, +3%], sequential -8.1% [-18%, +2%] (cost 0.261)
+   20 gaussian      -0.069 [-0.116, -0.029]    -0.069 [-0.114, -0.026]    +0.000 [+0.000, +0.000]     4/4    
+   20 bias          -0.035 [-0.073, +0.008]    -0.035 [-0.073, +0.009]    +0.000 [+0.000, +0.000]     5/5    
+   20 drift         -0.044 [-0.077, -0.013]    -0.053 [-0.086, -0.023]    -0.009 [-0.016, -0.004]     6/4    
+   20 ar1           -0.033 [-0.067, +0.001]    -0.060 [-0.090, -0.029]    -0.028 [-0.042, -0.016]     7/5    
+   20 pooled        -0.045 [-0.069, -0.023]    -0.054 [-0.078, -0.030]    -0.009 [-0.013, -0.006]     4/4    
+   20 share of the cost of error, pooled     shared -17.2% [-26%, -8%], sequential -20.8% [-30%, -12%] (cost 0.261)
+   25 gaussian      -0.094 [-0.139, -0.050]    -0.094 [-0.138, -0.051]    +0.000 [+0.000, +0.000]     3/3    
+   25 bias          -0.069 [-0.116, -0.019]    -0.069 [-0.117, -0.020]    +0.000 [+0.000, +0.000]     4/4    
+   25 drift         -0.072 [-0.104, -0.044]    -0.089 [-0.124, -0.057]    -0.016 [-0.030, -0.004]     3/1    
+   25 ar1           -0.066 [-0.107, -0.028]    -0.107 [-0.146, -0.064]    -0.041 [-0.072, -0.011]     3/3    
+   25 pooled        -0.075 [-0.107, -0.046]    -0.089 [-0.116, -0.060]    -0.014 [-0.024, -0.006]     3/3    
+   25 share of the cost of error, pooled     shared -28.8% [-40%, -18%], sequential -34.2% [-45%, -24%] (cost 0.261)
+   30 gaussian      -0.151 [-0.209, -0.098]    -0.151 [-0.206, -0.099]    +0.000 [+0.000, +0.000]     1/1    
+   30 bias          -0.117 [-0.171, -0.060]    -0.117 [-0.174, -0.059]    +0.000 [+0.000, +0.000]     3/3    
+   30 drift         -0.120 [-0.167, -0.078]    -0.123 [-0.169, -0.083]    -0.002 [-0.014, +0.010]     2/2    
+   30 ar1           -0.118 [-0.166, -0.073]    -0.122 [-0.169, -0.074]    -0.003 [-0.028, +0.018]     1/3    
+   30 pooled        -0.127 [-0.161, -0.095]    -0.128 [-0.166, -0.093]    -0.001 [-0.007, +0.004]     1/1    
+   30 share of the cost of error, pooled     shared -48.5% [-63%, -35%], sequential -49.0% [-64%, -36%] (cost 0.261)
+
+5sigma_from_trial_21, all seeds 7-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    8 gaussian      +0.197 [+0.121, +0.288]    +0.197 [+0.119, +0.282]    +0.000 [+0.000, +0.000]    19/19   
+    8 bias          -0.002 [-0.057, +0.050]    -0.002 [-0.058, +0.050]    +0.000 [+0.000, +0.000]    10/10   
+    8 drift         +0.151 [+0.090, +0.232]    +0.154 [+0.090, +0.239]    +0.003 [-0.007, +0.015]    20/19   
+    8 ar1           +0.154 [+0.115, +0.192]    +0.122 [+0.084, +0.163]    -0.032 [-0.062, -0.006]    20/19   
+    8 pooled        +0.125 [+0.092, +0.163]    +0.118 [+0.088, +0.151]    -0.007 [-0.015, -0.001]    20/20   
+    8 share of the cost of error, pooled     shared +22.9% [+18%, +27%], sequential +21.5% [+17%, +26%] (cost 0.547)
+   12 gaussian      +0.199 [+0.105, +0.312]    +0.199 [+0.105, +0.309]    +0.000 [+0.000, +0.000]    18/18   
+   12 bias          +0.000 [-0.065, +0.072]    +0.000 [-0.067, +0.071]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.281 [+0.193, +0.372]    +0.288 [+0.205, +0.384]    +0.007 [-0.004, +0.021]    19/19   
+   12 ar1           +0.172 [+0.119, +0.231]    +0.136 [+0.081, +0.194]    -0.036 [-0.063, -0.013]    19/17   
+   12 pooled        +0.163 [+0.113, +0.215]    +0.156 [+0.102, +0.210]    -0.007 [-0.014, -0.001]    19/19   
+   12 share of the cost of error, pooled     shared +29.8% [+23%, +36%], sequential +28.5% [+21%, +35%] (cost 0.547)
+   16 gaussian      +0.221 [+0.121, +0.355]    +0.221 [+0.123, +0.351]    +0.000 [+0.000, +0.000]    18/18   
+   16 bias          +0.165 [+0.081, +0.252]    +0.165 [+0.085, +0.248]    +0.000 [+0.000, +0.000]    18/18   
+   16 drift         +0.307 [+0.197, +0.422]    +0.309 [+0.198, +0.426]    +0.002 [-0.016, +0.021]    19/19   
+   16 ar1           +0.210 [+0.154, +0.264]    +0.154 [+0.095, +0.216]    -0.056 [-0.079, -0.034]    19/18   
+   16 pooled        +0.226 [+0.155, +0.300]    +0.212 [+0.140, +0.283]    -0.013 [-0.022, -0.005]    20/18   
+   16 share of the cost of error, pooled     shared +41.3% [+32%, +49%], sequential +38.8% [+29%, +48%] (cost 0.547)
+   20 gaussian      +0.180 [+0.087, +0.302]    +0.180 [+0.088, +0.312]    +0.000 [+0.000, +0.000]    15/15   
+   20 bias          +0.227 [+0.141, +0.321]    +0.227 [+0.141, +0.329]    +0.000 [+0.000, +0.000]    19/19   
+   20 drift         +0.297 [+0.191, +0.409]    +0.285 [+0.164, +0.404]    -0.012 [-0.037, +0.022]    19/18   
+   20 ar1           +0.197 [+0.134, +0.262]    +0.136 [+0.085, +0.188]    -0.061 [-0.088, -0.038]    18/17   
+   20 pooled        +0.225 [+0.149, +0.305]    +0.207 [+0.133, +0.289]    -0.018 [-0.029, -0.007]    18/17   
+   20 share of the cost of error, pooled     shared +41.2% [+31%, +50%], sequential +37.8% [+27%, +49%] (cost 0.547)
+
+5sigma_from_trial_21, held-out seeds 12-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    8 gaussian      +0.203 [+0.109, +0.307]    +0.203 [+0.109, +0.306]    +0.000 [+0.000, +0.000]    17/17   
+    8 bias          -0.034 [-0.120, +0.031]    -0.034 [-0.122, +0.031]    +0.000 [+0.000, +0.000]    10/10   
+    8 drift         +0.216 [+0.114, +0.337]    +0.219 [+0.118, +0.336]    +0.003 [-0.018, +0.029]    19/19   
+    8 ar1           +0.197 [+0.123, +0.275]    +0.146 [+0.090, +0.201]    -0.051 [-0.103, -0.008]    18/18   
+    8 pooled        +0.146 [+0.093, +0.198]    +0.134 [+0.092, +0.178]    -0.012 [-0.026, +0.000]    19/19   
+    8 share of the cost of error, pooled     shared +26.2% [+19%, +32%], sequential +24.0% [+19%, +29%] (cost 0.556)
+   12 gaussian      +0.204 [+0.104, +0.310]    +0.204 [+0.108, +0.311]    +0.000 [+0.000, +0.000]    17/17   
+   12 bias          -0.086 [-0.190, +0.003]    -0.086 [-0.192, -0.001]    +0.000 [+0.000, +0.000]     7/7    
+   12 drift         +0.269 [+0.151, +0.391]    +0.269 [+0.148, +0.400]    +0.000 [-0.015, +0.016]    18/18   
+   12 ar1           +0.218 [+0.138, +0.300]    +0.147 [+0.064, +0.243]    -0.071 [-0.116, -0.027]    18/14   
+   12 pooled        +0.151 [+0.096, +0.206]    +0.134 [+0.077, +0.190]    -0.018 [-0.029, -0.008]    19/17   
+   12 share of the cost of error, pooled     shared +27.2% [+20%, +33%], sequential +24.0% [+16%, +31%] (cost 0.556)
+   16 gaussian      +0.210 [+0.104, +0.333]    +0.210 [+0.101, +0.345]    +0.000 [+0.000, +0.000]    16/16   
+   16 bias          +0.109 [-0.003, +0.210]    +0.109 [+0.003, +0.216]    +0.000 [+0.000, +0.000]    14/14   
+   16 drift         +0.346 [+0.210, +0.513]    +0.339 [+0.189, +0.503]    -0.006 [-0.035, +0.021]    19/18   
+   16 ar1           +0.244 [+0.167, +0.328]    +0.189 [+0.111, +0.272]    -0.055 [-0.092, -0.019]    18/16   
+   16 pooled        +0.227 [+0.140, +0.321]    +0.212 [+0.129, +0.305]    -0.015 [-0.030, -0.003]    19/18   
+   16 share of the cost of error, pooled     shared +40.8% [+30%, +50%], sequential +38.1% [+26%, +48%] (cost 0.556)
+   20 gaussian      +0.197 [+0.100, +0.320]    +0.197 [+0.105, +0.313]    +0.000 [+0.000, +0.000]    17/17   
+   20 bias          +0.195 [+0.091, +0.312]    +0.195 [+0.091, +0.320]    +0.000 [+0.000, +0.000]    16/16   
+   20 drift         +0.349 [+0.192, +0.524]    +0.323 [+0.163, +0.518]    -0.026 [-0.054, +0.002]    17/18   
+   20 ar1           +0.226 [+0.142, +0.315]    +0.158 [+0.082, +0.247]    -0.068 [-0.106, -0.028]    17/17   
+   20 pooled        +0.242 [+0.157, +0.343]    +0.218 [+0.129, +0.319]    -0.023 [-0.035, -0.012]    18/17   
+   20 share of the cost of error, pooled     shared +43.4% [+31%, +54%], sequential +39.3% [+27%, +50%] (cost 0.556)
+
+1sigma_from_trial_21, all seeds 7-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    3 gaussian      +0.020 [+0.004, +0.038]    +0.020 [+0.004, +0.038]    +0.000 [+0.000, +0.000]    14/14   
+    3 bias          +0.016 [+0.005, +0.027]    +0.016 [+0.005, +0.027]    +0.000 [+0.000, +0.000]    16/16   
+    3 drift         +0.016 [+0.003, +0.029]    +0.016 [+0.001, +0.029]    -0.000 [-0.002, +0.002]    14/14   
+    3 ar1           +0.025 [+0.010, +0.041]    +0.028 [+0.014, +0.043]    +0.003 [-0.002, +0.008]    15/15   
+    3 pooled        +0.019 [+0.009, +0.030]    +0.020 [+0.010, +0.030]    +0.001 [-0.001, +0.002]    16/16   
+    3 share of the cost of error, pooled     shared +13.0% [+7%, +19%], sequential +13.5% [+7%, +20%] (cost 0.149)
+    5 gaussian      +0.023 [+0.002, +0.046]    +0.023 [+0.001, +0.046]    +0.000 [+0.000, +0.000]    16/16   
+    5 bias          +0.005 [-0.007, +0.017]    +0.005 [-0.006, +0.017]    +0.000 [+0.000, +0.000]    10/10   
+    5 drift         +0.020 [+0.003, +0.037]    +0.019 [+0.004, +0.035]    -0.000 [-0.001, +0.000]    13/13   
+    5 ar1           +0.033 [+0.016, +0.049]    +0.033 [+0.017, +0.048]    +0.000 [-0.006, +0.006]    15/17   
+    5 pooled        +0.020 [+0.008, +0.033]    +0.020 [+0.008, +0.032]    -0.000 [-0.001, +0.001]    15/15   
+    5 share of the cost of error, pooled     shared +13.5% [+6%, +20%], sequential +13.4% [+6%, +20%] (cost 0.149)
+    8 gaussian      +0.019 [-0.003, +0.039]    +0.019 [-0.000, +0.042]    +0.000 [+0.000, +0.000]    13/13   
+    8 bias          -0.003 [-0.014, +0.007]    -0.003 [-0.014, +0.008]    +0.000 [+0.000, +0.000]     8/8    
+    8 drift         +0.023 [+0.005, +0.040]    +0.021 [+0.003, +0.040]    -0.001 [-0.007, +0.004]    15/14   
+    8 ar1           +0.029 [+0.010, +0.050]    +0.024 [+0.004, +0.045]    -0.006 [-0.014, +0.003]    14/15   
+    8 pooled        +0.017 [+0.004, +0.031]    +0.015 [+0.001, +0.030]    -0.002 [-0.005, +0.001]    14/13   
+    8 share of the cost of error, pooled     shared +11.4% [+3%, +19%], sequential +10.3% [+1%, +18%] (cost 0.149)
+   12 gaussian      +0.012 [-0.006, +0.031]    +0.012 [-0.006, +0.031]    +0.000 [+0.000, +0.000]    11/11   
+   12 bias          +0.013 [-0.004, +0.029]    +0.013 [-0.005, +0.029]    +0.000 [+0.000, +0.000]    11/11   
+   12 drift         +0.019 [-0.004, +0.043]    +0.020 [-0.003, +0.043]    +0.001 [-0.004, +0.006]    15/15   
+   12 ar1           +0.032 [+0.014, +0.049]    +0.024 [+0.003, +0.043]    -0.008 [-0.015, -0.000]    17/17   
+   12 pooled        +0.019 [+0.003, +0.035]    +0.017 [+0.001, +0.034]    -0.002 [-0.004, +0.001]    14/14   
+   12 share of the cost of error, pooled     shared +12.8% [+2%, +22%], sequential +11.6% [+0%, +21%] (cost 0.149)
+   16 gaussian      -0.007 [-0.029, +0.014]    -0.007 [-0.029, +0.014]    +0.000 [+0.000, +0.000]    10/10   
+   16 bias          +0.021 [-0.001, +0.040]    +0.021 [-0.000, +0.040]    +0.000 [+0.000, +0.000]    16/16   
+   16 drift         +0.021 [-0.004, +0.044]    +0.015 [-0.011, +0.038]    -0.005 [-0.010, -0.001]    14/13   
+   16 ar1           +0.035 [+0.007, +0.062]    +0.009 [-0.016, +0.037]    -0.026 [-0.042, -0.013]    15/12   
+   16 pooled        +0.017 [-0.005, +0.036]    +0.009 [-0.010, +0.028]    -0.008 [-0.013, -0.004]    13/13   
+   16 share of the cost of error, pooled     shared +11.6% [-2%, +22%], sequential +6.4% [-8%, +18%] (cost 0.149)
+
+1sigma_from_trial_21, held-out seeds 12-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    3 gaussian      +0.014 [-0.008, +0.041]    +0.014 [-0.008, +0.041]    +0.000 [+0.000, +0.000]    13/13   
+    3 bias          +0.018 [+0.003, +0.032]    +0.018 [+0.003, +0.033]    +0.000 [+0.000, +0.000]    15/15   
+    3 drift         +0.013 [-0.006, +0.031]    +0.012 [-0.006, +0.030]    -0.001 [-0.004, +0.002]    14/14   
+    3 ar1           +0.020 [+0.004, +0.038]    +0.023 [+0.007, +0.041]    +0.003 [-0.003, +0.008]    15/15   
+    3 pooled        +0.016 [+0.004, +0.029]    +0.017 [+0.005, +0.030]    +0.001 [-0.001, +0.002]    14/15   
+    3 share of the cost of error, pooled     shared +11.0% [+3%, +19%], sequential +11.4% [+3%, +19%] (cost 0.148)
+    5 gaussian      +0.022 [-0.005, +0.053]    +0.022 [-0.004, +0.054]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.006 [-0.012, +0.024]    +0.006 [-0.012, +0.024]    +0.000 [+0.000, +0.000]    11/11   
+    5 drift         +0.017 [-0.002, +0.036]    +0.017 [-0.001, +0.036]    -0.000 [-0.003, +0.002]    13/12   
+    5 ar1           +0.022 [+0.002, +0.045]    +0.029 [+0.011, +0.047]    +0.007 [-0.003, +0.017]    14/15   
+    5 pooled        +0.017 [+0.002, +0.031]    +0.019 [+0.004, +0.032]    +0.002 [-0.001, +0.004]    14/14   
+    5 share of the cost of error, pooled     shared +11.4% [+2%, +20%], sequential +12.5% [+4%, +20%] (cost 0.148)
+    8 gaussian      +0.012 [-0.018, +0.045]    +0.012 [-0.019, +0.045]    +0.000 [+0.000, +0.000]    12/12   
+    8 bias          -0.007 [-0.020, +0.006]    -0.007 [-0.020, +0.005]    +0.000 [+0.000, +0.000]     9/9    
+    8 drift         +0.020 [-0.004, +0.046]    +0.018 [-0.008, +0.045]    -0.002 [-0.013, +0.006]    13/12   
+    8 ar1           +0.028 [+0.007, +0.050]    +0.027 [+0.004, +0.052]    -0.001 [-0.014, +0.012]    13/13   
+    8 pooled        +0.013 [-0.002, +0.030]    +0.013 [-0.003, +0.029]    -0.001 [-0.006, +0.003]    12/13   
+    8 share of the cost of error, pooled     shared +9.0% [-1%, +18%], sequential +8.5% [-3%, +19%] (cost 0.148)
+   12 gaussian      +0.008 [-0.018, +0.035]    +0.008 [-0.018, +0.036]    +0.000 [+0.000, +0.000]    10/10   
+   12 bias          +0.009 [-0.015, +0.034]    +0.009 [-0.015, +0.034]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.015 [-0.017, +0.050]    +0.014 [-0.017, +0.045]    -0.002 [-0.012, +0.008]    13/13   
+   12 ar1           +0.033 [+0.003, +0.063]    +0.024 [-0.003, +0.053]    -0.009 [-0.018, +0.001]    15/14   
+   12 pooled        +0.016 [-0.004, +0.036]    +0.014 [-0.007, +0.033]    -0.003 [-0.006, +0.001]    13/12   
+   12 share of the cost of error, pooled     shared +11.0% [-3%, +22%], sequential +9.2% [-5%, +21%] (cost 0.148)
+   16 gaussian      -0.014 [-0.042, +0.017]    -0.014 [-0.043, +0.018]    +0.000 [+0.000, +0.000]     9/9    
+   16 bias          +0.013 [-0.019, +0.041]    +0.013 [-0.017, +0.043]    +0.000 [+0.000, +0.000]    13/13   
+   16 drift         +0.014 [-0.016, +0.042]    +0.007 [-0.022, +0.035]    -0.007 [-0.016, -0.001]    12/10   
+   16 ar1           +0.030 [-0.001, +0.061]    -0.000 [-0.034, +0.033]    -0.030 [-0.052, -0.010]    14/11   
+   16 pooled        +0.011 [-0.014, +0.034]    +0.002 [-0.021, +0.022]    -0.009 [-0.017, -0.003]    13/11   
+   16 share of the cost of error, pooled     shared +7.4% [-10%, +20%], sequential +1.1% [-15%, +15%] (cost 0.148)
+
+5sigma_from_trial_1, all seeds 7-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    5 gaussian      +0.058 [+0.006, +0.122]    +0.058 [+0.006, +0.121]    +0.000 [+0.000, +0.000]    14/14   
+    5 bias          +0.045 [-0.004, +0.108]    +0.045 [-0.004, +0.103]    +0.000 [+0.000, +0.000]    12/12   
+    5 drift         +0.068 [+0.037, +0.102]    +0.065 [+0.031, +0.104]    -0.002 [-0.008, +0.004]    17/16   
+    5 ar1           +0.080 [+0.043, +0.128]    +0.073 [+0.043, +0.110]    -0.007 [-0.033, +0.018]    17/17   
+    5 pooled        +0.063 [+0.034, +0.097]    +0.060 [+0.029, +0.100]    -0.002 [-0.009, +0.005]    19/18   
+    5 share of the cost of error, pooled     shared +8.3% [+5%, +12%], sequential +8.0% [+4%, +12%] (cost 0.753)
+    8 gaussian      +0.056 [-0.001, +0.131]    +0.056 [-0.002, +0.132]    +0.000 [+0.000, +0.000]    13/13   
+    8 bias          +0.067 [+0.013, +0.129]    +0.067 [+0.013, +0.124]    +0.000 [+0.000, +0.000]    15/15   
+    8 drift         +0.051 [+0.003, +0.103]    +0.046 [+0.003, +0.094]    -0.005 [-0.013, +0.001]    14/14   
+    8 ar1           +0.083 [+0.032, +0.136]    +0.077 [+0.027, +0.134]    -0.006 [-0.024, +0.011]    19/16   
+    8 pooled        +0.064 [+0.031, +0.102]    +0.062 [+0.026, +0.099]    -0.003 [-0.007, +0.001]    16/16   
+    8 share of the cost of error, pooled     shared +8.5% [+4%, +13%], sequential +8.2% [+4%, +12%] (cost 0.753)
+   12 gaussian      +0.050 [-0.015, +0.122]    +0.050 [-0.016, +0.124]    +0.000 [+0.000, +0.000]    14/14   
+   12 bias          +0.055 [+0.007, +0.113]    +0.055 [+0.007, +0.113]    +0.000 [+0.000, +0.000]    15/15   
+   12 drift         +0.055 [+0.005, +0.112]    +0.055 [+0.002, +0.106]    -0.000 [-0.014, +0.015]    15/15   
+   12 ar1           +0.076 [+0.032, +0.125]    +0.078 [+0.037, +0.125]    +0.002 [-0.014, +0.018]    15/15   
+   12 pooled        +0.059 [+0.027, +0.094]    +0.060 [+0.027, +0.099]    +0.000 [-0.006, +0.007]    17/17   
+   12 share of the cost of error, pooled     shared +7.9% [+4%, +12%], sequential +7.9% [+4%, +12%] (cost 0.753)
+
+5sigma_from_trial_1, held-out seeds 12-16 (sequential = rank order); gain in opt_z units [95% landscape bootstrap]; landscapes gaining out of 20
+    k process                        shared                 sequential               seq - shared lands sh/seq
+    5 gaussian      +0.076 [+0.012, +0.141]    +0.076 [+0.015, +0.144]    +0.000 [+0.000, +0.000]    15/15   
+    5 bias          +0.028 [-0.026, +0.087]    +0.028 [-0.022, +0.089]    +0.000 [+0.000, +0.000]    11/11   
+    5 drift         +0.097 [+0.040, +0.168]    +0.093 [+0.036, +0.163]    -0.004 [-0.010, +0.000]    14/14   
+    5 ar1           +0.062 [+0.020, +0.102]    +0.070 [+0.034, +0.107]    +0.008 [-0.017, +0.038]    13/15   
+    5 pooled        +0.066 [+0.029, +0.110]    +0.067 [+0.026, +0.111]    +0.001 [-0.006, +0.008]    17/18   
+    5 share of the cost of error, pooled     shared +8.7% [+4%, +14%], sequential +8.8% [+4%, +14%] (cost 0.753)
+    8 gaussian      +0.040 [-0.023, +0.111]    +0.040 [-0.026, +0.114]    +0.000 [+0.000, +0.000]    10/10   
+    8 bias          +0.035 [-0.011, +0.081]    +0.035 [-0.011, +0.083]    +0.000 [+0.000, +0.000]    12/12   
+    8 drift         +0.079 [-0.011, +0.175]    +0.070 [-0.025, +0.158]    -0.009 [-0.021, -0.000]    13/13   
+    8 ar1           +0.076 [+0.046, +0.108]    +0.057 [+0.019, +0.100]    -0.019 [-0.045, +0.007]    17/14   
+    8 pooled        +0.058 [+0.017, +0.102]    +0.050 [+0.013, +0.093]    -0.007 [-0.013, -0.001]    17/16   
+    8 share of the cost of error, pooled     shared +7.6% [+3%, +13%], sequential +6.7% [+2%, +11%] (cost 0.753)
+   12 gaussian      +0.035 [-0.041, +0.108]    +0.035 [-0.040, +0.105]    +0.000 [+0.000, +0.000]    14/14   
+   12 bias          +0.034 [-0.037, +0.129]    +0.034 [-0.033, +0.135]    +0.000 [+0.000, +0.000]    10/10   
+   12 drift         +0.077 [-0.061, +0.194]    +0.073 [-0.061, +0.190]    -0.004 [-0.022, +0.011]    15/17   
+   12 ar1           +0.045 [-0.015, +0.095]    +0.046 [-0.023, +0.105]    +0.001 [-0.031, +0.034]    15/15   
+   12 pooled        +0.048 [+0.003, +0.093]    +0.047 [+0.004, +0.092]    -0.001 [-0.010, +0.010]    17/16   
+   12 share of the cost of error, pooled     shared +6.3% [+0%, +12%], sequential +6.3% [+0%, +11%] (cost 0.753)
+
+Largest move of a gain, sequential (rank order) minus shared, over the cells and sizes above:
+  pooled  max |diff| 0.023 (5sigma_from_trial_21, seeds 12-16, k=20: +0.242 -> +0.218); sign changes 0 of 42
+  drift   max |diff| 0.026 (5sigma_from_trial_21, seeds 12-16, k=20: +0.349 -> +0.323); sign changes 0 of 42
+  ar1     max |diff| 0.071 (5sigma_from_trial_21, seeds 12-16, k=12: +0.218 -> +0.147); sign changes 2 of 42
+
+Pooled over the four magnitudes, both onsets and the four processes, all seeds (sequential = rank order, rho = 1)
+  k= 2  shared +0.010 [-0.003, +0.022]  sequential +0.011 [-0.002, +0.023]  diff +0.001 [+0.000, +0.002]   | without 5sigma from trial 21: shared +0.008 [-0.005, +0.020]  sequential +0.009 [-0.004, +0.021]
+  k= 3  shared +0.015 [+0.004, +0.026]  sequential +0.014 [+0.004, +0.026]  diff -0.000 [-0.001, +0.000]   | without 5sigma from trial 21: shared +0.010 [-0.000, +0.021]  sequential +0.010 [-0.001, +0.020]
+  k= 5  shared +0.020 [+0.008, +0.033]  sequential +0.020 [+0.007, +0.034]  diff -0.000 [-0.001, +0.001]   | without 5sigma from trial 21: shared +0.009 [-0.001, +0.020]  sequential +0.009 [-0.002, +0.020]
+  k= 8  shared +0.022 [+0.010, +0.034]  sequential +0.020 [+0.008, +0.032]  diff -0.002 [-0.003, -0.001]   | without 5sigma from trial 21: shared +0.007 [-0.003, +0.018]  sequential +0.006 [-0.005, +0.017]
+  k=12  shared +0.021 [+0.006, +0.035]  sequential +0.019 [+0.005, +0.033]  diff -0.001 [-0.003, +0.000]   | without 5sigma from trial 21: shared +0.000 [-0.011, +0.011]  sequential -0.000 [-0.011, +0.012]
+  k=16  shared +0.022 [+0.001, +0.040]  sequential +0.018 [-0.000, +0.038]  diff -0.004 [-0.005, -0.002]   | without 5sigma from trial 21: shared -0.007 [-0.023, +0.007]  sequential -0.010 [-0.023, +0.004]
+  k=20  shared +0.009 [-0.015, +0.032]  sequential +0.002 [-0.021, +0.024]  diff -0.007 [-0.008, -0.005]   | without 5sigma from trial 21: shared -0.022 [-0.043, -0.005]  sequential -0.027 [-0.046, -0.012]
+  k=25  shared -0.022 [-0.050, +0.003]  sequential -0.035 [-0.060, -0.012]  diff -0.013 [-0.016, -0.010]   | without 5sigma from trial 21: shared -0.048 [-0.074, -0.026]  sequential -0.054 [-0.081, -0.033]
+  k=30  shared -0.054 [-0.089, -0.023]  sequential -0.063 [-0.099, -0.033]  diff -0.009 [-0.012, -0.007]   | without 5sigma from trial 21: shared -0.080 [-0.116, -0.051]  sequential -0.084 [-0.120, -0.056]
+
+Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (sequential, rank order; sitting_by_magnitude.analyse_cell)
+  pooled                   k=12 held-out gain +0.014 [-0.002, +0.030] on 13/20, Holm p over k 0.422, share +6.4%; per process gaussian +0.020, bias -0.012, drift +0.033, ar1 +0.017; k=12 all seeds +0.019; k chosen on 12-16 5
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  6/20, Holm p over k 0.088, share -212.8%; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.081, share -402.4%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.014; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 3 held-out gain -0.006 [-0.016, +0.003] on  9/20, Holm p over k 1.000, share -14.0%; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.004; k=12 all seeds -0.018; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share -19.7%; per process gaussian -0.004, bias -0.009, drift -0.004, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
+  1sigma_from_trial_1      k= 2 held-out gain +0.031 [+0.013, +0.051] on 14/20, Holm p over k 0.025, share +12.0%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.016; k=12 all seeds -0.011; k chosen on 12-16 2
+  1sigma_from_trial_21     k= 3 held-out gain +0.017 [+0.005, +0.030] on 15/20, Holm p over k 0.172, share +11.4%; per process gaussian +0.014, bias +0.018, drift +0.012, ar1 +0.023; k=12 all seeds +0.017; k chosen on 12-16 5
+  5sigma_from_trial_1      k= 8 held-out gain +0.050 [+0.011, +0.093] on 16/20, Holm p over k 0.077, share +6.7%; per process gaussian +0.040, bias +0.035, drift +0.070, ar1 +0.057; k=12 all seeds +0.060; k chosen on 12-16 2
+  5sigma_from_trial_21     k=16 held-out gain +0.212 [+0.128, +0.305] on 18/20, Holm p over k 0.000, share +38.1%; per process gaussian +0.210, bias +0.109, drift +0.339, ar1 +0.189; k=12 all seeds +0.156; k chosen on 12-16 20
+rho = 0.5: shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True; drift and ar1 rows whose shipped design changed: 23.3%
+
+Pooled over the four magnitudes, both onsets and the four processes, all seeds (sequential = random order, rho = 0.5, the half-SD sensitivity)
+  k= 2  shared +0.016 [+0.003, +0.028]  sequential +0.017 [+0.004, +0.029]  diff +0.000 [+0.000, +0.001]   | without 5sigma from trial 21: shared +0.013 [+0.001, +0.026]  sequential +0.014 [+0.002, +0.026]
+  k= 3  shared +0.024 [+0.013, +0.036]  sequential +0.024 [+0.013, +0.036]  diff -0.000 [-0.001, +0.001]   | without 5sigma from trial 21: shared +0.017 [+0.007, +0.027]  sequential +0.018 [+0.007, +0.028]
+  k= 5  shared +0.035 [+0.022, +0.048]  sequential +0.035 [+0.022, +0.050]  diff +0.000 [-0.000, +0.002]   | without 5sigma from trial 21: shared +0.022 [+0.012, +0.033]  sequential +0.022 [+0.011, +0.033]
+  k= 8  shared +0.042 [+0.028, +0.056]  sequential +0.041 [+0.026, +0.055]  diff -0.001 [-0.002, +0.000]   | without 5sigma from trial 21: shared +0.023 [+0.011, +0.034]  sequential +0.022 [+0.010, +0.034]
+  k=12  shared +0.046 [+0.028, +0.062]  sequential +0.043 [+0.027, +0.057]  diff -0.003 [-0.004, -0.001]   | without 5sigma from trial 21: shared +0.021 [+0.007, +0.033]  sequential +0.019 [+0.006, +0.031]
+  k=16  shared +0.051 [+0.028, +0.071]  sequential +0.049 [+0.028, +0.070]  diff -0.002 [-0.003, -0.001]   | without 5sigma from trial 21: shared +0.018 [-0.001, +0.034]  sequential +0.016 [-0.000, +0.032]
+  k=20  shared +0.042 [+0.015, +0.068]  sequential +0.039 [+0.011, +0.064]  diff -0.004 [-0.005, -0.002]   | without 5sigma from trial 21: shared +0.006 [-0.018, +0.026]  sequential +0.003 [-0.020, +0.021]
+  k=25  shared +0.022 [-0.012, +0.051]  sequential +0.016 [-0.016, +0.046]  diff -0.006 [-0.008, -0.004]   | without 5sigma from trial 21: shared -0.014 [-0.044, +0.012]  sequential -0.018 [-0.049, +0.007]
+  k=30  shared -0.008 [-0.049, +0.028]  sequential -0.011 [-0.055, +0.027]  diff -0.003 [-0.005, -0.001]   | without 5sigma from trial 21: shared -0.044 [-0.085, -0.011]  sequential -0.046 [-0.088, -0.013]
+
+Pooled over the four magnitudes, both onsets and the four processes, all seeds (sequential = rank order, rho = 0.5, the half-SD sensitivity)
+  k= 2  shared +0.016 [+0.003, +0.028]  sequential +0.017 [+0.004, +0.029]  diff +0.000 [-0.000, +0.001]   | without 5sigma from trial 21: shared +0.013 [+0.001, +0.026]  sequential +0.014 [+0.001, +0.025]
+  k= 3  shared +0.024 [+0.013, +0.036]  sequential +0.024 [+0.013, +0.036]  diff -0.000 [-0.001, +0.001]   | without 5sigma from trial 21: shared +0.017 [+0.007, +0.027]  sequential +0.018 [+0.007, +0.028]
+  k= 5  shared +0.035 [+0.022, +0.048]  sequential +0.033 [+0.021, +0.047]  diff -0.002 [-0.003, -0.000]   | without 5sigma from trial 21: shared +0.022 [+0.012, +0.033]  sequential +0.021 [+0.010, +0.032]
+  k= 8  shared +0.042 [+0.028, +0.056]  sequential +0.039 [+0.026, +0.053]  diff -0.002 [-0.004, -0.001]   | without 5sigma from trial 21: shared +0.023 [+0.011, +0.034]  sequential +0.022 [+0.009, +0.033]
+  k=12  shared +0.046 [+0.028, +0.062]  sequential +0.042 [+0.025, +0.057]  diff -0.004 [-0.005, -0.002]   | without 5sigma from trial 21: shared +0.021 [+0.007, +0.033]  sequential +0.019 [+0.006, +0.031]
+  k=16  shared +0.051 [+0.028, +0.071]  sequential +0.046 [+0.025, +0.066]  diff -0.005 [-0.007, -0.004]   | without 5sigma from trial 21: shared +0.018 [-0.001, +0.034]  sequential +0.014 [-0.001, +0.030]
+  k=20  shared +0.042 [+0.015, +0.068]  sequential +0.033 [+0.006, +0.057]  diff -0.010 [-0.012, -0.007]   | without 5sigma from trial 21: shared +0.006 [-0.018, +0.026]  sequential +0.000 [-0.021, +0.018]
+  k=25  shared +0.022 [-0.012, +0.051]  sequential +0.006 [-0.024, +0.033]  diff -0.016 [-0.019, -0.012]   | without 5sigma from trial 21: shared -0.014 [-0.044, +0.012]  sequential -0.021 [-0.052, +0.004]
+  k=30  shared -0.008 [-0.049, +0.028]  sequential -0.019 [-0.061, +0.017]  diff -0.011 [-0.014, -0.008]   | without 5sigma from trial 21: shared -0.044 [-0.085, -0.011]  sequential -0.048 [-0.089, -0.015]
+
+The shared side against the published values:
+  1sigma onset 0 k=2, seeds 12-16 (tab:sittingcell)              here +0.0303  published +0.0300  ok
+  5sigma onset 20 k=16, seeds 12-16 (tab:sittingcell)            here +0.2271  published +0.2270  ok
+  pooled fixed k=5, rho=1, all seeds (budget_split_policies.csv) here +0.0199  published +0.0199  ok
+  pooled fixed k=8, rho=1, all seeds (budget_split_policies.csv) here +0.0218  published +0.0218  ok
+  pooled fixed k=12, rho=1, all seeds (budget_split_policies.csv) here +0.0207  published +0.0207  ok
+  pooled fixed k=16, rho=1, all seeds (budget_split_policies.csv) here +0.0217  published +0.0217  ok
+  pooled fixed k=5, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0347  published +0.0347  ok
+  pooled fixed k=8, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0418  published +0.0418  ok
+  pooled fixed k=12, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0455  published +0.0455  ok
+  pooled fixed k=16, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0510  published +0.0510  ok
+
+Confirmation claims per process, pooled over the eight cells, on the 57,600 (run, procedure) pairs both replays hold (shared = end_of_study, sequential = end_of_study_ksweep_seq; LogEI, qNEI and UCB; replay_end_of_study.claims_table):
+  ar1      confirm_k2  false-claim rate shared 0.50% [0.27%, 0.75%] power 59.1% (= end_of_study_claims);  sequential 0.62% [0.27%, 1.00%] power 63.2%
+  ar1      confirm_k4  false-claim rate shared 0.38% [0.12%, 0.67%] power 73.0% (= end_of_study_claims);  sequential 0.52% [0.31%, 0.75%] power 76.4%
+  ar1      standard    false-claim rate shared 16.10% [12.79%, 19.94%] power 100.0% (= end_of_study_claims);  sequential 16.10% [12.79%, 19.94%] power 100.0%
+  bias     confirm_k2  false-claim rate shared 0.52% [0.27%, 0.79%] power 52.1% (= end_of_study_claims);  sequential 0.52% [0.27%, 0.79%] power 52.1%
+  bias     confirm_k4  false-claim rate shared 0.65% [0.40%, 0.94%] power 66.1% (= end_of_study_claims);  sequential 0.65% [0.40%, 0.94%] power 66.1%
+  bias     standard    false-claim rate shared 15.85% [12.62%, 19.50%] power 100.0% (= end_of_study_claims);  sequential 15.85% [12.62%, 19.50%] power 100.0%
+  drift    confirm_k2  false-claim rate shared 0.67% [0.33%, 1.04%] power 52.2% (= end_of_study_claims);  sequential 0.67% [0.38%, 0.98%] power 52.3%
+  drift    confirm_k4  false-claim rate shared 0.48% [0.25%, 0.73%] power 66.4% (= end_of_study_claims);  sequential 0.52% [0.29%, 0.77%] power 66.4%
+  drift    standard    false-claim rate shared 17.75% [14.00%, 21.96%] power 100.0% (= end_of_study_claims);  sequential 17.75% [14.00%, 21.96%] power 100.0%
+  gaussian confirm_k2  false-claim rate shared 0.50% [0.31%, 0.69%] power 50.7% (= end_of_study_claims);  sequential 0.50% [0.31%, 0.69%] power 50.7%
+  gaussian confirm_k4  false-claim rate shared 0.46% [0.27%, 0.71%] power 65.7% (= end_of_study_claims);  sequential 0.46% [0.27%, 0.71%] power 65.7%
+  gaussian standard    false-claim rate shared 15.73% [12.33%, 19.60%] power 100.0% (= end_of_study_claims);  sequential 15.73% [12.33%, 19.60%] power 100.0%
+
+=== code-estimands-10: the input arms' sitting over the assumed look SD (tournament_k5_lcb_rho1_look, pooled over cells) ===
+  look SD    0 output-boba-misclick   cost 0.0679  gain -0.0016  price +0.0124  recovered -2.4% [-15.7%, +11.2%]
+  look SD    0 output-boba-slip       cost 0.1942  gain +0.0620  price +0.0124  recovered +31.9% [+23.9%, +40.9%]
+  look SD  0.1 output-boba-misclick   cost 0.0679  gain -0.0080  price +0.0175  recovered -11.8% [-26.4%, -0.3%]
+  look SD  0.1 output-boba-slip       cost 0.1942  gain +0.0560  price +0.0175  recovered +28.8% [+21.1%, +36.7%]
+  look SD 0.25 output-boba-misclick   cost 0.0679  gain -0.0166  price +0.0243  recovered -24.5% [-44.9%, -10.4%]   (end_of_study, published: -24.5%; reproduced)
+  look SD 0.25 output-boba-slip       cost 0.1942  gain +0.0463  price +0.0243  recovered +23.8% [+15.9%, +31.3%]   (end_of_study, published: +23.8%; reproduced)
+  look SD  0.5 output-boba-misclick   cost 0.0679  gain -0.0259  price +0.0299  recovered -38.2% [-65.2%, -20.3%]
+  look SD  0.5 output-boba-slip       cost 0.1942  gain +0.0346  price +0.0299  recovered +17.8% [+9.6%, +24.8%]
+
+=== code-estimands-9: gross faults (spike sp0.15-20), look-buying rows as now logged (rerun in place at the run's spikes) against the two corrected replays (pooled, recovered share of the deployed cost) ===
+  tournament rows: a spike drawn per look at the run's rate and size; LUCB rows: Gaussian looks at the run's marginal SD sqrt(sigma^2 + p s^2) = 7.75, since lucb_sitting takes only an SD
+  seeds 7-11: hitl_remedies (as logged, corrected in place) -> end_of_study_spikesd (tournament) / hitl_remedies_spikesd (LUCB)
+    lucb_k8_rho0.5                      +42.0% [+30.1%, +52.8%] ->    +42.0% [+30.1%, +52.8%] (Gaussian at SD 7.75)  gain +0.3636 -> +0.3636  price +0.0160 -> +0.0160  cost 0.8652
+    lucb_k8_rho1                        +34.6% [+23.4%, +45.2%] ->    +34.6% [+23.4%, +45.2%] (Gaussian at SD 7.75)  gain +0.2995 -> +0.2995  price +0.0160 -> +0.0160  cost 0.8652
+    tournament_k8_lcb_rho0.5_look       +48.3% [+37.4%, +57.2%] ->    +48.3% [+37.5%, +57.7%] (spikes per look)  gain +0.4177 -> +0.4177  price +0.0143 -> +0.0143  cost 0.8652  (both corrected replays agree)
+    tournament_k8_lcb_rho0.5_post       +34.4% [+22.3%, +45.4%] ->    +34.4% [+22.8%, +45.4%] (spikes per look)  gain +0.2974 -> +0.2974  price +0.0319 -> +0.0319  cost 0.8652  (both corrected replays agree)
+    tournament_k8_lcb_rho1_look         +46.8% [+36.0%, +56.0%] ->    +46.8% [+36.2%, +56.0%] (spikes per look)  gain +0.4052 -> +0.4052  price +0.0143 -> +0.0143  cost 0.8652  (both corrected replays agree)
+    tournament_k8_lcb_rho1_post         +31.9% [+20.4%, +42.8%] ->    +31.9% [+20.0%, +43.3%] (spikes per look)  gain +0.2761 -> +0.2761  price +0.0319 -> +0.0319  cost 0.8652  (both corrected replays agree)
+    tournament_k8_obs_rho0.5_look       +59.6% [+48.3%, +68.9%] ->    +59.6% [+48.7%, +68.7%] (spikes per look)  gain +0.5153 -> +0.5153  price +0.0125 -> +0.0125  cost 0.8652  (both corrected replays agree)
+    tournament_k8_obs_rho0.5_post       +36.8% [+25.9%, +47.0%] ->    +36.8% [+26.3%, +47.0%] (spikes per look)  gain +0.3181 -> +0.3181  price +0.0276 -> +0.0276  cost 0.8652  (both corrected replays agree)
+    tournament_k8_obs_rho1_look         +56.9% [+46.3%, +66.3%] ->    +56.9% [+46.4%, +66.2%] (spikes per look)  gain +0.4926 -> +0.4926  price +0.0125 -> +0.0125  cost 0.8652  (both corrected replays agree)
+    tournament_k8_obs_rho1_post         +36.9% [+26.5%, +46.9%] ->    +36.9% [+26.3%, +47.0%] (spikes per look)  gain +0.3195 -> +0.3195  price +0.0276 -> +0.0276  cost 0.8652  (both corrected replays agree)
+    the 7 rows that buy no look (standard, shortlist, ordinal) identical in hitl_remedies_spikesd: True
+  seeds 12-16: hitl_remedies_heldout (as logged, corrected in place) -> end_of_study_spikesd_heldout (tournament) / hitl_remedies_spikesd_heldout (LUCB)
+    lucb_k4_rho0.5                      +25.9% [+14.3%, +36.6%] ->    +25.9% [+14.3%, +36.6%] (Gaussian at SD 7.75)  gain +0.2290 -> +0.2290  price +0.0119 -> +0.0119  cost 0.8852
+    lucb_k4_rho1                        +23.4% [+11.9%, +35.5%] ->    +23.4% [+11.9%, +35.5%] (Gaussian at SD 7.75)  gain +0.2071 -> +0.2071  price +0.0119 -> +0.0119  cost 0.8852
+    lucb_k8_rho0.5                      +24.7% [+12.9%, +37.1%] ->    +24.7% [+12.9%, +37.1%] (Gaussian at SD 7.75)  gain +0.2190 -> +0.2190  price +0.0189 -> +0.0189  cost 0.8852
+    lucb_k8_rho1                        +24.6% [+13.6%, +35.7%] ->    +24.6% [+13.6%, +35.7%] (Gaussian at SD 7.75)  gain +0.2175 -> +0.2175  price +0.0189 -> +0.0189  cost 0.8852
+    tournament_k4_lcb_rho0.5_look       +34.0% [+23.0%, +44.4%] ->    +34.0% [+22.9%, +44.9%] (spikes per look)  gain +0.3009 -> +0.3009  price +0.0112 -> +0.0112  cost 0.8852  (both corrected replays agree)
+    tournament_k4_lcb_rho0.5_post        +20.3% [+8.7%, +32.0%] ->     +20.3% [+8.9%, +32.7%] (spikes per look)  gain +0.1795 -> +0.1795  price +0.0168 -> +0.0168  cost 0.8852  (both corrected replays agree)
+    tournament_k4_lcb_rho1_look         +31.0% [+21.3%, +41.1%] ->    +31.0% [+20.8%, +41.9%] (spikes per look)  gain +0.2742 -> +0.2742  price +0.0112 -> +0.0112  cost 0.8852  (both corrected replays agree)
+    tournament_k4_lcb_rho1_post          +19.5% [+7.7%, +31.1%] ->     +19.5% [+8.2%, +31.9%] (spikes per look)  gain +0.1724 -> +0.1724  price +0.0168 -> +0.0168  cost 0.8852  (both corrected replays agree)
+    tournament_k4_obs_rho0.5_look       +43.3% [+33.5%, +53.2%] ->    +43.3% [+32.4%, +53.3%] (spikes per look)  gain +0.3831 -> +0.3831  price +0.0040 -> +0.0040  cost 0.8852  (both corrected replays agree)
+    tournament_k4_obs_rho0.5_post        +15.2% [+5.6%, +25.2%] ->     +15.2% [+5.9%, +25.4%] (spikes per look)  gain +0.1343 -> +0.1343  price +0.0094 -> +0.0094  cost 0.8852  (both corrected replays agree)
+    tournament_k4_obs_rho1_look         +35.9% [+26.8%, +45.7%] ->    +35.9% [+27.1%, +45.8%] (spikes per look)  gain +0.3180 -> +0.3180  price +0.0040 -> +0.0040  cost 0.8852  (both corrected replays agree)
+    tournament_k4_obs_rho1_post          +15.0% [+5.5%, +25.2%] ->     +15.0% [+5.8%, +25.4%] (spikes per look)  gain +0.1329 -> +0.1329  price +0.0094 -> +0.0094  cost 0.8852  (both corrected replays agree)
+    tournament_k8_lcb_rho0.5_look       +35.2% [+25.7%, +43.4%] ->    +35.2% [+25.6%, +43.7%] (spikes per look)  gain +0.3118 -> +0.3118  price +0.0156 -> +0.0156  cost 0.8852  (both corrected replays agree)
+    tournament_k8_lcb_rho0.5_post        +16.6% [+6.5%, +27.3%] ->     +16.6% [+6.7%, +27.5%] (spikes per look)  gain +0.1473 -> +0.1473  price +0.0279 -> +0.0279  cost 0.8852  (both corrected replays agree)
+    tournament_k8_lcb_rho1_look         +33.9% [+24.7%, +41.7%] ->    +33.9% [+24.5%, +42.7%] (spikes per look)  gain +0.3003 -> +0.3003  price +0.0156 -> +0.0156  cost 0.8852  (both corrected replays agree)
+    tournament_k8_lcb_rho1_post          +17.5% [+7.5%, +26.8%] ->     +17.5% [+7.7%, +27.4%] (spikes per look)  gain +0.1551 -> +0.1551  price +0.0279 -> +0.0279  cost 0.8852  (both corrected replays agree)
+    tournament_k8_obs_rho0.5_look       +42.1% [+32.9%, +50.3%] ->    +42.1% [+33.2%, +50.4%] (spikes per look)  gain +0.3722 -> +0.3722  price +0.0116 -> +0.0116  cost 0.8852  (both corrected replays agree)
+    tournament_k8_obs_rho0.5_post        +20.6% [+9.8%, +31.1%] ->     +20.6% [+9.9%, +31.9%] (spikes per look)  gain +0.1821 -> +0.1821  price +0.0226 -> +0.0226  cost 0.8852  (both corrected replays agree)
+    tournament_k8_obs_rho1_look         +40.1% [+30.9%, +47.8%] ->    +40.1% [+31.7%, +48.3%] (spikes per look)  gain +0.3547 -> +0.3547  price +0.0116 -> +0.0116  cost 0.8852  (both corrected replays agree)
+    tournament_k8_obs_rho1_post          +19.6% [+7.6%, +32.4%] ->     +19.6% [+7.6%, +32.0%] (spikes per look)  gain +0.1731 -> +0.1731  price +0.0226 -> +0.0226  cost 0.8852  (both corrected replays agree)
+    the 7 rows that buy no look (standard, shortlist, ordinal) identical in hitl_remedies_spikesd_heldout: True
+
+=== The paper's own producers re-run on each replay set (shared = the published outputs) ===
+
+sitting_by_magnitude.run re-run in-process; the shared side against its published outputs:
+  shared   vs review/sitting_by_magnitude_selection.json: 11 summaries, identical
+  gaussian vs review/sitting_by_magnitude_gaussian_selection.json: 11 summaries, identical
+heldout_remedies' k-curve scoring re-run in-process:
+  k-curve frame, shared, against heldout_remedies.load_kcurve: identical
+  the shared side against review/heldout_remedies.csv:
+    derived rule, seeds 12-16                    here -0.006787  published -0.006787  ok
+    k chosen on 7-11 vs derived, seeds 12-16     here +0.023975  published +0.023975  ok
+      its interval, low                          here +0.009169  published +0.009169  ok
+      its interval, high                         here +0.039185  published +0.039185  ok
+    tab:heldout k row, seeds 12-16               here +0.017189  published +0.017189  ok
+      its interval, low                          here +0.001152  published +0.001152  ok
+      its interval, high                         here +0.033490  published +0.033490  ok
+    Holm p over the 41 procedures, max |diff|    here +0.000000  published +0.000000  ok
+    raw p on the test seeds, max |diff|          here +0.000000  published +0.000000  ok
+    k, landscape splits: test_median             here +0.019465  published +0.019465  ok
+    k, landscape splits: test_p2_5               here +0.000474  published +0.000474  ok
+    k, landscape splits: test_p97_5              here +0.034039  published +0.034039  ok
+    k, landscape splits: share_selected_k5_to_16 here +0.999500  published +0.999500  ok
+    k, landscape splits: optimism_mean           here +0.005148  published +0.005148  ok
+    k, landscape splits: optimism_net_of_shift_mean here +0.005148  published +0.005148  ok
+    k, crossed splits: test_median               here +0.017653  published +0.017653  ok
+    k, crossed splits: test_p2_5                 here -0.001599  published -0.001599  ok
+    k, crossed splits: test_p97_5                here +0.036845  published +0.036845  ok
+    k, crossed splits: share_selected_k5_to_16   here +0.999500  published +0.999500  ok
+    k, crossed splits: optimism_mean             here +0.007104  published +0.007104  ok
+    k, crossed splits: optimism_net_of_shift_mean here +0.005865  published +0.005865  ok
+    k, seed split 7-11 -> 12-16: optimism        here +0.007098  published +0.007098  ok
+    k, seed split 7-11 -> 12-16: seed shift      here +0.001238  published +0.001238  ok
+    k, seed split 12-16 -> 7-11: optimism        here +0.001846  published +0.001846  ok
+    k, seed split 12-16 -> 7-11: seed shift      here -0.001238  published -0.001238  ok
+
+=== Every sitting value the paper prints, shared vs sequential (random order) vs sequential (rank order) ===
+Gains of the deployed design at the final trial over the standard process, in units of the achievable improvement; LogEI and qNEI, the four processes, looks at the full idiosyncratic SD. '*' marks a value at a k that differs from the shared one.
+  tab:sittingcell             pooled: held-out gain at the k chosen on seeds 7-11                  k=12  shared +0.0172  random +0.0181  (+0.0009)  rank +0.0144  (-0.0028)
+  tab:sittingcell             pooled: held-out increment over LCB1 at that k                       k=12  shared +0.0172  random +0.0182  (+0.0009)  rank +0.0145  (-0.0028)
+  tab:sittingcell             pooled: k = 12, all seeds                                            k=12  shared +0.0207  random +0.0206  (-0.0001)  rank +0.0193  (-0.0015)
+  tab:sittingcell             0.05sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11  k=3   shared -0.0103  random -0.0103  (+0.0000)  rank -0.0103  (-0.0000)
+  tab:sittingcell             0.05sigma_from_trial_1: held-out increment over LCB1 at that k       k=3   shared +0.0113  random +0.0113  (+0.0000)  rank +0.0112  (-0.0000)
+  tab:sittingcell             0.05sigma_from_trial_1: k = 12, all seeds                            k=12  shared -0.0184  random -0.0187  (-0.0003)  rank -0.0186  (-0.0002)
+  tab:sittingcell             0.05sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11 k=5   shared -0.0138  random -0.0137  (+0.0001)  rank -0.0137  (+0.0001)
+  tab:sittingcell             0.05sigma_from_trial_21: held-out increment over LCB1 at that k      k=5   shared +0.0031  random +0.0032  (+0.0001)  rank +0.0032  (+0.0001)
+  tab:sittingcell             0.05sigma_from_trial_21: k = 12, all seeds                           k=12  shared -0.0199  random -0.0200  (-0.0001)  rank -0.0200  (-0.0001)
+  tab:sittingcell             0.25sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11  k=5   shared -0.0055  random -0.0049* (+0.0007)  rank -0.0058* (-0.0003)
+  tab:sittingcell             0.25sigma_from_trial_1: held-out increment over LCB1 at that k       k=5   shared +0.0072  random +0.0079* (+0.0007)  rank +0.0069* (-0.0003)
+  tab:sittingcell             0.25sigma_from_trial_1: k = 12, all seeds                            k=12  shared -0.0166  random -0.0172  (-0.0006)  rank -0.0177  (-0.0011)
+  tab:sittingcell             0.25sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11 k=5   shared -0.0063  random -0.0030* (+0.0033)  rank -0.0065  (-0.0002)
+  tab:sittingcell             0.25sigma_from_trial_21: held-out increment over LCB1 at that k      k=5   shared +0.0040  random +0.0072* (+0.0033)  rank +0.0037  (-0.0002)
+  tab:sittingcell             0.25sigma_from_trial_21: k = 12, all seeds                           k=12  shared -0.0108  random -0.0114  (-0.0006)  rank -0.0111  (-0.0003)
+  tab:sittingcell             1sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11     k=2   shared +0.0303  random +0.0313  (+0.0009)  rank +0.0314  (+0.0011)
+  tab:sittingcell             1sigma_from_trial_1: held-out increment over LCB1 at that k          k=2   shared +0.0034  random +0.0043  (+0.0009)  rank +0.0044  (+0.0011)
+  tab:sittingcell             1sigma_from_trial_1: k = 12, all seeds                               k=12  shared -0.0099  random -0.0077  (+0.0022)  rank -0.0111  (-0.0012)
+  tab:sittingcell             1sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11    k=16  shared +0.0110  random +0.0068  (-0.0042)  rank +0.0169* (+0.0059)
+  tab:sittingcell             1sigma_from_trial_21: held-out increment over LCB1 at that k         k=16  shared +0.0004  random -0.0038  (-0.0042)  rank +0.0063* (+0.0059)
+  tab:sittingcell             1sigma_from_trial_21: k = 12, all seeds                              k=12  shared +0.0192  random +0.0184  (-0.0007)  rank +0.0173  (-0.0018)
+  tab:sittingcell             5sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11     k=8   shared +0.0576  random +0.0552  (-0.0023)  rank +0.0505  (-0.0071)
+  tab:sittingcell             5sigma_from_trial_1: held-out increment over LCB1 at that k          k=8   shared +0.0120  random +0.0097  (-0.0023)  rank +0.0049  (-0.0071)
+  tab:sittingcell             5sigma_from_trial_1: k = 12, all seeds                               k=12  shared +0.0594  random +0.0596  (+0.0002)  rank +0.0597  (+0.0003)
+  tab:sittingcell             5sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11    k=16  shared +0.2271  random +0.2261  (-0.0011)  rank +0.2117  (-0.0154)
+  tab:sittingcell             5sigma_from_trial_21: held-out increment over LCB1 at that k         k=16  shared +0.2492  random +0.2481  (-0.0011)  rank +0.2338  (-0.0154)
+  tab:sittingcell             5sigma_from_trial_21: k = 12, all seeds                              k=12  shared +0.1630  random +0.1621  (-0.0009)  rank +0.1557  (-0.0073)
+  Sec. 7 / App. H             1sigma_from_trial_1: gain on seeds 7-11 at the k chosen on 12-16     k=2   shared +0.0212  random +0.0225  (+0.0013)  rank +0.0221  (+0.0010)
+  App. H                      1sigma_from_trial_1: median held-out gain over landscape splits            shared +0.0250  random +0.0262  (+0.0012)  rank +0.0266  (+0.0016)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 2, all seeds                                k=2   shared +0.0257  random +0.0269  (+0.0011)  rank +0.0268  (+0.0010)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 3, all seeds                                k=3   shared +0.0220  random +0.0225  (+0.0005)  rank +0.0221  (+0.0001)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 5, all seeds                                k=5   shared +0.0182  random +0.0198  (+0.0016)  rank +0.0190  (+0.0008)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 8, all seeds                                k=8   shared +0.0115  random +0.0111  (-0.0004)  rank +0.0101  (-0.0014)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 12, all seeds                               k=12  shared -0.0099  random -0.0077  (+0.0022)  rank -0.0111  (-0.0012)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 16, all seeds                               k=16  shared -0.0249  random -0.0265  (-0.0016)  rank -0.0291  (-0.0042)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 20, all seeds                               k=20  shared -0.0485  random -0.0524  (-0.0039)  rank -0.0566  (-0.0080)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 25, all seeds                               k=25  shared -0.0771  random -0.0841  (-0.0070)  rank -0.0914  (-0.0143)
+  fig:kcurve (blue) / Sec. 7  1sigma_from_trial_1: k = 30, all seeds                               k=30  shared -0.1251  random -0.1267  (-0.0016)  rank -0.1306  (-0.0054)
+  App. H                      1sigma_from_trial_21: k = 3, all seeds                               k=3   shared +0.0193  random +0.0205  (+0.0012)  rank +0.0201  (+0.0008)
+  App. H                      1sigma_from_trial_21: k = 5, all seeds                               k=5   shared +0.0202  random +0.0201  (-0.0000)  rank +0.0201  (-0.0001)
+  App. H                      1sigma_from_trial_21: k = 8, all seeds                               k=8   shared +0.0170  random +0.0164  (-0.0007)  rank +0.0154  (-0.0017)
+  App. H                      1sigma_from_trial_21: k = 12, all seeds                              k=12  shared +0.0192  random +0.0184  (-0.0007)  rank +0.0173  (-0.0018)
+  Sec. 7 / App. H             pooled k = 12 without 5sigma_from_trial_21, all seeds                k=12  shared +0.0004  random +0.0004  (+0.0000)  rank -0.0002  (-0.0006)
+  App. H                      pooled k = 12 without 5sigma_from_trial_21, seeds 12-16              k=12  shared -0.0020  random -0.0006  (+0.0014)  rank -0.0026  (-0.0006)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 2, all seeds, rho = 1                               k=2   shared +0.0100  random +0.0109  (+0.0009)  rank +0.0112  (+0.0012)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 3, all seeds, rho = 1                               k=3   shared +0.0147  random +0.0147  (-0.0001)  rank +0.0144  (-0.0004)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 5, all seeds, rho = 1                               k=5   shared +0.0199  random +0.0201  (+0.0003)  rank +0.0197  (-0.0001)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 8, all seeds, rho = 1                               k=8   shared +0.0218  random +0.0219  (+0.0001)  rank +0.0200  (-0.0018)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 12, all seeds, rho = 1                              k=12  shared +0.0207  random +0.0206  (-0.0001)  rank +0.0193  (-0.0015)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 16, all seeds, rho = 1                              k=16  shared +0.0217  random +0.0204  (-0.0013)  rank +0.0179  (-0.0038)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 20, all seeds, rho = 1                              k=20  shared +0.0085  random +0.0061  (-0.0025)  rank +0.0020  (-0.0065)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 25, all seeds, rho = 1                              k=25  shared -0.0215  random -0.0240  (-0.0025)  rank -0.0345  (-0.0130)
+  fig:kcurve (grey) / Sec. 7  pooled fixed k = 30, all seeds, rho = 1                              k=30  shared -0.0538  random -0.0534  (+0.0004)  rank -0.0632  (-0.0093)
+  App. E.2                    pooled fixed k = 16, all seeds, rho = 0.5                            k=16  shared +0.0510  random +0.0490  (-0.0020)  rank +0.0458  (-0.0051)
+  tab:heldout                 pooled k chosen on seeds 7-11, held-out gain                         k=12  shared +0.0172  random +0.0181  (+0.0009)  rank +0.0144  (-0.0028)
+  tab:heldout                 pooled k chosen on ten landscapes: median held-out gain over splits        shared +0.0195  random +0.0191  (-0.0004)  rank +0.0174  (-0.0021)
+  Sec. 7 / App. H             derived budget rule, held-out gain                                         shared -0.0068  random -0.0071  (-0.0003)  rank -0.0070  (-0.0003)
+  Sec. 7 / App. H             k chosen on seeds 7-11 minus the derived rule, held-out              k=12  shared +0.0240  random +0.0252  (+0.0012)  rank +0.0215  (-0.0025)
+  random order: over the 54 values at the same k, the largest move is 0.00698 (1sigma_from_trial_1: k = 25, all seeds: -0.07711 -> -0.08409); sign changes 1; values at a re-chosen k: 4
+      the five largest: 1sigma_from_trial_1: k = 25, all seeds -0.0771 -> -0.0841; 1sigma_from_trial_21: held-out increment over LCB1 at that k +0.0004 -> -0.0038; 1sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11 +0.0110 -> +0.0068; 1sigma_from_trial_1: k = 20, all seeds -0.0485 -> -0.0524; pooled fixed k = 25, all seeds, rho = 1 -0.0215 -> -0.0240
+      sign change: 1sigma_from_trial_21: held-out increment over LCB1 at that k +0.0004 -> -0.0038
+      re-chosen k: 0.25sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11: k=5 -0.0055 -> k=3 -0.0049 (+0.0007)
+      re-chosen k: 0.25sigma_from_trial_1: held-out increment over LCB1 at that k: k=5 +0.0072 -> k=3 +0.0079 (+0.0007)
+      re-chosen k: 0.25sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11: k=5 -0.0063 -> k=3 -0.0030 (+0.0033)
+      re-chosen k: 0.25sigma_from_trial_21: held-out increment over LCB1 at that k: k=5 +0.0040 -> k=3 +0.0072 (+0.0033)
+  rank order: over the 54 values at the same k, the largest move is 0.01541 (5sigma_from_trial_21: held-out increment over LCB1 at that k: +0.24920 -> +0.23379); sign changes 1; values at a re-chosen k: 4
+      the five largest: 5sigma_from_trial_21: held-out increment over LCB1 at that k +0.2492 -> +0.2338; 5sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11 +0.2271 -> +0.2117; 1sigma_from_trial_1: k = 25, all seeds -0.0771 -> -0.0914; pooled fixed k = 25, all seeds, rho = 1 -0.0215 -> -0.0345; pooled fixed k = 30, all seeds, rho = 1 -0.0538 -> -0.0632
+      sign change: pooled k = 12 without 5sigma_from_trial_21, all seeds +0.0004 -> -0.0002
+      re-chosen k: 0.25sigma_from_trial_1: held-out gain at the k chosen on seeds 7-11: k=5 -0.0055 -> k=3 -0.0058 (-0.0003)
+      re-chosen k: 0.25sigma_from_trial_1: held-out increment over LCB1 at that k: k=5 +0.0072 -> k=3 +0.0069 (-0.0003)
+      re-chosen k: 1sigma_from_trial_21: held-out gain at the k chosen on seeds 7-11: k=16 +0.0110 -> k=3 +0.0169 (+0.0059)
+      re-chosen k: 1sigma_from_trial_21: held-out increment over LCB1 at that k: k=16 +0.0004 -> k=3 +0.0063 (+0.0059)
+
+Other quantities the text quotes (shared / random / rank):
+  1sigma_from_trial_1    shared k  2/ 2: held-out +0.030 [+0.012, +0.050] on 14/20, share 11.6% [5%, 18%], Holm p over k 0.029, over all cells 0.228; two-way [+0.010, +0.053]; reverse +0.021 [+0.011, +0.031]; splits choose k=2 in 87.9%, median +0.025 [+0.009, +0.038]; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.012; per acquisition logei +0.011, qnei +0.050; over LCB1 +0.003 [-0.003, +0.009], price 0.018
+  1sigma_from_trial_1    random k  2/ 2: held-out +0.031 [+0.013, +0.051] on 14/20, share 12.0% [5%, 19%], Holm p over k 0.022, over all cells 0.164; two-way [+0.011, +0.054]; reverse +0.022 [+0.012, +0.033]; splits choose k=2 in 90.1%, median +0.026 [+0.010, +0.040]; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.015; per acquisition logei +0.011, qnei +0.051; over LCB1 +0.004 [-0.002, +0.010], price 0.018
+  1sigma_from_trial_1    rank   k  2/ 2: held-out +0.031 [+0.013, +0.051] on 14/20, share 12.0% [5%, 19%], Holm p over k 0.025, over all cells 0.194; two-way [+0.011, +0.055]; reverse +0.022 [+0.012, +0.032]; splits choose k=2 in 94.5%, median +0.027 [+0.011, +0.040]; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.016; per acquisition logei +0.011, qnei +0.052; over LCB1 +0.004 [-0.001, +0.010], price 0.018
+  5sigma_from_trial_21   shared k 16/20: held-out +0.227 [+0.147, +0.321] on 19/20, share 40.8% [30%, 50%], Holm p over k 0.000, over all cells 0.001; two-way [+0.128, +0.349]; reverse +0.209 [+0.143, +0.276]; splits choose k=16 in 51.7%, median +0.222 [+0.150, +0.292]; per process gaussian +0.210, bias +0.109, drift +0.346, ar1 +0.244; per acquisition logei +0.198, qnei +0.257; over LCB1 +0.249 [+0.164, +0.339], price 0.033
+  5sigma_from_trial_21   random k 16/20: held-out +0.226 [+0.142, +0.320] on 18/20, share 40.6% [29%, 50%], Holm p over k 0.000, over all cells 0.002; two-way [+0.123, +0.346]; reverse +0.208 [+0.141, +0.276]; splits choose k=16 in 49.2%, median +0.222 [+0.149, +0.293]; per process gaussian +0.210, bias +0.109, drift +0.327, ar1 +0.258; per acquisition logei +0.189, qnei +0.263; over LCB1 +0.248 [+0.162, +0.340], price 0.033
+  5sigma_from_trial_21   rank   k 16/20: held-out +0.212 [+0.128, +0.305] on 18/20, share 38.1% [25%, 48%], Holm p over k 0.000, over all cells 0.005; two-way [+0.109, +0.331]; reverse +0.195 [+0.124, +0.272]; splits choose k=16 in 66.1%, median +0.207 [+0.129, +0.280]; per process gaussian +0.210, bias +0.109, drift +0.339, ar1 +0.189; per acquisition logei +0.170, qnei +0.253; over LCB1 +0.234 [+0.145, +0.324], price 0.033
+  5sigma_from_trial_1    shared k  8/ 5: held-out +0.058 [+0.017, +0.102] on 17/20, share 7.6% [2%, 13%], Holm p over k 0.029, over all cells 0.228; two-way [+0.013, +0.108]; reverse +0.060 [+0.022, +0.099]; splits choose k=8 in 27.8%, median +0.051 [+0.017, +0.086]; per process gaussian +0.040, bias +0.035, drift +0.079, ar1 +0.076; per acquisition logei +0.026, qnei +0.089; over LCB1 +0.012 [-0.017, +0.042], price 0.016
+  5sigma_from_trial_1    random k  8/ 2: held-out +0.055 [+0.017, +0.096] on 16/20, share 7.3% [2%, 12%], Holm p over k 0.050, over all cells 0.332; two-way [+0.012, +0.108]; reverse +0.050 [+0.013, +0.085]; splits choose k=8 in 34.5%, median +0.053 [+0.019, +0.088]; per process gaussian +0.040, bias +0.035, drift +0.082, ar1 +0.064; per acquisition logei +0.020, qnei +0.090; over LCB1 +0.010 [-0.020, +0.041], price 0.016
+  5sigma_from_trial_1    rank   k  8/ 2: held-out +0.050 [+0.011, +0.093] on 16/20, share 6.7% [2%, 11%], Holm p over k 0.077, over all cells 0.551; two-way [+0.006, +0.100]; reverse +0.056 [+0.016, +0.094]; splits choose k=8 in 19.9%, median +0.050 [+0.017, +0.083]; per process gaussian +0.040, bias +0.035, drift +0.070, ar1 +0.057; per acquisition logei +0.022, qnei +0.079; over LCB1 +0.005 [-0.025, +0.036], price 0.016
+  1sigma_from_trial_21   shared k 16/ 5: held-out +0.011 [-0.012, +0.033] on 13/20, share 7.4% [-9%, 20%], Holm p over k 0.884, over all cells 1.000; two-way [-0.022, +0.050]; reverse +0.023 [+0.010, +0.037]; splits choose k=16 in 20.1%, median +0.016 [-0.003, +0.030]; per process gaussian -0.014, bias +0.013, drift +0.014, ar1 +0.030; per acquisition logei -0.010, qnei +0.032; over LCB1 +0.000 [-0.023, +0.022], price 0.033
+  1sigma_from_trial_21   random k 16/ 3: held-out +0.007 [-0.017, +0.029] on 11/20, share 4.6% [-12%, 18%], Holm p over k 0.865, over all cells 1.000; two-way [-0.025, +0.043]; reverse +0.022 [+0.011, +0.034]; splits choose k=16 in 13.5%, median +0.018 [-0.004, +0.030]; per process gaussian -0.014, bias +0.013, drift +0.011, ar1 +0.017; per acquisition logei -0.019, qnei +0.033; over LCB1 -0.004 [-0.027, +0.018], price 0.033
+  1sigma_from_trial_21   rank   k  3/ 5: held-out +0.017 [+0.005, +0.030] on 15/20, share 11.4% [3%, 19%], Holm p over k 0.172, over all cells 0.730; two-way [-0.000, +0.036]; reverse +0.022 [+0.009, +0.035]; splits choose k=3 in 44.9%, median +0.018 [-0.000, +0.030]; per process gaussian +0.014, bias +0.018, drift +0.012, ar1 +0.023; per acquisition logei -0.000, qnei +0.034; over LCB1 +0.006 [-0.005, +0.019], price 0.012
+  pooled k = 12 without 5sigma_from_trial_21 (shared): all seeds +0.000 [-0.012, +0.012], seeds 12-16 -0.002 [-0.016, +0.011]
+  pooled k = 12 without 5sigma_from_trial_21 (random): all seeds +0.000 [-0.012, +0.012], seeds 12-16 -0.001 [-0.015, +0.013]
+  pooled k = 12 without 5sigma_from_trial_21 (rank): all seeds -0.000 [-0.012, +0.011], seeds 12-16 -0.003 [-0.016, +0.010]
+  pooled (shared): landscape splits (sitting_by_magnitude's 2,000 folds) choose k in 5..16 in 100.0%; two-way interval of the held-out k=12 [-0.003, +0.039]
+  pooled (random): landscape splits (sitting_by_magnitude's 2,000 folds) choose k in 5..16 in 100.0%; two-way interval of the held-out k=12 [-0.003, +0.041]
+  pooled (rank): landscape splits (sitting_by_magnitude's 2,000 folds) choose k in 5..16 in 99.8%; two-way interval of the held-out k=12 [-0.006, +0.035]
+  5sigma_from_trial_21, gaussian error alone (sitting_by_magnitude --processes gaussian; identical under every process model): k 16 held-out +0.210 [+0.099, +0.348] on 16/20
+  k-curve (shared): pooled k chosen fixed_k12 on 7-11 / fixed_k8 on 12-16; held-out gain +0.017 [+0.001, +0.033]; derived rule held-out -0.007 [-0.022, +0.006], +0.024 [+0.009, +0.039] below the chosen k
+      landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.019 [+0.000, +0.034], chosen k in 5..16 in 99.95% (outside in 0.05%); crossed median +0.018 [-0.002, +0.037], chosen k in 5..16 in 99.95% (outside in 0.05%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0059, +0.0031, +0.0051, +0.0059 (range +0.003 to +0.006)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1429 adj 1.000; fixed_k3 14/20 p 0.0484 adj 0.678; fixed_k5 13/20 p 0.0107 adj 0.246; fixed_k8 13/20 p 0.0121 adj 0.266; fixed_k12 14/20 p 0.0484 adj 0.678; fixed_k16 13/20 p 0.1054 adj 1.000; fixed_k20 10/20 p 0.4749 adj 1.000; fixed_k25 7/20 p 0.1140 adj 1.000; fixed_k30 4/20 p 0.0009 adj 0.029; derived 10/20 p 0.9273 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.059), lucb_k8_rho0.5 (+0.037)
+  k-curve (random): pooled k chosen fixed_k12 on 7-11 / fixed_k8 on 12-16; held-out gain +0.018 [+0.001, +0.035]; derived rule held-out -0.007 [-0.022, +0.006], +0.025 [+0.010, +0.040] below the chosen k
+      landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.019 [-0.000, +0.034], chosen k in 5..16 in 99.95% (outside in 0.05%); crossed median +0.019 [-0.005, +0.037], chosen k in 5..16 in 99.95% (outside in 0.05%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0032, +0.0040, +0.0050, +0.0048 (range +0.003 to +0.005)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.0897 adj 0.908; fixed_k3 14/20 p 0.0400 adj 0.616; fixed_k5 13/20 p 0.0083 adj 0.208; fixed_k8 13/20 p 0.0121 adj 0.266; fixed_k12 13/20 p 0.0532 adj 0.638; fixed_k16 13/20 p 0.1650 adj 1.000; fixed_k20 11/20 p 0.6742 adj 1.000; fixed_k25 7/20 p 0.0826 adj 0.908; fixed_k30 5/20 p 0.0020 adj 0.064; derived 11/20 p 0.9563 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), lucb_k8_rho0.5 (+0.037)
+  k-curve (rank): pooled k chosen fixed_k12 on 7-11 / fixed_k5 on 12-16; held-out gain +0.014 [-0.001, +0.031]; derived rule held-out -0.007 [-0.022, +0.006], +0.021 [+0.006, +0.037] below the chosen k
+      landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.017 [-0.003, +0.032], chosen k in 5..16 in 99.75% (outside in 0.25%); crossed median +0.015 [-0.003, +0.035], chosen k in 5..16 in 99.80% (outside in 0.20%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0073, +0.0078, +0.0055, +0.0071 (range +0.005 to +0.008)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1054 adj 1.000; fixed_k3 14/20 p 0.0532 adj 0.638; fixed_k5 13/20 p 0.0094 adj 0.236; fixed_k8 13/20 p 0.0172 adj 0.344; fixed_k12 13/20 p 0.1054 adj 1.000; fixed_k16 11/20 p 0.2943 adj 1.000; fixed_k20 10/20 p 0.8983 adj 1.000; fixed_k25 6/20 p 0.0153 adj 0.337; fixed_k30 2/20 p 0.0002 adj 0.008; derived 11/20 p 0.9854 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.067), lucb_k8_rho0.5 (+0.037)
+
+The chosen k, shared / random / rank (seeds 7-11 choose and 12-16 score, and the reverse):
+  pooled                   chosen on 7-11 : 12 / 12 / 12
+  pooled                   chosen on 12-16:  8 /  8 /  5   [rank: k 8 -> 5; on the choosing seeds k=5 leads k=8 by +0.0024; best all-seed gain of any size in the cell +0.0200]
+  0.05sigma_from_trial_1   chosen on 7-11 :  3 /  3 /  3
+  0.05sigma_from_trial_1   chosen on 12-16:  5 /  5 /  5
+  0.05sigma_from_trial_21  chosen on 7-11 :  5 /  5 /  5
+  0.05sigma_from_trial_21  chosen on 12-16:  3 /  3 /  3
+  0.25sigma_from_trial_1   chosen on 7-11 :  5 /  3 /  3   [random: k 5 -> 3; on the choosing seeds k=3 leads k=5 by +0.0002; best all-seed gain of any size in the cell -0.0049]   [rank: k 5 -> 3; on the choosing seeds k=3 leads k=5 by +0.0004; best all-seed gain of any size in the cell -0.0054]
+  0.25sigma_from_trial_1   chosen on 12-16:  3 /  3 /  3
+  0.25sigma_from_trial_21  chosen on 7-11 :  5 /  3 /  5   [random: k 5 -> 3; on the choosing seeds k=3 leads k=5 by +0.0003; best all-seed gain of any size in the cell -0.0033]
+  0.25sigma_from_trial_21  chosen on 12-16:  3 /  3 /  3
+  1sigma_from_trial_1      chosen on 7-11 :  2 /  2 /  2
+  1sigma_from_trial_1      chosen on 12-16:  2 /  2 /  2
+  1sigma_from_trial_21     chosen on 7-11 : 16 / 16 /  3   [rank: k 16 -> 3; on the choosing seeds k=3 leads k=16 by +0.0059; best all-seed gain of any size in the cell +0.0201]
+  1sigma_from_trial_21     chosen on 12-16:  5 /  3 /  5   [random: k 5 -> 3; on the choosing seeds k=3 leads k=5 by +0.0019; best all-seed gain of any size in the cell +0.0205]
+  5sigma_from_trial_1      chosen on 7-11 :  8 /  8 /  8
+  5sigma_from_trial_1      chosen on 12-16:  5 /  2 /  2   [random: k 5 -> 2; on the choosing seeds k=2 leads k=5 by +0.0005; best all-seed gain of any size in the cell +0.0671]   [rank: k 5 -> 2; on the choosing seeds k=2 leads k=5 by +0.0015; best all-seed gain of any size in the cell +0.0623]
+  5sigma_from_trial_21     chosen on 7-11 : 16 / 16 / 16
+  5sigma_from_trial_21     chosen on 12-16: 20 / 20 / 20
+  pooled, heldout_remedies chosen on 7-11 : 12 / 12 / 12
+  pooled, heldout_remedies chosen on 12-16:  8 /  8 /  5
+
+=== The paper's sitting numbers, simultaneous (shared) vs sequential ===
+Held-out gain (seeds 12-16) at the k chosen on seeds 7-11, sitting_by_magnitude.analyse_cell (same bootstrap draws as tab:sittingcell):
+  1sigma_from_trial_1    shared k= 2/ 2 +0.030 [+0.012, +0.050] on 14/20, Holm p 0.029, share of the cost 11.6%; gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.012
+  1sigma_from_trial_1    random k= 2/ 2 +0.031 [+0.013, +0.051] on 14/20, Holm p 0.022, share of the cost 12.0%; gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.015
+  1sigma_from_trial_1    rank   k= 2/ 2 +0.031 [+0.013, +0.051] on 14/20, Holm p 0.025, share of the cost 12.0%; gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.016
+  5sigma_from_trial_21   shared k=16/20 +0.227 [+0.147, +0.321] on 19/20, Holm p 0.000, share of the cost 40.8%; gaussian +0.210, bias +0.109, drift +0.346, ar1 +0.244
+  5sigma_from_trial_21   random k=16/20 +0.226 [+0.142, +0.320] on 18/20, Holm p 0.000, share of the cost 40.6%; gaussian +0.210, bias +0.109, drift +0.327, ar1 +0.258
+  5sigma_from_trial_21   rank   k=16/20 +0.212 [+0.128, +0.305] on 18/20, Holm p 0.000, share of the cost 38.1%; gaussian +0.210, bias +0.109, drift +0.339, ar1 +0.189
+  1sigma_from_trial_21   shared k=16/ 5 +0.011 [-0.012, +0.033] on 13/20, Holm p 0.884, share of the cost 7.4%; gaussian -0.014, bias +0.013, drift +0.014, ar1 +0.030
+  1sigma_from_trial_21   random k=16/ 3 +0.007 [-0.017, +0.029] on 11/20, Holm p 0.865, share of the cost 4.6%; gaussian -0.014, bias +0.013, drift +0.011, ar1 +0.017
+  1sigma_from_trial_21   rank   k= 3/ 5 +0.017 [+0.005, +0.030] on 15/20, Holm p 0.172, share of the cost 11.4%; gaussian +0.014, bias +0.018, drift +0.012, ar1 +0.023
+  5sigma_from_trial_1    shared k= 8/ 5 +0.058 [+0.017, +0.102] on 17/20, Holm p 0.029, share of the cost 7.6%; gaussian +0.040, bias +0.035, drift +0.079, ar1 +0.076
+  5sigma_from_trial_1    random k= 8/ 2 +0.055 [+0.017, +0.096] on 16/20, Holm p 0.050, share of the cost 7.3%; gaussian +0.040, bias +0.035, drift +0.082, ar1 +0.064
+  5sigma_from_trial_1    rank   k= 8/ 2 +0.050 [+0.011, +0.093] on 16/20, Holm p 0.077, share of the cost 6.7%; gaussian +0.040, bias +0.035, drift +0.070, ar1 +0.057
+  5sigma_from_trial_21 k=16, gaussian error alone, seeds 12-16 (either process; sitting_by_magnitude --processes gaussian, its draws): +0.210 [+0.099, +0.348]
+  random order: largest move of a gain the paper prints, at the same k, 0.0070 (1sigma_from_trial_1: k = 25, all seeds: -0.0771 -> -0.0841), sign changes 1 of 54; the chosen k changes in 4 of 18 (cell, seed direction) choices, the new size leading the old by at most 0.0019 on the seeds that chose it: 0.25sigma_from_trial_1 on 7-11: 5 -> 3; 0.25sigma_from_trial_21 on 7-11: 5 -> 3; 1sigma_from_trial_21 on 12-16: 5 -> 3; 5sigma_from_trial_1 on 12-16: 5 -> 2
+  rank order: largest move of a gain the paper prints, at the same k, 0.0154 (5sigma_from_trial_21: held-out increment over LCB1 at that k: +0.2492 -> +0.2338), sign changes 1 of 54; the chosen k changes in 4 of 18 (cell, seed direction) choices, the new size leading the old by at most 0.0059 on the seeds that chose it: pooled on 12-16: 8 -> 5; 0.25sigma_from_trial_1 on 7-11: 5 -> 3; 1sigma_from_trial_21 on 7-11: 16 -> 3; 5sigma_from_trial_1 on 12-16: 5 -> 2
+  derived budget rule, held-out (shared): -0.007 [-0.022, +0.006], +0.024 [+0.009, +0.039] below the pooled k chosen on seeds 7-11 (fixed_k12)
+  derived budget rule, held-out (random): -0.007 [-0.022, +0.006], +0.025 [+0.010, +0.040] below the pooled k chosen on seeds 7-11 (fixed_k12)
+  derived budget rule, held-out (rank): -0.007 [-0.022, +0.006], +0.021 [+0.006, +0.037] below the pooled k chosen on seeds 7-11 (fixed_k12)
+Pooled k-curve over magnitudes, onsets and the four processes, all seeds (the shared values are budget_split_policies*.csv's, checked above):
+  k= 5  rho=1: shared +0.020, sequential random +0.020, rank +0.020;  rho=0.5: shared +0.035, sequential random +0.035, rank +0.033
+  k= 8  rho=1: shared +0.022, sequential random +0.022, rank +0.020;  rho=0.5: shared +0.042, sequential random +0.041, rank +0.039
+  k=12  rho=1: shared +0.021, sequential random +0.021, rank +0.019;  rho=0.5: shared +0.046, sequential random +0.043, rank +0.042
+  k=16  rho=1: shared +0.022, sequential random +0.020, rank +0.018;  rho=0.5: shared +0.051, sequential random +0.049, rank +0.046
+  k=12 without 5sigma from trial 21 (shared; sitting_by_magnitude's draws): all seeds +0.000 [-0.012, +0.012], seeds 12-16 -0.002 [-0.016, +0.011]
+  k=12 without 5sigma from trial 21 (random; sitting_by_magnitude's draws): all seeds +0.000 [-0.012, +0.012], seeds 12-16 -0.001 [-0.015, +0.013]
+  k=12 without 5sigma from trial 21 (rank; sitting_by_magnitude's draws): all seeds -0.000 [-0.012, +0.011], seeds 12-16 -0.003 [-0.016, +0.010]

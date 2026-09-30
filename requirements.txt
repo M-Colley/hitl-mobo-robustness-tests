@@ -1,5 +1,8 @@
 --extra-index-url https://pypi.anaconda.org/lightgbm-packages/simple
 
+# Floors. The exact environment the simulations ran in is pinned in
+# requirements-eval.txt (BoTorch 0.18.2.dev23 at commit eea35f51a, numpy 2.5.3,
+# scipy 1.18.1, Python 3.12.9).
 numpy>=2.5.3
 pandas>=3.0.5
 scikit-learn>=1.9.0

@@ -6,6 +6,15 @@ paper cannot drift from the sweep, and re-running after more seeds land updates
 the paper by rebuilding rather than by editing.
 
   python scripts/make_boba_paper_tables.py --analysis output-boba/analysis
+
+A missing input is fatal for every table that paper/main.tex inputs (directly or
+through a wrapper such as benchmarks_wrapper.tex): the script exits non-zero
+and names the table and the file, instead of skipping it and leaving a stale
+.tex in place. A partial table (an arm's rows, a block) counts as missing too.
+On a machine without the git-ignored arms, --allow-missing restores the old
+behaviour (skip with a message and keep the old file) for those tables:
+
+  python scripts/make_boba_paper_tables.py --analysis output-boba/analysis --allow-missing
 """
 from __future__ import annotations
 
@@ -79,13 +88,60 @@ def _p_fdr(p: float) -> str:
     return "$<$0.001" if p < 0.001 else f"{p:.3f}"
 
 
+# The tables paper/main.tex inputs, by stem; main() fills it from the paper. A
+# table in it whose input is missing stops the run (see _missing), unless
+# ALLOW_MISSING. Called directly (tests), the functions keep the old skip.
+REQUIRED: set[str] = set()
+ALLOW_MISSING = False
+WRITTEN: set[str] = set()
+INPUT_RE = re.compile(r"\\input\{tables/([^}]+)\}")
+
+
+def paper_table_inputs(tex: Path, tables_dir: Path | None = None) -> set[str]:
+    """Stems of every tables/<stem> that ``tex`` inputs, following wrappers one level at a time.
+
+    Comment lines are ignored. A wrapper (tables/benchmarks_wrapper.tex) that
+    itself inputs a generated table is read too, so that table counts as input.
+    """
+    tables_dir = tables_dir or tex.parent / "tables"
+    found: set[str] = set()
+    todo = [tex]
+    while todo:
+        path = todo.pop()
+        # Drop comments: an unescaped % to the end of its line.
+        text = "\n".join(re.sub(r"(?<!\\)%.*$", "", line)
+                         for line in path.read_text(encoding="utf-8").splitlines())
+        for stem in INPUT_RE.findall(text):
+            stem = stem[:-4] if stem.endswith(".tex") else stem
+            if stem not in found:
+                found.add(stem)
+                child = tables_dir / f"{stem}.tex"
+                if child.is_file():
+                    todo.append(child)
+    return found
+
+
+def _missing(table: str, what) -> None:
+    """An input of ``table`` is missing: fatal if the paper inputs the table, a message otherwise."""
+    msg = f"{table}.tex: input {what} is missing"
+    if table in REQUIRED and not ALLOW_MISSING:
+        raise SystemExit(f"{msg}. paper/main.tex inputs this table, so it is not skipped; "
+                         "pass --allow-missing to skip it and keep the old file.")
+    print(f"skipped {msg}")
+
+
 def write(path: Path, body: str) -> None:
     # A negative number in a text-mode cell prints with a hyphen, which is
     # shorter than the plus sign in the same column. Only a minus directly
     # before a digit and directly after a cell boundary, a bracket or a space
     # is touched, so exponents (7.2e-01), ranges (2-3) and "--" are left alone.
     body = re.sub(r"(?<=[&\[ ])-(?=\d)", "$-$", body)
-    path.write_text(body.rstrip() + "\n", encoding="utf-8")
+    _write_raw(path, body.rstrip() + "\n")
+
+
+def _write_raw(path: Path, text: str) -> None:
+    path.write_text(text, encoding="utf-8")
+    WRITTEN.add(path.stem)
     print(f"wrote {path}")
 
 
@@ -128,7 +184,10 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
     # deployed excess is computed independently by both.
     decomp = analysis / "regret_decomposition.csv"
     dec = None
-    if decomp.is_file():
+    if not decomp.is_file():
+        # Without it the table would lose its final-trial search and selection blocks.
+        _missing("dose_response", decomp)
+    else:
         dec = pd.read_csv(decomp)
         dec = dec[(dec["error_model"] == "pooled") & (dec["jitter_std"] != "pooled")].copy()
         dec["jitter_std"] = dec["jitter_std"].astype(float)
@@ -179,6 +238,7 @@ error present & {columns} \\\\
 def table_mediation(analysis: Path, out: Path) -> None:
     mediator = pd.read_csv(analysis / "mediator_model.csv")
     if mediator.empty:
+        _missing("mediation", f"{analysis / 'mediator_model.csv'} (empty)")
         return
     order = ["frag_at_c", "log_noise", "log_opt_z", "noise_x_opt_z", "log_tail_ratio",
              "ruggedness", "dim"]
@@ -334,7 +394,7 @@ def table_noise_diagnostic(analysis: Path, out: Path) -> None:
     surrogate has seen. The point of the table is the top-left corner."""
     path = analysis / "gp_noise_diagnostic.csv"
     if not path.exists():
-        print(f"skipping noise diagnostic: {path} not present")
+        _missing("noise_diagnostic", path)
         return
     table = pd.read_csv(path)
     table = table[table["jitter_iteration"] == 0]
@@ -379,6 +439,9 @@ def table_noise_anchor(path: Path, out: Path,
         pipeline_sigma = {}
         if path.exists():
             pipeline_sigma = pd.read_csv(path).set_index("dataset")["sigma_f"].to_dict()
+        else:
+            # Without it the two corrected rows keep the as-logged sigma_f.
+            _missing("noise_anchor", path)
         rows = []
         for dataset, basis, label, rescale in (
                 ("ehmi", "pipeline", "as logged", False),
@@ -413,8 +476,11 @@ study & ratings & $\\sigma_f$ & noise / $\\sigma_f$ & upper bound \\\\
 \\bottomrule
 \\end{{tabular}}""")
         return
+    # The archival estimates are the table the paper prints; without them the
+    # older one-row-per-study table below is written, which is a different table.
+    _missing("noise_anchor", archival)
     if not path.exists():
-        print(f"skipping noise anchor: {path} not present")
+        _missing("noise_anchor", path)
         return
     table = pd.read_csv(path)
     rows = []
@@ -447,19 +513,23 @@ def table_manipulation(extensions: Path, main: Path, out: Path, stats_path: Path
     metric = "auc_simple_regret_excess_true_postonset_per_iter"
     files = sorted(glob.glob(str(extensions / "*" / "evaluation" / "paired_excess_metrics.csv")))
     if not files:
-        print(f"skipping manipulation table: nothing under {extensions}")
+        _missing("manipulation", f"{extensions}/*/evaluation/paired_excess_metrics.csv")
         return
     frame = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
     ladder = sorted(glob.glob(str(main / "levy_10" / "evaluation" / "paired_excess_metrics.csv")))
     if ladder:
         top = pd.read_csv(ladder[0])
         frame = pd.concat([frame, top[top["seed"] <= frame["seed"].max()]], ignore_index=True)
+    else:
+        _missing("manipulation", main / "levy_10" / "evaluation" / "paired_excess_metrics.csv")
     # The bump ladder (opt_z and spike volume held fixed across dimensions)
     # lives in its own run directory; the paragraph that rests on it quotes it,
     # so the table carries it too.
     fixed = sorted(glob.glob(str(Path("output-boba-ladder") / "*" / "evaluation" / "paired_excess_metrics.csv")))
     if fixed:
         frame = pd.concat([frame] + [pd.read_csv(f) for f in fixed], ignore_index=True)
+    else:
+        _missing("manipulation", "output-boba-ladder/*/evaluation/paired_excess_metrics.csv")
     frame = frame[(~frame["acquisition"].isin(["random", "sobol"]))
                   & (frame["error_model"] == "gaussian")
                   & (frame["jitter_iteration"] == 0)]
@@ -498,23 +568,22 @@ def table_arm_by_acquisition(path: Path, out: Path, name: str) -> None:
     For the incumbent arm this is the whole finding: UCB and qNEI never read
     best_f, so they must move by exactly zero, and how far the others move is
     how much of their measured fragility was the incumbent's rather than theirs.
+
+    Read from compare_boba_arms.py's arm_contrast_by_acquisition.csv, which is
+    already sorted by mean_delta and carries the share rule (share_removed is
+    NaN where the reference is near zero or negative on some landscape), so the
+    table prints '--' there and the Delta column is the result.
     """
-    pairs = path / "arm_contrast_pairs.csv"
-    if not pairs.exists():
-        print(f"skipping {name} by-acquisition: {pairs} not present")
+    by_acq = path / "arm_contrast_by_acquisition.csv"
+    if not by_acq.exists():
+        _missing(f"{name}_by_acquisition", by_acq)
         return
-    frame = pd.read_csv(pairs)
-    grouped = (
-        frame.groupby("acquisition")
-        .agg(ref=("ref", "mean"), trt=("trt", "mean"))
-        .assign(delta=lambda d: d["trt"] - d["ref"],
-                share=lambda d: 1.0 - d["trt"] / d["ref"])
-        .sort_values("delta")
-    )
+    grouped = pd.read_csv(by_acq).sort_values("mean_delta", kind="stable")
     rows = [
-        f"{PRETTY_ACQ.get(acq, acq)} & {row['ref']:.3f} & {row['trt']:.3f} & "
-        f"{row['delta']:+.3f} & {row['share'] * 100:+.0f}\\% \\\\"
-        for acq, row in grouped.iterrows()
+        f"{PRETTY_ACQ.get(row['acquisition'], row['acquisition'])} & {row['mean_reference']:.3f} & "
+        f"{row['mean_treatment']:.3f} & {row['mean_delta']:+.3f} & "
+        + ("--" if pd.isna(row["share_removed"]) else f"{row['share_removed'] * 100:+.0f}\\%") + " \\\\"
+        for _, row in grouped.iterrows()
     ]
     write(out / f"{name}_by_acquisition.tex", f"""\\begin{{tabular}}{{lrrrr}}
 \\toprule
@@ -526,17 +595,24 @@ acquisition & reference & treatment & $\\Delta$ & share removed \\\\
 
 
 def table_arm_contrast(path: Path, out: Path, name: str) -> None:
+    """One arm against the main sweep, cell by cell (compare_boba_arms.py).
+
+    share_removed is NaN where compare_boba_arms suppresses the share (reference
+    below its near-zero threshold, or negative on some landscape); the cell
+    prints '--' and the Delta column carries the absolute change.
+    """
     summary_path = path / "arm_contrast_summary.csv"
     if not summary_path.exists():
-        print(f"skipping {name}: {summary_path} not present yet")
+        _missing(name, summary_path)
         return
     summary = pd.read_csv(summary_path)
     rows = []
     for _, row in summary.sort_values(["jitter_iteration", "jitter_std"]).iterrows():
+        share = "--" if pd.isna(row["share_removed"]) else f"{row['share_removed'] * 100:+.0f}\\%"
         rows.append(
             f"{row['jitter_std']:g} & {int(row['jitter_iteration'])} & "
             f"{row['mean_reference']:.3f} & {row['mean_treatment']:.3f} & "
-            f"{row['mean_delta']:+.3f} & {row['share_removed'] * 100:+.0f}\\% & "
+            f"{row['mean_delta']:+.3f} & {share} & "
             f"{row['cohens_dz']:.2f} & {_p_fdr(row['wilcoxon_p_fdr'])} \\\\"
         )
     write(out / f"{name}.tex", f"""\\begin{{tabular}}{{rrrrrrrr}}
@@ -560,7 +636,7 @@ def table_multiobjective(mo_analysis: Path, out: Path) -> None:
     """
     path = mo_analysis / "mo_vs_scalar.csv"
     if not path.is_file():
-        print(f"skipped multiobjective table: {path} not found")
+        _missing("multiobjective", path)
         return
     cross = pd.read_csv(path)
     onsets = sorted(cross["jitter_iteration"].unique())
@@ -603,7 +679,7 @@ error & \\multicolumn{{1}}{{c}}{{from trial 1}} & \\multicolumn{{1}}{{c}}{{from 
 def table_multiobjective_acquisitions(mo_analysis: Path, out: Path) -> None:
     path = mo_analysis / "mo_acquisitions.csv"
     if not path.is_file():
-        print(f"skipped multiobjective acquisition table: {path} not found")
+        _missing("multiobjective_acquisitions", path)
         return
     acq = pd.read_csv(path)
     pretty = {"qehvi": "qEHVI", "qnehvi": "qNEHVI",
@@ -634,14 +710,15 @@ def _matched_dose_grid(runs: Path, error_model: str, acquisitions: list[str],
     zero. This reads the per-run pairs and applies the arm's own restriction.
     """
     import glob
-    import json
 
-    meta = runs / "run_metadata.json"
     files = sorted(glob.glob(str(runs / "*" / "evaluation" / "paired_excess_metrics.csv")))
-    if not meta.is_file() or not files:
+    if not files:
         return None
-    opt_z = {k: float(v["opt_z"]) for k, v in
-             json.loads(meta.read_text(encoding="utf-8"))["landscape_stats"].items()}
+    # opt_z from the tracked statistics file, which the arm's run_metadata.json
+    # copies: that file is git-ignored (it records local paths), and a checkout
+    # must be able to regenerate these tables without it.
+    opt_z = {k: float(v["opt_z"]) for k, v in bb.load_stats(bb.DEFAULT_STATS_PATH).items()
+             if isinstance(v, dict) and "opt_z" in v}
     frame = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
     frame = frame[(frame["error_model"] == error_model)
                   & frame["acquisition"].isin(acquisitions)
@@ -672,12 +749,20 @@ def _dose_grid(analysis) -> pd.DataFrame | None:
     )
 
 
+def _dose_input(analysis) -> str:
+    """What _dose_grid reads, for a missing-input message."""
+    if isinstance(analysis, dict):
+        return f"{analysis['runs']}/*/evaluation/paired_excess_metrics.csv"
+    return str(Path(analysis) / "cell_means.csv")
+
+
 def table_budget(arms: dict[str, Path], out: Path) -> None:
     """Onset held at the same FRACTION of the budget, so budget is the only change."""
     rows, columns = [], None
     for label, analysis in arms.items():
         grid = _dose_grid(analysis)
         if grid is None:
+            _missing("budget", f"{_dose_input(analysis)} (row {label})")
             continue
         columns = columns or [f"${c:g}\\sigma$" for c in grid.columns]
         early, late = grid.index.min(), grid.index.max()
@@ -696,7 +781,7 @@ def table_budget(arms: dict[str, Path], out: Path) -> None:
         )
         rows.append(r"\midrule")
     if not rows:
-        print("skipped budget table: no arms found")
+        _missing("budget", "every arm")
         return
     rows = rows[:-1]
     write(out / "budget.tex", f"""\\begin{{tabular}}{{ll{'r' * len(columns)}}}
@@ -714,6 +799,7 @@ def table_arm_dose(arms: dict[str, Path], out: Path, name: str, first_column: st
     for label, analysis in arms.items():
         grid = _dose_grid(analysis)
         if grid is None:
+            _missing(name, f"{_dose_input(analysis)} (row {label})")
             continue
         columns = columns or [f"${c:g}\\sigma$" for c in grid.columns]
         early, late = grid.index.min(), grid.index.max()
@@ -725,7 +811,7 @@ def table_arm_dose(arms: dict[str, Path], out: Path, name: str, first_column: st
             f" & from trial {int(late) + 1} & " + " & ".join(f"{v * 100:.1f}" for v in grid.loc[late]) + r" \\"
         )
     if not rows:
-        print(f"skipped {name} table: no arms found")
+        _missing(name, "every arm")
         return
     write(out / f"{name}.tex", f"""\\begin{{tabular}}{{ll{'r' * len(columns)}}}
 \\toprule
@@ -736,38 +822,70 @@ def table_arm_dose(arms: dict[str, Path], out: Path, name: str, first_column: st
 \\end{{tabular}}""")
 
 
-def table_fitted_companion(path: Path, out: Path) -> None:
-    if not path.is_file():
-        print(f"skipped fitted companion table: {path} not found")
-        return
-    cross = pd.read_csv(path)
+def _fitted_block(cross: pd.DataFrame, digits: int) -> tuple[list[str], list[float], int, int]:
+    """One block of tab:fitted: a row per arm, the magnitudes from each onset."""
     order = ["synthetic", "fitted", "fitted no-aug"]
     pretty = {"synthetic": "known functions (20)", "fitted": "fitted oracle (3)",
               "fitted no-aug": "fitted, no augmentation (3)"}
+    missing = [a for a in order if a not in set(cross["arm"])]
+    if missing:
+        raise ValueError(f"fitted companion input lacks the arm(s) {missing}")
     onsets = sorted(cross["jitter_iteration"].unique())
     early, late = onsets[0], onsets[-1]
     rows = []
     for arm in order:
         block = cross[cross.arm == arm]
-        if block.empty:
-            continue
         cells = []
-        for mag in sorted(block["sigma_multiple"].unique()):
-            r = block[(block.sigma_multiple == mag) & (block.jitter_iteration == early)]
-            cells.append(f"{r['mean'].iloc[0] * 100:.0f}" if len(r) else "--")
-        for mag in sorted(block["sigma_multiple"].unique()):
-            r = block[(block.sigma_multiple == mag) & (block.jitter_iteration == late)]
-            cells.append(f"{r['mean'].iloc[0] * 100:.0f}" if len(r) else "--")
+        for onset in (early, late):
+            for mag in sorted(block["sigma_multiple"].unique()):
+                r = block[(block.sigma_multiple == mag) & (block.jitter_iteration == onset)]
+                # + 0.0 so a value that rounds to zero from below prints as 0, not -0.
+                cells.append(f"{round(r['mean'].iloc[0] * 100, digits) + 0.0:.{digits}f}" if len(r) else "--")
         rows.append(f"{pretty.get(arm, arm)} & " + " & ".join(cells) + r" \\")
-    mags = sorted(cross["sigma_multiple"].unique())
+    return rows, sorted(cross["sigma_multiple"].unique()), int(early), int(late)
+
+
+def table_fitted_companion(path: Path, out: Path, achievable: Path | None = None) -> None:
+    """tab:fitted: the fitted-oracle arm beside the exact one, in two units.
+
+    ``path`` (fitted_vs_synthetic.csv) is the fraction of the floor gap, the gap
+    between the optimum and a same-budget model-free floor, with the fitted
+    oracle's optimum and floor formed within each run seed's own oracle.
+    ``achievable`` (fitted_vs_synthetic_achievable.csv, analyse_fitted_companion.py)
+    is the share of the achievable improvement, the paper's headline unit: opt_z
+    for the exact objective and, for a fitted oracle, each seed's estimated
+    optimum less its mean over the search box. When given, it is the first block,
+    with one decimal because its values are small, and the floor-gap block
+    follows as the second view.
+    """
+    if not path.is_file():
+        _missing("fitted_companion", path)
+        return
+    if achievable is not None and not achievable.is_file():
+        _missing("fitted_companion", achievable)
+        achievable = None
+    floor_rows, mags, early, late = _fitted_block(pd.read_csv(path), 0)
+    n_col = 1 + 2 * len(mags)
+    blocks = []
+    if achievable is not None:
+        ach_rows, ach_mags, a_early, a_late = _fitted_block(pd.read_csv(achievable), 1)
+        if (ach_mags, a_early, a_late) != (mags, early, late):
+            raise ValueError("the two fitted-companion inputs cover different magnitudes or onsets")
+        blocks.append(f"\\multicolumn{{{n_col}}}{{l}}{{\\emph{{share of the achievable improvement}}}} \\\\\n"
+                      + "\n".join(ach_rows))
+        blocks.append(f"\\multicolumn{{{n_col}}}{{l}}{{\\emph{{fraction of the floor gap}}}} \\\\\n"
+                      + "\n".join(floor_rows))
+    else:
+        blocks.append("\n".join(floor_rows))
     header = " & ".join(f"${m:g}\\sigma$" for m in mags)
+    body = "\n\\addlinespace\n".join(blocks)
     write(out / "fitted_companion.tex", f"""\\begin{{tabular}}{{l{'r' * (2 * len(mags))}}}
 \\toprule
-& \\multicolumn{{{len(mags)}}}{{c}}{{error from trial 1}} & \\multicolumn{{{len(mags)}}}{{c}}{{error from trial 21}} \\\\
+& \\multicolumn{{{len(mags)}}}{{c}}{{error from trial {early + 1}}} & \\multicolumn{{{len(mags)}}}{{c}}{{error from trial {late + 1}}} \\\\
 \\cmidrule(lr){{2-{1 + len(mags)}}} \\cmidrule(lr){{{2 + len(mags)}-{1 + 2 * len(mags)}}}
 arm & {header} & {header} \\\\
 \\midrule
-{chr(10).join(rows)}
+{body}
 \\bottomrule
 \\end{{tabular}}""")
 
@@ -781,7 +899,7 @@ def table_confirmatory(analysis: Path, out: Path) -> None:
     """
     path = analysis / "confirmatory_results.json"
     if not path.is_file():
-        print(f"skipped confirmatory table: {path} not found")
+        _missing("confirmatory", path)
         return
     result = json.loads(path.read_text(encoding="utf-8"))["results"]
 
@@ -828,11 +946,20 @@ def table_descriptor_regression(analysis: Path, out: Path) -> None:
     reg = analysis / "descriptor_regression.csv"
     vif = analysis / "descriptor_vif.csv"
     if not reg.is_file() or not vif.is_file():
-        print("skipped descriptor table: analysis outputs not found")
+        _missing("descriptors", f"{reg} or {vif}")
         return
     fit = pd.read_csv(reg)
     fit = fit[fit["model"] == "primary"]
-    inflation = pd.read_csv(vif).set_index("term")["vif"].to_dict()
+    vifs = pd.read_csv(vif)
+    # The primary model's own design, one row per term (analyse_boba_robustness
+    # also records VIFs with sparsity and skew added, under another design).
+    if "design" in vifs:
+        vifs = vifs[vifs["design"] == "primary"]
+    if "kind" in vifs:
+        vifs = vifs[vifs["kind"] == "continuous"]
+    if vifs["term"].duplicated().any():
+        raise ValueError(f"{vif}: more than one VIF per term in the primary design")
+    inflation = vifs.set_index("term")["vif"].to_dict()
     order = ["log_noise", "log_opt_z", "log_tail_ratio", "ruggedness", "dim"]
     rows = []
     for term in order:
@@ -888,7 +1015,7 @@ def table_inputerror_dose(analysis: Path, out: Path) -> None:
     """
     path = analysis / "inputerror_dose.csv"
     if not path.is_file():
-        print(f"skipped input-error dose table: {path} not found")
+        _missing("inputerror_dose", path)
         return
     dose = pd.read_csv(path)
     onsets = sorted(dose["jitter_iteration"].unique())
@@ -927,10 +1054,13 @@ def table_inputerror_mechanism(analysis: Path, out: Path) -> None:
     """
     mech_path = analysis / "inputerror_mechanism.csv"
     if not mech_path.is_file():
-        print(f"skipped input-error mechanism table: {mech_path} not found")
+        _missing("inputerror_mechanism", mech_path)
         return
     mech = pd.read_csv(mech_path)
     mis_path = analysis / "inputerror_mislabel.csv"
+    if not mis_path.is_file():
+        # Without it the mislabelling column is dropped.
+        _missing("inputerror_mechanism", mis_path)
     mis = pd.read_csv(mis_path) if mis_path.is_file() else mech.iloc[0:0]
     columns = [("floor", mech, "floor"), ("actual", mech, "logged"),
                ("proposed", mech, "unnoticed"), ("proposed - actual", mis, "mislabelling")]
@@ -964,7 +1094,7 @@ def table_inputerror_deployed(analysis: Path, out: Path) -> None:
     """
     path = analysis / "inputerror_deployed.csv"
     if not path.is_file():
-        print(f"skipped input-error deployed table: {path} not found")
+        _missing("inputerror_deployed", path)
         return
     dep = pd.read_csv(path)
     onsets = sorted(dep["jitter_iteration"].unique())
@@ -995,7 +1125,7 @@ def table_inputerror_main(analysis: Path, out: Path) -> None:
     paths = {k: analysis / f"inputerror_{k}.csv" for k in ("dose", "mechanism", "mislabel")}
     missing = [str(p) for p in paths.values() if not p.is_file()]
     if missing:
-        print(f"skipped input-error main table: {missing[0]} not found")
+        _missing("inputerror_main", missing[0])
         return
     dose, mech, mis = (pd.read_csv(paths[k]) for k in ("dose", "mechanism", "mislabel"))
     onsets = sorted(dose["jitter_iteration"].unique())
@@ -1056,7 +1186,7 @@ def table_extra_runs(analysis: Path, out: Path, tolerance: float = 0.01) -> None
     """
     path = analysis / "extra_runs.csv"
     if not path.is_file():
-        print(f"skipped extra-runs table: {path} not found")
+        _missing("extra_runs", path)
         return
     e = pd.read_csv(path)
     e = e[(e.tolerance == tolerance) & (e.error_model == "gaussian") & (e.variant.fillna("") == "")]
@@ -1085,7 +1215,7 @@ def table_extra_runs_full(arms: dict[str, tuple[Path, str, str]], out: Path,
     for label, (analysis, model, variant) in arms.items():
         path = analysis / "extra_runs.csv"
         if not path.is_file():
-            print(f"skipped extra-runs row {label}: {path} not found")
+            _missing("extra_runs_full", f"{path} (row {label})")
             continue
         e = pd.read_csv(path)
         # The bias runs carry their offset in the variant ("bias0.25"), one per
@@ -1095,13 +1225,14 @@ def table_extra_runs_full(arms: dict[str, tuple[Path, str, str]], out: Path,
         e = e[(e.tolerance == tolerance) & (e.error_model == model) & wanted
               & (e.k == k) & (e.jitter_iteration == e.jitter_iteration.min())]
         if e.empty:
+            _missing("extra_runs_full", f"the {model} rows (k = {k}, tolerance {tolerance:g}) of {path} (row {label})")
             continue
         cells = [_extra_cell(e[e.jitter_std == mag]) for mag in sorted(e.jitter_std.unique())]
         unit = "sigma" if model in PRETTY_ERROR else "box"
         blocks.append((unit, PRETTY_ERROR.get(model, f"\\textsc{{{label}}}") if variant == "" else f"\\textsc{{{model}}}, logged",
                        sorted(e.jitter_std.unique()), cells))
     if not blocks:
-        print("skipped full extra-runs table: nothing found")
+        _missing("extra_runs_full", "every arm")
         return
     rows = []
     for unit in ("sigma", "box"):
@@ -1146,24 +1277,42 @@ ADAPTATION_GROUPS = [
         ("idea-hold", "the first five proposals rated late"),
         ("idea-shiplcb", "a ship-rule acquisition"),
     ]),
-    ("fitted oracles, rating error", [
+    ("fitted oracles, rating error ($n = 3$, seeds 7--16)", [
         ("fitted-rep10", "first ten proposals rated twice"),
     ]),
 ]
+# At or below this many datasets a pooled row is reported by the range of its
+# per-dataset recoveries, never with a bootstrap interval or a star (AGENTS.md:
+# with three or four clusters, report the count and do not star results).
+FEW_CLUSTERS = 4
 
 
 def _recovered_cell(r: pd.Series) -> str:
-    """Pooled share recovered with its landscape-bootstrap interval, in percent."""
+    """Pooled share recovered with its landscape-bootstrap interval, in percent.
+
+    With FEW_CLUSTERS datasets or fewer the bracket is the range of the
+    per-dataset recoveries, labelled as such, and no star is printed. A share
+    that analyse_boba_adaptations suppresses (its reference cost near zero or
+    negative on some landscape) prints as '--'.
+    """
     if pd.isna(r["pooled_recovered"]):
         return "--"
-    lo, hi = r["pooled_recovered_lo"], r["pooled_recovered_hi"]
+    suppressed = r.get("pooled_recovered_suppressed", "")
+    if isinstance(suppressed, str) and suppressed:
+        return "--"
+    few = (not pd.isna(r.get("pooled_n_landscapes", float("nan")))
+           and int(r["pooled_n_landscapes"]) <= FEW_CLUSTERS)
+    if few:
+        lo, hi = r["pooled_recovered_range_lo"], r["pooled_recovered_range_hi"]
+    else:
+        lo, hi = r["pooled_recovered_lo"], r["pooled_recovered_hi"]
     # Star on the test the analysis actually ran, a BH-corrected Wilcoxon over
     # the per-landscape gains, NOT on "the interval excludes zero". The two
     # disagreed on two rows, one of them resting on a bootstrap lower bound of
     # +0.0004 from 2000 resamples of 20 landscapes, inside its own Monte Carlo
     # error.
     q = r.get("pooled_wilcoxon_p_fdr", r.get("pooled_wilcoxon_p", float("nan")))
-    mark = r"$^{*}$" if (not pd.isna(q) and q < 0.05) else ""
+    mark = r"$^{*}$" if (not few and not pd.isna(q) and q < 0.05) else ""
     # round() then + 0.0, so a value of -0.3% prints as "0", not a "-0" that reads as a typo.
     pct = lambda v: round(v * 100) + 0.0
 
@@ -1176,7 +1325,8 @@ def _recovered_cell(r: pd.Series) -> str:
             return f"{p:.{min(2, max(1, -exponent))}f}"
         return f"{pct(v):.0f}"
 
-    interval = "" if pd.isna(lo) else f" {{\\scriptsize [{bound(lo)}, {bound(hi)}]}}"
+    label = "range " if few else ""
+    interval = "" if pd.isna(lo) else f" {{\\scriptsize {label}[{bound(lo)}, {bound(hi)}]}}"
     value = pct(r["pooled_recovered"])
     return f"{value:+.0f}{mark}{interval}" if value != 0 else f"0{mark}{interval}"
 
@@ -1186,15 +1336,33 @@ SHORTLIST_ARMS = [
     ("output-boba-spike", "gross faults"),
     ("output-boba-ceiling", "capped scale"),
 ]
+# The capped scale ties the top rating in almost every run, and the standard
+# rule ships the earliest tied design. review_checks/tie_break.py re-scores the
+# same replay with the reference's tie broken uniformly at random.
+SHORTLIST_TIES = Path("output-boba") / "analysis" / "review" / "tie_break" / "replayed_remedies_deployed.csv"
+# The gross-fault and capped-scale arms share their clean twins (the same seeds,
+# acquisitions and landscapes without error), so they have one price.
+FAULT_ARMS = ("output-boba-spike", "output-boba-ceiling")
+
+
+def _share_cell(r: pd.Series) -> str:
+    lo, hi = r["recovered_lo"], r["recovered_hi"]
+    interval = "" if pd.isna(lo) else f" {{\\scriptsize $[{lo * 100:.0f},{hi * 100:.0f}]$}}"
+    return f"${r['recovered'] * 100:.0f}\\%$" + interval
 
 
 def table_shortlist(analysis: Path, out: Path, root: Path | None = None) -> None:
     """What a shortlist recovers, and what the same runs recover by rank.
 
-    Both are read from replay_hitl_remedies.py's own recovery files, one per
-    arm, so the table cannot drift from the replay that produced it. The
-    shortlist row at m = 1 IS the cautious ship rule, which is what makes the
-    column readable: everything above it is what the wider deliverable buys.
+    Read from replay_hitl_remedies.py's own recovery files, one per arm, so the
+    table cannot drift from the replay that produced it. The shortlist row at
+    m = 1 is the zero-trial ship rule by the posterior mean less one latent SD,
+    which is what makes the column readable: everything above it is what the
+    wider deliverable buys. The capped-scale column is repeated with the
+    reference's tie at the cap broken uniformly at random (tie_break.py), and
+    the last two columns are each procedure's price without error in units of
+    the achievable improvement: on the main sweep, and on the fault arms, which
+    share their clean twins.
     """
     root = root or Path(".")
     NL = chr(10)
@@ -1207,32 +1375,58 @@ def table_shortlist(analysis: Path, out: Path, root: Path | None = None) -> None
     for arm_dir, label in SHORTLIST_ARMS:
         path = root / arm_dir / "analysis" / "hitl_remedies" / "hitl_remedies_recovery.csv"
         if not path.is_file():
-            print(f"skipped shortlist table: {path} not found")
+            _missing("shortlist", path)
             return
         frame = pd.read_csv(path)
         frame = frame[frame["error_model"] == "pooled"].set_index("procedure")
         columns.append(label)
         blocks[label] = frame
+    ties_path = root / SHORTLIST_TIES
+    ties = None
+    if not ties_path.is_file():
+        _missing("shortlist", ties_path)
+    else:
+        t = pd.read_csv(ties_path)
+        t = t[(t["arm"] == "output-boba-ceiling") & (t["subdir"] == "hitl_remedies")
+              & (t["convention"] == "uniform") & (t["error_model"] == "pooled")]
+        if t["procedure"].duplicated().any():
+            raise ValueError(f"{ties_path}: more than one uniform-tie row per procedure for the capped arm")
+        ties = t.set_index("procedure")
+    arm_label = dict(SHORTLIST_ARMS)
+    fault_blocks = [blocks[arm_label[a]] for a in FAULT_ARMS]
     rows = []
     for proc, label in procedures:
         cells = []
         for column in columns:
             block = blocks[column]
-            if proc not in block.index:
-                cells.append("--")
-                continue
-            r = block.loc[proc]
-            lo, hi = r["recovered_lo"], r["recovered_hi"]
-            interval = "" if pd.isna(lo) else f" {{\\scriptsize $[{lo * 100:.0f},{hi * 100:.0f}]$}}"
-            cells.append(f"${r['recovered'] * 100:.0f}\\%$" + interval)
+            cells.append(_share_cell(block.loc[proc]) if proc in block.index else "--")
+        if ties is not None:
+            cells.append(_share_cell(ties.loc[proc]) if proc in ties.index else "--")
+        main_price = blocks["main sweep"].loc[proc, "price"] if proc in blocks["main sweep"].index else float("nan")
+        fault = [b.loc[proc, "price"] for b in fault_blocks if proc in b.index]
+        if len(fault) == len(fault_blocks) and max(fault) - min(fault) > 1e-9:
+            raise ValueError(f"{proc}: the fault arms' prices differ ({fault}); they no longer share clean twins")
+        cells.append("--" if pd.isna(main_price) else f"{main_price:.3f}")
+        cells.append(f"{fault[0]:.3f}" if fault else "--")
         rows.append(f"{label} & " + " & ".join(cells) + " \\\\")
-    header = " & ".join(columns)
+    share_cols = columns + (["capped, random ties"] if ties is not None else [])
+    n = len(share_cols)
+
+    def stacked(label: str) -> str:
+        # Two short lines instead of one long one: the seven columns must fit the
+        # text width, and a header wider than its cells is what overflows.
+        first, _, rest = label.partition(" ")
+        return f"\\shortstack{{{first}\\\\{rest}}}" if rest else label
+
+    header = " & ".join(stacked(c) for c in share_cols) + " & main & faults"
     body = NL.join(rows)
-    tex = (f"\\begin{{tabular}}{{l{'r' * len(columns)}}}{NL}\\toprule{NL}"
+    tex = (f"\\begin{{tabular}}{{l{'r' * (n + 2)}}}{NL}\\toprule{NL}"
+           f"& \\multicolumn{{{n}}}{{c}}{{share of the cost of error recovered}} & "
+           f"\\multicolumn{{2}}{{c}}{{price}} \\\\{NL}"
+           f"\\cmidrule(lr){{2-{n + 1}}} \\cmidrule(lr){{{n + 2}-{n + 3}}}{NL}"
            f"deliverable & {header} \\\\{NL}\\midrule{NL}{body}{NL}\\bottomrule{NL}"
            f"\\end{{tabular}}{NL}")
-    (out / "shortlist.tex").write_text(tex, encoding="utf-8")
-    print(f"wrote {out / 'shortlist.tex'}")
+    _write_raw(out / "shortlist.tex", tex)
 
 
 def table_adaptations(analysis: Path, out: Path) -> None:
@@ -1243,18 +1437,23 @@ def table_adaptations(analysis: Path, out: Path) -> None:
     adaptation recovers, with its landscape-bootstrap interval (a star when the BH-corrected
     Wilcoxon p is below 0.05), and the price the adaptation pays when there is no
     error, in percent of the achievable improvement. Negative recovery means
-    the adapted process does worse under error than the standard one. The
-    fitted-oracle datasets have no achievable-improvement scale, so no price.
+    the adapted process does worse under error than the standard one. Each
+    dataset is on the scale its arm names (analyse_boba_adaptations.ARMS): opt_z
+    for the landscapes and, for the fitted-oracle row, each archival dataset's
+    fitted achievable improvement; that row has three datasets, so its bracket
+    is the range of the per-dataset recoveries (FEW_CLUSTERS).
     """
     path = analysis / "adaptations_recovery.csv"
     if not path.is_file():
-        print(f"skipped adaptations table: {path} not found")
+        _missing("adaptations", path)
         return
     c = pd.read_csv(path)
     rows = []
     for group, members in ADAPTATION_GROUPS:
         body = []
         for arm, label in members:
+            if arm not in set(c["arm"]):
+                _missing("adaptations", f"arm {arm!r} in {path} (row {label!r})")
             cells, prices = [], []
             for response in ("trajectory", "deployed"):
                 block = c[(c.arm == arm) & (c.response == response)]
@@ -1264,7 +1463,7 @@ def table_adaptations(analysis: Path, out: Path) -> None:
                     continue
                 r = block.iloc[0]
                 cells.append(_recovered_cell(r))
-                prices.append("--" if arm.startswith("fitted") else f"{r['pooled_price'] * 100:+.1f}")
+                prices.append(f"{r['pooled_price'] * 100:+.1f}")
             if cells == ["--", "--"]:
                 continue
             body.append(f"{label} & " + " & ".join(cells + prices) + r" \\")
@@ -1274,7 +1473,7 @@ def table_adaptations(analysis: Path, out: Path) -> None:
             rows.append(f"\\multicolumn{{5}}{{l}}{{{group}}} \\\\")
             rows.extend(body)
     if not rows:
-        print("skipped adaptations table: no completed arm")
+        _missing("adaptations", "every arm")
         return
     write(out / "adaptations.tex", f"""\\begin{{tabular}}{{lrrrr}}
 \\toprule
@@ -1298,7 +1497,7 @@ def table_pilot_frag(analysis: Path, out: Path) -> None:
     """
     path = analysis / "pilot_frag_summary.csv"
     if not path.is_file():
-        print(f"skipped pilot-frag table: {path} not found")
+        _missing("pilot_frag", path)
         return
     s = pd.read_csv(path, dtype={"k": str, "sigma_e": str})
 
@@ -1325,6 +1524,16 @@ frag computed from & pooled & pooled & $1\\sigma$ & $5\\sigma$ \\\\
 \\end{{tabular}}""")
 
 
+# Every table this script writes, by stem.
+PRODUCED = {
+    "dose_response", "mediation", "currency", "acquisitions", "benchmarks", "noise_diagnostic", "noise_anchor",
+    "manipulation", "known_noise", "incumbent", "known_noise_by_acquisition", "incumbent_by_acquisition",
+    "multiobjective", "multiobjective_acquisitions", "budget", "instrument", "robust", "extra_runs",
+    "adaptations", "shortlist", "pilot_frag", "extra_runs_full", "fitted_companion", "confirmatory",
+    "descriptors", "inputerror_dose", "inputerror_mechanism", "inputerror_deployed", "inputerror_main",
+}
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -1339,8 +1548,31 @@ def main(argv: list[str] | None = None) -> None:
                         default=Path("output-boba-mo/analysis"))
     parser.add_argument("--out", type=Path, default=Path("paper/tables"))
     parser.add_argument("--stats-path", type=Path, default=bb.DEFAULT_STATS_PATH)
+    parser.add_argument("--paper", type=Path, default=SCRIPT_DIR.parent / "paper" / "main.tex",
+                        help="the paper whose \\input{tables/...} decide which tables must be complete")
+    parser.add_argument("--allow-missing", action="store_true",
+                        help="skip a table whose input is missing and keep its old file, even if the paper "
+                             "inputs it (a checkout without the git-ignored arms)")
     args = parser.parse_args(argv)
 
+    global ALLOW_MISSING
+    ALLOW_MISSING = bool(args.allow_missing)
+    REQUIRED.clear()
+    WRITTEN.clear()
+    try:
+        if args.paper.is_file():
+            REQUIRED.update(paper_table_inputs(args.paper))
+        elif not ALLOW_MISSING:
+            raise SystemExit(f"{args.paper} not found: it decides which tables must be complete "
+                             "(pass --paper, or --allow-missing)")
+        _make_all(args)
+    finally:
+        # The policy is main()'s; a table function called on its own keeps the old skip.
+        REQUIRED.clear()
+        ALLOW_MISSING = False
+
+
+def _make_all(args: argparse.Namespace) -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     table_dose_response(args.analysis, args.out)
     table_mediation(args.analysis, args.out)
@@ -1390,7 +1622,8 @@ def main(argv: list[str] | None = None) -> None:
         "slip, logged": (Path("output-boba-slip-actual/analysis"), "slip", "rec-actual"),
         "misclick": (Path("output-boba-misclick/analysis"), "misclick", ""),
     }, args.out)
-    table_fitted_companion(Path("output-fitted/analysis/fitted_vs_synthetic.csv"), args.out)
+    table_fitted_companion(Path("output-fitted/analysis/fitted_vs_synthetic.csv"), args.out,
+                           achievable=Path("output-fitted/analysis/fitted_vs_synthetic_achievable.csv"))
     # The SENSITIVITY run, not the one planned in advance: that run is
     # void on a control failure, so it has no per-claim verdict. Section text
     # and caption both say so.
@@ -1402,6 +1635,16 @@ def main(argv: list[str] | None = None) -> None:
     table_inputerror_mechanism(Path("output-boba-slip/analysis"), args.out)
     table_inputerror_deployed(Path("output-boba-slip/analysis"), args.out)
     table_inputerror_main(Path("output-boba-slip/analysis"), args.out)
+
+    # Every table the paper inputs that this script makes must have been written
+    # now; the others (a static wrapper, sitting_by_magnitude.tex from its own
+    # producer) are only checked to exist.
+    stale = sorted(t for t in REQUIRED & PRODUCED if t not in WRITTEN)
+    absent = sorted(t for t in REQUIRED - PRODUCED if not (args.paper.parent / "tables" / f"{t}.tex").is_file())
+    if stale:
+        print(f"not rewritten in this run (inputs missing, --allow-missing): {stale}")
+    if absent:
+        raise SystemExit(f"paper/main.tex inputs tables that do not exist and this script does not make: {absent}")
 
 
 if __name__ == "__main__":

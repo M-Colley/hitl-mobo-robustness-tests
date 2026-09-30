@@ -1,0 +1,7 @@
+acquisition,dataset,max_abs_excess_auc,max_abs_excess_final,runs
+random,bump_d11,0.0,0.0,80
+random,bump_d4,0.0,0.0,80
+random,bump_d7,0.0,0.0,80
+sobol,bump_d11,0.0,0.0,80
+sobol,bump_d4,0.0,0.0,80
+sobol,bump_d7,0.0,0.0,80

@@ -30,18 +30,42 @@ standard run's (column prefix_identical).
 
 The rating noise s of the new trials
 ------------------------------------
-Error shared by every trial of one sitting cancels when designs are compared, so
-only the idiosyncratic part enters:
-    gaussian, bias, drift   s = sigma                     (bias and the slow ramp are shared)
-    ar1                     s = sigma * sqrt(1 - rho_ar^2) (the innovation; the state is shared)
+--sitting-process shared (the default, and the model of every headline number):
+the sitting is modelled as simultaneous. Error shared by every trial of one
+sitting cancels when designs are compared, so only the idiosyncratic part enters:
+    gaussian, bias, drift   s = sigma                     (the bias and the drift ramp are held fixed)
+    ar1                     s = sigma * sqrt(1 - rho_ar^2) (the innovation; the AR state is held fixed)
+    spike                   s = sigma, plus a spike of SD s_sp with probability p drawn
+                            explicitly per look, (p, s_sp) read from the run's variant
+                            suffix sp<p>-<s_sp> (which names the spike SD actually used,
+                            scaled or fixed); a caller that takes only an SD gets the
+                            marginal sqrt(sigma^2 + p * s_sp^2)
     clean twin              s = 0
     slip, misclick          s = --slip-look-sd (0.25) in the noisy AND the clean twin:
                             the system renders the RECORDED design, so no slip
                             enters, and the rating noise belongs to the procedure,
-                            not to the error under study.
+                            not to the error under study. The rating in these arms is
+                            otherwise exact, so this SD is an assumption, not a
+                            property of the fault.
+--sitting-process sequential: the looks are trials T-k+1..T of the same rater, so the
+drift ramp and the AR(1) state go on moving through the sitting exactly as the
+simulator defines them (bo_sensor_error_simulation.apply_sensor_error):
+    drift   e_t = sigma * (t - t0) / (T - t0) + rho * sigma * z
+    ar1     e_t = rho_ar * e_{t-1} + rho * sigma * sqrt(1 - rho_ar^2) * z, started from the
+            run's own logged error at the last searched trial (error_magnitude); the
+            first post-onset trial, if it falls in the sitting, is a stationary draw
+gaussian, bias, spike and the input arms are unchanged (bias is constant, so it
+cancels between looks as before). --sitting-order random (default) presents the
+candidates in a random order drawn per run, rank presents them best-ranked first.
+rho scales only the fresh draws z, never the ramp or the carried state. The fresh
+draws are the shared model's draws, attached to the same candidate, so the two
+processes differ by the ramp and the carried state alone. Confirmation's 2k trials
+follow the same process in their counterbalanced order.
+
 Draws come from a generator seeded by the run file's name and the procedure, so a
 replay is reproducible, independent of --workers, and the variants of one
-procedure (candidate rule, rho, winner rule) share their draws.
+procedure (candidate rule, rho, winner rule) share their draws. The presentation
+order and the spikes have streams of their own, so neither moves the Gaussian draws.
 
 Scores and summaries
 --------------------
@@ -55,12 +79,15 @@ its own summarise() -- by arm x procedure x error model x magnitude x onset.
 
     python scripts/replay_end_of_study.py --workers 5
     python scripts/replay_end_of_study.py --summary-only
+    python scripts/replay_end_of_study.py --sitting-process sequential --output-dir <a fresh directory>
+    python scripts/replay_end_of_study.py --arms output-boba-spike --variants sp0.15-20 --error-models spike
 """
 from __future__ import annotations
 
 import argparse
 import dataclasses
 import json
+import re
 import sys
 import time
 import warnings
@@ -89,9 +116,18 @@ from botorch.models.transforms.outcome import Standardize  # noqa: E402
 from gpytorch.mlls import ExactMarginalLogLikelihood  # noqa: E402
 
 RESPONSE_MODELS = ("gaussian", "bias", "drift", "ar1", "spike")
-# The spike arm was launched at p = 0.05 and p = 0.15; the sitting SD uses the
-# larger, which is conservative for a procedure that spends looks to average.
+# Only for idiosyncratic_sd called without the run's spike parameters: it then
+# assumes the scaled spike (size = the magnitude) at this probability. That is
+# wrong for the fixed-size spike arms (sp0.05-5 ... sp0.15-20), so the replays
+# never rely on it: sitting_sd_fn reads p and the size from the run's variant.
 SPIKE_PROB_DEFAULT = 0.15
+# sp<p>-<size>, as both drivers name a spike run; the size is the spike SD used.
+SPIKE_VARIANT = re.compile(r"^sp(?P<p>\d*\.?\d+(?:e[+-]?\d+)?)-(?P<s>\d*\.?\d+(?:e[+-]?\d+)?)$")
+SITTING_PROCESSES = ("shared", "sequential")
+SITTING_ORDERS = ("random", "rank")
+# Processes whose error moves from trial to trial through a sitting.
+SEQUENTIAL_MODELS = ("drift", "ar1")
+ORDER_STREAM, SPIKE_STREAM = 101, 102
 INPUT_MODELS = ("slip", "misclick")
 DEFAULT_ARMS = "output-boba,output-boba-slip,output-boba-misclick"
 # The re-rating arm that modifies each standard arm, for context at matched cells.
@@ -114,6 +150,26 @@ class Settings:
     slip_look_sd: float = 0.25
     alpha: float = 0.05
     lcb_beta: float = 1.0
+    # Not written to settings.json at the default, so directories replayed before
+    # these existed still match their own settings.
+    sitting_process: str = "shared"
+    sitting_order: str = "random"
+    # Per task, never on the command line: build_tasks sets it to the one spike
+    # variant of a stem's runs, so a caller that does not pass variant= to
+    # sitting_sd_fn (replay_hitl_remedies.replay_stem_rows) still gets the run's
+    # spikes. None when the stem holds no spike run or several spike variants.
+    spike_variant: str | None = None
+
+
+def settings_record(settings: Settings) -> dict:
+    """What settings.json holds: the shared-process record is the historic one, key for key."""
+    record = json.loads(json.dumps(dataclasses.asdict(settings)))
+    record.pop("spike_variant")          # a property of a task, not of the replay
+    if settings.sitting_process == "shared":
+        # The order only matters when the process moves within the sitting.
+        record.pop("sitting_process")
+        record.pop("sitting_order")
+    return record
 
 
 @dataclasses.dataclass(frozen=True)
@@ -148,6 +204,9 @@ class RunLog:
     deployed: np.ndarray     # f at the RECORDED design (differs from objective_true only after a slip)
     logged_inference: np.ndarray
     y_opt: float
+    # The response error of each trial as the loop carried it (error_magnitude):
+    # the AR(1) state a sequential sitting continues from. None when not logged.
+    error: np.ndarray | None = None
 
 
 @dataclasses.dataclass
@@ -188,6 +247,10 @@ def validate_settings(settings: Settings) -> None:
         raise ValueError("--alpha must lie in (0, 1)")
     if settings.lcb_beta < 0:
         raise ValueError("--lcb-beta must be non-negative")
+    if settings.sitting_process not in SITTING_PROCESSES:
+        raise ValueError(f"--sitting-process must be one of {SITTING_PROCESSES}, not {settings.sitting_process!r}")
+    if settings.sitting_order not in SITTING_ORDERS:
+        raise ValueError(f"--sitting-order must be one of {SITTING_ORDERS}, not {settings.sitting_order!r}")
 
 
 def _rerate_window(args: dict) -> tuple[int, int]:
@@ -270,13 +333,22 @@ def read_run(path: Path, iterations: int) -> RunLog:
         raise ValueError(f"{Path(path).name}: expected iterations 1..{iterations}, found {len(df)} rows")
     params = str(df["param_columns"].iloc[0]).split(",")
     deployed = "objective_true_deployed" if "objective_true_deployed" in df.columns else "objective_true"
+    observed = df["objective_observed"].to_numpy(dtype=float)
+    if "error_magnitude" in df.columns:
+        error = pd.to_numeric(df["error_magnitude"], errors="coerce").to_numpy(dtype=float)
+    elif "objective_true" in df.columns:
+        # The loop carries observed - true as the AR(1) state (apply_sensor_error).
+        error = observed - df["objective_true"].to_numpy(dtype=float)
+    else:
+        error = None
     return RunLog(
         name=Path(path).name,
         X=df[params].to_numpy(dtype=float),
-        observed=df["objective_observed"].to_numpy(dtype=float),
+        observed=observed,
         deployed=df[deployed].to_numpy(dtype=float),
         logged_inference=df["inference_simple_regret_true"].to_numpy(dtype=float),
         y_opt=float(df["y_opt"].iloc[0]),
+        error=error,
     )
 
 
@@ -291,36 +363,189 @@ def noise_seed(name: str, *parts: int) -> np.random.SeedSequence:
     return np.random.SeedSequence([zlib.crc32(name.encode("utf-8")), *(int(p) for p in parts)])
 
 
-def idiosyncratic_sd(error_model: str, jitter_std: float, ar1_rho: float = 0.8) -> float:
-    """The part of a response error that does NOT cancel between trials of one sitting."""
+def idiosyncratic_sd(error_model: str, jitter_std: float, ar1_rho: float = 0.8,
+                     spike_prob: float | None = None, spike_std: float | None = None) -> float:
+    """The part of a response error that does NOT cancel between trials of one sitting.
+
+    This is the shared (simultaneous-sitting) model: the bias, the drift ramp and
+    the AR(1) state are held fixed across the sitting's looks.
+    """
     if error_model == "none":
         return 0.0
     if error_model in ("gaussian", "bias", "drift"):
-        # bias is constant and the drift ramp moves by sigma / (T - onset) per trial,
-        # so both are shared; the gaussian jitter on top of them is not.
+        # Under the shared model the constant bias and the drift ramp are held
+        # fixed across the sitting, so they cancel; the gaussian jitter does not.
         return float(jitter_std)
     if error_model == "ar1":
-        # e_t = rho e_{t-1} + u_t: the state is shared, the innovation u_t is new.
+        # e_t = rho e_{t-1} + u_t: the state is held fixed, the innovation u_t is new.
         return float(jitter_std) * float(np.sqrt(max(0.0, 1.0 - ar1_rho ** 2)))
     if error_model == "spike":
         # A spike is drawn afresh per rating, so all of it is idiosyncratic. The
-        # marginal SD is sqrt(std^2 + p * spike_std^2); with the sweep's scaled
-        # spike the size is the magnitude itself, so p is the only extra term.
-        return float(jitter_std) * float(np.sqrt(1.0 + SPIKE_PROB_DEFAULT))
+        # marginal SD is sqrt(std^2 + p * spike_std^2), with p and spike_std those
+        # of the run. Without them this assumes the scaled spike (size = the
+        # magnitude) at p = SPIKE_PROB_DEFAULT, which the fixed-size spike arms
+        # were not; sitting_sd_fn always passes the run's own values.
+        if spike_prob is None and spike_std is None:
+            spike_prob, spike_std = SPIKE_PROB_DEFAULT, float(jitter_std)
+        if spike_prob is None or spike_std is None:
+            raise ValueError("the spike SD needs both the spike probability and the spike size")
+        return float(np.sqrt(float(jitter_std) ** 2 + float(spike_prob) * float(spike_std) ** 2))
     raise ValueError(
         f"error model {error_model!r} has no idiosyncratic-noise model for the end-of-study sitting; "
         f"supported: {', '.join(RESPONSE_MODELS + INPUT_MODELS)}"
     )
 
 
-def sitting_sd_fn(arm: ArmInfo, error_model: str, jitter_std: float, onset: int, settings: Settings):
-    """Rating-noise SD of end-of-study trial t (1-based), before any rho scaling."""
+def spike_spec(variant: str | None) -> tuple[float, float]:
+    """(probability, spike SD) of a spike run, from its file-name variant (sp<p>-<size>).
+
+    Both drivers write the spike SD actually used into the name, the magnitude
+    under --error-spike-std-mode scaled and the constant under fixed, so the name
+    settles the mode as well. run_metadata.json cannot: one directory holds
+    several spike variants and the file describes only the last invocation.
+    """
+    if variant is None:
+        raise ValueError("a spike run's sitting noise needs its variant (sp<p>-<size>); pass variant=")
+    for part in str(variant).split("_"):
+        m = SPIKE_VARIANT.match(part)
+        if m:
+            p, s = float(m["p"]), float(m["s"])
+            if not 0.0 <= p <= 1.0 or s < 0.0:
+                raise ValueError(f"spike variant {variant!r}: probability {p} or size {s} out of range")
+            return p, s
+    raise ValueError(f"spike run variant {variant!r} has no sp<p>-<size> part")
+
+
+@dataclasses.dataclass(frozen=True)
+class SittingNoise:
+    """The rating error of the end-of-study trials of one run.
+
+    Called with a trial number (1-based) it returns that trial's look SD before
+    rho, which is all the shared model needs and what a caller that only takes an
+    SD gets (for a spike run the marginal SD). tournament() and confirmation()
+    also read the process, so a sequential sitting and explicit spikes reach them.
+    """
+    base: float                  # the shared model's idiosyncratic SD of a corrupted trial
+    onset: int = 0               # trial t is corrupted when t > onset (the simulator's convention)
+    always_on: bool = False      # input arms: the rendered design's rating noise on every trial
+    error_model: str = "none"
+    jitter_std: float = 0.0
+    process: str = "shared"
+    order: str = "random"
+    iterations: int = 0          # T, for the drift ramp
+    ar1_rho: float = 0.8
+    spike_prob: float = 0.0
+    spike_std: float = 0.0
+
+    def __call__(self, trial: int) -> float:
+        if self.always_on:
+            return self.base
+        return self.base if trial > self.onset else 0.0
+
+    @property
+    def moves(self) -> bool:
+        """True when the error changes from look to look beyond the fresh draw."""
+        return (self.process == "sequential" and not self.always_on
+                and self.error_model in SEQUENTIAL_MODELS)
+
+    @property
+    def spiky(self) -> bool:
+        return (not self.always_on) and self.error_model == "spike" and self.spike_prob > 0.0
+
+    def ramp(self, trial: int) -> float:
+        """The simulator's drift ramp: sigma * (t - t0) / (T - t0) after onset, else 0."""
+        if trial <= self.onset:
+            return 0.0
+        span = max(1, int(self.iterations) - int(self.onset))
+        return float(self.jitter_std) * (int(trial) - int(self.onset)) / span
+
+
+def sitting_sd_fn(arm: ArmInfo, error_model: str, jitter_std: float, onset: int, settings: Settings,
+                  variant: str | None = None) -> SittingNoise:
+    """The rating error of end-of-study trial t (1-based); called, its SD before any rho scaling.
+
+    ``variant`` is the run's file-name variant; a spike run needs it for its
+    spike probability and size. Without it a spike run falls back on
+    ``settings.spike_variant``, the one spike variant of the stem that
+    build_tasks puts into each task's settings, and fails when there is none.
+    """
     if arm.input_arm:
-        base = float(settings.slip_look_sd)
-        return lambda trial: base
-    base = idiosyncratic_sd(error_model, jitter_std, arm.ar1_rho)
-    # Same onset convention as the simulator: trial t is corrupted when t > onset.
-    return lambda trial: base if trial > onset else 0.0
+        # The system renders the recorded design, whose rating is otherwise exact:
+        # the assumed look SD, in the noisy and the clean twin alike.
+        return SittingNoise(base=float(settings.slip_look_sd), onset=int(onset), always_on=True)
+    p = s = 0.0
+    if error_model == "spike":
+        p, s = spike_spec(variant if variant is not None else settings.spike_variant)
+        base = idiosyncratic_sd(error_model, jitter_std, arm.ar1_rho, p, s)
+    else:
+        base = idiosyncratic_sd(error_model, jitter_std, arm.ar1_rho)
+    return SittingNoise(base=base, onset=int(onset), error_model=str(error_model), jitter_std=float(jitter_std),
+                        process=settings.sitting_process, order=settings.sitting_order,
+                        iterations=int(arm.iterations), ar1_rho=float(arm.ar1_rho), spike_prob=p, spike_std=s)
+
+
+def _prefix_error(run: RunLog, last_searched: int) -> float:
+    """The loop's own error at trial ``last_searched``: the AR(1) state a sitting continues."""
+    if last_searched < 1:
+        return 0.0
+    if run.error is None:
+        raise ValueError(f"{run.name}: the log has no error_magnitude, so the AR(1) state at trial "
+                         f"{last_searched} is unknown")
+    value = float(run.error[last_searched - 1])
+    if not np.isfinite(value):
+        raise ValueError(f"{run.name}: the logged error at trial {last_searched} is not finite")
+    return value
+
+
+def process_errors(noise: SittingNoise, trials: np.ndarray, z: np.ndarray, rho: float, prev_error: float,
+                   spikes: np.ndarray | None = None) -> np.ndarray:
+    """Errors of ratings made at ``trials`` (distinct, consecutive once sorted), aligned with the input.
+
+    ``z`` holds one fresh standard normal per rating and ``prev_error`` the
+    error of the trial just before the first of them. The fresh part of every
+    rating is scaled by rho; the drift ramp and the carried AR(1) state are not.
+    ``spikes`` (standard-normal spike draws, 0 where no spike fires) adds the
+    spike process when given.
+    """
+    trials = np.asarray(trials, dtype=int)
+    z = np.asarray(z, dtype=float)
+    sigma = float(noise.jitter_std)
+    out = np.zeros(len(trials), dtype=float)
+    if noise.always_on:
+        return rho * noise.base * z
+    order = np.argsort(trials, kind="stable")
+    sorted_trials = trials[order]
+    if len(trials) and np.any(np.diff(sorted_trials) != 1):
+        raise ValueError(f"a sitting's trials must be consecutive, got {sorted_trials.tolist()}")
+    prev = float(prev_error)
+    innovation_sd = sigma * float(np.sqrt(max(0.0, 1.0 - noise.ar1_rho ** 2)))
+    for r in order:
+        t = int(trials[r])
+        if t <= noise.onset:
+            e = 0.0
+        elif noise.moves and noise.error_model == "drift":
+            e = noise.ramp(t) + rho * sigma * z[r]
+        elif noise.moves and noise.error_model == "ar1":
+            # The simulator: the first post-onset error is a stationary draw, every
+            # later one rho_ar times the last plus an innovation.
+            e = rho * sigma * z[r] if t == noise.onset + 1 else noise.ar1_rho * prev + rho * innovation_sd * z[r]
+        elif noise.error_model == "spike":
+            e = rho * sigma * z[r]
+        else:
+            e = rho * noise(t) * z[r]
+        if spikes is not None and t > noise.onset:
+            e += rho * float(noise.spike_std) * float(spikes[r])
+        out[r] = e
+        prev = e
+    return out
+
+
+def spike_draws(name: str, proc: int, k: int, n: int, prob: float) -> np.ndarray:
+    """Standard-normal spike sizes for n ratings, zero where no spike fires (probability ``prob``)."""
+    rng = np.random.default_rng(noise_seed(name, proc, k, SPIKE_STREAM))
+    fires = rng.random(n) < prob
+    size = rng.standard_normal(n)
+    return np.where(fires, size, 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -448,6 +673,20 @@ def check_logged_inference(run: RunLog, ns: list[int], rule: str = "best_observe
             )
 
 
+def check_logged_error(run: RunLog, iterations: int) -> None:
+    """The AR(1) state a sequential sitting continues from must be the loop's own error.
+
+    error_magnitude is what the loop carried (observed - true after any
+    post-processing); on a response arm it must equal observed - deployed.
+    """
+    if run.error is None:
+        raise ReproductionError(f"{run.name}: no logged error, so the AR(1) state cannot be continued")
+    recomputed = run.observed - run.deployed
+    if run.error.shape != recomputed.shape or not np.allclose(run.error, recomputed, rtol=0.0, atol=1e-9):
+        worst = float(np.nanmax(np.abs(run.error - recomputed)))
+        raise ReproductionError(f"{run.name}: logged error_magnitude differs from observed - true by {worst!r}")
+
+
 def standard_process(run: RunLog, initial: int) -> dict:
     pick = int(np.argmax(run.observed))
     c_row = int(np.argmax(run.observed[:initial]))
@@ -459,9 +698,32 @@ def standard_process(run: RunLog, initial: int) -> dict:
             "truly_better": truly_better, "false_claim": claim and not truly_better}
 
 
+def _uses_process(sd_of_trial) -> bool:
+    """True when the sitting's errors need more than a per-trial SD (a moving process or spikes)."""
+    return isinstance(sd_of_trial, SittingNoise) and (sd_of_trial.moves or sd_of_trial.spiky)
+
+
+def tournament_look_errors(run: RunLog, noise: SittingNoise, k: int, m: int, z: np.ndarray, rho: float,
+                           T: int) -> np.ndarray:
+    """Errors of the m looks of a sitting over trials T-k+1..T, look j = the j-th ranked candidate.
+
+    Candidate j keeps its fresh draw z[j]; under the sequential process it is
+    shown at position order[j] (random or rank), so it also carries the ramp at
+    that trial or the AR(1) state carried there from the prefix.
+    """
+    order = np.arange(m)
+    if noise.moves and noise.order == "random":
+        order = np.random.default_rng(noise_seed(run.name, PROC_TOURNAMENT, k, ORDER_STREAM)).permutation(m)
+    trials = T - k + 1 + order
+    prev = _prefix_error(run, T - k) if noise.moves and noise.error_model == "ar1" else 0.0
+    spikes = spike_draws(run.name, PROC_TOURNAMENT, k, k, noise.spike_prob)[:m] if noise.spiky else None
+    return process_errors(noise, trials, z[:m], rho, prev, spikes)
+
+
 def tournament(run: RunLog, state: SearchState, k: int, rhos: tuple[float, ...], sd_of_trial, T: int) -> dict:
     z = np.random.default_rng(noise_seed(run.name, PROC_TOURNAMENT, k)).standard_normal(k)
     sds = np.array([sd_of_trial(t) for t in range(T - k + 1, T + 1)], dtype=float)
+    process = _uses_process(sd_of_trial)
     out: dict[str, dict] = {}
     for cand, scores in (("lcb", state.lcb), ("obs", state.obs_mean)):
         # Stable sort: ties go to the design visited first, as the loop's argmax does.
@@ -470,7 +732,11 @@ def tournament(run: RunLog, state: SearchState, k: int, rhos: tuple[float, ...],
         truth = run.deployed[rows]
         Xc = torch.tensor(run.X[rows], dtype=torch.double)
         for rho in rhos:
-            looks = truth + rho * sds[:m] * z[:m]
+            if process:
+                looks = truth + tournament_look_errors(run, sd_of_trial, k, m, z, rho, T)
+            else:
+                # The shared model: the historic expression, so its replays are bit-identical.
+                looks = truth + rho * sds[:m] * z[:m]
             look_pick = int(np.argmax(looks))
             post_pick = look_pick
             if state.gp is not None:
@@ -506,13 +772,22 @@ def confirmation(run: RunLog, state: SearchState, k: int, initial: int, sd_of_tr
     f_d, f_c = float(run.deployed[d_row]), float(run.deployed[c_row])
     rng = np.random.default_rng(noise_seed(run.name, PROC_CONFIRM, k))
     z_d, z_c = rng.standard_normal(k), rng.standard_normal(k)
-    # Counterbalanced: pair j is (D, C) for even j and (C, D) for odd j. The shared
-    # state cancels within a pair, so order only enters through the onset gate.
+    # Counterbalanced: pair j is (D, C) for even j and (C, D) for odd j. Under the
+    # shared model the bias, ramp and AR state cancel within a pair, so order only
+    # enters through the onset gate; under the sequential process they move with
+    # the trial and the counterbalancing is what cancels a linear ramp.
     start = T - 2 * k + 1
     d_trials = [start + 2 * j + (j % 2) for j in range(k)]
     c_trials = [start + 2 * j + 1 - (j % 2) for j in range(k)]
-    r_d = f_d + np.array([sd_of_trial(t) for t in d_trials]) * z_d
-    r_c = f_c + np.array([sd_of_trial(t) for t in c_trials]) * z_c
+    if _uses_process(sd_of_trial):
+        noise = sd_of_trial
+        prev = _prefix_error(run, T - 2 * k) if noise.moves and noise.error_model == "ar1" else 0.0
+        spikes = spike_draws(run.name, PROC_CONFIRM, k, 2 * k, noise.spike_prob) if noise.spiky else None
+        e = process_errors(noise, np.array(d_trials + c_trials), np.concatenate([z_d, z_c]), 1.0, prev, spikes)
+        r_d, r_c = f_d + e[:k], f_c + e[k:]
+    else:
+        r_d = f_d + np.array([sd_of_trial(t) for t in d_trials]) * z_d
+        r_c = f_c + np.array([sd_of_trial(t) for t in c_trials]) * z_c
     decision = confirmation_decision(f_d, f_c, r_d, r_c, alpha)
     return {"family": "confirmation", "k": k, "regret": run.y_opt - decision.pop("shipped_value"), **decision,
             "d_is_c": sim._design_key(run.X[d_row]) == sim._design_key(run.X[c_row]),
@@ -605,8 +880,13 @@ def build_tasks(arm: ArmInfo, filters: Filters, settings: Settings, out_dir: Pat
             counts["resumed stems"] += 1
             continue
         counts["noisy runs"] += len(runs)
+        # A stem whose spike runs share one variant carries it in its settings, the
+        # fallback of sitting_sd_fn for a caller that does not pass the run's variant.
+        spike_variants = {str(r["variant"]) for r in runs if r["error_model"] == "spike"}
+        task_settings = (dataclasses.replace(settings, spike_variant=spike_variants.pop())
+                         if len(spike_variants) == 1 else settings)
         tasks.append({
-            "arm": arm, "settings": settings, "dataset": dataset, "stem": stem,
+            "arm": arm, "settings": task_settings, "dataset": dataset, "stem": stem,
             "acquisition": runs[0]["acquisition"], "seed": runs[0]["seed"], "clean_path": str(clean),
             "runs": [{key: (str(v) if key == "path" else v) for key, v in r.items()} for r in runs],
             "out_path": str(out_path),
@@ -648,7 +928,10 @@ def replay_stem_rows(task: dict) -> pd.DataFrame:
     for rec in task["runs"]:
         path = Path(rec["path"])
         noisy = read_run(path, arm.iterations)
-        sd_fn = sitting_sd_fn(arm, rec["error_model"], rec["jitter_std"], rec["jitter_iteration"], settings)
+        sd_fn = sitting_sd_fn(arm, rec["error_model"], rec["jitter_std"], rec["jitter_iteration"], settings,
+                              variant=rec.get("variant"))
+        if sd_fn.moves and sd_fn.error_model == "ar1":
+            check_logged_error(noisy, arm.iterations)
         noisy_out = replay_run(noisy, arm, settings, bounds, sd_fn)
         if arm.rerate_dir is not None and rerate_name in clean_out:
             rr = rerate_outcome(arm.rerate_dir / task["dataset"] / f"{path.stem}{arm.rerate_suffix}.csv", noisy, arm)
@@ -742,7 +1025,18 @@ def load_per_run(out_dir: Path, arm_names: list[str], filters: Filters) -> pd.Da
         keep &= frame["jitter_iteration"].isin(filters.onsets)
     if filters.stds is not None:
         keep &= np.isclose(frame["jitter_std"].to_numpy()[:, None], np.asarray(filters.stds)[None, :]).any(axis=1)
-    return frame[keep].reset_index(drop=True)
+    if filters.variants is not None and "variant" in frame:
+        keep &= frame["variant"].fillna("").astype(str).isin(filters.variants).to_numpy()
+    frame = frame[keep].reset_index(drop=True)
+    if "variant" in frame and len(frame):
+        # One variant per cell: the summaries do not split by it (the bias arm's
+        # bias<std> is one variant per magnitude, so it passes).
+        per_cell = frame.assign(_v=frame["variant"].fillna("").astype(str)).groupby(
+            ["arm", "error_model", "jitter_std"])["_v"].nunique()
+        if (per_cell > 1).any():
+            raise SystemExit(f"{out_dir} mixes run variants within a cell ({per_cell[per_cell > 1].to_dict()}); "
+                             f"select one with --variants or replay each into its own --output-dir")
+    return frame
 
 
 def recovery_table(frame: pd.DataFrame, opt_z: dict[str, float], split_acquisition: bool = False) -> pd.DataFrame:
@@ -865,7 +1159,18 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--confirm-k", default="2,4")
     p.add_argument("--rho", default="1,0.5", help="look noise as a multiple of the idiosyncratic SD")
     p.add_argument("--slip-look-sd", type=float, default=0.25,
-                   help="rating-noise SD of a rendered design in the input-error arms (scaled by rho in a sitting)")
+                   help="rating-noise SD of a rendered design in the input-error arms (scaled by rho in a sitting); "
+                        "an assumption: the rating in those arms is otherwise exact")
+    p.add_argument("--sitting-process", choices=SITTING_PROCESSES, default="shared",
+                   help="shared: the sitting is simultaneous, so the drift ramp and the AR(1) state are held fixed "
+                        "and cancel (the default, every headline number); sequential: they continue through "
+                        "trials T-k+1..T as the simulator defines them")
+    p.add_argument("--sitting-order", choices=SITTING_ORDERS, default="random",
+                   help="presentation order of a sequential sitting's candidates: random per run, or rank "
+                        "(best-ranked first); ignored by the shared process")
+    p.add_argument("--variants", default="",
+                   help="comma-separated run-name variants to replay (a spike size such as sp0.15-20); "
+                        "empty = the standard process only")
     p.add_argument("--alpha", type=float, default=0.05)
     p.add_argument("--lcb-beta", type=float, default=1.0, help="latent SDs subtracted by the ship rule")
     p.add_argument("--rerate-dirs", default="auto",
@@ -886,15 +1191,18 @@ def main(argv=None) -> None:
         confirm_k=tuple(int(v) for v in args.confirm_k.split(",") if v.strip()),
         rhos=tuple(float(v) for v in args.rho.split(",") if v.strip()),
         slip_look_sd=float(args.slip_look_sd), alpha=float(args.alpha), lcb_beta=float(args.lcb_beta),
+        sitting_process=args.sitting_process, sitting_order=args.sitting_order,
     )
     validate_settings(settings)
     stds = None if args.stds.strip().lower() == "all" else tuple(float(v) for v in args.stds.split(",") if v.strip())
     onsets = _names(args.onsets)
+    variants = frozenset(v.strip() for v in args.variants.split(",") if v.strip()) or None
     filters = Filters(
         functions=_names(args.functions), acquisitions=_names(args.acquisitions),
         seeds=None if _names(args.seeds) is None else frozenset(int(s) for s in _names(args.seeds)),
         error_models=_names(args.error_models), stds=stds,
         onsets=None if onsets is None else frozenset(int(o) for o in onsets),
+        variants=variants,
     )
     arms = [load_arm(Path(a.strip()), args.rerate_dirs) for a in args.arms.split(",") if a.strip()]
     for arm in arms:
@@ -902,7 +1210,7 @@ def main(argv=None) -> None:
     out_dir = args.output_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     settings_path = out_dir / "settings.json"
-    current = json.loads(json.dumps(dataclasses.asdict(settings)))
+    current = settings_record(settings)
     if settings_path.is_file():
         saved = json.loads(settings_path.read_text(encoding="utf-8"))
         if saved != current:
@@ -942,6 +1250,8 @@ def main(argv=None) -> None:
     failed = frame.filter(like="gp_failed").apply(_as_bool).to_numpy().any(axis=1).mean() if len(frame) else 0.0
     print(f"{len(frame):,} procedure rows from {frame['file'].nunique():,} noisy runs on "
           f"{frame['dataset'].nunique()} landscapes; rows with a GP fallback: {failed:.2%}")
+    if settings.sitting_process != "shared":
+        print(f"sitting process: {settings.sitting_process}, presentation order {settings.sitting_order}")
     print_summary(recovery, claims)
     print(f"\nWrote {', '.join(written)} under {out_dir}")
 

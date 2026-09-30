@@ -2,20 +2,21 @@
 name = "hitl-mobo-robustness-tests"
 version = "0.1.0"
 description = "Simulation tooling for HITL Bayesian optimization sensor-error robustness studies."
-requires-python = ">=3.13"
+# The simulations ran on Python 3.12.9.
+requires-python = ">=3.12"
 # Floors match requirements.txt; exact pins live in requirements-eval.txt.
 dependencies = [
-  "numpy>=2.5.2",
+  "numpy>=2.5.3",
   "pandas>=3.0.5",
   "scikit-learn>=1.9.0",
-  "scipy>=1.17.1",
+  "scipy>=1.18.1",
   "matplotlib>=3.11.1",
   "seaborn>=0.13.2",
-  "tqdm>=4.68.3",
+  "tqdm>=4.70.0",
   "xgboost>=3.4.0",
   "lightgbm>=4.7.0",
   "catboost>=1.2.10",
-  "tabpfn>=8.2.0",
+  "tabpfn>=8.5.0",
   "statsmodels>=0.14.6",
   "botorch>=0.18.1",
   "torch>=2.13.0",

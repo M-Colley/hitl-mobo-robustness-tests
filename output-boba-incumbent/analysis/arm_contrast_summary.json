@@ -1,0 +1,14 @@
+{
+  "reference": "output-boba",
+  "treatment": "output-boba-incumbent",
+  "paired_cells": 5600,
+  "benchmarks": 20,
+  "mean_reference": 0.06331015471643957,
+  "mean_treatment": 0.050622297901075,
+  "overall_share_removed": 0.20040792621961367,
+  "overall_share_suppressed": "",
+  "near_zero_reference": 0.01,
+  "conditions_share_suppressed": 2,
+  "conditions_tested": 8,
+  "conditions_significant_fdr": 6
+}

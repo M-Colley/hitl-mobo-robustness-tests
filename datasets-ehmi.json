@@ -2,6 +2,7 @@
   {
     "name": "ehmi",
     "data_dir": "https://github.com/M-Colley/ehmi-optimization-chi25-data",
+    "data_commit": "232eb6bbb2a72c9542c81d318b6ea008fb5a75d7",
     "oracle_target": "mean",
     "param_columns": [
       "verticalPosition",

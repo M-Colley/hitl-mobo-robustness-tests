@@ -1,0 +1,47 @@
+composites: datasets.json 'composite' (column ranges applied); sigma_f: output/noise_anchor.csv
+
+ehmi: 737 ratings, 5 items (Trust;Understanding;PerceivedSafety;Aesthetics;Acceptance)
+  item steps 0.5;0.25;0.25;1;0.5; item ranges [1;1;-3;1;1] to [5;5;3;7;7]
+    Trust: logged [1, 5], no declared range; ratings at the logged worse end 9, at the better end 437 of 737
+    Understanding: logged [1, 5], no declared range; ratings at the logged worse end 7, at the better end 183 of 737
+    PerceivedSafety: logged [-3, 3], no declared range; ratings at the logged worse end 1, at the better end 427 of 737
+    Aesthetics: logged [1, 7], no declared range; ratings at the logged worse end 6, at the better end 444 of 737
+    Acceptance: logged [1, 7], no declared range; ratings at the logged worse end 1, at the better end 436 of 737
+  sigma_f 0.3647, mean_f 4.5372, y_opt 5.4000, opt_z 2.366
+  composite step          0.05 raw = 0.137 sigma (implied by the items 0.05)
+  coarsest-item step      0.2 raw = 0.548 sigma (finest 0.137 sigma)
+  span over item extremes 5.2 raw = 14.26 sigma (0.2 to 5.4)
+  span of logged composite 4.75 raw = 13.02 sigma
+  ceiling above the average design 2.37 sigma, floor below it 11.89 sigma
+
+opticarvis: 546 ratings, 5 items (Trust;Understanding;PerceivedSafety;Aesthetics;Acceptance)
+  item steps 0.25;0.125;0.0833333;0.333333;0.166667; item ranges [-1;-1;-1;-1;-1] to [1;1;1;1;1]
+    Trust: logged [-1, 1], declared [-1, 1]; ratings at the logged worse end 3, at the better end 210 of 546
+    Understanding: logged [-0.75, 1], declared [-1, 1]; ratings at the logged worse end 1, at the better end 191 of 546
+    PerceivedSafety: logged [-1, 1], declared [-1, 1]; ratings at the logged worse end 11, at the better end 170 of 546
+    Aesthetics: logged [-1, 1], declared [-1, 1]; ratings at the logged worse end 5, at the better end 177 of 546
+    Acceptance: logged [-1, 1], declared [-1, 1]; ratings at the logged worse end 5, at the better end 167 of 546
+  sigma_f 0.1563, mean_f 0.4045, y_opt 0.9959, opt_z 3.784
+  composite step          0.00833333 raw = 0.053 sigma (implied by the items 0.00833333)
+  coarsest-item step      0.0666667 raw = 0.427 sigma (finest 0.107 sigma)
+  span over item extremes 2 raw = 12.80 sigma (-1 to 1)
+  span of logged composite 1.95 raw = 12.48 sigma
+  ceiling above the average design 3.81 sigma, floor below it 8.99 sigma
+
+provoice: 532 ratings, 3 items (-Predictability;Percieved Usefulness;-Mental Demand)
+  item steps 0.5;0.5;1; item ranges [-5;1;-17] to [-1;5;-1]
+    -Predictability: logged [-5, -1], no declared range; ratings at the logged worse end 17, at the better end 216 of 532
+    Percieved Usefulness: logged [1, 5], no declared range; ratings at the logged worse end 7, at the better end 259 of 532
+    -Mental Demand: logged [-17, -1], no declared range; ratings at the logged worse end 1, at the better end 237 of 532
+  sigma_f 0.4486, mean_f -0.1120, y_opt 0.9994, opt_z 2.477
+  composite step          0.166667 raw = 0.372 sigma (implied by the items 0.166667)
+  coarsest-item step      0.333333 raw = 0.743 sigma (finest 0.372 sigma)
+  span over item extremes 8 raw = 17.83 sigma (-7 to 1)
+  span of logged composite 6.333 raw = 14.12 sigma
+  ceiling above the average design 2.48 sigma, floor below it 15.35 sigma
+
+the arm: clip +-8 sigma about the landscape mean (span 16 sigma), step 0.55 sigma
+  its top lies above the optimum on 17 of 20 landscapes; below it on 3 (opt_z: michalewicz 8.05, ackley 20.10, shekel 56.77)
+  its bottom lies above the sampled minimum on 1 of 20 (steering_law); output-boba-instrument/run_metadata.json
+
+Wrote output-boba/analysis/review/instrument_scale.csv

@@ -1,0 +1,18 @@
+{
+  "n_runs": 11520,
+  "benchmarks": [
+    "bump_a16_w0.05",
+    "bump_a16_w0.15",
+    "bump_a4_w0.05",
+    "bump_a4_w0.15",
+    "levy_4d",
+    "levy_7d"
+  ],
+  "floor_check_max_abs_excess": 0.0,
+  "currency_verdicts": {
+    "both (underpowered)": 4,
+    "spread": 4
+  },
+  "most_robust_acquisition": "ucb",
+  "best_absolute_acquisition": "qei"
+}

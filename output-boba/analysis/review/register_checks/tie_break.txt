@@ -1,0 +1,337 @@
+Tie-break of the standard ship rule (best observed rating): first index, as logged, against a uniformly random choice among tied maxima (exact expectation, no seed).
+runs scanned: 238,762 in 63 arm directories; logged final deployed regret reproduced by the first-index rule in 233,543 of 236,172 single-objective runs.
+main sweep noisy runs: 76,800; tied maximum in 407, a tie between designs of different true value in 0.
+main sweep clean runs: 2,400; tied maximum in 336, a tie between designs of different true value in 0.
+main sweep noisy runs with a tied maximum, re-read from their logs: 407; every tied rating exact (equal to the true value within 1e-12) in 407; error onset trial 21: 407; every tied trial before the onset in 407; tied designs of different true value in 0.
+main sweep clean runs with a tied maximum, re-read from their logs: 336; every tied rating exact (equal to the true value within 1e-12) in 336; tied designs of different true value in 0.
+
+arm directories with any noisy run whose tied maxima differ in true value (share of runs; median designs tied; among the consequential ties, the share in which the first tied design is worse than the mean tied design):
+  output-boba-adapt-nigp             nigp                         n= 1600  tied   7.9%  consequential   1.4%  median tied 1  first worse  13.0%
+  output-boba-adapt-rerate-slip      rerate3x2                    n= 1600  tied   8.2%  consequential   1.9%  median tied 1  first worse  10.0%
+  output-boba-ceiling                ceil0.9-anchored             n=  400  tied  11.0%  consequential  10.0%  median tied 1  first worse 100.0%
+  output-boba-ceiling                ceil0.9-fixed                n=  800  tied  99.5%  consequential  99.5%  median tied 21  first worse  70.5%
+  output-boba-instrument                                          n= 4800  tied  66.2%  consequential  61.1%  median tied 3  first worse  52.8%
+  output-boba-q-iu-0.05              iu16-0.05                    n=  400  tied   8.2%  consequential   1.8%  median tied 1  first worse  28.6%
+  output-boba-q-iu-0.15              iu16-0.15                    n=  400  tied   9.2%  consequential   4.5%  median tied 1  first worse  16.7%
+  output-boba-q-iu-0.4               iu16-0.4                     n=  400  tied   8.8%  consequential   4.8%  median tied 1  first worse  15.8%
+  output-boba-slip                                                n= 6400  tied   8.2%  consequential   1.3%  median tied 1  first worse  14.8%
+  output-boba-spike-clip             sp0.05-20                    n=  200  tied  57.5%  consequential  56.0%  median tied 2  first worse  52.7%
+  output-boba-spike-clip             sp0.05-5                     n=  200  tied  54.0%  consequential  51.5%  median tied 2  first worse  60.2%
+  output-boba-spike-clip             sp0.15-20                    n=  200  tied  77.0%  consequential  76.5%  median tied 4  first worse  68.6%
+  output-boba-spike-clip             sp0.15-5                     n=  200  tied  61.0%  consequential  60.5%  median tied 2  first worse  57.9%
+clean-twin (error_model none) directories with a consequential tie:
+  output-boba-slip-mislabelled                                    n= 2252  consequential   1.2%
+
+deployed excess of each such arm (ratio of landscape means over its model-based acquisitions, share of the achievable improvement), per condition: first-index | uniform | last-index | best tied | worst tied
+  output-boba-adapt-nigp         nigp                 slip     0.01/0  n= 200 moved  0.0%  0.0305 | 0.0305 | 0.0305 | 0.0305 | 0.0305
+  output-boba-adapt-nigp         nigp                 slip     0.01/20 n= 200 moved  0.0%  0.0304 | 0.0304 | 0.0304 | 0.0304 | 0.0304
+  output-boba-adapt-nigp         nigp                 slip     0.05/0  n= 200 moved  0.5%  0.1762 | 0.1762 | 0.1762 | 0.1762 | 0.1762
+  output-boba-adapt-nigp         nigp                 slip     0.05/20 n= 200 moved  1.0%  0.1344 | 0.1345 | 0.1346 | 0.1344 | 0.1347
+  output-boba-adapt-nigp         nigp                 slip     0.15/0  n= 200 moved  0.5%  0.3739 | 0.3740 | 0.3739 | 0.3739 | 0.3743
+  output-boba-adapt-nigp         nigp                 slip     0.15/20 n= 200 moved  2.0%  0.2257 | 0.2260 | 0.2263 | 0.2257 | 0.2266
+  output-boba-adapt-nigp         nigp                 slip     0.4/0  n= 200 moved  2.0%  0.6606 | 0.6600 | 0.6594 | 0.6589 | 0.6617
+  output-boba-adapt-nigp         nigp                 slip     0.4/20 n= 200 moved  5.5%  0.3249 | 0.3276 | 0.3311 | 0.3249 | 0.3336
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.01/0  n= 200 moved  0.0%  0.0214 | 0.0214 | 0.0214 | 0.0214 | 0.0214
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.01/20 n= 200 moved  0.0%  0.0196 | 0.0196 | 0.0196 | 0.0196 | 0.0196
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.05/0  n= 200 moved  1.5%  0.1571 | 0.1572 | 0.1574 | 0.1571 | 0.1574
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.05/20 n= 200 moved  0.5%  0.0838 | 0.0838 | 0.0838 | 0.0838 | 0.0838
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.15/0  n= 200 moved  3.5%  0.3331 | 0.3331 | 0.3332 | 0.3327 | 0.3338
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.15/20 n= 200 moved  1.5%  0.1180 | 0.1183 | 0.1186 | 0.1180 | 0.1186
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.4/0  n= 200 moved  1.5%  0.6524 | 0.6525 | 0.6527 | 0.6521 | 0.6530
+  output-boba-adapt-rerate-slip  rerate3x2            slip     0.4/20 n= 200 moved  6.5%  0.1067 | 0.1091 | 0.1128 | 0.1067 | 0.1139
+  output-boba-ceiling            ceil0.9-anchored     gaussian 0.25/0  n= 200 moved  0.0%  0.1097 | 0.1097 | 0.1097 | 0.1097 | 0.1097
+  output-boba-ceiling            ceil0.9-anchored     gaussian 1/0  n= 200 moved 20.0%  0.5423 | 0.4786 | 0.4611 | 0.4183 | 0.5530
+  output-boba-ceiling            ceil0.9-fixed        gaussian 0.25/0  n= 400 moved 99.8%  0.3592 | 0.2996 | 0.3018 | 0.0945 | 0.5156
+  output-boba-ceiling            ceil0.9-fixed        gaussian 1/0  n= 400 moved 99.2%  0.5439 | 0.4279 | 0.3845 | 0.1674 | 0.8098
+  output-boba-instrument                              gaussian 0.05/0  n= 600 moved 80.8%  0.1152 | 0.0931 | 0.0922 | 0.0421 | 0.1654
+  output-boba-instrument                              gaussian 0.05/20 n= 600 moved 52.2%  0.0494 | 0.0457 | 0.0429 | 0.0273 | 0.0696
+  output-boba-instrument                              gaussian 0.25/0  n= 600 moved 68.7%  0.1201 | 0.1039 | 0.1005 | 0.0722 | 0.1506
+  output-boba-instrument                              gaussian 0.25/20 n= 600 moved 59.3%  0.0618 | 0.0594 | 0.0573 | 0.0373 | 0.0907
+  output-boba-instrument                              gaussian 1/0  n= 600 moved 42.2%  0.2969 | 0.2784 | 0.2699 | 0.2417 | 0.3203
+  output-boba-instrument                              gaussian 1/20 n= 600 moved 40.0%  0.1423 | 0.1432 | 0.1446 | 0.1196 | 0.1700
+  output-boba-instrument                              gaussian 5/0  n= 600 moved 77.8%  0.7329 | 0.7241 | 0.7192 | 0.5512 | 0.9307
+  output-boba-instrument                              gaussian 5/20 n= 600 moved 67.7%  0.4442 | 0.4956 | 0.5331 | 0.3622 | 0.6598
+  output-boba-q-iu-0.05          iu16-0.05            slip     0.05/0  n= 200 moved  2.5%  0.1157 | 0.1157 | 0.1157 | 0.1156 | 0.1158
+  output-boba-q-iu-0.05          iu16-0.05            slip     0.05/20 n= 200 moved  1.0%  0.0880 | 0.0881 | 0.0880 | 0.0880 | 0.0883
+  output-boba-q-iu-0.15          iu16-0.15            slip     0.15/0  n= 200 moved  3.5%  0.2858 | 0.2857 | 0.2854 | 0.2853 | 0.2864
+  output-boba-q-iu-0.15          iu16-0.15            slip     0.15/20 n= 200 moved  5.5%  0.1335 | 0.1346 | 0.1358 | 0.1335 | 0.1358
+  output-boba-q-iu-0.4           iu16-0.4             slip     0.4/0  n= 200 moved  2.5%  0.5743 | 0.5742 | 0.5749 | 0.5734 | 0.5753
+  output-boba-q-iu-0.4           iu16-0.4             slip     0.4/20 n= 200 moved  7.0%  0.1817 | 0.1861 | 0.1926 | 0.1804 | 0.1951
+  output-boba-slip                                    slip     0.01/0  n= 600 moved  0.0%  0.0266 | 0.0266 | 0.0266 | 0.0266 | 0.0266
+  output-boba-slip                                    slip     0.01/20 n= 600 moved  0.0%  0.0245 | 0.0245 | 0.0245 | 0.0245 | 0.0245
+  output-boba-slip                                    slip     0.05/0  n= 600 moved  0.5%  0.1645 | 0.1645 | 0.1645 | 0.1644 | 0.1645
+  output-boba-slip                                    slip     0.05/20 n= 600 moved  0.7%  0.0961 | 0.0961 | 0.0961 | 0.0961 | 0.0962
+  output-boba-slip                                    slip     0.15/0  n= 600 moved  2.2%  0.3426 | 0.3427 | 0.3431 | 0.3423 | 0.3435
+  output-boba-slip                                    slip     0.15/20 n= 600 moved  2.0%  0.1336 | 0.1338 | 0.1343 | 0.1336 | 0.1343
+  output-boba-slip                                    slip     0.4/0  n= 600 moved  1.7%  0.6579 | 0.6579 | 0.6577 | 0.6573 | 0.6584
+  output-boba-slip                                    slip     0.4/20 n= 600 moved  6.5%  0.1328 | 0.1347 | 0.1396 | 0.1327 | 0.1406
+  output-boba-spike-clip         sp0.05-20            spike    0.25/0  n= 200 moved 56.0%  0.2262 | 0.2022 | 0.1838 | 0.1471 | 0.3499
+  output-boba-spike-clip         sp0.05-5             spike    0.25/0  n= 200 moved 51.5%  0.1661 | 0.1551 | 0.1411 | 0.1118 | 0.2725
+  output-boba-spike-clip         sp0.15-20            spike    0.25/0  n= 200 moved 76.5%  0.6757 | 0.4838 | 0.4242 | 0.2854 | 0.8631
+  output-boba-spike-clip         sp0.15-5             spike    0.25/0  n= 200 moved 60.5%  0.3861 | 0.3118 | 0.3381 | 0.2124 | 0.5563
+
+runs whose logged deployed regret is NOT the first-index argmax of the logged ratings (a different ship rule: re-rating by mean, per-rater backfit, and so on); not re-scored:
+  output-boba-adapt-rep10: 308
+  output-boba-adapt-rep10-obs: 175
+  output-boba-adapt-rerate: 729
+  output-boba-adapt-rerate-slip: 951
+  output-boba-relay-backfit-block: 107
+  output-boba-relay-backfit-rr: 242
+  output-fitted-adapt-rep10: 75
+  output-fitted-adapt-rep10-prefix: 42
+
+arm contrasts (analyse_boba_adaptations.ARMS, deployed design): first-index rows reproduce adaptations_recovery.csv, max abs difference 1.8e-15
+  rerate-slip: re-scored (26 reference and 0 treatment runs move); the treatment keeps its own (non-argmax) ship rule, only the reference is re-scored
+  nigp: re-scored (26 reference and 23 treatment runs move)
+  q-iu-0.05: re-scored (26 reference and 7 treatment runs move)
+  q-iu-0.15: re-scored (26 reference and 18 treatment runs move)
+  q-iu-0.4: re-scored (26 reference and 19 treatment runs move)
+  ceiling-anchored: re-scored (398 reference and 40 treatment runs move)
+  ceiling-cost: re-scored (0 reference and 398 treatment runs move)
+  spike-clip-sp0.05-5: re-scored (0 reference and 103 treatment runs move)
+  spike-clip-sp0.05-20: re-scored (0 reference and 112 treatment runs move)
+  spike-clip-sp0.15-5: re-scored (0 reference and 121 treatment runs move)
+  spike-clip-sp0.15-20: re-scored (0 reference and 153 treatment runs move)
+  47 other arms touch no directory with consequential ties and are unchanged
+  rerate-slip:
+    first   0.01 sigma, onset 0    cost 0.0247 gain -0.0016 price +0.0084 recovered -6.3% [-82.1%, +21.1%]
+    first   0.01 sigma, onset 20   cost 0.0229 gain -0.0008 price +0.0084 recovered -3.5% [-82.1%, +23.6%]
+    first   0.05 sigma, onset 0    cost 0.1544 gain -0.0016 price +0.0084 recovered -1.0% [-16.4%, +12.7%]
+    first   0.05 sigma, onset 20   cost 0.0954 gain +0.0045 price +0.0084 recovered +4.7% [-21.0%, +20.5%]
+    first   0.15 sigma, onset 0    cost 0.3462 gain +0.0079 price +0.0084 recovered +2.3% [-10.5%, +12.2%]
+    first   0.15 sigma, onset 20   cost 0.1307 gain -0.0473 price +0.0084 recovered -36.2% [-66.3%, -17.1%]
+    first   0.4 sigma, onset 0     cost 0.6578 gain +0.0278 price +0.0084 recovered +4.2% [-3.4%, +13.5%]
+    first   0.4 sigma, onset 20    cost 0.1152 gain -0.0855 price +0.0084 recovered -74.2% [-164.5%, -33.9%]
+    first   pooled                 cost 0.1934 gain -0.0121 price +0.0084 recovered -6.2% [-14.7%, +1.1%]
+    uniform 0.01 sigma, onset 0    cost 0.0247 gain -0.0016 price +0.0084 recovered -6.3% [-82.1%, +21.1%]
+    uniform 0.01 sigma, onset 20   cost 0.0229 gain -0.0008 price +0.0084 recovered -3.5% [-82.1%, +23.6%]
+    uniform 0.05 sigma, onset 0    cost 0.1545 gain -0.0015 price +0.0084 recovered -1.0% [-16.3%, +12.8%]
+    uniform 0.05 sigma, onset 20   cost 0.0954 gain +0.0045 price +0.0084 recovered +4.7% [-21.0%, +20.5%]
+    uniform 0.15 sigma, onset 0    cost 0.3462 gain +0.0079 price +0.0084 recovered +2.3% [-10.6%, +12.2%]
+    uniform 0.15 sigma, onset 20   cost 0.1309 gain -0.0470 price +0.0084 recovered -35.9% [-65.7%, -16.9%]
+    uniform 0.4 sigma, onset 0     cost 0.6582 gain +0.0282 price +0.0084 recovered +4.3% [-3.3%, +13.5%]
+    uniform 0.4 sigma, onset 20    cost 0.1181 gain -0.0826 price +0.0084 recovered -69.9% [-154.6%, -32.5%]
+    uniform pooled                 cost 0.1939 gain -0.0116 price +0.0084 recovered -6.0% [-14.4%, +1.3%]
+  nigp:
+    first   0.01 sigma, onset 0    cost 0.0247 gain +0.0091 price -0.0148 recovered +36.6% [-85.0%, +76.7%]
+    first   0.01 sigma, onset 20   cost 0.0229 gain +0.0073 price -0.0148 recovered +31.9% [-31.6%, +101.0%]
+    first   0.05 sigma, onset 0    cost 0.1544 gain -0.0070 price -0.0148 recovered -4.5% [-16.1%, +8.8%]
+    first   0.05 sigma, onset 20   cost 0.0954 gain -0.0242 price -0.0148 recovered -25.4% [-71.1%, +1.0%]
+    first   0.15 sigma, onset 0    cost 0.3462 gain -0.0129 price -0.0148 recovered -3.7% [-14.5%, +5.6%]
+    first   0.15 sigma, onset 20   cost 0.1307 gain -0.0802 price -0.0148 recovered -61.4% [-130.8%, -22.8%]
+    first   0.4 sigma, onset 0     cost 0.6578 gain +0.0121 price -0.0148 recovered +1.8% [-6.5%, +12.1%]
+    first   0.4 sigma, onset 20    cost 0.1152 gain -0.1949 price -0.0148 recovered -169.2% [-340.9%, -92.6%]
+    first   pooled                 cost 0.1934 gain -0.0363 price -0.0148 recovered -18.8% [-31.4%, -8.8%]
+    uniform 0.01 sigma, onset 0    cost 0.0247 gain +0.0091 price -0.0148 recovered +36.6% [-85.0%, +76.7%]
+    uniform 0.01 sigma, onset 20   cost 0.0229 gain +0.0073 price -0.0148 recovered +31.9% [-31.6%, +101.0%]
+    uniform 0.05 sigma, onset 0    cost 0.1545 gain -0.0068 price -0.0148 recovered -4.4% [-16.0%, +8.9%]
+    uniform 0.05 sigma, onset 20   cost 0.0954 gain -0.0242 price -0.0148 recovered -25.4% [-71.2%, +1.0%]
+    uniform 0.15 sigma, onset 0    cost 0.3462 gain -0.0130 price -0.0148 recovered -3.8% [-14.6%, +5.6%]
+    uniform 0.15 sigma, onset 20   cost 0.1309 gain -0.0802 price -0.0148 recovered -61.3% [-130.5%, -22.8%]
+    uniform 0.4 sigma, onset 0     cost 0.6582 gain +0.0131 price -0.0148 recovered +2.0% [-6.5%, +12.3%]
+    uniform 0.4 sigma, onset 20    cost 0.1181 gain -0.1946 price -0.0148 recovered -164.7% [-320.8%, -90.2%]
+    uniform pooled                 cost 0.1939 gain -0.0362 price -0.0148 recovered -18.7% [-31.2%, -8.6%]
+  q-iu-0.05:
+    first   0.05 sigma, onset 0    cost 0.1544 gain +0.0105 price +0.0282 recovered +6.8% [-8.8%, +16.6%]
+    first   0.05 sigma, onset 20   cost 0.0954 gain -0.0208 price +0.0282 recovered -21.8% [-61.6%, -0.0%]
+    first   pooled                 cost 0.1249 gain -0.0052 price +0.0282 recovered -4.1% [-15.2%, +4.0%]
+    uniform 0.05 sigma, onset 0    cost 0.1545 gain +0.0106 price +0.0282 recovered +6.9% [-8.7%, +16.7%]
+    uniform 0.05 sigma, onset 20   cost 0.0954 gain -0.0209 price +0.0282 recovered -21.9% [-61.7%, -0.1%]
+    uniform pooled                 cost 0.1250 gain -0.0051 price +0.0282 recovered -4.1% [-15.2%, +4.0%]
+  q-iu-0.15:
+    first   0.15 sigma, onset 0    cost 0.3462 gain -0.0124 price +0.0727 recovered -3.6% [-18.6%, +6.3%]
+    first   0.15 sigma, onset 20   cost 0.1307 gain -0.0755 price +0.0727 recovered -57.8% [-111.6%, -28.2%]
+    first   pooled                 cost 0.2384 gain -0.0439 price +0.0727 recovered -18.4% [-34.2%, -9.3%]
+    uniform 0.15 sigma, onset 0    cost 0.3462 gain -0.0122 price +0.0727 recovered -3.5% [-18.6%, +6.2%]
+    uniform 0.15 sigma, onset 20   cost 0.1309 gain -0.0764 price +0.0727 recovered -58.3% [-112.6%, -28.7%]
+    uniform pooled                 cost 0.2386 gain -0.0443 price +0.0727 recovered -18.6% [-34.3%, -9.4%]
+  q-iu-0.4:
+    first   0.4 sigma, onset 0     cost 0.6578 gain -0.0620 price +0.1455 recovered -9.4% [-26.1%, +8.3%]
+    first   0.4 sigma, onset 20    cost 0.1152 gain -0.2120 price +0.1455 recovered -184.0% [-387.1%, -97.3%]
+    first   pooled                 cost 0.3865 gain -0.1370 price +0.1455 recovered -35.5% [-54.2%, -16.0%]
+    uniform 0.4 sigma, onset 0     cost 0.6582 gain -0.0616 price +0.1455 recovered -9.4% [-26.0%, +8.3%]
+    uniform 0.4 sigma, onset 20    cost 0.1181 gain -0.2135 price +0.1455 recovered -180.7% [-370.8%, -95.8%]
+    uniform pooled                 cost 0.3881 gain -0.1375 price +0.1455 recovered -35.4% [-54.2%, -16.0%]
+  ceiling-anchored:
+    first   0.25 sigma, onset 0    cost 0.3593 gain +0.2496 price +0.0000 recovered +69.5% [+62.4%, +75.6%]
+    first   1 sigma, onset 0       cost 0.5088 gain -0.0335 price +0.0000 recovered -6.6% [-15.0%, +1.1%]
+    first   pooled                 cost 0.4341 gain +0.1081 price +0.0000 recovered +24.9% [+17.0%, +31.9%]
+    uniform 0.25 sigma, onset 0    cost 0.3047 gain +0.1950 price +0.0000 recovered +64.0% [+56.0%, +70.9%]
+    uniform 1 sigma, onset 0       cost 0.4108 gain -0.0678 price +0.0000 recovered -16.5% [-24.7%, -9.5%]
+    uniform pooled                 cost 0.3578 gain +0.0636 price +0.0000 recovered +17.8% [+9.3%, +24.9%]
+  ceiling-cost:
+    first   0.25 sigma, onset 0    cost 0.0525 gain -0.3068 price +0.0000 recovered -584.2% [-988.8%, -378.2%]
+    first   1 sigma, onset 0       cost 0.2521 gain -0.2567 price +0.0000 recovered -101.8% [-149.9%, -68.0%]
+    first   pooled                 cost 0.1523 gain -0.2817 price +0.0000 recovered -185.0% [-257.7%, -132.0%]
+    uniform 0.25 sigma, onset 0    cost 0.0525 gain -0.2522 price +0.0000 recovered -480.2% [-828.3%, -304.2%]
+    uniform 1 sigma, onset 0       cost 0.2521 gain -0.1587 price +0.0000 recovered -63.0% [-99.5%, -37.0%]
+    uniform pooled                 cost 0.1523 gain -0.2054 price +0.0000 recovered -134.9% [-195.5%, -92.2%]
+  spike-clip-sp0.05-5:
+    first   0.25 sigma, onset 0    cost 0.2134 gain +0.0473 price +0.0000 recovered +22.2% [+10.0%, +35.2%]
+    first   pooled                 cost 0.2134 gain +0.0473 price +0.0000 recovered +22.2% [+10.0%, +35.2%]
+    uniform 0.25 sigma, onset 0    cost 0.2134 gain +0.0582 price +0.0000 recovered +27.3% [+15.7%, +39.4%]
+    uniform pooled                 cost 0.2134 gain +0.0582 price +0.0000 recovered +27.3% [+15.7%, +39.4%]
+  spike-clip-sp0.05-20:
+    first   0.25 sigma, onset 0    cost 0.3468 gain +0.1206 price +0.0000 recovered +34.8% [+23.1%, +45.8%]
+    first   pooled                 cost 0.3468 gain +0.1206 price +0.0000 recovered +34.8% [+23.1%, +45.8%]
+    uniform 0.25 sigma, onset 0    cost 0.3468 gain +0.1446 price +0.0000 recovered +41.7% [+32.7%, +50.4%]
+    uniform pooled                 cost 0.3468 gain +0.1446 price +0.0000 recovered +41.7% [+32.7%, +50.4%]
+  spike-clip-sp0.15-5:
+    first   0.25 sigma, onset 0    cost 0.4088 gain +0.0226 price +0.0000 recovered +5.5% [-6.7%, +17.7%]
+    first   pooled                 cost 0.4088 gain +0.0226 price +0.0000 recovered +5.5% [-6.7%, +17.7%]
+    uniform 0.25 sigma, onset 0    cost 0.4088 gain +0.0970 price +0.0000 recovered +23.7% [+12.1%, +34.7%]
+    uniform pooled                 cost 0.4088 gain +0.0970 price +0.0000 recovered +23.7% [+12.1%, +34.7%]
+  spike-clip-sp0.15-20:
+    first   0.25 sigma, onset 0    cost 0.8652 gain +0.1895 price +0.0000 recovered +21.9% [+4.1%, +38.2%]
+    first   pooled                 cost 0.8652 gain +0.1895 price +0.0000 recovered +21.9% [+4.1%, +38.2%]
+    uniform 0.25 sigma, onset 0    cost 0.8652 gain +0.3814 price +0.0000 recovered +44.1% [+31.5%, +55.4%]
+    uniform pooled                 cost 0.8652 gain +0.3814 price +0.0000 recovered +44.1% [+31.5%, +55.4%]
+
+replayed remedies (replay_hitl_remedies.recovery_table), reference = the standard rule:
+  output-boba/hitl_remedies: 891 rows of hitl_remedies_recovery.csv reproduced, max abs difference 7.1e-15; 0 noisy runs move under the uniform rule
+  output-boba-spike/hitl_remedies: 34 rows of hitl_remedies_recovery.csv reproduced, max abs difference 1.1e-16; 0 noisy runs move under the uniform rule
+  output-boba-spike/hitl_remedies_heldout: 54 rows of hitl_remedies_recovery.csv reproduced, max abs difference 9.7e-17; 0 noisy runs move under the uniform rule
+  output-boba-ceiling/hitl_remedies: 51 rows of hitl_remedies_recovery.csv reproduced, max abs difference 9.5e-17; 398 noisy runs move under the uniform rule
+  output-boba-ceiling/hitl_remedies_heldout: 81 rows of hitl_remedies_recovery.csv reproduced, max abs difference 1.1e-16; 398 noisy runs move under the uniform rule
+  output-boba/hitl_remedies (seeds 7-16):
+    ordinal_lcb1  first -1.1% [-11.3%, +7.8%] (cost 0.2238, gain -0.0026, price +0.0266); uniform -1.1% [-11.3%, +7.8%] (cost 0.2238, gain -0.0026, price +0.0266)
+    ordinal_pm    first -8.2% [-18.0%, +0.9%] (cost 0.2238, gain -0.0182, price +0.0350); uniform -8.2% [-18.0%, +0.9%] (cost 0.2238, gain -0.0182, price +0.0350)
+    shortlist_m1  first +0.4% [-7.9%, +7.6%] (cost 0.2238, gain +0.0008, price +0.0222); uniform +0.4% [-7.9%, +7.6%] (cost 0.2238, gain +0.0008, price +0.0222)
+    shortlist_m2  first +15.7% [+9.2%, +21.4%] (cost 0.2238, gain +0.0351, price +0.0156); uniform +15.7% [+9.2%, +21.4%] (cost 0.2238, gain +0.0351, price +0.0156)
+    shortlist_m3  first +24.0% [+18.3%, +30.0%] (cost 0.2238, gain +0.0538, price +0.0108); uniform +24.0% [+18.3%, +30.0%] (cost 0.2238, gain +0.0538, price +0.0108)
+    shortlist_m5  first +34.1% [+27.6%, +40.3%] (cost 0.2238, gain +0.0764, price +0.0066); uniform +34.1% [+27.6%, +40.3%] (cost 0.2238, gain +0.0764, price +0.0066)
+  output-boba-spike/hitl_remedies (seeds 7-11):
+    ordinal_lcb1  first +50.5% [+36.1%, +62.5%] (cost 0.8652, gain +0.4371, price +0.0292); uniform +50.5% [+36.1%, +62.5%] (cost 0.8652, gain +0.4371, price +0.0292)
+    ordinal_pm    first +48.3% [+34.0%, +60.5%] (cost 0.8652, gain +0.4180, price +0.0386); uniform +48.3% [+34.0%, +60.5%] (cost 0.8652, gain +0.4180, price +0.0386)
+    shortlist_m1  first +19.8% [+10.2%, +28.9%] (cost 0.8652, gain +0.1714, price +0.0233); uniform +19.8% [+10.2%, +28.9%] (cost 0.8652, gain +0.1714, price +0.0233)
+    shortlist_m2  first +38.9% [+26.8%, +50.3%] (cost 0.8652, gain +0.3361, price +0.0150); uniform +38.9% [+26.8%, +50.3%] (cost 0.8652, gain +0.3361, price +0.0150)
+    shortlist_m3  first +46.7% [+34.9%, +57.8%] (cost 0.8652, gain +0.4037, price +0.0090); uniform +46.7% [+34.9%, +57.8%] (cost 0.8652, gain +0.4037, price +0.0090)
+    shortlist_m5  first +55.6% [+44.0%, +65.8%] (cost 0.8652, gain +0.4809, price +0.0047); uniform +55.6% [+44.0%, +65.8%] (cost 0.8652, gain +0.4809, price +0.0047)
+  output-boba-spike/hitl_remedies_heldout (seeds 12-16):
+    ordinal_lcb1  first +48.8% [+33.9%, +62.6%] (cost 0.8852, gain +0.4323, price +0.0240); uniform +48.8% [+33.9%, +62.6%] (cost 0.8852, gain +0.4323, price +0.0240)
+    ordinal_pm    first +48.5% [+33.0%, +62.6%] (cost 0.8852, gain +0.4293, price +0.0313); uniform +48.5% [+33.0%, +62.6%] (cost 0.8852, gain +0.4293, price +0.0313)
+    shortlist_m1  first +23.5% [+11.0%, +36.7%] (cost 0.8852, gain +0.2076, price +0.0211); uniform +23.5% [+11.0%, +36.7%] (cost 0.8852, gain +0.2076, price +0.0211)
+    shortlist_m2  first +34.7% [+21.3%, +46.4%] (cost 0.8852, gain +0.3069, price +0.0163); uniform +34.7% [+21.3%, +46.4%] (cost 0.8852, gain +0.3069, price +0.0163)
+    shortlist_m3  first +40.5% [+27.3%, +53.3%] (cost 0.8852, gain +0.3583, price +0.0127); uniform +40.5% [+27.3%, +53.3%] (cost 0.8852, gain +0.3583, price +0.0127)
+    shortlist_m5  first +46.1% [+33.4%, +57.7%] (cost 0.8852, gain +0.4080, price +0.0085); uniform +46.1% [+33.4%, +57.7%] (cost 0.8852, gain +0.4080, price +0.0085)
+  output-boba-ceiling/hitl_remedies (seeds 7-11):
+    ordinal_lcb1  first +36.1% [+28.7%, +43.1%] (cost 0.4341, gain +0.1569, price +0.0292); uniform +22.5% [+17.4%, +27.9%] (cost 0.3578, gain +0.0806, price +0.0292)
+    ordinal_pm    first +35.7% [+28.5%, +43.6%] (cost 0.4341, gain +0.1552, price +0.0386); uniform +22.0% [+16.2%, +28.5%] (cost 0.3578, gain +0.0789, price +0.0386)
+    shortlist_m1  first +29.6% [+22.9%, +36.7%] (cost 0.4341, gain +0.1285, price +0.0233); uniform +14.6% [+10.1%, +19.4%] (cost 0.3578, gain +0.0522, price +0.0233)
+    shortlist_m2  first +40.7% [+34.1%, +47.8%] (cost 0.4341, gain +0.1766, price +0.0150); uniform +28.0% [+23.4%, +33.5%] (cost 0.3578, gain +0.1003, price +0.0150)
+    shortlist_m3  first +46.5% [+39.9%, +53.7%] (cost 0.4341, gain +0.2018, price +0.0090); uniform +35.1% [+29.5%, +41.4%] (cost 0.3578, gain +0.1255, price +0.0090)
+    shortlist_m5  first +54.4% [+46.8%, +62.2%] (cost 0.4341, gain +0.2362, price +0.0047); uniform +44.7% [+37.7%, +52.7%] (cost 0.3578, gain +0.1599, price +0.0047)
+  output-boba-ceiling/hitl_remedies_heldout (seeds 12-16):
+    ordinal_lcb1  first +37.9% [+30.7%, +44.9%] (cost 0.4690, gain +0.1780, price +0.0240); uniform +21.3% [+15.8%, +27.1%] (cost 0.3697, gain +0.0787, price +0.0240)
+    ordinal_pm    first +37.1% [+29.9%, +44.1%] (cost 0.4690, gain +0.1738, price +0.0313); uniform +20.2% [+15.0%, +26.0%] (cost 0.3697, gain +0.0745, price +0.0313)
+    shortlist_m1  first +33.7% [+26.9%, +40.1%] (cost 0.4690, gain +0.1581, price +0.0211); uniform +15.9% [+11.2%, +21.3%] (cost 0.3697, gain +0.0588, price +0.0211)
+    shortlist_m2  first +43.5% [+37.3%, +49.8%] (cost 0.4690, gain +0.2041, price +0.0163); uniform +28.4% [+23.2%, +34.3%] (cost 0.3697, gain +0.1048, price +0.0163)
+    shortlist_m3  first +48.7% [+42.1%, +55.0%] (cost 0.4690, gain +0.2284, price +0.0127); uniform +34.9% [+29.1%, +41.2%] (cost 0.3697, gain +0.1291, price +0.0127)
+    shortlist_m5  first +54.7% [+47.6%, +61.4%] (cost 0.4690, gain +0.2567, price +0.0085); uniform +42.6% [+35.9%, +49.4%] (cost 0.3697, gain +0.1574, price +0.0085)
+
+rank rule, 2000 landscape-split folds (heldout_remedies.py's own functions):
+  rank_spike: landscape-split median and range of heldout_remedies.csv reproduced, max abs difference 0.0e+00
+  rank_ceiling: landscape-split median and range of heldout_remedies.csv reproduced, max abs difference 5.6e-17
+  rank_spike    first   full +50.5% [+36.2%, +63.0%]  held-out median +50.0% [+34.5%, +62.6%]  folds choosing ordinal_lcb1 89.5%
+  rank_spike    uniform full +50.5% [+36.2%, +63.0%]  held-out median +50.0% [+34.5%, +62.6%]  folds choosing ordinal_lcb1 89.5%
+  rank_ceiling  first   full +36.1% [+29.5%, +44.2%]  held-out median +35.6% [+28.0%, +43.6%]  folds choosing ordinal_lcb1 65.8%
+  rank_ceiling  uniform full +22.5% [+17.4%, +28.4%]  held-out median +22.0% [+16.1%, +28.6%]  folds choosing ordinal_lcb1 65.8%
+
+instrument screen (design_rules_from_pilot.instrument / screen_fit), capped arm re-scored:
+  instrument screen, capped seeds 7-11: design_rule_instrument_screen.csv reproduced, max abs difference 8.3e-17
+  instrument screen, capped seeds 7-16: design_rule_instrument_screen.csv NOT reproduced, max abs difference 7.2e-02
+  (script = design_rules_from_pilot as written, capped LogEI/qNEI against the main sweep's cell means over ten acquisitions; paired = LogEI/qNEI seeds 7-11 against the same runs of the main sweep)
+  script capped seeds 7-11  first   ceil0.9-anchored   median extra cost +0.104  rho(headroom) +0.31  low-headroom half +0.083  high +0.170
+  script capped seeds 7-11  first   ceil0.9-fixed      median extra cost +0.219  rho(headroom) +0.65  low-headroom half +0.153  high +0.316
+  script capped seeds 7-11  uniform ceil0.9-anchored   median extra cost +0.084  rho(headroom) +0.37  low-headroom half +0.056  high +0.134
+  script capped seeds 7-11  uniform ceil0.9-fixed      median extra cost +0.132  rho(headroom) +0.76  low-headroom half +0.079  high +0.238
+  script capped seeds 7-16  first   ceil0.9-anchored   median extra cost +0.104  rho(headroom) +0.31  low-headroom half +0.083  high +0.170
+  script capped seeds 7-16  first   ceil0.9-fixed      median extra cost +0.242  rho(headroom) +0.58  low-headroom half +0.180  high +0.324
+  script capped seeds 7-16  uniform ceil0.9-anchored   median extra cost +0.084  rho(headroom) +0.37  low-headroom half +0.056  high +0.134
+  script capped seeds 7-16  uniform ceil0.9-fixed      median extra cost +0.139  rho(headroom) +0.75  low-headroom half +0.093  high +0.236
+  paired capped seeds 7-11  first   ceil0.9-fixed      median extra cost +0.255  rho(headroom) +0.49  low-headroom half +0.200  high +0.363
+  paired capped seeds 7-11  uniform ceil0.9-fixed      median extra cost +0.176  rho(headroom) +0.64  low-headroom half +0.125  high +0.286
+  paired capped seeds 7-11  first   ceil0.9-anchored   median extra cost +0.131  rho(headroom) +0.30  low-headroom half +0.129  high +0.218
+  paired capped seeds 7-11  uniform ceil0.9-anchored   median extra cost +0.114  rho(headroom) +0.39  low-headroom half +0.102  high +0.182
+
+cautious ship rule (LCB2) and LCB1, gaussian error, main sweep, ten acquisitions, seeds 7-16:
+  lcb2: 8 gaussian condition rows of ship_rules_recovery.csv reproduced, max abs difference 8.3e-17
+  lcb1: 8 gaussian condition rows of ship_rules_recovery.csv reproduced, max abs difference 8.3e-17
+  lcb2 0.05 sigma, onset 0                                cost 0.0158 gain -0.0128 price +0.0147 recovered -80.6% [-216.5%, -13.2%]
+  lcb2 0.05 sigma, onset 20                               cost 0.0088 gain -0.0130 price +0.0147 recovered -146.9% [-316.2%, -37.6%]
+  lcb2 0.25 sigma, onset 0                                cost 0.0969 gain -0.0019 price +0.0147 recovered -1.9% [-14.6%, +7.3%]
+  lcb2 0.25 sigma, onset 20                               cost 0.0397 gain -0.0051 price +0.0147 recovered -12.8% [-44.6%, +11.2%]
+  lcb2 1 sigma, onset 0                                   cost 0.3022 gain +0.0174 price +0.0147 recovered +5.8% [+1.9%, +9.7%]
+  lcb2 1 sigma, onset 20                                  cost 0.1224 gain +0.0154 price +0.0147 recovered +12.6% [+4.2%, +22.7%]
+  lcb2 5 sigma, onset 0                                   cost 0.7078 gain +0.0689 price +0.0147 recovered +9.7% [+5.5%, +15.1%]
+  lcb2 5 sigma, onset 20                                  cost 0.4070 gain +0.0752 price +0.0147 recovered +18.5% [+10.9%, +26.1%]
+  lcb2 0.25 sigma, both onsets                            cost 0.0683 gain -0.0035 price +0.0147 recovered -5.1% [-23.1%, +8.1%]
+  lcb2 1 sigma, both onsets                               cost 0.2123 gain +0.0164 price +0.0147 recovered +7.7% [+2.7%, +12.8%]
+  lcb2 5 sigma, both onsets                               cost 0.5574 gain +0.0720 price +0.0147 recovered +12.9% [+7.9%, +18.6%]
+  lcb2 >= 0.25 sigma, both onsets                         cost 0.2794 gain +0.0283 price +0.0147 recovered +10.1% [+4.6%, +15.9%]
+  lcb2 >= 0.25 sigma without 5 sigma (0.25 and 1 sigma)   cost 0.1403 gain +0.0065 price +0.0147 recovered +4.6% [-2.9%, +11.2%]
+  lcb2 >= 0.25 sigma, both onsets, LogEI and qNEI only    cost 0.2886 gain +0.0460 price +0.0216 recovered +15.9% [+6.8%, +25.3%]
+  lcb1 0.05 sigma, onset 0                                cost 0.0158 gain -0.0128 price +0.0145 recovered -80.5% [-216.4%, -13.0%]
+  lcb1 0.05 sigma, onset 20                               cost 0.0088 gain -0.0125 price +0.0145 recovered -141.7% [-318.7%, -30.0%]
+  lcb1 0.25 sigma, onset 0                                cost 0.0969 gain -0.0028 price +0.0145 recovered -2.9% [-15.7%, +6.6%]
+  lcb1 0.25 sigma, onset 20                               cost 0.0397 gain -0.0057 price +0.0145 recovered -14.3% [-46.5%, +9.7%]
+  lcb1 1 sigma, onset 0                                   cost 0.3022 gain +0.0179 price +0.0145 recovered +5.9% [+2.0%, +9.8%]
+  lcb1 1 sigma, onset 20                                  cost 0.1224 gain +0.0123 price +0.0145 recovered +10.0% [+2.1%, +19.3%]
+  lcb1 5 sigma, onset 0                                   cost 0.7078 gain +0.0658 price +0.0145 recovered +9.3% [+5.2%, +14.4%]
+  lcb1 5 sigma, onset 20                                  cost 0.4070 gain +0.0417 price +0.0145 recovered +10.3% [+3.7%, +17.2%]
+  lcb1 0.25 sigma, both onsets                            cost 0.0683 gain -0.0043 price +0.0145 recovered -6.2% [-24.6%, +7.2%]
+  lcb1 1 sigma, both onsets                               cost 0.2123 gain +0.0151 price +0.0145 recovered +7.1% [+2.2%, +11.8%]
+  lcb1 5 sigma, both onsets                               cost 0.5574 gain +0.0537 price +0.0145 recovered +9.6% [+4.9%, +15.0%]
+  lcb1 >= 0.25 sigma, both onsets                         cost 0.2794 gain +0.0215 price +0.0145 recovered +7.7% [+2.4%, +13.1%]
+  lcb1 >= 0.25 sigma without 5 sigma (0.25 and 1 sigma)   cost 0.1403 gain +0.0054 price +0.0145 recovered +3.9% [-3.6%, +10.3%]
+  lcb1 >= 0.25 sigma, both onsets, LogEI and qNEI only    cost 0.2886 gain +0.0380 price +0.0222 recovered +13.2% [+3.9%, +22.1%]
+  lcb1: the 5 sigma cells carry 66.5% of the pooled >= 0.25 sigma cost
+  lcb2: the 5 sigma cells carry 66.5% of the pooled >= 0.25 sigma cost
+
+quoted numbers, first-index (as logged) | uniform tie-break (deployed design throughout):
+  Limitations, app:shiprules, app:budgetneutral, app:remedies (screen) capped scale: extra cost over an uncapped scale, share of its cost (pooled 0.25 and 1 sigma)  185.0% [132.0, 257.7] | 134.9% [92.2, 195.5]
+  Limitations, app:shiprules, app:budgetneutral, app:remedies (screen) capped scale: extra cost over an uncapped scale, share of its cost (0.25 sigma)  584.2% [378.2, 988.8] | 480.2% [304.2, 828.3]
+  Limitations, app:shiprules, app:budgetneutral, app:remedies (screen) capped scale: extra cost over an uncapped scale, share of its cost (1 sigma)     101.8% [68.0, 149.9] | 63.0% [37.0, 99.5]
+  tab:remedies, tab:budgetneutral, app:shiprules re-anchored cap, recovered (pooled); price 0                                       24.9% [17.0, 31.9] | 17.8% [9.3, 24.9]
+  tab:remedies, tab:budgetneutral, app:shiprules re-anchored cap, recovered (0.25 sigma); price 0                                   69.5% [62.4, 75.6] | 64.0% [56.0, 70.9]
+  tab:remedies, tab:budgetneutral, app:shiprules re-anchored cap, recovered (1 sigma); price 0                                      -6.6% [-15.0, 1.1] | -16.5% [-24.7, -9.5]
+  tab:remedies, tab:budgetneutral, app:shiprules clip to the landscape's known range, recovered (15% of trials at 20 SD); price 0      21.9% [4.1, 38.2] | 44.1% [31.5, 55.4]
+  tab:remedies, tab:budgetneutral, app:shiprules clip to the landscape's known range, recovered (5% at 20 SD); price 0              34.8% [23.1, 45.8] | 41.7% [32.7, 50.4]
+  tab:remedies, tab:budgetneutral, app:shiprules clip to the landscape's known range, recovered (5% at 5 SD); price 0               22.2% [10.0, 35.2] | 27.3% [15.7, 39.4]
+  tab:remedies, tab:budgetneutral, app:shiprules clip to the landscape's known range, recovered (15% at 5 SD); price 0               5.5% [-6.7, 17.7] | 23.7% [12.1, 34.7]
+  tab:budgetneutral / tab:adapt      slip-aware acquisition, 0.05 slip, recovered                                       -4.1% [-15.2, 4.0] | -4.1% [-15.2, 4.0]
+  tab:budgetneutral / tab:adapt      slip-aware acquisition, 0.15 slip, recovered                                     -18.4% [-34.2, -9.3] | -18.6% [-34.3, -9.4]
+  tab:budgetneutral / tab:adapt      slip-aware acquisition, 0.4 slip, recovered                                     -35.5% [-54.2, -16.0] | -35.4% [-54.2, -16.0]
+  tab:budgetneutral / tab:adapt      noisy-input GP under a slip, recovered                                           -18.8% [-31.4, -8.8] | -18.7% [-31.2, -8.6]
+  tab:budgetneutral / tab:adapt      re-rating under a slip, recovered                                                  -6.2% [-14.7, 1.1] | -6.0% [-14.4, 1.3]
+  tab:remedies, Sec. 7, app:remedies, tab:shortlist, tab:heldout rank refit (ordinal_lcb1), recovered, capped scale, seeds 7-11; price 0.0292       36.1% [28.7, 43.1] | 22.5% [17.4, 27.9]
+  tab:remedies, Sec. 7, app:remedies, tab:shortlist, tab:heldout rank refit (ordinal_lcb1), recovered, capped scale, seeds 12-16; price 0.0240      37.9% [30.7, 44.9] | 21.3% [15.8, 27.1]
+  tab:remedies, Sec. 7, app:remedies, tab:shortlist, tab:heldout rank refit (ordinal_lcb1), recovered, gross faults, seeds 7-11; price 0.0292       50.5% [36.1, 62.5] | 50.5% [36.1, 62.5]
+  tab:remedies, Sec. 7, app:remedies, tab:shortlist, tab:heldout rank refit (ordinal_lcb1), recovered, gross faults, seeds 12-16; price 0.0240      48.8% [33.9, 62.6] | 48.8% [33.9, 62.6]
+  tab:remedies, Sec. 7, app:remedies, tab:shortlist, tab:heldout rank refit (ordinal_lcb1), recovered, main sweep, seeds 7-16; price 0.0266         -1.1% [-11.3, 7.8] | -1.1% [-11.3, 7.8]
+  tab:shortlist (capped scale)       ship 1 by LCB1, recovered; price 0.0233                                            29.6% [22.9, 36.7] | 14.6% [10.1, 19.4]
+  tab:shortlist (capped scale)       ship 2 by LCB1, recovered; price 0.0150                                            40.7% [34.1, 47.8] | 28.0% [23.4, 33.5]
+  tab:shortlist (capped scale)       ship 3 by LCB1, recovered; price 0.0090                                            46.5% [39.9, 53.7] | 35.1% [29.5, 41.4]
+  tab:shortlist (capped scale)       ship 5 by LCB1, recovered; price 0.0047                                            54.4% [46.8, 62.2] | 44.7% [37.7, 52.7]
+  tab:heldout                        rank_ceiling: landscape-split median [2.5, 97.5 percentiles] over 2000 folds       35.6% [28.0, 43.6] | 22.0% [16.1, 28.6]
+  tab:heldout                        rank_spike: landscape-split median [2.5, 97.5 percentiles] over 2000 folds         50.0% [34.5, 62.6] | 50.0% [34.5, 62.6]
+  app:remedies (screen)              instrument screen (script, capped seeds 7-11), ceil0.9-fixed                   median 0.219, rho 0.65, halves 0.153/0.316 | median 0.132, rho 0.76, halves 0.079/0.238
+  app:remedies (screen)              instrument screen (script, capped seeds 7-11), ceil0.9-anchored                median 0.104, rho 0.31, halves 0.083/0.170 | median 0.084, rho 0.37, halves 0.056/0.134
+  app:remedies (screen)              instrument screen (paired, capped seeds 7-11), ceil0.9-fixed                   median 0.255, rho 0.49, halves 0.200/0.363 | median 0.176, rho 0.64, halves 0.125/0.286
+  app:remedies (screen)              instrument screen (paired, capped seeds 7-11), ceil0.9-anchored                median 0.131, rho 0.30, halves 0.129/0.218 | median 0.114, rho 0.39, halves 0.102/0.182
+  app:remedies (screen)              instrument screen (script, capped seeds 7-16), ceil0.9-fixed                   median 0.242, rho 0.58, halves 0.180/0.324 | median 0.139, rho 0.75, halves 0.093/0.236
+  app:remedies (screen)              instrument screen (script, capped seeds 7-16), ceil0.9-anchored                median 0.104, rho 0.31, halves 0.083/0.170 | median 0.084, rho 0.37, halves 0.056/0.134
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 0.05 sigma, onset 0                                      -80.6% [-216.5, -13.2]; price 0.0147 | -80.6% [-216.5, -13.2]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 0.05 sigma, onset 20                                     -146.9% [-316.2, -37.6]; price 0.0147 | -146.9% [-316.2, -37.6]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 0.25 sigma, onset 0                                      -1.9% [-14.6, 7.3]; price 0.0147 | -1.9% [-14.6, 7.3]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 0.25 sigma, onset 20                                     -12.8% [-44.6, 11.2]; price 0.0147 | -12.8% [-44.6, 11.2]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 1 sigma, onset 0                                         5.8% [1.9, 9.7]; price 0.0147 | 5.8% [1.9, 9.7]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 1 sigma, onset 20                                        12.6% [4.2, 22.7]; price 0.0147 | 12.6% [4.2, 22.7]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 5 sigma, onset 0                                         9.7% [5.5, 15.1]; price 0.0147 | 9.7% [5.5, 15.1]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 5 sigma, onset 20                                        18.5% [10.9, 26.1]; price 0.0147 | 18.5% [10.9, 26.1]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 0.25 sigma, both onsets                                  -5.1% [-23.1, 8.1]; price 0.0147 | -5.1% [-23.1, 8.1]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 1 sigma, both onsets                                     7.7% [2.7, 12.8]; price 0.0147 | 7.7% [2.7, 12.8]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), 5 sigma, both onsets                                     12.9% [7.9, 18.6]; price 0.0147 | 12.9% [7.9, 18.6]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), >= 0.25 sigma, both onsets                               10.1% [4.6, 15.9]; price 0.0147 | 10.1% [4.6, 15.9]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), >= 0.25 sigma without 5 sigma (0.25 and 1 sigma)         4.6% [-2.9, 11.2]; price 0.0147 | 4.6% [-2.9, 11.2]; price 0.0147
+  Sec. 7, app:shiprules, tab:remedies cautious rule (LCB2), >= 0.25 sigma, both onsets, LogEI and qNEI only          15.9% [6.8, 25.3]; price 0.0216 | 15.9% [6.8, 25.3]; price 0.0216

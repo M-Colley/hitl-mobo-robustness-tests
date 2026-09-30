@@ -869,8 +869,10 @@ def write_report(
                     f"  is 0.0625); treat per-condition p-values as descriptive and rely on\n"
                     f"  effect sizes, CIs and replication across conditions instead.\n"
                 )
-        handle.write("- FDR (Benjamini-Hochberg) correction is applied per test family\n")
-        handle.write("  (Friedman omnibus and Wilcoxon pairwise are corrected separately).\n")
+        handle.write("- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus\n")
+        handle.write("  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank\n")
+        handle.write("  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in\n")
+        handle.write("  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.\n")
         handle.write("- Kendall's W accompanies every Friedman test as the effect size.\n")
         handle.write("- Dataset comparisons should stay stratified by dataset rather than pooling\n")
         handle.write("  unless outcomes are explicitly normalized across datasets.\n\n")

@@ -126,5 +126,5 @@
   "ship_fit_failures": 0,
   "evaluation_rows_matched": 12800,
   "evaluation_max_abs_diff": 3.552713678800501e-15,
-  "runtime_sec": 8032.117991999956
+  "runtime_sec": 21.096277700038627
 }

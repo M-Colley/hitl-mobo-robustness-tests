@@ -43,10 +43,37 @@ Ship rules, since a comparison loop has no rating to rank by:
 
 Both are scored by the true objective at the design they ship, against the
 identically seeded CLEAN run of the same loop, so each elicitation is its own
-control and the comparison is of excess, never of levels.
+control and the comparison is of excess, never of levels. That own-twin share
+(removed_share) is what this arm has always reported. The comparison loop also
+changes the clean run, so the summary carries the standard-process estimand of
+AGENTS.md beside it (analyse_boba_adaptations.summarise): cost = rating noisy -
+rating clean, gain = rating noisy - comparison noisy, price = comparison clean -
+rating clean, each a landscape mean in units of opt_z with a landscape bootstrap.
 
-    python scripts/elicitation_compare.py --workers 10
-    python scripts/elicitation_compare.py --summary-only
+Determinism. Each run seeds the global numpy and torch generators from its task
+seed (_seed_globals). BoTorch's PairwiseGP perturbs the start of every Laplace
+MAP search with numpy's global generator, and a failed hyperparameter fit
+retries from values drawn with torch's; before the seed was set the global numpy
+generator was seeded from the operating system, so the comparison loop gave a
+different result for the same task on every execution. The log in
+output-elicitation predates the seed and cannot be regenerated;
+output-elicitation-rerun is the deterministic arm.
+
+Ties. The rating loop ships the EARLIEST design with the best observed rating
+(np.argmax), the standard rule of the paper. Under the noise-free cap many
+designs tie at the cap, so each run also records the exact expectation over a
+uniformly random choice among the tied designs (shipped_true_uniform_ties), and
+the summary gives both. A comparison between two looks that tie (both above the
+cap) goes to the first design of the pair, the new proposal in the loop.
+
+``--functions`` takes a comma-separated list, ``suite`` for the twenty
+landscapes of the paper (boba_benchmarks.DEFAULT_SUITE), or the default ``all``
+for every landscape in the stats file, which also holds the manipulation
+families. The paper's arm, with the twenty named explicitly so that a reader of
+the command (and scripts/check_provenance.py) sees which landscapes it covers:
+
+    python scripts/elicitation_compare.py --functions ackley,branin,eggholder,griewank,hartmann_3,hartmann_6,hicks_law,levy_10,michalewicz,moving_peaks,powell,power_law_practice,rastrigin,rosenbrock,schwefel,shekel,steering_law,stevens,weber_fechner,yerkes_dodson --error-models bias,drift,ceiling,gaussian --magnitudes 1 --iterations 20 --workers 12 --output-dir output-elicitation-rerun
+    python scripts/elicitation_compare.py --summary-only --output-dir output-elicitation-rerun
 """
 from __future__ import annotations
 
@@ -83,7 +110,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--output-dir", type=Path, default=Path("output-elicitation"))
-    p.add_argument("--functions", type=str, default="all")
+    p.add_argument("--functions", type=str, default="all",
+                   help="'all' (every landscape in the stats file), 'suite' (the paper's twenty, "
+                        "boba_benchmarks.DEFAULT_SUITE) or a comma-separated list")
     p.add_argument("--error-models", type=str, default=",".join(ALL_FAULTS))
     p.add_argument("--magnitudes", type=str, default="1,5")
     p.add_argument("--seeds", type=str, default="7,8,9")
@@ -210,11 +239,50 @@ def _propose(gp, bounds: torch.Tensor, best_f: float, pool: np.ndarray) -> int:
     return int(torch.argmax(values).item())
 
 
+TIE_TOL = 1e-12
+
+
+def _ship(score: np.ndarray, truth: np.ndarray) -> dict:
+    """What the loop ships from ``score``, under both tie conventions.
+
+    shipped_true is the earliest design with the best score (np.argmax, the
+    rule every number of this arm has used). shipped_true_uniform_ties is the
+    exact expectation over a uniformly random choice among the designs whose
+    score is within TIE_TOL of the best, and n_tied_top counts them. Computed
+    after the loop, so it draws no random number and cannot change the run.
+    """
+    score = np.asarray(score, dtype=float)
+    tied = np.flatnonzero(score >= score.max() - TIE_TOL)
+    return {"shipped_true": float(truth[int(np.argmax(score))]),
+            "shipped_true_uniform_ties": float(np.mean(truth[tied])),
+            "n_tied_top": int(len(tied))}
+
+
+def _seed_globals(seed: int) -> None:
+    """Start the run's GLOBAL numpy and torch streams from its own seed.
+
+    The loops draw their own numbers from a local generator, but the libraries
+    draw from the global ones: every PairwiseGP starts its Laplace MAP search
+    from the win counts plus 0.05 of a standard normal drawn with
+    np.random.standard_normal (botorch.models.pairwise_gp), and a failed
+    hyperparameter fit retries from values sampled from the priors with torch's
+    generator (botorch.fit). Without this, numpy's global generator was seeded
+    from the operating system in every worker, so the comparison loop gave a
+    different result for the same task on every execution, and its clean twin
+    differed between error-process cells. Seeding both at the start of every run
+    makes each run a function of its task alone.
+    """
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
+
+
 def run_rating(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: int,
                error_model: str, magnitude: float, apply_error: bool, seed: int,
                cap: float | None, spike_prob: float, spike_sd: float) -> dict:
+    _seed_globals(seed)
     rng = np.random.default_rng(seed)
     fit_failures = 0
+    n_fits = 0
     bounds = torch.tensor(np.stack([bounds_low, bounds_high]), dtype=torch.double)
     d = len(bounds_low)
     X = rng.uniform(bounds_low, bounds_high, size=(n0, d))
@@ -225,6 +293,7 @@ def run_rating(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: int,
         pool = rng.uniform(bounds_low, bounds_high, size=(pool_size, d))
         gp, failed = _fit_rating_gp(X, observed, bounds)
         fit_failures += int(failed)
+        n_fits += 1
         idx = _propose(gp, bounds, float(observed.max()), pool)
         x_new = pool[idx : idx + 1]
         f_new = _values(oracle, x_new)
@@ -233,16 +302,17 @@ def run_rating(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: int,
         X = np.vstack([X, x_new])
         truth = np.concatenate([truth, f_new])
         observed = np.concatenate([observed, y_new])
-    shipped = int(np.argmax(observed))
-    return {"shipped_true": float(truth[shipped]), "best_visited_true": float(truth.max()),
-            "n_designs": len(X), "fit_failures": fit_failures}
+    return {**_ship(observed, truth), "best_visited_true": float(truth.max()),
+            "n_designs": len(X), "fit_failures": fit_failures, "n_fits": n_fits}
 
 
 def run_pairwise(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: int,
                  error_model: str, magnitude: float, apply_error: bool, seed: int,
                  cap: float | None, spike_prob: float, spike_sd: float) -> dict:
+    _seed_globals(seed)
     rng = np.random.default_rng(seed)
     fit_failures = 0
+    n_fits = 0
     bounds = torch.tensor(np.stack([bounds_low, bounds_high]), dtype=torch.double)
     d = len(bounds_low)
     model = error_model if apply_error else "none"
@@ -260,6 +330,7 @@ def run_pairwise(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: in
     for t in range(n0, T):
         gp, failed = _fit_pairwise_gp(X, np.asarray(comparisons), bounds)
         fit_failures += int(failed)
+        n_fits += 1
         with torch.no_grad():
             mean = gp.posterior(torch.tensor(X, dtype=torch.double)).mean.squeeze(-1).numpy()
         incumbent = int(np.argmax(mean))
@@ -277,11 +348,11 @@ def run_pairwise(oracle, bounds_low, bounds_high, T: int, n0: int, pool_size: in
 
     gp, failed = _fit_pairwise_gp(X, np.asarray(comparisons), bounds)
     fit_failures += int(failed)
+    n_fits += 1
     with torch.no_grad():
         mean = gp.posterior(torch.tensor(X, dtype=torch.double)).mean.squeeze(-1).numpy()
-    shipped = int(np.argmax(mean))
-    return {"shipped_true": float(truth[shipped]), "best_visited_true": float(truth.max()),
-            "n_designs": len(X), "fit_failures": fit_failures}
+    return {**_ship(mean, truth), "best_visited_true": float(truth.max()),
+            "n_designs": len(X), "fit_failures": fit_failures, "n_fits": n_fits}
 
 
 # ---------------------------------------------------------------------------
@@ -343,15 +414,61 @@ def build_tasks(args: argparse.Namespace, names: list[str]) -> list[dict]:
     return tasks
 
 
+def _standard_process(regret: pd.DataFrame, column: str) -> dict:
+    """The comparison loop scored against the STANDARD process (AGENTS.md).
+
+    ``regret`` holds one row per (dataset, seed) with the rating loop's noisy and
+    clean regret and the comparison loop's, all in units of opt_z. The estimand
+    and its landscape bootstrap are analyse_boba_adaptations.summarise, imported
+    rather than copied; the suppression rule for a near-zero or sign-changing
+    cost is its share_flags.
+    """
+    import analyse_boba_adaptations as aba  # a heavy import, kept out of the workers
+    block = pd.DataFrame({
+        "dataset": regret["dataset"],
+        "ref_noisy": regret[f"rating_noisy{column}"], "ref_clean": regret[f"rating_clean{column}"],
+        "trt_noisy": regret["pairwise_noisy"], "trt_clean": regret["pairwise_clean"],
+    })
+    out = aba.summarise(block, np.random.default_rng(aba.BOOTSTRAP_SEED))
+    flags = aba.share_flags(block)
+    keep = ("cost", "gain", "price", "recovered", "recovered_lo", "recovered_hi", "wilcoxon_p")
+    res = {f"std_{k}{column}": out[k] for k in keep}
+    res[f"std_recovered_suppressed{column}"] = flags["recovered_suppressed"]
+    return res
+
+
 def summarise(runs: pd.DataFrame, opt_z: dict[str, float]) -> pd.DataFrame:
-    """Excess regret of each elicitation over its OWN clean twin."""
+    """Excess regret of each elicitation over its OWN clean twin, and more.
+
+    The first seven columns are the arm's original own-twin estimand, computed
+    exactly as before (same bootstrap stream). The rest: the number of runs, how
+    many noisy runs ship a different design than their clean twin, the fits and
+    fallbacks, the same share under a uniformly random tie-break of the rating
+    loop's ship rule (same landscape resamples), and the standard-process
+    estimand (std_*) under both tie conventions.
+    """
     runs = runs.copy()
-    z = runs["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    missing = sorted(set(runs["dataset"]) - set(opt_z))
+    if missing:
+        raise KeyError(f"no opt_z for {missing}; regrets from different landscapes would mix units")
+    z = runs["dataset"].map(opt_z)
     runs["regret"] = (runs["y_opt"] - runs["shipped_true"]) / z
+    uniform = "shipped_true_uniform_ties" in runs.columns
+    if uniform:
+        runs["regret_u"] = (runs["y_opt"] - runs["shipped_true_uniform_ties"]) / z
     keys = ["dataset", "elicitation", "error_model", "magnitude", "seed"]
-    noisy = runs[runs["apply_error"]].set_index(keys)["regret"]
-    clean = runs[~runs["apply_error"]].set_index(keys)["regret"]
+    noisy_runs = runs[runs["apply_error"]].set_index(keys)
+    clean_runs = runs[~runs["apply_error"]].set_index(keys)
+    noisy = noisy_runs["regret"]
+    clean = clean_runs["regret"]
     excess = (noisy - clean).rename("excess").reset_index()
+    moved = ((noisy_runs["shipped_true"] - clean_runs["shipped_true"]).abs() > TIE_TOL).rename("moved")
+    excess = excess.merge(moved.reset_index(), on=keys, how="left")
+    if uniform:
+        # The clean twin has no cap, so its uniform value is its first-index value
+        # unless two designs tie exactly; both sides use the same convention.
+        excess_u = (noisy_runs["regret_u"] - clean_runs["regret_u"]).rename("excess_u").reset_index()
+        excess = excess.merge(excess_u, on=keys, how="left")
 
     rng = np.random.default_rng(BOOTSTRAP_SEED)
     rows = []
@@ -362,15 +479,22 @@ def summarise(runs: pd.DataFrame, opt_z: dict[str, float]) -> pd.DataFrame:
         per = per.dropna()
         diff = (per["rating"] - per["pairwise"]).to_numpy()
         base = per["rating"].to_numpy()
+        if uniform:
+            per_u = (group.groupby(["dataset", "elicitation"])["excess_u"].mean()
+                     .unstack("elicitation").loc[per.index])
+            diff_u = (per_u["rating"] - per_u["pairwise"]).to_numpy()
+            base_u = per_u["rating"].to_numpy()
         n = len(diff)
-        draws = []
+        draws, draws_u = [], []
         for _ in range(BOOTSTRAP_REPS):
             idx = rng.integers(0, n, n)
             b = base[idx].mean()
             if b != 0:
                 draws.append(diff[idx].mean() / b)
+            if uniform and base_u[idx].mean() != 0:
+                draws_u.append(diff_u[idx].mean() / base_u[idx].mean())
         share = float(diff.mean() / base.mean()) if base.mean() != 0 else float("nan")
-        rows.append({
+        row = {
             "error_model": model, "magnitude": mag, "class":
                 "shared" if model in SHARED_FAULTS else "idiosyncratic",
             "n_landscapes": n,
@@ -379,8 +503,61 @@ def summarise(runs: pd.DataFrame, opt_z: dict[str, float]) -> pd.DataFrame:
             "removed_share": share,
             "removed_lo": float(np.percentile(draws, 2.5)) if draws else float("nan"),
             "removed_hi": float(np.percentile(draws, 97.5)) if draws else float("nan"),
-        })
+        }
+        for elic in ("rating", "pairwise"):
+            g = group[group["elicitation"] == elic]
+            row[f"{elic}_runs"] = int(len(g))
+            row[f"{elic}_runs_moved"] = int(g["moved"].sum())
+        cell = runs[(runs["error_model"] == model) & (runs["magnitude"] == mag)]
+        for elic in ("rating", "pairwise"):
+            c = cell[cell["elicitation"] == elic]
+            row[f"{elic}_fit_fallbacks"] = int(c["fit_failures"].sum())
+            if "n_fits" in c.columns:
+                row[f"{elic}_fits"] = int(c["n_fits"].sum())
+        if uniform:
+            nr = noisy_runs.reset_index()
+            nr = nr[(nr["error_model"] == model) & (nr["magnitude"] == mag) & (nr["elicitation"] == "rating")]
+            row["rating_runs_tied_top"] = int((nr["n_tied_top"] > 1).sum())
+            row["rating_runs_tie_matters"] = int(
+                ((nr["shipped_true"] - nr["shipped_true_uniform_ties"]).abs() > TIE_TOL).sum())
+            row["rating_excess_uniform_ties"] = float(per_u["rating"].mean())
+            row["removed_share_uniform_ties"] = (float(diff_u.mean() / base_u.mean())
+                                                 if base_u.mean() != 0 else float("nan"))
+            row["removed_lo_uniform_ties"] = float(np.percentile(draws_u, 2.5)) if draws_u else float("nan")
+            row["removed_hi_uniform_ties"] = float(np.percentile(draws_u, 97.5)) if draws_u else float("nan")
+        # The standard-process estimand, one row per (dataset, seed).
+        wide = {}
+        for elic in ("rating", "pairwise"):
+            for flag, frame in (("noisy", noisy_runs), ("clean", clean_runs)):
+                f = frame.reset_index()
+                f = f[(f["error_model"] == model) & (f["magnitude"] == mag) & (f["elicitation"] == elic)]
+                wide[f"{elic}_{flag}"] = f.set_index(["dataset", "seed"])["regret"]
+                if uniform and elic == "rating":
+                    wide[f"rating_{flag}_u"] = f.set_index(["dataset", "seed"])["regret_u"]
+        regret = pd.DataFrame(wide).dropna(subset=["rating_noisy", "rating_clean",
+                                                    "pairwise_noisy", "pairwise_clean"]).reset_index()
+        row.update(_standard_process(regret, ""))
+        if uniform:
+            row.update(_standard_process(regret, "_u"))
+        rows.append(row)
     return pd.DataFrame(rows)
+
+
+def landscape_names(functions: str, stats: dict) -> list[str]:
+    """The landscapes ``--functions`` names: 'all', 'suite' or a comma-separated list.
+
+    A name the stats file does not hold is an error rather than silently dropped.
+    """
+    if functions == "all":
+        return sorted(stats)
+    if functions == "suite":
+        names = sorted(bb.DEFAULT_SUITE)
+    else:
+        names = [f.strip() for f in functions.split(",") if f.strip()]
+    unknown = [n for n in names if n not in stats]
+    if unknown:
+        raise SystemExit(f"--functions names landscapes the stats file does not hold: {unknown}")
+    return names
 
 
 def main(argv=None) -> pd.DataFrame:
@@ -389,8 +566,7 @@ def main(argv=None) -> pd.DataFrame:
     runs_path = args.output_dir / f"{OUTPUT_NAME}_runs.csv"
 
     stats = bb.load_stats(args.stats_path)
-    names = sorted(stats) if args.functions == "all" else [f.strip() for f in args.functions.split(",")]
-    names = [n for n in names if n in stats]
+    names = landscape_names(args.functions, stats)
 
     if args.summary_only and runs_path.is_file():
         runs = pd.read_csv(runs_path)
@@ -428,8 +604,64 @@ def main(argv=None) -> pd.DataFrame:
                   f"[{r['removed_lo'] * 100:+.0f},{r['removed_hi'] * 100:+.0f}]  "
                   f"n={int(r['n_landscapes'])}")
         print()
+    print(report(summary))
     print(f"Wrote {runs_path} and {args.output_dir / (OUTPUT_NAME + '_summary.csv')}")
     return summary
+
+
+def report(summary: pd.DataFrame) -> str:
+    """The run counts, fallbacks, tie sensitivity and standard-process estimand.
+
+    Every number is a landscape mean of the shipped design's regret in units of
+    opt_z (the deployed design at the final judgement), with a landscape bootstrap.
+    """
+    def pct(v: float) -> str:
+        return "  nan" if pd.isna(v) else f"{v * 100:+.1f}%"
+
+    lines = ["Per cell: noisy runs whose shipped design differs from the clean twin's, and fit fallbacks",
+             "(a failed hyperparameter fit, kept with the prior hyperparameters):"]
+    for _, r in summary.sort_values(["error_model", "magnitude"]).iterrows():
+        fits = {e: (int(r[f"{e}_fits"]) if f"{e}_fits" in r and pd.notna(r[f"{e}_fits"]) else None)
+                for e in ("rating", "pairwise")}
+        lines.append(
+            f"  {r['error_model']:<9} {r['magnitude']:>4}sd  moved: rating {int(r['rating_runs_moved'])}/"
+            f"{int(r['rating_runs'])}, pairwise {int(r['pairwise_runs_moved'])}/{int(r['pairwise_runs'])}; "
+            f"fallbacks: rating {int(r['rating_fit_fallbacks'])}"
+            + (f"/{fits['rating']} fits" if fits["rating"] is not None else "")
+            + f", pairwise {int(r['pairwise_fit_fallbacks'])}"
+            + (f"/{fits['pairwise']} fits" if fits["pairwise"] is not None else ""))
+    total = {e: int(summary[f"{e}_fit_fallbacks"].sum()) for e in ("rating", "pairwise")}
+    lines.append(f"  all cells: fallbacks rating {total['rating']}, pairwise {total['pairwise']}"
+                 + (f"; fits rating {int(summary['rating_fits'].sum())}, pairwise "
+                    f"{int(summary['pairwise_fits'].sum())}" if "rating_fits" in summary else "")
+                 + f"; runs {int(summary['rating_runs'].sum() + summary['pairwise_runs'].sum()) * 2}"
+                 " (noisy and clean)")
+    if "removed_share_uniform_ties" in summary:
+        lines += ["", "Ties: the rating loop ships the earliest design with the best rating (first index);",
+                  "under a uniformly random choice among tied designs (exact expectation) instead:"]
+        for _, r in summary.sort_values(["error_model", "magnitude"]).iterrows():
+            lines.append(
+                f"  {r['error_model']:<9} {r['magnitude']:>4}sd  noisy rating runs with a tied top "
+                f"{int(r['rating_runs_tied_top'])}, tie matters {int(r['rating_runs_tie_matters'])}; "
+                f"rating excess {r['rating_excess']:+.4f} -> {r['rating_excess_uniform_ties']:+.4f}; "
+                f"removed {pct(r['removed_share'])} -> {pct(r['removed_share_uniform_ties'])} "
+                f"[{pct(r['removed_lo_uniform_ties'])}, {pct(r['removed_hi_uniform_ties'])}]")
+    lines += ["", "Against the standard process (AGENTS.md): cost = rating noisy - rating clean, gain = rating",
+              "noisy - comparison noisy, price = comparison clean - rating clean; landscape means, opt_z units:"]
+    for suffix, label in (("", "first-index ties"), ("_u", "uniform ties")):
+        if f"std_cost{suffix}" not in summary:
+            continue
+        lines.append(f"  rating loop's ship rule with {label}:")
+        for _, r in summary.sort_values(["error_model", "magnitude"]).iterrows():
+            sup = r.get(f"std_recovered_suppressed{suffix}", "")
+            share = (f"share {pct(r[f'std_recovered{suffix}'])} [{pct(r[f'std_recovered_lo{suffix}'])}, "
+                     f"{pct(r[f'std_recovered_hi{suffix}'])}]") if not (isinstance(sup, str) and sup) \
+                else f"share not reported ({sup})"
+            lines.append(
+                f"    {r['error_model']:<9} {r['magnitude']:>4}sd  cost {r[f'std_cost{suffix}']:+.4f}  "
+                f"gain {r[f'std_gain{suffix}']:+.4f}  price {r[f'std_price{suffix}']:+.4f}  {share}  "
+                f"Wilcoxon p {r[f'std_wilcoxon_p{suffix}']:.3g}")
+    return "\n".join(lines) + "\n"
 
 
 if __name__ == "__main__":

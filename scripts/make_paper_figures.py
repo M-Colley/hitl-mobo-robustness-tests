@@ -12,7 +12,10 @@ kept for the record; the paper now shows the per-landscape split instead):
                       per magnitude and onset, the selection share on each bar
   kcurve.pdf          gain over the standard process from a final comparative
                       sitting of k trials, with intervals, pooled and at 1 sigma
-                      from the first rating (review/sitting_by_magnitude.csv)
+                      from the first rating (review/sitting_by_magnitude.csv),
+                      with the zero-trial ship rules (posterior mean less one or
+                      two latent SDs, all 50 trials) on the same runs as
+                      horizontal lines in each curve's colour
   per_landscape.pdf   the headline cell (1 sigma from the first rating) per
                       landscape: deployed excess as search plus selection loss
   frag_scatter.pdf    the one-shot selection loss of a landscape against the
@@ -35,6 +38,7 @@ from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.lines  # noqa: E402
 import matplotlib.patches  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
@@ -53,7 +57,7 @@ SEED = 20260918
 SEARCH, DEPLOYED = "#2a78d6", "#eb6834"
 SEQ_BLUE = ["#86b6ef", "#3987e5", "#1c5cab", "#0d366b"]   # 0.05, 0.25, 1, 5 sigma
 INK, INK2, GRID = "#0b0b0b", "#52514e", "#e6e5e1"
-WIDTH = 5.5   # inches; the ICLR text width is 5.5in
+WIDTH = 5.5   # inches; the paper scales every figure to \linewidth, so this sets the font size
 
 plt.rcParams.update({
     "font.size": 8.5, "axes.titlesize": 9, "axes.labelsize": 8.5,
@@ -85,7 +89,8 @@ def boot_mean(per_landscape: np.ndarray, rng: np.random.Generator) -> tuple[floa
 
 def _save(fig, out: Path, name: str) -> None:
     """PDF for the paper, PNG beside it so the figure can be looked at."""
-    fig.savefig(out / f"{name}.pdf", bbox_inches="tight", pad_inches=0.02)
+    # No creation date in the PDF, so an unchanged figure is byte-identical when redrawn.
+    fig.savefig(out / f"{name}.pdf", bbox_inches="tight", pad_inches=0.02, metadata={"CreationDate": None})
     fig.savefig(out / f"{name}.png", dpi=180, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
 
@@ -255,8 +260,10 @@ def fig_kcurve(policies: pd.DataFrame, out: Path, by_cell: pd.DataFrame | None =
     fixed = fixed.sort_values("k")
     fig, ax = plt.subplots(figsize=(WIDTH, 2.0))
     ax.axhline(0, color=INK2, linewidth=0.8)
-    ax.annotate("standard process", (fixed.k.max(), 0), xytext=(0, 3),
-                textcoords="offset points", ha="right", va="bottom", fontsize=7.5, color=INK2)
+    # Below the line at the left end, the one place no curve, interval or
+    # reference line crosses the label.
+    ax.annotate("standard process", (fixed.k.min(), 0), xytext=(2, -2),
+                textcoords="offset points", ha="left", va="top", fontsize=7.5, color=INK2)
     ax.errorbar(fixed.k, fixed.gain_vs_standard,
                 yerr=[fixed.gain_vs_standard - fixed.gain_lo, fixed.gain_hi - fixed.gain_vs_standard],
                 color=INK2, linewidth=1.0, linestyle="--", elinewidth=0.6, capsize=2.0, marker="o",
@@ -267,7 +274,31 @@ def fig_kcurve(policies: pd.DataFrame, out: Path, by_cell: pd.DataFrame | None =
         ax.errorbar(c.k, c.gain_all, yerr=[c.gain_all - c.gain_all_lo, c.gain_all_hi - c.gain_all],
                     color=SEARCH, linewidth=1.4, elinewidth=0.8, capsize=2.5, marker="o", markersize=4.5,
                     markeredgecolor="white", markeredgewidth=0.8, label=r"$1\sigma$ from the first rating")
-        ax.legend(frameon=False, loc="lower left")
+        # The zero-trial ship rules on the same runs (sitting_by_magnitude.py):
+        # ship the visited design with the best posterior mean less one or two
+        # latent SDs after all 50 trials. Each is one number per curve, so a
+        # horizontal line in that curve's colour; the pooled cell's gains must
+        # equal the policies file's, or the two curves are not on the same runs.
+        pooled = by_cell[by_cell.cell == "pooled"].sort_values("k")
+        merged = fixed.merge(pooled[["k", "gain_all"]], on="k", how="inner")
+        if len(merged) != len(fixed) or not np.allclose(merged.gain_vs_standard, merged.gain_all, atol=1e-9):
+            raise SystemExit("the k-curve's policies file and sitting_by_magnitude.csv are not on the same runs")
+        refs = [("lcb1_gain_all", ":"), ("lcb2_gain_all", "-.")]
+        for frame, colour in ((pooled, INK2), (c, SEARCH)):
+            for column, style in refs:
+                values = frame[column].unique()
+                if len(values) != 1:
+                    raise SystemExit(f"{column} is not one value per cell in sitting_by_magnitude.csv")
+                ax.axhline(float(values[0]), color=colour, linewidth=0.9, linestyle=style, alpha=0.9)
+        handles, labels = ax.get_legend_handles_labels()
+        for (column, style), text in zip(refs, ("ship by posterior mean $-$ 1 SD, no extra trial",
+                                                 "ship by posterior mean $-$ 2 SD, no extra trial")):
+            handles.append(matplotlib.lines.Line2D([], [], color=INK2, linewidth=0.9, linestyle=style))
+            labels.append(text)
+        # Inside, lower left: the one region no curve or interval reaches (the 1 sigma
+        # curve only drops below -0.07 after k = 16), so the figure keeps its height.
+        ax.legend(handles, labels, frameon=False, loc="lower left", ncol=1, handlelength=2.4,
+                  fontsize=7.5, borderaxespad=0.3, labelspacing=0.25)
     ax.set_xticks(fixed.k)
     ax.set_xticklabels([f"{k:g}" for k in fixed.k])
     # The unit (fraction of the achievable improvement) is in the caption; a

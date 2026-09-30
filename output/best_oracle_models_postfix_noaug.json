@@ -1,0 +1,125 @@
+{
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "tabpfn",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "ehmi",
+      "objectives": {
+        "composite": {
+          "best_model": "tabpfn",
+          "scores": {
+            "xgboost": 0.542065968791879,
+            "lightgbm": 0.49513122664899767,
+            "catboost": 0.5668870936559453,
+            "tabpfn": 0.598768812743031,
+            "random_forest": 0.5379038883608018,
+            "extra_trees": 0.562528492948146,
+            "gradient_boosting": 0.48175860901207734,
+            "hist_gradient_boosting": 0.5061019345297575
+          },
+          "rmse": {
+            "xgboost": 0.4739541475012272,
+            "lightgbm": 0.4940401272794464,
+            "catboost": 0.46047778430798314,
+            "tabpfn": 0.4416241961110627,
+            "random_forest": 0.47665471569967377,
+            "extra_trees": 0.46342281650372685,
+            "gradient_boosting": 0.5029696880207722,
+            "hist_gradient_boosting": 0.48937370254455664
+          },
+          "validation_strategy": "kfold",
+          "group_source": null,
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.017639077340569877,
+          "deduplicated": false,
+          "oracle_augmentation": "none",
+          "oracle_target": "mean"
+        }
+      }
+    },
+    {
+      "name": "opticarvis",
+      "objectives": {
+        "composite": {
+          "best_model": "tabpfn",
+          "scores": {
+            "xgboost": -0.15207617996272532,
+            "lightgbm": -0.14952153018114603,
+            "catboost": -0.10487566857949313,
+            "tabpfn": -0.056707302764407344,
+            "random_forest": -0.07591249061210256,
+            "extra_trees": -0.07865465031743073,
+            "gradient_boosting": -0.21327814535846024,
+            "hist_gradient_boosting": -0.1021276449389309
+          },
+          "rmse": {
+            "xgboost": 0.38461465929423494,
+            "lightgbm": 0.38195650390013824,
+            "catboost": 0.3767004971235915,
+            "tabpfn": 0.36972630888345437,
+            "random_forest": 0.3723342138463071,
+            "extra_trees": 0.3725240797611518,
+            "gradient_boosting": 0.3941609938490641,
+            "hist_gradient_boosting": 0.37443684243888803
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.02197802197802198,
+          "deduplicated": false,
+          "oracle_augmentation": "none",
+          "oracle_target": "individual"
+        }
+      }
+    },
+    {
+      "name": "provoice",
+      "objectives": {
+        "composite": {
+          "best_model": "tabpfn",
+          "scores": {
+            "xgboost": -0.08420216537328999,
+            "lightgbm": -0.10556049094332995,
+            "catboost": -0.08932697112033897,
+            "tabpfn": -0.018930363704986707,
+            "random_forest": -0.060332878160124406,
+            "extra_trees": -0.04233929729860157,
+            "gradient_boosting": -0.1885634225725703,
+            "hist_gradient_boosting": -0.09643090100354461
+          },
+          "rmse": {
+            "xgboost": 1.3213278668805515,
+            "lightgbm": 1.3337542766404311,
+            "catboost": 1.3228562283369825,
+            "tabpfn": 1.2837192403225783,
+            "random_forest": 1.3055569788582537,
+            "extra_trees": 1.293579720932285,
+            "gradient_boosting": 1.3765659000379735,
+            "hist_gradient_boosting": 1.3256146431298608
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.17293233082706766,
+          "deduplicated": false,
+          "oracle_augmentation": "none",
+          "oracle_target": "individual"
+        }
+      }
+    }
+  ]
+}

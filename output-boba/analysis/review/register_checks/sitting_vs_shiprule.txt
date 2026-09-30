@@ -1,0 +1,535 @@
+The final sitting against the ship rules that buy no trial (LogEI and qNEI, looks at the full SD, rho = 1)
+Gains over the standard process in units of opt_z, landscape means with a landscape bootstrap; sitting - LCB1
+is the paired per-run difference; 'looks alone' is the sitting over the top candidate of its own T - k prefix;
+price is the regret added to the clean twin. LCB1, PM, LCB2 ship after all 50 trials with no extra trial.
+Two sitting gains below are also printed by fresh_seed_replication.txt's first block, with intervals from
+its own generator: gaussian error at 1 sigma from the first rating, k = 2, on seeds 12-16 and on seeds
+27-36. The means are the same; the paper quotes that block's intervals for those two gains.
+
+== 1. 1 sigma from the first rating, k = 2
+   four processes  seeds 7-11   cost 0.2398  sitting +0.0212
+                                LCB1 +0.0107 [-0.0047, +0.0248] (+4.5% [-1.7, 10.9]; price 0.0233)  PM +0.0054  LCB2 +0.0147
+                                sitting - LCB1 +0.0105 [-0.0000, +0.0216]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.2612  sitting +0.0303 [+0.0125, +0.0496] (the table's interval) (+11.6% [4.9, 18.2] of the cost)
+                                LCB1 +0.0270 [+0.0059, +0.0479] (+10.3% [2.2, 18.1]; price 0.0211)  PM +0.0200  LCB2 +0.0260
+                                sitting - LCB1 +0.0034 [-0.0030, +0.0091] ahead 11/20 p 0.388 (Holm over k 1)
+                                looks alone +0.0073 [+0.0006, +0.0144] (so the k search trials add +0.0040 to LCB1); price 0.0176, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.2505  sitting +0.0257 [+0.0120, +0.0385] (+10.3% of the cost)
+                                LCB1 +0.0188 [+0.0025, +0.0336] (+7.5% [0.8, 13.6]; price 0.0222)  PM +0.0127  LCB2 +0.0204
+                                sitting - LCB1 +0.0069 [-0.0003, +0.0141] ahead 12/20 p 0.154
+                                looks alone +0.0091; price 0.0154, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.2521  sitting +0.0267
+                                LCB1 +0.0119 [-0.0090, +0.0337] (+4.7% [-3.8, 13.3]; price 0.0233)  PM +0.0070  LCB2 +0.0133
+                                sitting - LCB1 +0.0147 [-0.0007, +0.0302]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.2776  sitting +0.0420 [+0.0181, +0.0675] (the table's interval) (+15.1% [6.2, 23.8] of the cost)
+                                LCB1 +0.0344 [+0.0044, +0.0645] (+12.4% [0.7, 22.5]; price 0.0211)  PM +0.0238  LCB2 +0.0287
+                                sitting - LCB1 +0.0075 [-0.0053, +0.0202] ahead 12/20 p 0.33 (Holm over k 1)
+                                looks alone +0.0093 [-0.0003, +0.0204] (so the k search trials add +0.0018 to LCB1); price 0.0176, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.2648  sitting +0.0343 [+0.0166, +0.0521] (+13.0% of the cost)
+                                LCB1 +0.0232 [+0.0002, +0.0459] (+8.7% [-0.3, 17.2]; price 0.0222)  PM +0.0154  LCB2 +0.0210
+                                sitting - LCB1 +0.0111 [+0.0006, +0.0232] ahead 11/20 p 0.143
+                                looks alone +0.0148; price 0.0154, LCB1 0.0222
+   gaussian        seeds 27-36  cost 0.2613  sitting +0.0281 [+0.0063, +0.0483] (+10.8% of the cost)
+                                LCB1 +0.0357 [+0.0122, +0.0571] (+13.7%)  PM +0.0397  LCB2 +0.0298
+                                sitting - LCB1 -0.0076 [-0.0168, +0.0016] ahead 6/20 p 0.105 (Holm over the three k 0.211)
+                                looks alone +0.0022 [-0.0068, +0.0112]; price 0.0184, LCB1 0.0210
+   same cell, other k on seeds 27-36 (gaussian):
+      k =  5  sitting +0.0244 [+0.0045, +0.0450]  sitting - LCB1 -0.0114 [-0.0288, +0.0055] ahead 6/20
+      k = 12  sitting -0.0144 [-0.0395, +0.0091]  sitting - LCB1 -0.0502 [-0.0779, -0.0209] ahead 4/20
+
+== 2. 5 sigma from trial 21, k = 16 (the k chosen on seeds 7-11) and k = 12
+-- k = 16
+   four processes  seeds 7-11   cost 0.5371  sitting +0.2242
+                                LCB1 +0.0195 [-0.0229, +0.0713] (+3.6% [-4.2, 12.2]; price 0.0233)  PM -0.0324  LCB2 +0.0553
+                                sitting - LCB1 +0.2047 [+0.1484, +0.2618]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.5562  sitting +0.2271 [+0.1474, +0.3214] (the table's interval) (+40.8% [29.7, 49.9] of the cost)
+                                LCB1 -0.0221 [-0.0446, -0.0018] (-4.0% [-8.0, -0.5]; price 0.0211)  PM -0.0649  LCB2 +0.0091
+                                sitting - LCB1 +0.2492 [+0.1644, +0.3392] ahead 18/20 p 1.91e-05 (Holm over k 0.000134)
+                                looks alone +0.1676 [+0.1044, +0.2416] (so the k search trials add -0.0816 to LCB1); price 0.0325, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.5466  sitting +0.2257 [+0.1563, +0.2965] (+41.3% of the cost)
+                                LCB1 -0.0013 [-0.0288, +0.0279] (-0.2% [-5.4, 4.9]; price 0.0222)  PM -0.0486  LCB2 +0.0322
+                                sitting - LCB1 +0.2269 [+0.1641, +0.2913] ahead 19/20 p 9.54e-06
+                                looks alone +0.1581; price 0.0285, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.5341  sitting +0.2324
+                                LCB1 +0.1213 [+0.0413, +0.2287] (+22.7% [9.9, 35.1]; price 0.0233)  PM +0.0214  LCB2 +0.1694
+                                sitting - LCB1 +0.1111 [+0.0559, +0.1763]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.5142  sitting +0.2102 [+0.0989, +0.3477] (the table's interval) (+40.9% [22.9, 56.2] of the cost)
+                                LCB1 +0.1131 [+0.0174, +0.2379] (+22.0% [3.1, 39.2]; price 0.0211)  PM +0.0559  LCB2 +0.1449
+                                sitting - LCB1 +0.0971 [+0.0301, +0.1623] ahead 14/20 p 0.0136 (Holm over k 0.123)
+                                looks alone +0.1433 [+0.0718, +0.2210] (so the k search trials add +0.0462 to LCB1); price 0.0325, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.5241  sitting +0.2213 [+0.1195, +0.3610] (+42.2% of the cost)
+                                LCB1 +0.1172 [+0.0365, +0.2198] (+22.4% [8.4, 35.3]; price 0.0222)  PM +0.0386  LCB2 +0.1571
+                                sitting - LCB1 +0.1041 [+0.0563, +0.1570] ahead 16/20 p 0.000395
+                                looks alone +0.1266; price 0.0285, LCB1 0.0222
+   gaussian        seeds 27-36  k = 16 was not replayed on these seeds
+-- k = 12
+   four processes  seeds 7-11   cost 0.5371  sitting +0.1747
+                                LCB1 +0.0195 [-0.0229, +0.0713] (+3.6% [-4.2, 12.2]; price 0.0233)  PM -0.0324  LCB2 +0.0553
+                                sitting - LCB1 +0.1551 [+0.1090, +0.2058]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.5562  sitting +0.1512 [+0.0983, +0.2069] (+27.2% of the cost)
+                                LCB1 -0.0221 [-0.0446, -0.0018] (-4.0% [-8.0, -0.5]; price 0.0211)  PM -0.0649  LCB2 +0.0091
+                                sitting - LCB1 +0.1733 [+0.1149, +0.2296] ahead 19/20 p 1.91e-05 (Holm over k 0.000134)
+                                looks alone +0.1096 [+0.0736, +0.1503] (so the k search trials add -0.0637 to LCB1); price 0.0236, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.5466  sitting +0.1630 [+0.1149, +0.2142] (+29.8% of the cost)
+                                LCB1 -0.0013 [-0.0288, +0.0279] (-0.2% [-5.4, 4.9]; price 0.0222)  PM -0.0486  LCB2 +0.0322
+                                sitting - LCB1 +0.1642 [+0.1189, +0.2100] ahead 19/20 p 9.54e-06
+                                looks alone +0.1252; price 0.0219, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.5341  sitting +0.1933
+                                LCB1 +0.1213 [+0.0413, +0.2287] (+22.7% [9.9, 35.1]; price 0.0233)  PM +0.0214  LCB2 +0.1694
+                                sitting - LCB1 +0.0720 [+0.0387, +0.1114]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.5142  sitting +0.2037 [+0.1072, +0.3176] (+39.6% of the cost)
+                                LCB1 +0.1131 [+0.0174, +0.2379] (+22.0% [3.1, 39.2]; price 0.0211)  PM +0.0559  LCB2 +0.1449
+                                sitting - LCB1 +0.0907 [+0.0175, +0.1632] ahead 14/20 p 0.0296 (Holm over k 0.207)
+                                looks alone +0.0493 [+0.0067, +0.1005] (so the k search trials add -0.0414 to LCB1); price 0.0236, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.5241  sitting +0.1985 [+0.1096, +0.3073] (+37.9% of the cost)
+                                LCB1 +0.1172 [+0.0365, +0.2198] (+22.4% [8.4, 35.3]; price 0.0222)  PM +0.0386  LCB2 +0.1571
+                                sitting - LCB1 +0.0813 [+0.0374, +0.1281] ahead 17/20 p 0.00233
+                                looks alone +0.0813; price 0.0219, LCB1 0.0222
+   gaussian        seeds 27-36  cost 0.4547  sitting +0.1371 [+0.0831, +0.1953] (+30.2% of the cost)
+                                LCB1 +0.0257 [-0.0278, +0.0767] (+5.7%)  PM -0.0674  LCB2 +0.0827
+                                sitting - LCB1 +0.1114 [+0.0480, +0.1735] ahead 14/20 p 0.00422 (Holm over the three k 0.0127)
+                                looks alone +0.1226 [+0.0686, +0.1802]; price 0.0213, LCB1 0.0210
+   four processes: k chosen on seeds 7-11 = 16; on seeds 12-16, by process, sitting - LCB1 {'gaussian': 0.0971, 'bias': 0.2241, 'drift': 0.4252, 'ar1': 0.2504}, LCB1 gain {'gaussian': 0.1131, 'bias': -0.115, 'drift': -0.0797, 'ar1': -0.0066}, sitting gain {'gaussian': 0.2102, 'bias': 0.1091, 'drift': 0.3455, 'ar1': 0.2438}
+   gaussian: k chosen on seeds 7-11 = 16; on seeds 12-16, by process, sitting - LCB1 {'gaussian': 0.0971}, LCB1 gain {'gaussian': 0.1131}, sitting gain {'gaussian': 0.2102}
+
+== 3. other cells the text quotes
+-- 5sigma_from_trial_1, k = 8
+   four processes  seeds 7-11   cost 0.7517  sitting +0.0711
+                                LCB1 +0.0548 [+0.0154, +0.0966] (+7.3% [1.9, 12.9]; price 0.0233)  PM +0.0100  LCB2 +0.0604
+                                sitting - LCB1 +0.0163 [-0.0159, +0.0528]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.7535  sitting +0.0576 [+0.0173, +0.1017] (the table's interval) (+7.6% [2.4, 12.6] of the cost)
+                                LCB1 +0.0456 [+0.0106, +0.0833] (+6.0% [1.8, 10.7]; price 0.0211)  PM +0.0085  LCB2 +0.0631
+                                sitting - LCB1 +0.0120 [-0.0174, +0.0423] ahead 13/20 p 0.33 (Holm over k 1)
+                                looks alone +0.0196 [-0.0167, +0.0512] (so the k search trials add +0.0076 to LCB1); price 0.0156, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.7526  sitting +0.0643 [+0.0312, +0.1032] (+8.5% of the cost)
+                                LCB1 +0.0502 [+0.0167, +0.0880] (+6.7% [2.5, 11.6]; price 0.0222)  PM +0.0093  LCB2 +0.0618
+                                sitting - LCB1 +0.0141 [-0.0114, +0.0426] ahead 13/20 p 0.349
+                                looks alone +0.0235; price 0.0150, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.7164  sitting +0.0716
+                                LCB1 +0.1078 [+0.0297, +0.2012] (+15.0% [4.4, 27.5]; price 0.0233)  PM +0.0685  LCB2 +0.0994
+                                sitting - LCB1 -0.0362 [-0.0725, -0.0016]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.7426  sitting +0.0398 [-0.0263, +0.1141] (+5.4% of the cost)
+                                LCB1 +0.0449 [-0.0195, +0.1120] (+6.1% [-2.7, 14.5]; price 0.0211)  PM +0.0244  LCB2 +0.0600
+                                sitting - LCB1 -0.0051 [-0.0497, +0.0480] ahead 8/20 p 0.368 (Holm over k 1)
+                                looks alone -0.0145 [-0.0590, +0.0312] (so the k search trials add -0.0094 to LCB1); price 0.0156, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.7295  sitting +0.0557 [-0.0023, +0.1322] (+7.6% of the cost)
+                                LCB1 +0.0764 [+0.0186, +0.1449] (+10.5% [2.8, 18.9]; price 0.0222)  PM +0.0464  LCB2 +0.0797
+                                sitting - LCB1 -0.0207 [-0.0554, +0.0141] ahead 9/20 p 0.349
+                                looks alone -0.0034; price 0.0150, LCB1 0.0222
+-- 1sigma_from_trial_21, k = 3
+   four processes  seeds 7-11   cost 0.1498  sitting +0.0223
+                                LCB1 +0.0026 [-0.0188, +0.0201] (+1.7% [-12.1, 14.7]; price 0.0233)  PM -0.0068  LCB2 +0.0081
+                                sitting - LCB1 +0.0198 [+0.0046, +0.0363]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.1484  sitting +0.0163 [+0.0044, +0.0286] (+11.0% of the cost)
+                                LCB1 +0.0106 [-0.0074, +0.0257] (+7.1% [-5.0, 17.4]; price 0.0211)  PM +0.0002  LCB2 +0.0141
+                                sitting - LCB1 +0.0057 [-0.0050, +0.0182] ahead 8/20 p 0.898 (Holm over k 1)
+                                looks alone +0.0073 [-0.0014, +0.0158] (so the k search trials add +0.0016 to LCB1); price 0.0119, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.1491  sitting +0.0193 [+0.0084, +0.0295] (+13.0% of the cost)
+                                LCB1 +0.0066 [-0.0121, +0.0224] (+4.4% [-7.4, 15.4]; price 0.0222)  PM -0.0033  LCB2 +0.0111
+                                sitting - LCB1 +0.0127 [+0.0010, +0.0257] ahead 14/20 p 0.0583
+                                looks alone +0.0107; price 0.0101, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.1309  sitting +0.0257
+                                LCB1 +0.0155 [-0.0100, +0.0372] (+11.8% [-7.7, 30.0]; price 0.0233)  PM +0.0032  LCB2 +0.0149
+                                sitting - LCB1 +0.0102 [-0.0088, +0.0320]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.1247  sitting +0.0144 [-0.0092, +0.0399] (+11.5% of the cost)
+                                LCB1 +0.0244 [-0.0066, +0.0527] (+19.6% [-5.8, 39.3]; price 0.0211)  PM +0.0034  LCB2 +0.0302
+                                sitting - LCB1 -0.0100 [-0.0330, +0.0112] ahead 4/20 p 0.133 (Holm over k 0.422)
+                                looks alone +0.0019 [-0.0155, +0.0202] (so the k search trials add +0.0119 to LCB1); price 0.0119, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.1278  sitting +0.0200 [+0.0036, +0.0378] (+15.7% of the cost)
+                                LCB1 +0.0199 [-0.0063, +0.0437] (+15.6% [-3.6, 32.9]; price 0.0222)  PM +0.0033  LCB2 +0.0226
+                                sitting - LCB1 +0.0001 [-0.0154, +0.0178] ahead 8/20 p 0.43
+                                looks alone +0.0109; price 0.0101, LCB1 0.0222
+-- 1sigma_from_trial_21, k = 5
+   four processes  seeds 7-11   cost 0.1498  sitting +0.0234
+                                LCB1 +0.0026 [-0.0188, +0.0201] (+1.7% [-12.1, 14.7]; price 0.0233)  PM -0.0068  LCB2 +0.0081
+                                sitting - LCB1 +0.0209 [+0.0027, +0.0388]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.1484  sitting +0.0169 [+0.0027, +0.0314] (+11.4% of the cost)
+                                LCB1 +0.0106 [-0.0074, +0.0257] (+7.1% [-5.0, 17.4]; price 0.0211)  PM +0.0002  LCB2 +0.0141
+                                sitting - LCB1 +0.0063 [-0.0099, +0.0230] ahead 13/20 p 0.409 (Holm over k 1)
+                                looks alone +0.0182 [+0.0017, +0.0348] (so the k search trials add +0.0119 to LCB1); price 0.0140, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.1491  sitting +0.0202 [+0.0074, +0.0325] (+13.5% of the cost)
+                                LCB1 +0.0066 [-0.0121, +0.0224] (+4.4% [-7.4, 15.4]; price 0.0222)  PM -0.0033  LCB2 +0.0111
+                                sitting - LCB1 +0.0136 [-0.0041, +0.0302] ahead 12/20 p 0.0973
+                                looks alone +0.0173; price 0.0120, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.1309  sitting +0.0239
+                                LCB1 +0.0155 [-0.0100, +0.0372] (+11.8% [-7.7, 30.0]; price 0.0233)  PM +0.0032  LCB2 +0.0149
+                                sitting - LCB1 +0.0084 [-0.0118, +0.0277]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.1247  sitting +0.0222 [-0.0041, +0.0532] (+17.8% of the cost)
+                                LCB1 +0.0244 [-0.0066, +0.0527] (+19.6% [-5.8, 39.3]; price 0.0211)  PM +0.0034  LCB2 +0.0302
+                                sitting - LCB1 -0.0021 [-0.0274, +0.0225] ahead 9/20 p 0.784 (Holm over k 0.784)
+                                looks alone +0.0199 [+0.0014, +0.0407] (so the k search trials add +0.0220 to LCB1); price 0.0140, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.1278  sitting +0.0231 [+0.0014, +0.0460] (+18.1% of the cost)
+                                LCB1 +0.0199 [-0.0063, +0.0437] (+15.6% [-3.6, 32.9]; price 0.0222)  PM +0.0033  LCB2 +0.0226
+                                sitting - LCB1 +0.0031 [-0.0168, +0.0227] ahead 9/20 p 0.898
+                                looks alone +0.0163; price 0.0120, LCB1 0.0222
+-- 1sigma_from_trial_21, k = 8
+   four processes  seeds 7-11   cost 0.1498  sitting +0.0207
+                                LCB1 +0.0026 [-0.0188, +0.0201] (+1.7% [-12.1, 14.7]; price 0.0233)  PM -0.0068  LCB2 +0.0081
+                                sitting - LCB1 +0.0182 [-0.0002, +0.0375]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.1484  sitting +0.0133 [-0.0020, +0.0291] (+9.0% of the cost)
+                                LCB1 +0.0106 [-0.0074, +0.0257] (+7.1% [-5.0, 17.4]; price 0.0211)  PM +0.0002  LCB2 +0.0141
+                                sitting - LCB1 +0.0028 [-0.0138, +0.0208] ahead 10/20 p 0.927 (Holm over k 1)
+                                looks alone +0.0115 [-0.0063, +0.0292] (so the k search trials add +0.0088 to LCB1); price 0.0156, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.1491  sitting +0.0170 [+0.0040, +0.0313] (+11.4% of the cost)
+                                LCB1 +0.0066 [-0.0121, +0.0224] (+4.4% [-7.4, 15.4]; price 0.0222)  PM -0.0033  LCB2 +0.0111
+                                sitting - LCB1 +0.0105 [-0.0064, +0.0272] ahead 13/20 p 0.261
+                                looks alone +0.0113; price 0.0150, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.1309  sitting +0.0265
+                                LCB1 +0.0155 [-0.0100, +0.0372] (+11.8% [-7.7, 30.0]; price 0.0233)  PM +0.0032  LCB2 +0.0149
+                                sitting - LCB1 +0.0110 [-0.0117, +0.0362]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.1247  sitting +0.0124 [-0.0178, +0.0448] (the table's interval) (+9.9% [-18.0, 31.7] of the cost)
+                                LCB1 +0.0244 [-0.0066, +0.0527] (+19.6% [-5.8, 39.3]; price 0.0211)  PM +0.0034  LCB2 +0.0302
+                                sitting - LCB1 -0.0120 [-0.0404, +0.0161] ahead 7/20 p 0.231 (Holm over k 0.461)
+                                looks alone +0.0060 [-0.0218, +0.0302] (so the k search trials add +0.0180 to LCB1); price 0.0156, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.1278  sitting +0.0194 [-0.0022, +0.0411] (+15.2% of the cost)
+                                LCB1 +0.0199 [-0.0063, +0.0437] (+15.6% [-3.6, 32.9]; price 0.0222)  PM +0.0033  LCB2 +0.0226
+                                sitting - LCB1 -0.0005 [-0.0218, +0.0236] ahead 9/20 p 0.571
+                                looks alone +0.0135; price 0.0150, LCB1 0.0222
+-- 1sigma_from_trial_21, k = 12
+   four processes  seeds 7-11   cost 0.1498  sitting +0.0220
+                                LCB1 +0.0026 [-0.0188, +0.0201] (+1.7% [-12.1, 14.7]; price 0.0233)  PM -0.0068  LCB2 +0.0081
+                                sitting - LCB1 +0.0194 [-0.0005, +0.0403]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.1484  sitting +0.0163 [-0.0037, +0.0357] (+11.0% of the cost)
+                                LCB1 +0.0106 [-0.0074, +0.0257] (+7.1% [-5.0, 17.4]; price 0.0211)  PM +0.0002  LCB2 +0.0141
+                                sitting - LCB1 +0.0057 [-0.0167, +0.0267] ahead 11/20 p 0.498 (Holm over k 1)
+                                looks alone +0.0135 [-0.0038, +0.0293] (so the k search trials add +0.0077 to LCB1); price 0.0236, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.1491  sitting +0.0192 [+0.0024, +0.0351] (+12.8% of the cost)
+                                LCB1 +0.0066 [-0.0121, +0.0224] (+4.4% [-7.4, 15.4]; price 0.0222)  PM -0.0033  LCB2 +0.0111
+                                sitting - LCB1 +0.0126 [-0.0080, +0.0320] ahead 13/20 p 0.261
+                                looks alone +0.0197; price 0.0219, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.1309  sitting +0.0173
+                                LCB1 +0.0155 [-0.0100, +0.0372] (+11.8% [-7.7, 30.0]; price 0.0233)  PM +0.0032  LCB2 +0.0149
+                                sitting - LCB1 +0.0019 [-0.0215, +0.0257]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.1247  sitting +0.0076 [-0.0171, +0.0368] (+6.1% of the cost)
+                                LCB1 +0.0244 [-0.0066, +0.0527] (+19.6% [-5.8, 39.3]; price 0.0211)  PM +0.0034  LCB2 +0.0302
+                                sitting - LCB1 -0.0168 [-0.0374, +0.0040] ahead 5/20 p 0.105 (Holm over k 0.422)
+                                looks alone -0.0033 [-0.0206, +0.0137] (so the k search trials add +0.0135 to LCB1); price 0.0236, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.1278  sitting +0.0125 [-0.0068, +0.0315] (+9.8% of the cost)
+                                LCB1 +0.0199 [-0.0063, +0.0437] (+15.6% [-3.6, 32.9]; price 0.0222)  PM +0.0033  LCB2 +0.0226
+                                sitting - LCB1 -0.0075 [-0.0243, +0.0104] ahead 6/20 p 0.216
+                                looks alone +0.0062; price 0.0219, LCB1 0.0222
+-- 1sigma_from_trial_21, k = 16
+   four processes  seeds 7-11   cost 0.1498  sitting +0.0236
+                                LCB1 +0.0026 [-0.0188, +0.0201] (+1.7% [-12.1, 14.7]; price 0.0233)  PM -0.0068  LCB2 +0.0081
+                                sitting - LCB1 +0.0210 [-0.0022, +0.0447]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   four processes  seeds 12-16  cost 0.1484  sitting +0.0110 [-0.0118, +0.0327] (the table's interval) (+7.4% [-9.1, 20.5] of the cost)
+                                LCB1 +0.0106 [-0.0074, +0.0257] (+7.1% [-5.0, 17.4]; price 0.0211)  PM +0.0002  LCB2 +0.0141
+                                sitting - LCB1 +0.0004 [-0.0231, +0.0221] ahead 11/20 p 0.729 (Holm over k 1)
+                                looks alone +0.0228 [+0.0061, +0.0391] (so the k search trials add +0.0224 to LCB1); price 0.0325, LCB1 0.0211
+   four processes  seeds 7-16   cost 0.1491  sitting +0.0173 [-0.0041, +0.0354] (+11.6% of the cost)
+                                LCB1 +0.0066 [-0.0121, +0.0224] (+4.4% [-7.4, 15.4]; price 0.0222)  PM -0.0033  LCB2 +0.0111
+                                sitting - LCB1 +0.0107 [-0.0116, +0.0306] ahead 15/20 p 0.245
+                                looks alone +0.0283; price 0.0285, LCB1 0.0222
+   gaussian        seeds 7-11   cost 0.1309  sitting -0.0006
+                                LCB1 +0.0155 [-0.0100, +0.0372] (+11.8% [-7.7, 30.0]; price 0.0233)  PM +0.0032  LCB2 +0.0149
+                                sitting - LCB1 -0.0161 [-0.0424, +0.0110]
+                                (seeds 7-11 chose k; the sitting's gain there is a mean only)
+   gaussian        seeds 12-16  cost 0.1247  sitting -0.0137 [-0.0425, +0.0175] (-11.0% of the cost)
+                                LCB1 +0.0244 [-0.0066, +0.0527] (+19.6% [-5.8, 39.3]; price 0.0211)  PM +0.0034  LCB2 +0.0302
+                                sitting - LCB1 -0.0380 [-0.0616, -0.0143] ahead 3/20 p 0.00315 (Holm over k 0.0189)
+                                looks alone +0.0018 [-0.0193, +0.0261] (so the k search trials add +0.0398 to LCB1); price 0.0325, LCB1 0.0211
+   gaussian        seeds 7-16   cost 0.1278  sitting -0.0071 [-0.0294, +0.0130] (-5.6% of the cost)
+                                LCB1 +0.0199 [-0.0063, +0.0437] (+15.6% [-3.6, 32.9]; price 0.0222)  PM +0.0033  LCB2 +0.0226
+                                sitting - LCB1 -0.0271 [-0.0479, -0.0060] ahead 5/20 p 0.0192
+                                looks alone +0.0045; price 0.0285, LCB1 0.0222
+
+== 4. the pooled k-curve (every magnitude and onset)
+   scope           k   gain 7-16                  gain 12-16                 LCB1 7-16 / 12-16   sitting - LCB1, 7-16          sitting - LCB1, 12-16
+   four processes   2  +0.0100 [-0.0028, +0.0220]  +0.0111 [-0.0017, +0.0240]  +0.0008 / -0.0001  +0.0092 [+0.0034, +0.0159]  +0.0112 [+0.0054, +0.0171]
+   four processes   3  +0.0147 [+0.0043, +0.0261]  +0.0162 [+0.0043, +0.0290]  +0.0008 / -0.0001  +0.0140 [+0.0046, +0.0239]  +0.0163 [+0.0075, +0.0256]
+   four processes   5  +0.0199 [+0.0069, +0.0322]  +0.0219 [+0.0078, +0.0368]  +0.0008 / -0.0001  +0.0191 [+0.0078, +0.0310]  +0.0220 [+0.0102, +0.0338]
+   four processes   8  +0.0218 [+0.0095, +0.0338]  +0.0227 [+0.0072, +0.0385]  +0.0008 / -0.0001  +0.0210 [+0.0087, +0.0342]  +0.0227 [+0.0089, +0.0358]
+   four processes  12  +0.0207 [+0.0063, +0.0351]  +0.0172 [+0.0015, +0.0326]  +0.0008 / -0.0001  +0.0199 [+0.0049, +0.0347]  +0.0172 [+0.0006, +0.0324]
+   four processes  16  +0.0217 [+0.0007, +0.0411]  +0.0220 [-0.0015, +0.0467]  +0.0008 / -0.0001  +0.0209 [+0.0013, +0.0398]  +0.0221 [+0.0014, +0.0431]
+   four processes  20  +0.0085 [-0.0147, +0.0305]  +0.0081 [-0.0191, +0.0325]  +0.0008 / -0.0001  +0.0078 [-0.0141, +0.0273]  +0.0081 [-0.0155, +0.0290]
+   four processes  25  -0.0215 [-0.0502, +0.0038]  -0.0242 [-0.0564, +0.0035]  +0.0008 / -0.0001  -0.0223 [-0.0485, -0.0009]  -0.0241 [-0.0532, +0.0007]
+   four processes  30  -0.0538 [-0.0889, -0.0244]  -0.0587 [-0.0984, -0.0252]  +0.0008 / -0.0001  -0.0546 [-0.0902, -0.0282]  -0.0586 [-0.0951, -0.0293]
+   gaussian         2  +0.0261 [+0.0047, +0.0475]  +0.0296 [+0.0087, +0.0501]  +0.0230 / +0.0217  +0.0032 [-0.0035, +0.0102]  +0.0078 [-0.0004, +0.0174]
+   gaussian         3  +0.0277 [+0.0102, +0.0489]  +0.0308 [+0.0128, +0.0514]  +0.0230 / +0.0217  +0.0047 [-0.0063, +0.0168]  +0.0091 [-0.0039, +0.0228]
+   gaussian         5  +0.0291 [+0.0095, +0.0506]  +0.0358 [+0.0147, +0.0595]  +0.0230 / +0.0217  +0.0061 [-0.0045, +0.0179]  +0.0141 [-0.0014, +0.0305]
+   gaussian         8  +0.0305 [+0.0114, +0.0519]  +0.0286 [+0.0085, +0.0508]  +0.0230 / +0.0217  +0.0075 [-0.0050, +0.0212]  +0.0068 [-0.0105, +0.0242]
+   gaussian        12  +0.0215 [+0.0002, +0.0451]  +0.0197 [-0.0042, +0.0432]  +0.0230 / +0.0217  -0.0015 [-0.0158, +0.0138]  -0.0020 [-0.0218, +0.0172]
+   gaussian        16  +0.0144 [-0.0115, +0.0423]  +0.0104 [-0.0157, +0.0374]  +0.0230 / +0.0217  -0.0085 [-0.0281, +0.0125]  -0.0113 [-0.0333, +0.0110]
+   gaussian        20  -0.0078 [-0.0335, +0.0209]  -0.0067 [-0.0366, +0.0225]  +0.0230 / +0.0217  -0.0307 [-0.0510, -0.0104]  -0.0284 [-0.0535, -0.0041]
+   gaussian        25  -0.0436 [-0.0717, -0.0158]  -0.0463 [-0.0818, -0.0133]  +0.0230 / +0.0217  -0.0666 [-0.0924, -0.0438]  -0.0680 [-0.1008, -0.0392]
+   gaussian        30  -0.0717 [-0.1064, -0.0402]  -0.0816 [-0.1196, -0.0475]  +0.0230 / +0.0217  -0.0946 [-0.1269, -0.0679]  -0.1033 [-0.1376, -0.0730]
+   gaussian 27-36   2  +0.0126 [-0.0037, +0.0269]  LCB1 +0.0093  sitting - LCB1 +0.0033 [-0.0036, +0.0104]
+   gaussian 27-36   5  +0.0132 [+0.0016, +0.0250]  LCB1 +0.0093  sitting - LCB1 +0.0040 [-0.0072, +0.0157]
+   gaussian 27-36  12  +0.0041 [-0.0095, +0.0175]  LCB1 +0.0093  sitting - LCB1 -0.0052 [-0.0233, +0.0111]
+   four processes, k = 12 pooled without 5 sigma from trial 21, all_seeds: gain +0.0004 [-0.0115, +0.0115], LCB1 +0.0011, sitting - LCB1 -0.0007 [-0.0143, +0.0135] ahead 7/20 p 0.546
+   four processes, k = 12 pooled without 5 sigma from trial 21, seeds_12_16: gain -0.0020 [-0.0159, +0.0108], LCB1 +0.0031, sitting - LCB1 -0.0050 [-0.0192, +0.0098] ahead 6/20 p 0.349
+   gaussian, k = 12 pooled without 5 sigma from trial 21, all_seeds: gain -0.0038 [-0.0193, +0.0127], LCB1 +0.0095, sitting - LCB1 -0.0133 [-0.0274, +0.0022] ahead 6/20 p 0.0441
+   gaussian, k = 12 pooled without 5 sigma from trial 21, seeds_12_16: gain -0.0065 [-0.0248, +0.0119], LCB1 +0.0087, sitting - LCB1 -0.0152 [-0.0327, +0.0028] ahead 7/20 p 0.114
+
+== 5. Holm's correction for the increment over LCB1 on seeds 12-16 (two-sided Wilcoxon over 20 landscapes)
+-- four processes
+   0.05sigma_from_trial_1   k =  3  sitting - LCB1 +0.0113 [-0.0001, +0.0261]  p 0.778  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.117)
+   0.05sigma_from_trial_21  k =  5  sitting - LCB1 +0.0031 [-0.0089, +0.0149]  p 0.629  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.0564)
+   0.25sigma_from_trial_1   k =  5  sitting - LCB1 +0.0072 [-0.0039, +0.0208]  p 0.985  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 1)
+   0.25sigma_from_trial_21  k =  5  sitting - LCB1 +0.0040 [-0.0073, +0.0156]  p 0.717  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 1)
+   1sigma_from_trial_1      k =  2  sitting - LCB1 +0.0034 [-0.0030, +0.0091]  p 0.388  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.0292)
+   1sigma_from_trial_21     k = 16  sitting - LCB1 +0.0004 [-0.0231, +0.0221]  p 0.729  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.884)
+   5sigma_from_trial_1      k =  8  sitting - LCB1 +0.0120 [-0.0174, +0.0423]  p 0.33  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.0292)
+   5sigma_from_trial_21     k = 16  sitting - LCB1 +0.2492 [+0.1644, +0.3392]  p 1.91e-05  Holm over k 0.000134  over the 8 chosen 0.000153  over all 72 0.00126   (gain over the standard process: Holm over k 8.58e-05)
+   fixed 1sigma_from_trial_1, k = 2: p 0.388, Holm over k 1, over all 72 1
+   fixed 5sigma_from_trial_21, k = 16: p 1.91e-05, Holm over k 0.000134, over all 72 0.00126
+-- gaussian
+   0.05sigma_from_trial_1   k =  3  sitting - LCB1 +0.0098 [-0.0031, +0.0263]  p 0.586  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.34)
+   0.05sigma_from_trial_21  k =  5  sitting - LCB1 -0.0048 [-0.0217, +0.0084]  p 0.199  Holm over k 0.994  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.0227)
+   0.25sigma_from_trial_1   k =  3  sitting - LCB1 +0.0065 [-0.0004, +0.0149]  p 0.277  Holm over k 0.832  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.293)
+   0.25sigma_from_trial_21  k =  2  sitting - LCB1 -0.0021 [-0.0110, +0.0056]  p 0.904  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 1)
+   1sigma_from_trial_1      k =  2  sitting - LCB1 +0.0075 [-0.0053, +0.0202]  p 0.33  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.0292)
+   1sigma_from_trial_21     k =  8  sitting - LCB1 -0.0120 [-0.0404, +0.0161]  p 0.231  Holm over k 0.461  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 1)
+   5sigma_from_trial_1      k =  3  sitting - LCB1 +0.0240 [-0.0160, +0.0683]  p 0.409  Holm over k 1  over the 8 chosen 1  over all 72 1   (gain over the standard process: Holm over k 0.137)
+   5sigma_from_trial_21     k = 16  sitting - LCB1 +0.0971 [+0.0301, +0.1623]  p 0.0136  Holm over k 0.123  over the 8 chosen 0.109  over all 72 0.694   (gain over the standard process: Holm over k 0.00354)
+   fixed 1sigma_from_trial_1, k = 2: p 0.33, Holm over k 1, over all 72 1
+   fixed 5sigma_from_trial_21, k = 16: p 0.0136, Holm over k 0.123, over all 72 0.694
+
+== 6. clean-twin prices, (trt_clean - ref_clean) / opt_z, landscape mean (the clean twin is the same for
+   every error process, so the two scopes give one price)
+   sitting k =  2  seeds 7-16 +0.0154 [+0.0053, +0.0294]  seeds 7-11 +0.0131  seeds 12-16 +0.0176 [+0.0056, +0.0337]
+   sitting k =  3  seeds 7-16 +0.0101 [+0.0035, +0.0190]  seeds 7-11 +0.0084  seeds 12-16 +0.0119 [+0.0036, +0.0243]
+   sitting k =  5  seeds 7-16 +0.0120 [+0.0052, +0.0204]  seeds 7-11 +0.0101  seeds 12-16 +0.0140 [+0.0059, +0.0239]
+   sitting k =  8  seeds 7-16 +0.0150 [+0.0073, +0.0229]  seeds 7-11 +0.0143  seeds 12-16 +0.0156 [+0.0063, +0.0273]
+   sitting k = 12  seeds 7-16 +0.0219 [+0.0108, +0.0337]  seeds 7-11 +0.0202  seeds 12-16 +0.0236 [+0.0105, +0.0385]
+   sitting k = 16  seeds 7-16 +0.0285 [+0.0141, +0.0442]  seeds 7-11 +0.0245  seeds 12-16 +0.0325 [+0.0151, +0.0527]
+   sitting k = 20  seeds 7-16 +0.0402 [+0.0188, +0.0622]  seeds 7-11 +0.0349  seeds 12-16 +0.0456 [+0.0218, +0.0721]
+   sitting k = 25  seeds 7-16 +0.0643 [+0.0323, +0.1000]  seeds 7-11 +0.0581  seeds 12-16 +0.0705 [+0.0366, +0.1105]
+   sitting k = 30  seeds 7-16 +0.0963 [+0.0520, +0.1494]  seeds 7-11 +0.0901  seeds 12-16 +0.1025 [+0.0566, +0.1555]
+   PM            seeds 7-16 +0.0271 [+0.0093, +0.0502]  seeds 7-11 +0.0273  seeds 12-16 +0.0269 [+0.0088, +0.0525]
+   LCB1          seeds 7-16 +0.0222 [+0.0074, +0.0427]  seeds 7-11 +0.0233  seeds 12-16 +0.0211 [+0.0064, +0.0430]
+   LCB2          seeds 7-16 +0.0216 [+0.0074, +0.0427]  seeds 7-11 +0.0200  seeds 12-16 +0.0231 [+0.0075, +0.0460]
+   seeds 27-36:
+   sitting k = 2  +0.0184 [+0.0073, +0.0321]
+   sitting k = 5  +0.0140 [+0.0063, +0.0225]
+   sitting k = 12 +0.0213 [+0.0106, +0.0334]
+   pm             +0.0220 [+0.0085, +0.0400]
+   lcb1           +0.0210 [+0.0075, +0.0393]
+   lcb2           +0.0225 [+0.0083, +0.0403]
+   the gaussian-only outputs give the same prices: True
+
+== 7. the look model: the replays above cancel the error one sitting shares, including the drift ramp and
+   the AR(1) state; the sequential replays let that state move on from look to look (random order, or the
+   candidates in rank order), drift and AR(1) only change. Four processes pooled; seeds 12-16 unless stated;
+   intervals are the per-k rows' (for a cell's chosen k the table's interval of the gain is in sections 1-3).
+   sequential, random order: replays end_of_study_ksweep_seq, end_of_study_kwide_seq; k chosen on seeds 7-11 by cell {'pooled': 12, '0.05sigma_from_trial_1': 3, '0.05sigma_from_trial_21': 5, '0.25sigma_from_trial_1': 3, '0.25sigma_from_trial_21': 3, '1sigma_from_trial_1': 2, '1sigma_from_trial_21': 16, '5sigma_from_trial_1': 8, '5sigma_from_trial_21': 16}
+   sequential, rank order: replays end_of_study_ksweep_seqrank=drift+ar1, end_of_study_kwide_seqrank=drift+ar1, end_of_study_ksweep=gaussian+bias, end_of_study_kwide=gaussian+bias; k chosen on seeds 7-11 by cell {'pooled': 12, '0.05sigma_from_trial_1': 3, '0.05sigma_from_trial_21': 5, '0.25sigma_from_trial_1': 3, '0.25sigma_from_trial_21': 5, '1sigma_from_trial_1': 2, '1sigma_from_trial_21': 3, '5sigma_from_trial_1': 8, '5sigma_from_trial_21': 16}
+-- 1sigma_from_trial_1, k = 2
+   shared                    gain +0.0303 [+0.0127, +0.0485]  sitting - LCB1 +0.0034 [-0.0030, +0.0091] ahead 11/20 p 0.388 (Holm over k 1); seeds 7-16 +0.0069 [-0.0003, +0.0141]; by process drift +0.0070  ar1 -0.0010
+   sequential, random order  gain +0.0313 [+0.0137, +0.0494]  sitting - LCB1 +0.0043 [-0.0021, +0.0102] ahead 13/20 p 0.202 (Holm over k 0.66); seeds 7-16 +0.0080 [+0.0008, +0.0154]; by process drift +0.0070  ar1 +0.0027
+   sequential, rank order    gain +0.0314 [+0.0135, +0.0498]  sitting - LCB1 +0.0044 [-0.0014, +0.0097] ahead 13/20 p 0.177 (Holm over k 0.531); seeds 7-16 +0.0079 [+0.0008, +0.0151]; by process drift +0.0070  ar1 +0.0033
+-- 1sigma_from_trial_1, k = 12
+   shared                    gain -0.0094 [-0.0294, +0.0117]  sitting - LCB1 -0.0364 [-0.0555, -0.0162] ahead 3/20 p 0.00143 (Holm over k 0.00726); seeds 7-16 -0.0287 [-0.0449, -0.0108]; by process drift -0.0305  ar1 -0.0287
+   sequential, random order  gain -0.0048 [-0.0242, +0.0157]  sitting - LCB1 -0.0318 [-0.0505, -0.0117] ahead 5/20 p 0.00639 (Holm over k 0.0319); seeds 7-16 -0.0265 [-0.0430, -0.0081]; by process drift -0.0318  ar1 -0.0090
+   sequential, rank order    gain -0.0085 [-0.0286, +0.0132]  sitting - LCB1 -0.0354 [-0.0535, -0.0165] ahead 4/20 p 0.00233 (Holm over k 0.0116); seeds 7-16 -0.0299 [-0.0463, -0.0123]; by process drift -0.0337  ar1 -0.0216
+-- 1sigma_from_trial_1, k = 16
+   shared                    gain -0.0160 [-0.0395, +0.0088]  sitting - LCB1 -0.0430 [-0.0632, -0.0219] ahead 5/20 p 0.00121 (Holm over k 0.00726); seeds 7-16 -0.0437 [-0.0641, -0.0225]; by process drift -0.0491  ar1 -0.0182
+   sequential, random order  gain -0.0214 [-0.0449, +0.0028]  sitting - LCB1 -0.0483 [-0.0689, -0.0266] ahead 5/20 p 0.000851 (Holm over k 0.0051); seeds 7-16 -0.0454 [-0.0668, -0.0232]; by process drift -0.0552  ar1 -0.0335
+   sequential, rank order    gain -0.0211 [-0.0453, +0.0034]  sitting - LCB1 -0.0481 [-0.0687, -0.0269] ahead 4/20 p 0.000708 (Holm over k 0.00425); seeds 7-16 -0.0479 [-0.0688, -0.0269]; by process drift -0.0527  ar1 -0.0349
+-- 5sigma_from_trial_21, k = 8
+   shared                    gain +0.1456 [+0.0900, +0.2037]  sitting - LCB1 +0.1676 [+0.1165, +0.2223] ahead 20/20 p 1.91e-06 (Holm over k 1.72e-05); seeds 7-16 +0.1263 [+0.0940, +0.1582]; by process drift +0.2953  ar1 +0.2038
+   sequential, random order  gain +0.1488 [+0.0969, +0.2034]  sitting - LCB1 +0.1709 [+0.1212, +0.2230] ahead 20/20 p 1.91e-06 (Holm over k 1.72e-05); seeds 7-16 +0.1266 [+0.0939, +0.1612]; by process drift +0.2928  ar1 +0.2194
+   sequential, rank order    gain +0.1336 [+0.0876, +0.1786]  sitting - LCB1 +0.1557 [+0.1110, +0.2005] ahead 19/20 p 3.81e-06 (Holm over k 3.43e-05); seeds 7-16 +0.1190 [+0.0853, +0.1529]; by process drift +0.2985  ar1 +0.1528
+-- 5sigma_from_trial_21, k = 12
+   shared                    gain +0.1512 [+0.0983, +0.2069]  sitting - LCB1 +0.1733 [+0.1149, +0.2296] ahead 19/20 p 1.91e-05 (Holm over k 0.000134); seeds 7-16 +0.1642 [+0.1189, +0.2100]; by process drift +0.3487  ar1 +0.2250
+   sequential, random order  gain +0.1489 [+0.0929, +0.2105]  sitting - LCB1 +0.1710 [+0.1112, +0.2294] ahead 19/20 p 1.91e-05 (Holm over k 0.000153); seeds 7-16 +0.1633 [+0.1167, +0.2117]; by process drift +0.3522  ar1 +0.2122
+   sequential, rank order    gain +0.1335 [+0.0803, +0.1929]  sitting - LCB1 +0.1556 [+0.0957, +0.2136] ahead 19/20 p 6.29e-05 (Holm over k 0.000315); seeds 7-16 +0.1569 [+0.1110, +0.2040]; by process drift +0.3490  ar1 +0.1539
+-- 5sigma_from_trial_21, k = 16
+   shared                    gain +0.2271 [+0.1422, +0.3197]  sitting - LCB1 +0.2492 [+0.1644, +0.3392] ahead 18/20 p 1.91e-05 (Holm over k 0.000134); seeds 7-16 +0.2269 [+0.1641, +0.2913]; by process drift +0.4252  ar1 +0.2504
+   sequential, random order  gain +0.2261 [+0.1391, +0.3201]  sitting - LCB1 +0.2481 [+0.1617, +0.3401] ahead 18/20 p 2.67e-05 (Holm over k 0.00016); seeds 7-16 +0.2272 [+0.1627, +0.2952]; by process drift +0.4064  ar1 +0.2649
+   sequential, rank order    gain +0.2117 [+0.1237, +0.3065]  sitting - LCB1 +0.2338 [+0.1452, +0.3243] ahead 18/20 p 4.77e-05 (Holm over k 0.000286); seeds 7-16 +0.2135 [+0.1465, +0.2839]; by process drift +0.4187  ar1 +0.1952
+-- 5sigma_from_trial_1, k = 8
+   shared                    gain +0.0576 [+0.0146, +0.0997]  sitting - LCB1 +0.0120 [-0.0174, +0.0423] ahead 13/20 p 0.33 (Holm over k 1); seeds 7-16 +0.0141 [-0.0114, +0.0426]; by process drift +0.0162  ar1 +0.0262
+   sequential, random order  gain +0.0552 [+0.0149, +0.0929]  sitting - LCB1 +0.0097 [-0.0204, +0.0410] ahead 12/20 p 0.475 (Holm over k 1); seeds 7-16 +0.0170 [-0.0054, +0.0425]; by process drift +0.0192  ar1 +0.0139
+   sequential, rank order    gain +0.0505 [+0.0079, +0.0890]  sitting - LCB1 +0.0049 [-0.0253, +0.0362] ahead 12/20 p 0.622 (Holm over k 1); seeds 7-16 +0.0113 [-0.0148, +0.0403]; by process drift +0.0072  ar1 +0.0070
+-- 1sigma_from_trial_21, k = 3
+   shared                    gain +0.0163 [+0.0044, +0.0286]  sitting - LCB1 +0.0057 [-0.0050, +0.0182] ahead 8/20 p 0.898 (Holm over k 1); seeds 7-16 +0.0127 [+0.0010, +0.0257]; by process drift +0.0179  ar1 +0.0100
+   sequential, random order  gain +0.0186 [+0.0069, +0.0307]  sitting - LCB1 +0.0080 [-0.0026, +0.0207] ahead 11/20 p 0.498 (Holm over k 1); seeds 7-16 +0.0139 [+0.0018, +0.0275]; by process drift +0.0194  ar1 +0.0179
+   sequential, rank order    gain +0.0169 [+0.0048, +0.0291]  sitting - LCB1 +0.0063 [-0.0049, +0.0190] ahead 9/20 p 0.729 (Holm over k 1); seeds 7-16 +0.0135 [+0.0008, +0.0272]; by process drift +0.0171  ar1 +0.0131
+-- 1sigma_from_trial_21, k = 5
+   shared                    gain +0.0169 [+0.0027, +0.0314]  sitting - LCB1 +0.0063 [-0.0099, +0.0230] ahead 13/20 p 0.409 (Holm over k 1); seeds 7-16 +0.0136 [-0.0041, +0.0302]; by process drift +0.0222  ar1 +0.0120
+   sequential, random order  gain +0.0167 [+0.0032, +0.0312]  sitting - LCB1 +0.0061 [-0.0095, +0.0224] ahead 12/20 p 0.498 (Holm over k 1); seeds 7-16 +0.0136 [-0.0037, +0.0299]; by process drift +0.0206  ar1 +0.0128
+   sequential, rank order    gain +0.0186 [+0.0051, +0.0329]  sitting - LCB1 +0.0080 [-0.0078, +0.0248] ahead 12/20 p 0.349 (Holm over k 1); seeds 7-16 +0.0135 [-0.0038, +0.0301]; by process drift +0.0218  ar1 +0.0191
+-- 1sigma_from_trial_21, k = 8
+   shared                    gain +0.0133 [-0.0020, +0.0291]  sitting - LCB1 +0.0028 [-0.0138, +0.0208] ahead 10/20 p 0.927 (Holm over k 1); seeds 7-16 +0.0105 [-0.0064, +0.0272]; by process drift +0.0249  ar1 +0.0175
+   sequential, random order  gain +0.0154 [-0.0005, +0.0317]  sitting - LCB1 +0.0048 [-0.0122, +0.0232] ahead 10/20 p 0.622 (Holm over k 1); seeds 7-16 +0.0098 [-0.0079, +0.0270]; by process drift +0.0245  ar1 +0.0261
+   sequential, rank order    gain +0.0126 [-0.0040, +0.0297]  sitting - LCB1 +0.0020 [-0.0167, +0.0210] ahead 11/20 p 0.812 (Holm over k 1); seeds 7-16 +0.0088 [-0.0095, +0.0268]; by process drift +0.0229  ar1 +0.0164
+-- 1sigma_from_trial_21, k = 12
+   shared                    gain +0.0163 [-0.0037, +0.0357]  sitting - LCB1 +0.0057 [-0.0167, +0.0267] ahead 11/20 p 0.498 (Holm over k 1); seeds 7-16 +0.0126 [-0.0080, +0.0320]; by process drift +0.0204  ar1 +0.0228
+   sequential, random order  gain +0.0184 [-0.0022, +0.0386]  sitting - LCB1 +0.0078 [-0.0144, +0.0283] ahead 13/20 p 0.409 (Holm over k 1); seeds 7-16 +0.0119 [-0.0082, +0.0309]; by process drift +0.0262  ar1 +0.0252
+   sequential, rank order    gain +0.0137 [-0.0065, +0.0332]  sitting - LCB1 +0.0031 [-0.0192, +0.0228] ahead 13/20 p 0.546 (Holm over k 1); seeds 7-16 +0.0108 [-0.0087, +0.0295]; by process drift +0.0187  ar1 +0.0141
+-- 1sigma_from_trial_21, k = 16
+   shared                    gain +0.0110 [-0.0135, +0.0324]  sitting - LCB1 +0.0004 [-0.0231, +0.0221] ahead 11/20 p 0.729 (Holm over k 1); seeds 7-16 +0.0107 [-0.0116, +0.0306]; by process drift +0.0192  ar1 +0.0197
+   sequential, random order  gain +0.0068 [-0.0182, +0.0289]  sitting - LCB1 -0.0038 [-0.0272, +0.0177] ahead 11/20 p 0.841 (Holm over k 1); seeds 7-16 +0.0092 [-0.0125, +0.0277]; by process drift +0.0159  ar1 +0.0063
+   sequential, rank order    gain +0.0016 [-0.0215, +0.0227]  sitting - LCB1 -0.0090 [-0.0325, +0.0127] ahead 10/20 p 0.756 (Holm over k 1); seeds 7-16 +0.0029 [-0.0180, +0.0217]; by process drift +0.0118  ar1 -0.0103
+-- pooled, k = 5
+   shared                    gain +0.0219 [+0.0078, +0.0368]  sitting - LCB1 +0.0220 [+0.0102, +0.0338] ahead 15/20 p 0.00365 (Holm over k 0.0256); seeds 7-16 +0.0191 [+0.0078, +0.0310]; by process drift +0.0449  ar1 +0.0251
+   sequential, random order  gain +0.0217 [+0.0082, +0.0357]  sitting - LCB1 +0.0218 [+0.0104, +0.0330] ahead 16/20 p 0.00365 (Holm over k 0.0256); seeds 7-16 +0.0193 [+0.0080, +0.0311]; by process drift +0.0439  ar1 +0.0253
+   sequential, rank order    gain +0.0224 [+0.0081, +0.0377]  sitting - LCB1 +0.0225 [+0.0105, +0.0344] ahead 15/20 p 0.00271 (Holm over k 0.019); seeds 7-16 +0.0189 [+0.0075, +0.0310]; by process drift +0.0448  ar1 +0.0274
+-- pooled, k = 8
+   shared                    gain +0.0227 [+0.0072, +0.0385]  sitting - LCB1 +0.0227 [+0.0089, +0.0358] ahead 15/20 p 0.0073 (Holm over k 0.0365); seeds 7-16 +0.0210 [+0.0087, +0.0342]; by process drift +0.0426  ar1 +0.0332
+   sequential, random order  gain +0.0230 [+0.0077, +0.0385]  sitting - LCB1 +0.0230 [+0.0095, +0.0359] ahead 15/20 p 0.00558 (Holm over k 0.0335); seeds 7-16 +0.0211 [+0.0088, +0.0337]; by process drift +0.0424  ar1 +0.0345
+   sequential, rank order    gain +0.0200 [+0.0052, +0.0347]  sitting - LCB1 +0.0201 [+0.0063, +0.0328] ahead 15/20 p 0.0073 (Holm over k 0.0365); seeds 7-16 +0.0192 [+0.0065, +0.0327]; by process drift +0.0418  ar1 +0.0233
+-- pooled, k = 12
+   shared                    gain +0.0172 [+0.0015, +0.0326]  sitting - LCB1 +0.0172 [+0.0006, +0.0324] ahead 14/20 p 0.0696 (Holm over k 0.278); seeds 7-16 +0.0199 [+0.0049, +0.0347]; by process drift +0.0444  ar1 +0.0269
+   sequential, random order  gain +0.0181 [+0.0019, +0.0345]  sitting - LCB1 +0.0182 [+0.0020, +0.0331] ahead 14/20 p 0.0484 (Holm over k 0.194); seeds 7-16 +0.0198 [+0.0049, +0.0344]; by process drift +0.0438  ar1 +0.0312
+   sequential, rank order    gain +0.0144 [-0.0013, +0.0295]  sitting - LCB1 +0.0145 [-0.0022, +0.0303] ahead 14/20 p 0.154 (Holm over k 0.461); seeds 7-16 +0.0185 [+0.0034, +0.0334]; by process drift +0.0428  ar1 +0.0174
+-- pooled, k = 16
+   shared                    gain +0.0220 [-0.0015, +0.0467]  sitting - LCB1 +0.0221 [+0.0014, +0.0431] ahead 13/20 p 0.0759 (Holm over k 0.278); seeds 7-16 +0.0209 [+0.0013, +0.0398]; by process drift +0.0529  ar1 +0.0340
+   sequential, random order  gain +0.0190 [-0.0036, +0.0424]  sitting - LCB1 +0.0191 [-0.0015, +0.0393] ahead 13/20 p 0.0826 (Holm over k 0.248); seeds 7-16 +0.0196 [+0.0003, +0.0382]; by process drift +0.0480  ar1 +0.0268
+   sequential, rank order    gain +0.0167 [-0.0067, +0.0412]  sitting - LCB1 +0.0168 [-0.0038, +0.0377] ahead 13/20 p 0.154 (Holm over k 0.461); seeds 7-16 +0.0171 [-0.0028, +0.0362]; by process drift +0.0511  ar1 +0.0146
+
+== 8. the other two zero-trial rules. LCB1 ranks the sitting's candidates, but it is not always the strongest
+   rule that buys no trial: LCB2 (the cautious rule, posterior mean less two latent SDs) gains more in some cells.
+   The sitting's increment over LCB2 and over PM, the same paired estimand and Holm families as over LCB1; then
+   the rule with the largest gain on seeds 7-11, the seeds that choose k, and the sitting over it on seeds 12-16.
+-- 1sigma_from_trial_1
+   four processes  rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0107 / +0.0270 / +0.0188  LCB2 +0.0147 / +0.0260 / +0.0204  PM +0.0054 / +0.0200 / +0.0127
+                   k =  2  sitting - LCB1 7-11 +0.0105 [-0.0000, +0.0216]  12-16 +0.0034 [-0.0030, +0.0091]
+                   k =  2  sitting - LCB2 7-11 +0.0065 [-0.0020, +0.0149]  12-16 +0.0043 [-0.0021, +0.0112] ahead 11/20 p 0.312 (Holm over k 0.935, over the 8 chosen 1, over all 72 1)  7-16 +0.0054 [-0.0014, +0.0125]
+                   k =  2  sitting - PM   7-11 +0.0158 [+0.0042, +0.0274]  12-16 +0.0103 [-0.0015, +0.0224] ahead 12/20 p 0.165 (Holm over k 0.66, over the 8 chosen 0.99, over all 72 1)  7-16 +0.0130 [+0.0023, +0.0238]
+                   k = 12  sitting - LCB1 7-11 -0.0210 [-0.0431, +0.0004]  12-16 -0.0364 [-0.0555, -0.0162]
+                   k = 12  sitting - LCB2 7-11 -0.0250 [-0.0451, -0.0053]  12-16 -0.0354 [-0.0542, -0.0150] ahead 3/20 p 0.00233 (Holm over k 0.0119, over the 8 chosen nan, over all 72 0.119)  7-16 -0.0302 [-0.0461, -0.0128]
+                   k = 12  sitting - PM   7-11 -0.0157 [-0.0383, +0.0073]  12-16 -0.0294 [-0.0510, -0.0048] ahead 6/20 p 0.0441 (Holm over k 0.22, over the 8 chosen nan, over all 72 1)  7-16 -0.0226 [-0.0430, -0.0003]
+                   k = 16  sitting - LCB1 7-11 -0.0445 [-0.0691, -0.0193]  12-16 -0.0430 [-0.0632, -0.0219]
+                   k = 16  sitting - LCB2 7-11 -0.0485 [-0.0706, -0.0261]  12-16 -0.0421 [-0.0627, -0.0198] ahead 5/20 p 0.00199 (Holm over k 0.0119, over the 8 chosen nan, over all 72 0.103)  7-16 -0.0453 [-0.0660, -0.0246]
+                   k = 16  sitting - PM   7-11 -0.0392 [-0.0653, -0.0117]  12-16 -0.0361 [-0.0602, -0.0090] ahead 6/20 p 0.0136 (Holm over k 0.0817, over the 8 chosen nan, over all 72 0.64)  7-16 -0.0376 [-0.0618, -0.0124]
+   gaussian        rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0119 / +0.0344 / +0.0232  LCB2 +0.0133 / +0.0287 / +0.0210  PM +0.0070 / +0.0238 / +0.0154
+                   k =  2  sitting - LCB1 7-11 +0.0147 [-0.0007, +0.0302]  12-16 +0.0075 [-0.0053, +0.0202]
+                   k =  2  sitting - LCB2 7-11 +0.0134 [-0.0028, +0.0289]  12-16 +0.0132 [-0.0000, +0.0273] ahead 13/20 p 0.0696 (Holm over k 0.278, over the 8 chosen 0.487, over all 72 1)  7-16 +0.0133 [+0.0027, +0.0242]
+                   k =  2  sitting - PM   7-11 +0.0196 [+0.0009, +0.0379]  12-16 +0.0182 [-0.0018, +0.0413] ahead 11/20 p 0.231 (Holm over k 0.922, over the 8 chosen 1, over all 72 1)  7-16 +0.0189 [+0.0022, +0.0364]
+                   k = 12  sitting - LCB1 7-11 -0.0257 [-0.0577, +0.0080]  12-16 -0.0565 [-0.0960, -0.0187]
+                   k = 12  sitting - LCB2 7-11 -0.0271 [-0.0558, +0.0019]  12-16 -0.0508 [-0.0879, -0.0147] ahead 6/20 p 0.0172 (Holm over k 0.103, over the 8 chosen nan, over all 72 0.893)  7-16 -0.0389 [-0.0645, -0.0128]
+                   k = 12  sitting - PM   7-11 -0.0208 [-0.0532, +0.0108]  12-16 -0.0458 [-0.0898, +0.0019] ahead 7/20 p 0.0759 (Holm over k 0.382, over the 8 chosen nan, over all 72 1)  7-16 -0.0333 [-0.0660, -0.0001]
+                   k = 16  sitting - LCB1 7-11 -0.0364 [-0.0720, -0.0052]  12-16 -0.0532 [-0.0907, -0.0161]
+                   k = 16  sitting - LCB2 7-11 -0.0378 [-0.0678, -0.0091]  12-16 -0.0475 [-0.0838, -0.0105] ahead 5/20 p 0.0362 (Holm over k 0.181, over the 8 chosen nan, over all 72 1)  7-16 -0.0426 [-0.0725, -0.0171]
+                   k = 16  sitting - PM   7-11 -0.0315 [-0.0678, +0.0039]  12-16 -0.0425 [-0.0872, +0.0050] ahead 7/20 p 0.0637 (Holm over k 0.382, over the 8 chosen nan, over all 72 1)  7-16 -0.0370 [-0.0720, -0.0024]
+   gaussian 27-36  k =  2  sitting - LCB2 (LCB2 gain +0.0298) -0.0017 [-0.0118, +0.0084] ahead 9/20 p 0.784 (Holm over the three k 0.784, over the 24 1)  sitting - PM (PM gain +0.0397) -0.0116 [-0.0258, +0.0027] ahead 10/20 p 0.231 (Holm over the three k 0.286, over the 24 1)
+   gaussian 27-36  k = 12  sitting - LCB2 (LCB2 gain +0.0298) -0.0442 [-0.0718, -0.0129] ahead 4/20 p 0.00831 (Holm over the three k 0.0249, over the 24 0.199)  sitting - PM (PM gain +0.0397) -0.0541 [-0.0845, -0.0223] ahead 4/20 p 0.00558 (Holm over the three k 0.0167, over the 24 0.117)
+   gaussian 27-36  k = 16  not replayed on these seeds
+-- 5sigma_from_trial_21
+   four processes  rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0195 / -0.0221 / -0.0013  LCB2 +0.0553 / +0.0091 / +0.0322  PM -0.0324 / -0.0649 / -0.0486
+                   k = 16  sitting - LCB1 7-11 +0.2047 [+0.1484, +0.2618]  12-16 +0.2492 [+0.1644, +0.3392]
+                   k = 16  sitting - LCB2 7-11 +0.1689 [+0.1199, +0.2131]  12-16 +0.2180 [+0.1458, +0.2910] ahead 17/20 p 2.67e-05 (Holm over k 0.00016, over the 8 chosen 0.000214, over all 72 0.00174)  7-16 +0.1935 [+0.1366, +0.2478]
+                   k = 16  sitting - PM   7-11 +0.2566 [+0.1849, +0.3228]  12-16 +0.2920 [+0.1956, +0.3933] ahead 18/20 p 9.54e-06 (Holm over k 5.72e-05, over the 8 chosen 7.63e-05, over all 72 0.000629)  7-16 +0.2743 [+0.2007, +0.3512]
+                   k = 12  sitting - LCB1 7-11 +0.1551 [+0.1090, +0.2058]  12-16 +0.1733 [+0.1149, +0.2296]
+                   k = 12  sitting - LCB2 7-11 +0.1194 [+0.0857, +0.1536]  12-16 +0.1421 [+0.0973, +0.1894] ahead 19/20 p 2.67e-05 (Holm over k 0.00016, over the 8 chosen nan, over all 72 0.00174)  7-16 +0.1307 [+0.0959, +0.1661]
+                   k = 12  sitting - PM   7-11 +0.2070 [+0.1519, +0.2682]  12-16 +0.2161 [+0.1501, +0.2820] ahead 19/20 p 1.34e-05 (Holm over k 5.72e-05, over the 8 chosen nan, over all 72 0.000841)  7-16 +0.2116 [+0.1541, +0.2691]
+   gaussian        rule gains 7-11 / 12-16 / 7-16: LCB1 +0.1213 / +0.1131 / +0.1172  LCB2 +0.1694 / +0.1449 / +0.1571  PM +0.0214 / +0.0559 / +0.0386
+                   k = 16  sitting - LCB1 7-11 +0.1111 [+0.0559, +0.1763]  12-16 +0.0971 [+0.0301, +0.1623]
+                   k = 16  sitting - LCB2 7-11 +0.0630 [+0.0163, +0.1241]  12-16 +0.0653 [+0.0103, +0.1216] ahead 14/20 p 0.0328 (Holm over k 0.295, over the 8 chosen 0.262, over all 72 1)  7-16 +0.0641 [+0.0267, +0.1021]
+                   k = 16  sitting - PM   7-11 +0.2110 [+0.1201, +0.3150]  12-16 +0.1543 [+0.0707, +0.2398] ahead 15/20 p 0.00199 (Holm over k 0.00794, over the 8 chosen 0.0159, over all 72 0.105)  7-16 +0.1826 [+0.1112, +0.2747]
+                   k = 12  sitting - LCB1 7-11 +0.0720 [+0.0387, +0.1114]  12-16 +0.0907 [+0.0175, +0.1632]
+                   k = 12  sitting - LCB2 7-11 +0.0239 [-0.0016, +0.0557]  12-16 +0.0589 [-0.0074, +0.1200] ahead 13/20 p 0.0759 (Holm over k 0.531, over the 8 chosen nan, over all 72 1)  7-16 +0.0414 [+0.0064, +0.0807]
+                   k = 12  sitting - PM   7-11 +0.1719 [+0.1021, +0.2512]  12-16 +0.1478 [+0.0820, +0.2197] ahead 16/20 p 0.00102 (Holm over k 0.0061, over the 8 chosen nan, over all 72 0.0579)  7-16 +0.1599 [+0.0973, +0.2253]
+   gaussian 27-36  k = 16  not replayed on these seeds
+   gaussian 27-36  k = 12  sitting - LCB2 (LCB2 gain +0.0827) +0.0544 [+0.0004, +0.1128] ahead 12/20 p 0.0973 (Holm over the three k 0.292, over the 24 1)  sitting - PM (PM gain -0.0674) +0.2045 [+0.1355, +0.2684] ahead 18/20 p 3.62e-05 (Holm over the three k 7.25e-05, over the 24 0.000834)
+-- 5sigma_from_trial_1
+   four processes  rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0548 / +0.0456 / +0.0502  LCB2 +0.0604 / +0.0631 / +0.0618  PM +0.0100 / +0.0085 / +0.0093
+                   k =  8  sitting - LCB1 7-11 +0.0163 [-0.0159, +0.0528]  12-16 +0.0120 [-0.0174, +0.0423]
+                   k =  8  sitting - LCB2 7-11 +0.0106 [-0.0206, +0.0464]  12-16 -0.0056 [-0.0335, +0.0193] ahead 11/20 p 0.812 (Holm over k 1, over the 8 chosen 1, over all 72 1)  7-16 +0.0025 [-0.0232, +0.0295]
+                   k =  8  sitting - PM   7-11 +0.0610 [+0.0098, +0.1171]  12-16 +0.0490 [+0.0054, +0.0970] ahead 16/20 p 0.0484 (Holm over k 0.291, over the 8 chosen 0.339, over all 72 1)  7-16 +0.0550 [+0.0137, +0.0998]
+   gaussian        rule gains 7-11 / 12-16 / 7-16: LCB1 +0.1078 / +0.0449 / +0.0764  LCB2 +0.0994 / +0.0600 / +0.0797  PM +0.0685 / +0.0244 / +0.0464
+                   k =  8  sitting - LCB1 7-11 -0.0362 [-0.0725, -0.0016]  12-16 -0.0051 [-0.0497, +0.0480]
+                   k =  8  sitting - LCB2 7-11 -0.0278 [-0.0583, +0.0037]  12-16 -0.0202 [-0.0657, +0.0306] ahead 7/20 p 0.245 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 -0.0240 [-0.0564, +0.0123]
+                   k =  8  sitting - PM   7-11 +0.0031 [-0.0542, +0.0635]  12-16 +0.0154 [-0.0477, +0.0866] ahead 11/20 p 0.841 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0093 [-0.0450, +0.0638]
+   gaussian 27-36  k =  8  not replayed on these seeds
+-- 1sigma_from_trial_21
+   four processes  rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0026 / +0.0106 / +0.0066  LCB2 +0.0081 / +0.0141 / +0.0111  PM -0.0068 / +0.0002 / -0.0033
+                   k =  3  sitting - LCB1 7-11 +0.0198 [+0.0046, +0.0363]  12-16 +0.0057 [-0.0050, +0.0182]
+                   k =  3  sitting - LCB2 7-11 +0.0142 [+0.0017, +0.0282]  12-16 +0.0022 [-0.0092, +0.0140] ahead 9/20 p 0.784 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0082 [-0.0016, +0.0196]
+                   k =  3  sitting - PM   7-11 +0.0291 [+0.0129, +0.0476]  12-16 +0.0160 [+0.0023, +0.0319] ahead 12/20 p 0.0973 (Holm over k 0.778, over the 8 chosen nan, over all 72 1)  7-16 +0.0226 [+0.0085, +0.0366]
+                   k =  5  sitting - LCB1 7-11 +0.0209 [+0.0027, +0.0388]  12-16 +0.0063 [-0.0099, +0.0230]
+                   k =  5  sitting - LCB2 7-11 +0.0154 [+0.0006, +0.0300]  12-16 +0.0028 [-0.0130, +0.0183] ahead 11/20 p 0.841 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0091 [-0.0068, +0.0231]
+                   k =  5  sitting - PM   7-11 +0.0302 [+0.0097, +0.0495]  12-16 +0.0166 [-0.0025, +0.0356] ahead 14/20 p 0.114 (Holm over k 0.798, over the 8 chosen nan, over all 72 1)  7-16 +0.0234 [+0.0039, +0.0417]
+                   k =  8  sitting - LCB1 7-11 +0.0182 [-0.0002, +0.0375]  12-16 +0.0028 [-0.0138, +0.0208]
+                   k =  8  sitting - LCB2 7-11 +0.0127 [-0.0025, +0.0280]  12-16 -0.0007 [-0.0173, +0.0166] ahead 8/20 p 0.729 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0060 [-0.0090, +0.0207]
+                   k =  8  sitting - PM   7-11 +0.0276 [+0.0083, +0.0474]  12-16 +0.0131 [-0.0058, +0.0329] ahead 13/20 p 0.231 (Holm over k 0.865, over the 8 chosen nan, over all 72 1)  7-16 +0.0203 [+0.0020, +0.0392]
+                   k = 12  sitting - LCB1 7-11 +0.0194 [-0.0005, +0.0403]  12-16 +0.0057 [-0.0167, +0.0267]
+                   k = 12  sitting - LCB2 7-11 +0.0139 [-0.0029, +0.0320]  12-16 +0.0022 [-0.0197, +0.0233] ahead 10/20 p 0.674 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0081 [-0.0099, +0.0257]
+                   k = 12  sitting - PM   7-11 +0.0288 [+0.0065, +0.0518]  12-16 +0.0161 [-0.0096, +0.0404] ahead 13/20 p 0.216 (Holm over k 0.865, over the 8 chosen nan, over all 72 1)  7-16 +0.0224 [+0.0001, +0.0451]
+   gaussian        rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0155 / +0.0244 / +0.0199  LCB2 +0.0149 / +0.0302 / +0.0226  PM +0.0032 / +0.0034 / +0.0033
+                   k =  3  sitting - LCB1 7-11 +0.0102 [-0.0088, +0.0320]  12-16 -0.0100 [-0.0330, +0.0112]
+                   k =  3  sitting - LCB2 7-11 +0.0107 [-0.0058, +0.0304]  12-16 -0.0159 [-0.0377, +0.0044] ahead 4/20 p 0.0637 (Holm over k 0.191, over the 8 chosen nan, over all 72 1)  7-16 -0.0026 [-0.0175, +0.0140]
+                   k =  3  sitting - PM   7-11 +0.0224 [+0.0025, +0.0451]  12-16 +0.0109 [-0.0136, +0.0402] ahead 7/20 p 0.648 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0167 [-0.0000, +0.0349]
+                   k =  5  sitting - LCB1 7-11 +0.0084 [-0.0118, +0.0277]  12-16 -0.0021 [-0.0274, +0.0225]
+                   k =  5  sitting - LCB2 7-11 +0.0090 [-0.0081, +0.0258]  12-16 -0.0080 [-0.0316, +0.0149] ahead 9/20 p 0.622 (Holm over k 0.622, over the 8 chosen nan, over all 72 1)  7-16 +0.0005 [-0.0174, +0.0167]
+                   k =  5  sitting - PM   7-11 +0.0207 [-0.0028, +0.0452]  12-16 +0.0188 [-0.0112, +0.0516] ahead 11/20 p 0.498 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0198 [-0.0031, +0.0421]
+                   k =  8  sitting - LCB1 7-11 +0.0110 [-0.0117, +0.0362]  12-16 -0.0120 [-0.0404, +0.0161]
+                   k =  8  sitting - LCB2 7-11 +0.0115 [-0.0097, +0.0350]  12-16 -0.0178 [-0.0444, +0.0083] ahead 5/20 p 0.114 (Holm over k 0.228, over the 8 chosen 0.684, over all 72 1)  7-16 -0.0031 [-0.0237, +0.0170]
+                   k =  8  sitting - PM   7-11 +0.0232 [-0.0026, +0.0516]  12-16 +0.0090 [-0.0282, +0.0486] ahead 9/20 p 0.956 (Holm over k 1, over the 8 chosen 1, over all 72 1)  7-16 +0.0161 [-0.0088, +0.0442]
+                   k = 12  sitting - LCB1 7-11 +0.0019 [-0.0215, +0.0257]  12-16 -0.0168 [-0.0374, +0.0040]
+                   k = 12  sitting - LCB2 7-11 +0.0024 [-0.0195, +0.0256]  12-16 -0.0226 [-0.0410, -0.0043] ahead 5/20 p 0.0328 (Holm over k 0.131, over the 8 chosen nan, over all 72 1)  7-16 -0.0101 [-0.0258, +0.0067]
+                   k = 12  sitting - PM   7-11 +0.0141 [-0.0128, +0.0398]  12-16 +0.0042 [-0.0252, +0.0354] ahead 8/20 p 0.784 (Holm over k 1, over the 8 chosen nan, over all 72 1)  7-16 +0.0092 [-0.0119, +0.0320]
+   gaussian 27-36  k =  3  not replayed on these seeds
+   gaussian 27-36  k =  5  sitting - LCB2 (LCB2 gain +0.0222) +0.0018 [-0.0148, +0.0202] ahead 11/20 p 0.927 (Holm over the three k 1, over the 24 1)  sitting - PM (PM gain +0.0166) +0.0074 [-0.0095, +0.0265] ahead 11/20 p 0.522 (Holm over the three k 0.818, over the 24 1)
+   gaussian 27-36  k =  8  not replayed on these seeds
+   gaussian 27-36  k = 12  sitting - LCB2 (LCB2 gain +0.0222) -0.0147 [-0.0373, +0.0074] ahead 7/20 p 0.294 (Holm over the three k 0.883, over the 24 1)  sitting - PM (PM gain +0.0166) -0.0091 [-0.0325, +0.0147] ahead 9/20 p 0.409 (Holm over the three k 0.818, over the 24 1)
+-- pooled
+   four processes  rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0016 / -0.0001 / +0.0008  LCB2 +0.0084 / +0.0069 / +0.0077  PM -0.0131 / -0.0131 / -0.0131
+                   k = 12  sitting - LCB1 7-11 +0.0226 [+0.0070, +0.0384]  12-16 +0.0172 [+0.0006, +0.0324]
+                   k = 12  sitting - LCB2 7-11 +0.0159 [+0.0013, +0.0313]  12-16 +0.0103 [-0.0047, +0.0255] ahead 13/20 p 0.245 (Holm over k 0.736, over the 8 chosen nan, over all 72 nan)  7-16 +0.0131 [-0.0010, +0.0280]
+                   k = 12  sitting - PM   7-11 +0.0374 [+0.0176, +0.0571]  12-16 +0.0303 [+0.0107, +0.0493] ahead 14/20 p 0.0073 (Holm over k 0.0365, over the 8 chosen nan, over all 72 nan)  7-16 +0.0338 [+0.0155, +0.0515]
+   gaussian        rule gains 7-11 / 12-16 / 7-16: LCB1 +0.0242 / +0.0217 / +0.0230  LCB2 +0.0300 / +0.0273 / +0.0287  PM +0.0045 / +0.0074 / +0.0059
+                   k = 12  sitting - LCB1 7-11 -0.0009 [-0.0137, +0.0124]  12-16 -0.0020 [-0.0218, +0.0172]
+                   k = 12  sitting - LCB2 7-11 -0.0068 [-0.0193, +0.0077]  12-16 -0.0076 [-0.0246, +0.0107] ahead 8/20 p 0.349 (Holm over k 1, over the 8 chosen nan, over all 72 nan)  7-16 -0.0072 [-0.0208, +0.0080]
+                   k = 12  sitting - PM   7-11 +0.0188 [-0.0007, +0.0400]  12-16 +0.0124 [-0.0124, +0.0379] ahead 9/20 p 0.452 (Holm over k 1, over the 8 chosen nan, over all 72 nan)  7-16 +0.0156 [-0.0042, +0.0357]
+   gaussian 27-36  k = 12  sitting - LCB2 (LCB2 gain +0.0173) -0.0132 [-0.0284, +0.0022] ahead 7/20 p 0.114 (Holm over the three k 0.342, over the 24 nan)  sitting - PM (PM gain -0.0100) +0.0141 [-0.0080, +0.0368] ahead 11/20 p 0.216 (Holm over the three k 0.216, over the 24 nan)
+-- the zero-trial rule chosen on seeds 7-11, and the chosen sitting over it on seeds 12-16
+   four processes
+      pooled                   k = 12  rule LCB2 (gain on 7-11 +0.0084)  sitting - rule +0.0103 [-0.0047, +0.0255] ahead 13/20 p 0.245
+      0.05sigma_from_trial_1   k =  3  rule LCB1 (gain on 7-11 -0.0275)  sitting - rule +0.0113 [-0.0001, +0.0261] ahead 10/20 p 0.778 (Holm over the 8 cells 1)
+      0.05sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0227)  sitting - rule +0.0043 [-0.0080, +0.0164] ahead 6/20 p 0.546 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_1   k =  5  rule LCB2 (gain on 7-11 -0.0082)  sitting - rule +0.0037 [-0.0050, +0.0152] ahead 7/20 p 0.648 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0121)  sitting - rule +0.0027 [-0.0078, +0.0138] ahead 10/20 p 0.841 (Holm over the 8 cells 1)
+      1sigma_from_trial_1      k =  2  rule LCB2 (gain on 7-11 +0.0147)  sitting - rule +0.0043 [-0.0021, +0.0112] ahead 11/20 p 0.312 (Holm over the 8 cells 1)
+      1sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.0081)  sitting - rule -0.0031 [-0.0261, +0.0178] ahead 10/20 p 0.956 (Holm over the 8 cells 1)
+      5sigma_from_trial_1      k =  8  rule LCB2 (gain on 7-11 +0.0604)  sitting - rule -0.0056 [-0.0335, +0.0193] ahead 11/20 p 0.812 (Holm over the 8 cells 1)
+      5sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.0553)  sitting - rule +0.2180 [+0.1458, +0.2910] ahead 17/20 p 2.67e-05 (Holm over the 8 cells 0.000214)
+   gaussian
+      pooled                   k =  8  rule LCB2 (gain on 7-11 +0.0300)  sitting - rule +0.0012 [-0.0139, +0.0172] ahead 10/20 p 0.956
+      0.05sigma_from_trial_1   k =  3  rule LCB2 (gain on 7-11 -0.0235)  sitting - rule +0.0111 [-0.0026, +0.0286] ahead 11/20 p 0.372 (Holm over the 8 cells 1)
+      0.05sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0254)  sitting - rule -0.0011 [-0.0174, +0.0119] ahead 7/20 p 0.811 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_1   k =  3  rule LCB2 (gain on 7-11 -0.0009)  sitting - rule +0.0041 [-0.0030, +0.0131] ahead 9/20 p 1 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_21  k =  2  rule LCB1 (gain on 7-11 -0.0070)  sitting - rule -0.0021 [-0.0110, +0.0056] ahead 9/20 p 0.904 (Holm over the 8 cells 1)
+      1sigma_from_trial_1      k =  2  rule LCB2 (gain on 7-11 +0.0133)  sitting - rule +0.0132 [-0.0000, +0.0273] ahead 13/20 p 0.0696 (Holm over the 8 cells 0.487)
+      1sigma_from_trial_21     k =  8  rule LCB1 (gain on 7-11 +0.0155)  sitting - rule -0.0120 [-0.0404, +0.0161] ahead 7/20 p 0.231 (Holm over the 8 cells 1)
+      5sigma_from_trial_1      k =  3  rule LCB1 (gain on 7-11 +0.1078)  sitting - rule +0.0240 [-0.0160, +0.0683] ahead 11/20 p 0.409 (Holm over the 8 cells 1)
+      5sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.1694)  sitting - rule +0.0653 [+0.0103, +0.1216] ahead 14/20 p 0.0328 (Holm over the 8 cells 0.262)
+   four processes, sequential, random order
+      pooled                   k = 12  rule LCB2 (gain on 7-11 +0.0084)  sitting - rule +0.0112 [-0.0033, +0.0258] ahead 14/20 p 0.165
+      0.05sigma_from_trial_1   k =  3  rule LCB1 (gain on 7-11 -0.0275)  sitting - rule +0.0113 [-0.0000, +0.0260] ahead 9/20 p 0.809 (Holm over the 8 cells 1)
+      0.05sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0227)  sitting - rule +0.0044 [-0.0079, +0.0164] ahead 6/20 p 0.573 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_1   k =  3  rule LCB2 (gain on 7-11 -0.0082)  sitting - rule +0.0044 [-0.0032, +0.0136] ahead 7/20 p 0.956 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_21  k =  3  rule LCB2 (gain on 7-11 -0.0121)  sitting - rule +0.0060 [-0.0029, +0.0176] ahead 10/20 p 0.388 (Holm over the 8 cells 1)
+      1sigma_from_trial_1      k =  2  rule LCB2 (gain on 7-11 +0.0147)  sitting - rule +0.0052 [-0.0012, +0.0123] ahead 13/20 p 0.165 (Holm over the 8 cells 1)
+      1sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.0081)  sitting - rule -0.0073 [-0.0300, +0.0132] ahead 10/20 p 0.756 (Holm over the 8 cells 1)
+      5sigma_from_trial_1      k =  8  rule LCB2 (gain on 7-11 +0.0604)  sitting - rule -0.0079 [-0.0362, +0.0191] ahead 9/20 p 0.784 (Holm over the 8 cells 1)
+      5sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.0553)  sitting - rule +0.2170 [+0.1417, +0.2944] ahead 17/20 p 6.29e-05 (Holm over the 8 cells 0.000504)
+   four processes, sequential, rank order
+      pooled                   k = 12  rule LCB2 (gain on 7-11 +0.0084)  sitting - rule +0.0075 [-0.0074, +0.0228] ahead 11/20 p 0.43
+      0.05sigma_from_trial_1   k =  3  rule LCB1 (gain on 7-11 -0.0275)  sitting - rule +0.0112 [-0.0001, +0.0260] ahead 9/20 p 0.778 (Holm over the 8 cells 1)
+      0.05sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0227)  sitting - rule +0.0044 [-0.0079, +0.0165] ahead 6/20 p 0.601 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_1   k =  3  rule LCB2 (gain on 7-11 -0.0082)  sitting - rule +0.0034 [-0.0040, +0.0125] ahead 7/20 p 0.596 (Holm over the 8 cells 1)
+      0.25sigma_from_trial_21  k =  5  rule LCB2 (gain on 7-11 -0.0121)  sitting - rule +0.0025 [-0.0080, +0.0135] ahead 9/20 p 0.872 (Holm over the 8 cells 1)
+      1sigma_from_trial_1      k =  2  rule LCB2 (gain on 7-11 +0.0147)  sitting - rule +0.0054 [-0.0004, +0.0118] ahead 14/20 p 0.105 (Holm over the 8 cells 0.738)
+      1sigma_from_trial_21     k =  3  rule LCB2 (gain on 7-11 +0.0081)  sitting - rule +0.0028 [-0.0092, +0.0148] ahead 8/20 p 0.841 (Holm over the 8 cells 1)
+      5sigma_from_trial_1      k =  8  rule LCB2 (gain on 7-11 +0.0604)  sitting - rule -0.0126 [-0.0413, +0.0142] ahead 10/20 p 0.674 (Holm over the 8 cells 1)
+      5sigma_from_trial_21     k = 16  rule LCB2 (gain on 7-11 +0.0553)  sitting - rule +0.2026 [+0.1263, +0.2828] ahead 17/20 p 8.2e-05 (Holm over the 8 cells 0.000656)

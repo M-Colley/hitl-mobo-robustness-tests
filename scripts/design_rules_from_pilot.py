@@ -19,7 +19,18 @@ pilot yields, so they cost nothing once the pilot exists.
               damage, an experimenter can reject an instrument before spending a
               participant on it.
 
-    python scripts/design_rules_from_pilot.py
+The instrument screen compares the capped arm's deployed excess, per landscape
+and magnitude (LogEI and qNEI, its seeds), with the main sweep's cell mean over
+ten acquisitions and ten seeds. The published design_rule_instrument*.csv files
+were written when the capped arm held seeds 7-11 only; it now also holds seeds
+12-16 of the fixed cap, so they are reproduced with --ceiling-seeds 7-11:
+
+    python scripts/design_rules_from_pilot.py --ceiling-seeds 7,8,9,10,11
+
+Without --ceiling-seeds every seed of the capped arm is used. The standard ship
+rule under the cap deploys the earliest of the tied top-rated designs;
+scripts/review_checks/tie_break.py gives the same screen under a uniformly random
+tie-break, and a paired version on matched acquisitions and seeds.
 """
 from __future__ import annotations
 
@@ -116,13 +127,14 @@ def sizing(arms: dict[int, Path], stats: dict, opt_z: dict[str, float],
 
 
 def instrument(ceiling_root: Path, base_root: Path, stats: dict, opt_z: dict[str, float],
-               quantile: float, rng: np.random.Generator) -> pd.DataFrame:
+               quantile: float, rng: np.random.Generator, seeds: set[int] | None = None) -> pd.DataFrame:
     """Damage done by a capped scale against the headroom a pilot would see.
 
     The cap sits at a quantile of the landscape, so how OFTEN it binds is fixed
     by construction. What varies, and what a pilot can measure, is how far the
     reachable optimum sits above it: that is the part of the signal the
-    instrument cannot represent.
+    instrument cannot represent. ``seeds`` restricts the capped arm's runs
+    (None: all of them); the uncapped side is the main sweep's cell means.
     """
     # The capped arm holds two variants in one directory, so it has no pooled
     # cell_means; the per-dataset paired metrics keep the variants apart, which
@@ -136,6 +148,11 @@ def instrument(ceiling_root: Path, base_root: Path, stats: dict, opt_z: dict[str
         raise SystemExit(f"no paired metrics under {ceiling_root}")
     cap_cells = pd.concat(parts, ignore_index=True)
     cap_cells = cap_cells[~cap_cells.acquisition.isin(MODEL_FREE)]
+    if seeds is not None:
+        missing = sorted(set(seeds) - set(int(s) for s in cap_cells["seed"].unique()))
+        if missing:
+            raise SystemExit(f"the capped arm under {ceiling_root} has no runs for seeds {missing}")
+        cap_cells = cap_cells[cap_cells["seed"].isin(seeds)]
     cap_cells = cap_cells.rename(columns={"final_inference_simple_regret_excess_true": "inference_excess"})
     cap_cells["variant"] = cap_cells["variant"].fillna("")
     base = load_cells(base_root, opt_z).set_index(["dataset", "jitter_std"])
@@ -193,6 +210,9 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--large", type=Path, default=Path("output-boba-budget100"))
     p.add_argument("--ceiling", type=Path, default=Path("output-boba-ceiling"))
     p.add_argument("--cap-quantile", type=float, default=0.9)
+    p.add_argument("--ceiling-seeds", type=str, default=None,
+                   help="comma-separated seeds of the capped arm to use (default: all); the published "
+                        "instrument screen used 7,8,9,10,11")
     p.add_argument("--output-dir", type=Path, default=Path("output-boba/analysis"))
     p.add_argument("--stats-path", type=Path, default=bb.DEFAULT_STATS_PATH)
     return p.parse_args(argv)
@@ -218,7 +238,9 @@ def main(argv=None) -> None:
                 parts.append(f"{rule} {float(r.mean_deployed_cost.iloc[0]):.4f}")
         print(f"  sigma_e {std:>5g}: flat {flat:.4f} | " + " | ".join(parts))
 
-    inst = instrument(args.ceiling, args.mid, stats, opt_z, args.cap_quantile, rng)
+    ceiling_seeds = ({int(s) for s in args.ceiling_seeds.split(",") if s.strip()}
+                     if args.ceiling_seeds else None)
+    inst = instrument(args.ceiling, args.mid, stats, opt_z, args.cap_quantile, rng, ceiling_seeds)
     inst.to_csv(args.output_dir / "design_rule_instrument.csv", index=False)
     fit = screen_fit(inst)
     fit.to_csv(args.output_dir / "design_rule_instrument_screen.csv", index=False)

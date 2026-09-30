@@ -1,0 +1,52 @@
+reproduces output-boba-budget100/analysis/extra_runs_per_run.csv: 4800 rows; equal: extra True, censored True, clean_origin True, reach_trial True
+
+GAUSSIAN error from the first rating, tolerance 0.01 of opt_z, six acquisitions, 5 seeds, 20 landscapes, budget 100
+medians over runs; a censored run's extra is budget - origin and its reach is the budget, so a median is exact only while fewer than half the runs are censored
+
+k = 25, 0.05 sigma: 600 runs, 4.0% censored (medians exact)
+  median extra 1 (counted from origin); origin: median trial 18, before trial 25 in 90.8% of runs
+  reach trial (origin + extra): median 19, median reach / 25 = 0.760
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 1.040
+  runs that reach it (576): median reach trial 18, median extra 1
+
+k = 25, 0.25 sigma: 600 runs, 13.8% censored (medians exact)
+  median extra 7 (counted from origin); origin: median trial 18, before trial 25 in 90.8% of runs
+  reach trial (origin + extra): median 25, median reach / 25 = 1.000
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 1.280
+  runs that reach it (517): median reach trial 22, median extra 4
+
+k = 25, 1 sigma: 600 runs, 38.5% censored (medians exact)
+  median extra 40.5 (counted from origin); origin: median trial 18, before trial 25 in 90.8% of runs
+  reach trial (origin + extra): median 56, median reach / 25 = 2.240
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 2.620
+  runs that reach it (369): median reach trial 31, median extra 14
+
+k = 25, 5 sigma: 600 runs, 70.0% censored (medians a lower bound)
+  median extra 78 (counted from origin); origin: median trial 18, before trial 25 in 90.8% of runs
+  reach trial (origin + extra): median 100, median reach / 25 = 4.000
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 4.120
+  runs that reach it (180): median reach trial 29, median extra 17.5
+
+k = 50, 0.05 sigma: 600 runs, 12.7% censored (medians exact)
+  median extra 1 (counted from origin); origin: median trial 22, before trial 50 in 97.5% of runs
+  reach trial (origin + extra): median 25, median reach / 50 = 0.500
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 1.020
+  runs that reach it (524): median reach trial 21, median extra 0
+
+k = 50, 0.25 sigma: 600 runs, 27.0% censored (medians exact)
+  median extra 13 (counted from origin); origin: median trial 22, before trial 50 in 97.5% of runs
+  reach trial (origin + extra): median 37.5, median reach / 50 = 0.750
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 1.260
+  runs that reach it (438): median reach trial 25, median extra 3
+
+k = 50, 1 sigma: 600 runs, 53.0% censored (medians a lower bound)
+  median extra 56 (counted from origin); origin: median trial 22, before trial 50 in 97.5% of runs
+  reach trial (origin + extra): median 100, median reach / 50 = 2.000
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 2.120
+  runs that reach it (282): median reach trial 36, median extra 17
+
+k = 50, 5 sigma: 600 runs, 77.5% censored (medians a lower bound)
+  median extra 69 (counted from origin); origin: median trial 22, before trial 50 in 97.5% of runs
+  reach trial (origin + extra): median 100, median reach / 50 = 2.000
+  the per-run 'multiplier' (k + extra) / k, for contrast: median 2.380
+  runs that reach it (135): median reach trial 33, median extra 22

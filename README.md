@@ -21,7 +21,10 @@ There are two arms:
   20 analytic benchmark functions with a published optimum. That arm exists
   because the fitted oracle is the weakest link in the data-driven one: its
   held-out R^2 is 0.55 at best, so a measured cost of feedback error is always
-  entangled with the surrogate human's own mis-specification. See
+  entangled with the surrogate human's own mis-specification. Run on the
+  analytic landscapes themselves, a fitted oracle does not significantly
+  understate the deployed loss, but how much search loss it reports depends on
+  its model family and on how its unknown optimum is estimated. See
   [Known-Function Arm](#known-function-arm-the-boba-suite).
 
 In practice, the workflow is:
@@ -40,7 +43,7 @@ In practice, the workflow is:
 - `scripts/evaluate_research_question.py`
   - The simplest recommended evaluation step. It ranks acquisitions by robustness (excess regret) AND absolute noisy performance for each dataset and error condition, with per-family FDR correction and paired effect sizes.
 - `scripts/confirmatory_followup.py`
-  - Runs a preregistration-style confirmatory comparison on fresh seeds (screening seeds are excluded from confirmatory tests).
+  - Runs a confirmatory comparison, planned in advance, on fresh seeds (screening seeds are excluded from confirmatory tests). The known-function arm's replication is `scripts/test_confirmatory_hypotheses.py`.
 - `scripts/plot_combined_aspects.py`
   - Paper-ready combined figures from the evaluation outputs.
 - `scripts/plot_sensor_error_results.py`
@@ -96,9 +99,18 @@ reference.
 
 ### 1. Install
 
+The code needs Python 3.12 or later. `requirements-eval.txt` lists the
+environment the paper's runs used (Python 3.12.9, torch 2.13.0, BoTorch
+0.18.2.dev23 pinned to its git commit, gpytorch 1.15.2, numpy 2.5.3, scipy
+1.18.1) for a fresh install:
+
 ```bash
 python -m pip install --upgrade -r requirements-eval.txt
 ```
+
+Do not install it over an environment that already has a CUDA build of torch
+and a working BoTorch: pip would rebuild BoTorch from git and reinstall
+packages over the installed ones.
 
 ### 2. Pick the Oracle Model
 
@@ -145,7 +157,11 @@ Important methodological defaults:
 - Per-iteration logs include `inference_simple_regret_true`: the true value of
   the design the experimenter would pick from the noisy observations. This is
   the deployment-relevant recommendation quality; plain `simple_regret_true`
-  assumes the best design is recognized for free.
+  assumes the best design is recognized for free. The pick is the earliest
+  design with the best observed rating. Under continuous error ties never
+  matter, but on a capped, clipped or rounded rating scale many designs tie at
+  the top, and `scripts/review_checks/tie_break.py` gives the value under a
+  uniformly random choice among the tied designs as well.
 - Regret is NOT clamped at zero: `y_opt` is a sampling-based estimate
   (anchored on the training data) that BO can legitimately exceed.
 - Use `--jitter-iterations 0,...` to include the human-plausible
@@ -343,11 +359,18 @@ Things worth knowing about this arm:
   uses that 74x lever arm to test which of the two scales fragility actually
   follows, rather than assuming one.
 - **`random` and `sobol` are a hard internal control.** They pick candidates
-  without looking at any observation, so their excess regret must be exactly
-  zero. The analysis reports the largest floor excess, flags any value above
-  1e-9, and excludes the floors from the
-  robustness ranking -- a method that ignores its data wins any such ranking
-  while learning nothing.
+  without looking at any observation, so under response error their excess
+  search regret (`simple_regret_true`) must be exactly zero. The analysis
+  reports the largest floor excess, flags any value above 1e-9, and excludes
+  the floors from the robustness ranking -- a method that ignores its data wins
+  any such ranking while learning nothing. Their deployed design is still
+  chosen by the noisy ratings, so on `inference_simple_regret_true` they are no
+  zero control.
+- **The rating instrument is part of the file name.** Runs with
+  `--response-clip` or `--response-round` carry `_clip<lo>,<hi>`,
+  `_clip-sample` or `_round<q>` at the end of their variant suffix; standard
+  runs keep their names. `output-boba-instrument` and `output-boba-spike-clip`
+  predate this and must not be resumed in place.
 - **`bias` scales with the swept magnitude** (`--error-bias-mode scaled`), so it
   is a systematic error of the same size as the `gaussian` random one. Pass
   `--error-bias-mode fixed` to reproduce the data-driven arm's constant 0.2
@@ -392,7 +415,9 @@ If you want to use different data, update `datasets.json` or pass `--dataset-con
 
 Reproducibility notes:
 
-- Remote datasets are cloned at HEAD; `run_metadata.json` records the
+- Remote datasets are cloned at the commit pinned by `data_commit` in
+  `datasets*.json`, and a cached clone at another commit is refused unless
+  `HITL_DATA_COMMIT_MISMATCH=warn` is set; `run_metadata.json` records the
   commit SHA of each cloned data directory (`data_dir_commits`). Quote those
   SHAs in the camera-ready paper only; the anonymous submission must not carry them.
 - The simulation exits non-zero and records `failed_seeds` in
@@ -406,7 +431,10 @@ Reproducibility notes:
 The paper's results come from the known-function arm. Its driver is
 `run_boba_pipeline.ps1` (see [Known-Function Arm](#known-function-arm-the-boba-suite)),
 and the paper's tables are regenerated with
-`python scripts/make_boba_paper_tables.py --analysis output-boba/analysis`.
+`python scripts/make_boba_paper_tables.py --analysis output-boba/analysis`
+(the sitting table `paper/tables/sitting_by_magnitude.tex` by
+`python scripts/sitting_by_magnitude.py`). `paper/COMMANDS.md` records, in run
+order, the command behind every table and every number in the paper.
 Before claiming any result, follow the checklist at the end of `AGENTS.md`.
 
 The steps below run the older data-driven arm (fitted oracles), which the paper

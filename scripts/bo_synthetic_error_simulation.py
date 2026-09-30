@@ -518,7 +518,76 @@ def _variant_suffix(args: argparse.Namespace, error_model: str, error_bias: floa
         parts.append(f"xc{adapt['error_cross_corr']:g}")
     if adapt["mo_halo_model"] != "none":
         parts.append(f"halo-{adapt['mo_halo_model']}")
+    # The response instrument. Both act on noisy ratings only (after the onset),
+    # so the clean run and its name are unchanged, but a clipped or rounded run
+    # used to carry the standard name and resume would have reused one for the
+    # other. Named only when set, so standard runs keep their names.
+    parts.extend(instrument_suffix_parts(args))
     return ("_" + "_".join(parts)) if parts else ""
+
+
+def instrument_suffix_parts(args: argparse.Namespace) -> list[str]:
+    """The file-name parts of --response-clip and --response-round: 'clip-sample'
+    or 'clip<low>,<high>', and 'round<step>'. Empty at the defaults. Clipping is
+    not applied in the multi-objective suite (run_task passes no bounds), so it
+    is not named there."""
+    parts: list[str] = []
+    clip = str(getattr(args, "response_clip", "none") or "none").strip()
+    if clip not in ("", "none") and not getattr(args, "multi_objective", False):
+        if clip == "sample":
+            parts.append("clip-sample")
+        else:
+            low, high = (float(v) for v in clip.split(","))
+            parts.append(f"clip{low:g},{high:g}")
+    step = getattr(args, "response_round", None)
+    if step is not None and float(step) > 0:
+        parts.append(f"round{float(step):g}")
+    return parts
+
+
+# A directory whose clipped or rounded runs were written before those settings
+# entered the file name (output-boba-instrument, output-boba-spike-clip) holds
+# them under standard names. New code would neither find them (new names) nor
+# tell them apart from standard runs, so it refuses such a directory. The
+# marker says a directory's names already carry the instrument parts.
+NAMING_MARKER = "run_naming.json"
+
+
+def _legacy_instrument_runs(output_dir: Path) -> bool:
+    """Whether run_metadata.json records a clipped or rounded invocation that
+    predates the instrument parts of the file name."""
+    path = output_dir / "run_metadata.json"
+    if not path.is_file():
+        return False
+    try:
+        recorded = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return False
+    recorded_args = argparse.Namespace(**{"response_clip": "none", "response_round": None,
+                                          **(recorded.get("args") or {})})
+    if instrument_suffix_parts(recorded_args):
+        return True
+    for invocation in recorded.get("invocations") or []:
+        argv = [str(a) for a in (invocation.get("argv") or [])]
+        if any(a.startswith(("--response-clip", "--response-round")) for a in argv):
+            return True
+    return False
+
+
+def _guard_instrument_naming(output_dir: Path, args: argparse.Namespace) -> None:
+    """Refuse a directory that holds clipped or rounded runs under standard names."""
+    marker = output_dir / NAMING_MARKER
+    if marker.is_file():
+        return
+    if _legacy_instrument_runs(output_dir) and next(output_dir.rglob("*_jittered_*.csv"), None) is not None:
+        raise ValueError(
+            f"{output_dir} holds clipped or rounded runs written before --response-clip and "
+            "--response-round entered the file name, so they carry standard names. Resuming "
+            "would rerun them under new names beside the old ones, and a standard run would "
+            "reuse them as its own. Use a fresh --output-dir."
+        )
+    if instrument_suffix_parts(args):
+        marker.write_text(json.dumps({"instrument_parts_in_name": True}, indent=2), encoding="utf-8")
 
 
 # Settings that change the CLEAN run without appearing in its filename. The
@@ -1063,6 +1132,7 @@ def main(argv: list[str] | None = None) -> None:
     if args.dry_run:
         return
     _guard_clean_run_settings(output_dir, args)
+    _guard_instrument_naming(output_dir, args)
 
     if args.n_jobs == -1:
         n_jobs = mp.cpu_count()
@@ -1221,6 +1291,9 @@ def main(argv: list[str] | None = None) -> None:
         "runtime_sec": float(time.perf_counter() - runtime_start),
         "n_workers": int(n_jobs),
         "failures": failures,
+        # append_invocation adds code_dirty, code_diff_sha256 and the per-invocation
+        # stamps (commit, dirty files, argv), and writes the uncommitted patch
+        # beside this file as code_diff_<sha12>.patch.
         "git_commit": _git_commit(REPO_ROOT),
         "boba_root": args.boba_root,
         "boba_commit": _git_commit(Path(args.boba_root)) if args.boba_root else None,
@@ -1230,7 +1303,8 @@ def main(argv: list[str] | None = None) -> None:
         "landscape_stats": {f: stats[f] for f in functions},
         "multi_objective": bool(args.multi_objective),
         "package_versions": sim.collect_package_versions(
-            ["numpy", "pandas", "scipy", "scikit-learn", "botorch", "torch", "gpytorch", "tqdm"]
+            ["numpy", "pandas", "scipy", "scikit-learn", "botorch", "torch", "gpytorch",
+             "linear_operator", "tqdm"]
         ),
     }
     metadata = sim.append_invocation(output_dir / "run_metadata.json", metadata, REPO_ROOT)

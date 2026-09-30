@@ -19,7 +19,7 @@ This script answers it. Four analyses:
    trivial on shekel, whose optimum stands 57 SDs above a random design, and
    catastrophic on branin, where it stands 1.25 SDs above. Two candidate scales
    therefore exist -- error relative to the landscape's spread, and error
-   relative to the *achievable gain* -- and the suite spans a 45x range of the
+   relative to the *achievable gain* -- and the suite spans a 74x range of the
    ratio between them, which is enough to tell them apart. Fitting the power
    law ``E[excess] = A * sigma_e**beta_c * opt_z**beta_z`` to landscape x
    magnitude cell means decides it: beta_z = 0 means spread is the currency,
@@ -89,7 +89,7 @@ MODEL_FREE = ("random", "sobol")
 # log_opt_z across this suite (a landscape whose optimum stands many SDs up is
 # necessarily one where almost nothing is near it) and skew is largely a
 # restatement of tail weight, so both are dropped from the primary model and
-# kept only in the sensitivity fit below. The VIF table records the choice.
+# kept only in the sensitivity fit below. descriptor_vif_all.csv records the choice.
 PRIMARY_DESCRIPTORS = ["dim", "log_opt_z", "ruggedness", "log_tail_ratio"]
 # log_sparsity is the optimum-anchored fraction, floored at half a sample so the
 # needle landscapes (where it is exactly zero) stay loggable. It sits only in the
@@ -388,6 +388,23 @@ def bias_onset_control(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
     0 should therefore differ from the `gaussian` arm at onset 0 only by its
     noise draw. If it differs systematically, something in the pipeline is
     reacting to the offset that should not be.
+
+    In the sweep the two arms do NOT share a noise stream: the jitter seed
+    includes the error model's index, so the difference below is sampling noise
+    between independent draws, not floating-point drift. The response is the
+    post-onset per-iteration excess (``excess_sd``, landscape SDs). The noisy
+    runs are paired on (landscape, acquisition, seed), which share one clean
+    twin, so the twin cancels from the paired difference. The standard error
+    treats the landscape as the cluster: the SD of the landscape means of the
+    paired difference over sqrt(landscapes), with a landscape-bootstrap
+    percentile interval beside it. The landscapes share their random numbers by
+    design (the jitter seed omits the landscape, so every landscape sees the same
+    noise stream for a given acquisition and seed), so this bootstrap treats
+    correlated clusters as independent. Two further SEs show how much that
+    matters: ``difference_se_stream`` clusters on the shared stream (acquisition
+    x seed) and ``difference_se_twoway`` on both landscape and stream
+    (Cameron-Gelbach-Miller, statsmodels). The ``difference_se_independent``
+    column is the unclustered two-sample SE, for comparison only.
     """
     subset = df[(df["jitter_iteration"] == 0)
                 & (df["error_model"].isin(["gaussian", "bias"]))
@@ -402,8 +419,77 @@ def bias_onset_control(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
     table.columns = ["_".join(map(str, c)) for c in table.columns]
     table = table.reset_index()
     table["difference"] = table.get("mean_bias", np.nan) - table.get("mean_gaussian", np.nan)
+    clustered = pd.DataFrame([
+        {"jitter_std": float(std), **_paired_landscape_difference(block, "bias", "gaussian")}
+        for std, block in subset.groupby("jitter_std")
+    ])
+    if not clustered.empty:
+        table = table.merge(clustered, on="jitter_std", how="left")
+    if {"std_bias", "std_gaussian", "count_bias", "count_gaussian"} <= set(table.columns):
+        table["difference_se_independent"] = np.sqrt(
+            table["std_bias"] ** 2 / table["count_bias"]
+            + table["std_gaussian"] ** 2 / table["count_gaussian"])
     table.to_csv(output_dir / "bias_onset0_control.csv", index=False)
     return table
+
+
+def _paired_landscape_difference(block: pd.DataFrame, treated: str, reference: str,
+                                 response: str = "excess_sd",
+                                 reps: int = BOOTSTRAP_REPS,
+                                 seed: int = BOOTSTRAP_SEED) -> dict[str, float]:
+    """Mean paired ``treated - reference`` difference, with the landscape as the cluster.
+
+    Runs are paired on (dataset, acquisition, seed); the difference is averaged
+    within a landscape, then over landscapes (the mean of landscape means). The
+    SE is the SD of the landscape means over sqrt(n_landscapes), and the
+    interval a percentile bootstrap over landscapes. ``difference_se_stream``
+    and ``difference_se_twoway`` are cluster-robust SEs of the mean paired
+    difference (an intercept-only OLS in statsmodels, with its default
+    small-sample correction) clustered on the noise stream (acquisition x seed)
+    and on landscape and stream together. In a balanced panel the landscape
+    one-way version of that estimator equals ``difference_se_landscape``.
+    """
+    keys = ["dataset", "acquisition", "seed"]
+    wide = block.pivot_table(index=keys, columns="error_model", values=response, aggfunc="mean")
+    if treated not in wide.columns or reference not in wide.columns:
+        return {}
+    paired = (wide[treated] - wide[reference]).dropna().rename("d").reset_index()
+    per_landscape = paired.groupby("dataset")["d"].mean().to_numpy()
+    n = len(per_landscape)
+    if n == 0:
+        return {}
+    se = float(per_landscape.std(ddof=1) / np.sqrt(n)) if n > 1 else np.nan
+    rng = np.random.default_rng(seed)
+    draws = np.array([per_landscape[rng.integers(0, n, n)].mean() for _ in range(reps)])
+    lo, hi = np.percentile(draws, [2.5, 97.5]) if n > 1 else (np.nan, np.nan)
+    landscape_codes = pd.factorize(paired["dataset"])[0]
+    stream_codes = pd.factorize(paired["acquisition"].astype(str) + "|"
+                                + paired["seed"].astype(str))[0]
+    return {
+        "paired_runs": int(len(paired)),
+        "n_landscapes": int(n),
+        "n_streams": int(stream_codes.max() + 1) if len(stream_codes) else 0,
+        "difference_paired": float(per_landscape.mean()),
+        "difference_se_landscape": se,
+        "difference_ci_low": float(lo),
+        "difference_ci_high": float(hi),
+        "difference_se_stream": _clustered_mean_se(paired["d"].to_numpy(), stream_codes),
+        "difference_se_twoway": _clustered_mean_se(
+            paired["d"].to_numpy(), np.column_stack([landscape_codes, stream_codes])),
+    }
+
+
+def _clustered_mean_se(values: np.ndarray, groups: np.ndarray) -> float:
+    """Cluster-robust SE of the mean of ``values`` (one- or two-way ``groups``), via statsmodels."""
+    values = np.asarray(values, dtype=float)
+    groups = np.asarray(groups)
+    n_groups = [len(np.unique(groups))] if groups.ndim == 1 else [
+        len(np.unique(groups[:, j])) for j in range(groups.shape[1])]
+    if len(values) < 2 or min(n_groups) < 2:
+        return float("nan")
+    fit = smapi.OLS(values, np.ones((len(values), 1))).fit(
+        cov_type="cluster", cov_kwds={"groups": groups})
+    return float(np.sqrt(fit.cov_params()[0, 0]))
 
 
 # ---------------------------------------------------------------------------
@@ -726,6 +812,45 @@ def _cluster_bootstrap(
     })
 
 
+def _descriptor_design(cells: pd.DataFrame, descriptors: list[str]) -> pd.DataFrame:
+    """The predictor matrix a descriptor model is fitted on.
+
+    z-scored ``log_noise`` and ``descriptors``, then the error-process and onset
+    indicators (first level dropped). No constant: ``_cluster_bootstrap`` and
+    ``_vif_table`` add it.
+    """
+    design = cells[["log_noise"] + descriptors].astype(float)
+    design = (design - design.mean()) / design.std(ddof=0).replace(0.0, 1.0)
+    dummies = pd.get_dummies(
+        pd.DataFrame({
+            "error_model": cells["error_model"].to_numpy(),
+            "onset": cells["jitter_iteration"].astype(str).to_numpy(),
+        }),
+        drop_first=True, dtype=float,
+    )
+    return pd.concat([design.reset_index(drop=True), dummies.reset_index(drop=True)], axis=1)
+
+
+def descriptor_vif(cells: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """VIFs on the primary model's design matrix, and on the seven-descriptor one.
+
+    Each VIF is computed on the full design matrix of the model it describes,
+    indicators included, so it is the variance inflation of that model's own
+    coefficient. In the balanced panel the indicators are orthogonal to the
+    landscape descriptors and to the magnitude, so leaving them out would not
+    move the continuous terms' values. A ``design`` column says which fit a row
+    belongs to, and ``kind`` separates the continuous terms from the indicators.
+    """
+    out = []
+    for label, descriptors in (("primary", PRIMARY_DESCRIPTORS), ("all_descriptors", ALL_DESCRIPTORS)):
+        table = _vif_table(_descriptor_design(cells, descriptors))
+        table["kind"] = np.where(table["term"].isin(["log_noise"] + descriptors),
+                                 "continuous", "indicator")
+        table["design"] = label
+        out.append(table.reset_index(drop=True))
+    return out[0], out[1]
+
+
 def descriptor_regression(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
     """Fragility on the pre-measured landscape descriptors.
 
@@ -745,8 +870,13 @@ def descriptor_regression(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
     )
 
     raw = cells[["log_noise"] + ALL_DESCRIPTORS].astype(float)
-    vif = _vif_table(raw)
-    vif.to_csv(output_dir / "descriptor_vif.csv", index=False)
+    # The VIF column of the descriptor table sits beside the PRIMARY model's
+    # coefficients, so descriptor_vif.csv is computed on that model's own design
+    # matrix. The seven-descriptor design, which adds sparsity and skew and is
+    # where log opt_z's VIF reaches about 9, is kept in descriptor_vif_all.csv.
+    vif_primary, vif_all = descriptor_vif(cells)
+    vif_primary.to_csv(output_dir / "descriptor_vif.csv", index=False)
+    vif_all.to_csv(output_dir / "descriptor_vif_all.csv", index=False)
     raw.corr().to_csv(output_dir / "descriptor_correlations.csv")
 
     frames = []
@@ -762,16 +892,7 @@ def descriptor_regression(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
                 file=sys.stderr,
             )
             continue
-        design = cells[["log_noise"] + descriptors].astype(float)
-        design = (design - design.mean()) / design.std(ddof=0).replace(0.0, 1.0)
-        dummies = pd.get_dummies(
-            pd.DataFrame({
-                "error_model": cells["error_model"].to_numpy(),
-                "onset": cells["jitter_iteration"].astype(str).to_numpy(),
-            }),
-            drop_first=True, dtype=float,
-        )
-        block = pd.concat([design.reset_index(drop=True), dummies.reset_index(drop=True)], axis=1)
+        block = _descriptor_design(cells, descriptors)
         block["dataset"] = cells["dataset"].to_numpy()
         block["excess_sd"] = cells["excess_sd"].to_numpy()
 
@@ -888,6 +1009,91 @@ def mediator_model(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
 
     result = pd.concat(frames, ignore_index=True)
     result.to_csv(output_dir / "mediator_model.csv", index=False)
+    return result
+
+
+# The opt_z-free rows of the mediation table, refitted on both responses. The
+# descriptor rows are deliberately absent: they contain log opt_z, and the
+# normalised response must never be regressed on it (module docstring).
+NORMALISED_MEDIATION_MODELS = (
+    ("indicators_only", [], True),
+    ("magnitude_only", ["log_noise"], True),
+    ("mediator_only", ["frag_at_c"], True),
+    ("magnitude_mediator", ["log_noise", "frag_at_c"], True),
+    # frag divided by opt_z matches the response's units, but the two then share
+    # the divisor, which by itself induces correlation. Kept, and flagged. The
+    # induced correlation is positive, so it can inflate frag/opt_z's apparent
+    # contribution but not hide it: beside the magnitude on the fraction of opt_z
+    # it adds nothing, while frag left in landscape SDs does.
+    ("mediator_scaled_only", ["frag_over_opt_z"], False),
+    ("magnitude_mediator_scaled", ["log_noise", "frag_over_opt_z"], False),
+)
+
+
+def mediator_normalised_sensitivity(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
+    """The opt_z-free mediation rows on the raw and on the opt_z-normalised response.
+
+    ``mediator_model`` fits every row to ``excess_sd``, the post-onset
+    per-iteration excess in landscape SDs. The paper's "cost" is the same
+    quantity as a fraction of opt_z. This refits the rows that contain no opt_z
+    term (indicators, magnitude, frag, magnitude + frag) on both responses, with
+    the same cells, indicators, z-scoring and landscape bootstrap, so the reader
+    can see which conclusions depend on the unit. ``response`` is ``excess_sd``
+    or ``fragility`` (= cell-mean ``excess_sd`` / opt_z); ``opt_z_free`` is False
+    for the two rows whose mediator is itself divided by opt_z. The correlation
+    of frag with log opt_z over the cells is recorded in ``corr_frag_log_opt_z``.
+    """
+    columns = ["response", "model", "opt_z_free", "term", "coefficient", "ci_low", "ci_high",
+               "p_bootstrap", "r_squared", "n_cells", "n_clusters", "corr_frag_log_opt_z"]
+    path = output_dir / "mediator_model_normalised.csv"
+    learners = df[~df["acquisition"].isin(MODEL_FREE)]
+    if learners["frag_at_c"].isna().all():
+        pd.DataFrame(columns=columns).to_csv(path, index=False)
+        return pd.DataFrame(columns=columns)
+    cells = (
+        learners.dropna(subset=["frag_at_c"])
+        .groupby(["dataset", "error_model", "jitter_std", "jitter_iteration"])
+        .agg(excess_sd=("excess_sd", "mean"),
+             frag_at_c=("frag_at_c", "first"),
+             log_noise=("log_noise", "first"),
+             log_opt_z=("log_opt_z", "first"),
+             opt_z=("opt_z", "first"))
+        .reset_index()
+    )
+    if cells["dataset"].nunique() < 3:
+        pd.DataFrame(columns=columns).to_csv(path, index=False)
+        return pd.DataFrame(columns=columns)
+    cells["fragility"] = cells["excess_sd"] / cells["opt_z"]
+    cells["frag_over_opt_z"] = cells["frag_at_c"] / cells["opt_z"]
+    corr = float(np.corrcoef(cells["frag_at_c"], cells["log_opt_z"])[0, 1])
+    dummies = pd.get_dummies(
+        pd.DataFrame({
+            "error_model": cells["error_model"].to_numpy(),
+            "onset": cells["jitter_iteration"].astype(str).to_numpy(),
+        }),
+        drop_first=True, dtype=float,
+    )
+    frames = []
+    for response in ("excess_sd", "fragility"):
+        for label, terms, opt_z_free in NORMALISED_MEDIATION_MODELS:
+            if terms:
+                design = cells[terms].astype(float)
+                design = (design - design.mean()) / design.std(ddof=0).replace(0.0, 1.0)
+                block = pd.concat([design.reset_index(drop=True), dummies.reset_index(drop=True)],
+                                  axis=1)
+            else:
+                block = dummies.reset_index(drop=True).copy()
+            block["dataset"] = cells["dataset"].to_numpy()
+            block["_y"] = cells[response].to_numpy()
+            predictors = [c for c in block.columns if c not in {"dataset", "_y"}]
+            table = _cluster_bootstrap(block, "_y", predictors, BOOTSTRAP_REPS, BOOTSTRAP_SEED)
+            table.insert(0, "opt_z_free", bool(opt_z_free))
+            table.insert(0, "model", label)
+            table.insert(0, "response", response)
+            frames.append(table)
+    result = pd.concat(frames, ignore_index=True)
+    result["corr_frag_log_opt_z"] = corr
+    result.to_csv(path, index=False)
     return result
 
 
@@ -1141,6 +1347,7 @@ def write_report(
     stats: dict[str, dict[str, float]],
     output_dir: Path,
     tolerance: float,
+    mediator_units: pd.DataFrame | None = None,
 ) -> None:
     lines: list[str] = []
     add = lines.append
@@ -1217,10 +1424,19 @@ def write_report(
         add("  not computed: this arm does not run both the gaussian and bias models")
         add("  at onset 0.")
     else:
-        add(f"  {'error SD':>9s} {'gaussian':>11s} {'bias':>11s} {'difference':>11s}")
+        add("  Post-onset excess regret, landscape SDs. The two arms draw independent")
+        add("  noise streams; SE and 95% interval treat the landscape as the cluster;")
+        add("  SE stream clusters on acquisition x seed, SE 2-way on both.")
+        add(f"  {'error SD':>9s} {'gaussian':>11s} {'bias':>11s} {'difference':>11s} "
+            f"{'SE':>7s} {'95% CI':>18s} {'SE stream':>10s} {'SE 2-way':>9s}")
         for _, row in bias_control.iterrows():
             add(f"  {row['jitter_std']:>9.3g} {row.get('mean_gaussian', float('nan')):>11.4f} "
-                f"{row.get('mean_bias', float('nan')):>11.4f} {row['difference']:>11.4f}")
+                f"{row.get('mean_bias', float('nan')):>11.4f} {row['difference']:>11.4f} "
+                f"{row.get('difference_se_landscape', float('nan')):>7.4f} "
+                f"[{row.get('difference_ci_low', float('nan')):>+7.4f},"
+                f"{row.get('difference_ci_high', float('nan')):>+7.4f}] "
+                f"{row.get('difference_se_stream', float('nan')):>10.4f} "
+                f"{row.get('difference_se_twoway', float('nan')):>9.4f}")
     add("")
 
     add("1d. WHERE THE ERROR HELPED")
@@ -1286,10 +1502,16 @@ def write_report(
         add(f"  [{model}]  R^2 = {block['r_squared'].iloc[0]:.3f} over "
             f"{int(block['n_cells'].iloc[0]):,} cells in "
             f"{int(block['n_clusters'].iloc[0])} benchmarks")
-        add(f"  {'term':<16s} {'beta':>9s} {'95% CI':>20s} {'p(FDR)':>9s}")
+        vif_path = output_dir / ("descriptor_vif.csv" if model == "primary"
+                                 else "descriptor_vif_all.csv")
+        vif = (pd.read_csv(vif_path).set_index("term")["vif"].to_dict()
+               if vif_path.is_file() else {})
+        add(f"  {'term':<16s} {'beta':>9s} {'95% CI':>20s} {'p(FDR)':>9s} {'VIF':>6s}")
         for _, row in interesting.iterrows():
             add(f"  {row['term']:<16s} {row['coefficient']:>9.4f} "
-                f"[{row['ci_low']:>8.3f},{row['ci_high']:>8.3f}] {row['p_fdr']:>9.4g}")
+                f"[{row['ci_low']:>8.3f},{row['ci_high']:>8.3f}] {row['p_fdr']:>9.4g} "
+                f"{vif.get(row['term'], float('nan')):>6.2f}")
+        add("  (VIF on this model's own design matrix, indicators included)")
         add("")
 
     add("3b. DOES IT REDUCE TO ONE-SHOT SELECTION LOSS?")
@@ -1309,6 +1531,36 @@ def write_report(
             beta = f"{row['coefficient'].iloc[0]:+.4f}" if len(row) else "     -"
             add(f"  {model:<18s} R^2 = {block['r_squared'].iloc[0]:.3f}   "
                 f"beta(frag_at_c) = {beta}")
+        add("  (response: post-onset excess regret in landscape SDs)")
+    if mediator_units is not None and not mediator_units.empty:
+        add("")
+        add("  Unit sensitivity, opt_z-free rows only (mediator_model_normalised.csv):")
+        add(f"  {'model':<26s} {'R^2 excess (SDs)':>17s} {'R^2 fraction of opt_z':>22s}")
+        r2 = (mediator_units.groupby(["model", "response"])["r_squared"].first()
+              .unstack("response"))
+        for label, _, opt_z_free in NORMALISED_MEDIATION_MODELS:
+            if label not in r2.index:
+                continue
+            mark = "" if opt_z_free else "  (shares the opt_z divisor)"
+            add(f"  {label:<26s} {r2.loc[label].get('excess_sd', float('nan')):>17.3f} "
+                f"{r2.loc[label].get('fragility', float('nan')):>22.3f}{mark}")
+        add(f"  corr(frag_at_c, log10 opt_z) over the cells = "
+            f"{float(mediator_units['corr_frag_log_opt_z'].iloc[0]):+.3f}")
+        # The frag coefficient beside the magnitude (z-scored predictors), on each
+        # response and with frag in landscape SDs or divided by opt_z.
+        add("  frag beside the magnitude (z-scored; 95% landscape-bootstrap interval):")
+        for label, term in (("magnitude_mediator", "frag_at_c"),
+                            ("magnitude_mediator_scaled", "frag_over_opt_z")):
+            for response in ("excess_sd", "fragility"):
+                hit = mediator_units[(mediator_units["model"] == label)
+                                     & (mediator_units["response"] == response)
+                                     & (mediator_units["term"] == term)]
+                if hit.empty:
+                    continue
+                r = hit.iloc[0]
+                add(f"    {response:<10s} {term:<16s} beta = {r['coefficient']:+.4f} "
+                    f"[{r['ci_low']:+.4f}, {r['ci_high']:+.4f}]  p = {r['p_bootstrap']:.4f}  "
+                    f"R^2 = {r['r_squared']:.4f}")
     add("")
 
     add("4. ACQUISITION ROBUSTNESS, POOLED OVER CONDITIONS")
@@ -1371,10 +1623,12 @@ def main(argv: list[str] | None = None) -> None:
     currency = noise_currency(df, args.output_dir)
     descriptors = descriptor_regression(df, args.output_dir)
     mediator = mediator_model(df, args.output_dir)
+    mediator_units = mediator_normalised_sensitivity(df, args.output_dir)
     rankings, overall = acquisition_rankings(df, args.output_dir)
     make_figures(df, rankings, args.output_dir)
     write_report(df, floor, headroom, bias_control, helpful, currency, descriptors, mediator,
-                 overall, stats, args.output_dir, args.floor_tolerance)
+                 overall, stats, args.output_dir, args.floor_tolerance,
+                 mediator_units=mediator_units)
 
     summary = {
         "n_runs": int(len(df)),

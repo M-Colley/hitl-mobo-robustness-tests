@@ -1,0 +1,5 @@
+magnitude,n_cells,spearman_mean_ranks,best_acquisition_agrees,mean_rank_fitted_ei,mean_rank_exact_ei,mean_rank_fitted_logei,mean_rank_exact_logei,mean_rank_fitted_ucb,mean_rank_exact_ucb,mean_rank_fitted_qnei,mean_rank_exact_qnei
+0.25sigma,20,-0.8,5,2.83,2.4,2.67,2.2,2.08,2.75,2.42,2.65
+1sigma,20,0.4,4,2.5,2.55,2.9,2.65,2.15,2.05,2.45,2.75
+5sigma,20,0.949,3,2.45,2.05,2.35,1.95,2.55,3.0,2.65,3.0
+pooled,60,-0.8,12,2.59,2.33,2.64,2.27,2.26,2.6,2.51,2.8

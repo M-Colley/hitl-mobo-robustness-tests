@@ -1,0 +1,156 @@
+Loaded 76,800 paired runs from 20 benchmarks.
+Loaded 2,880 paired runs from 3 benchmarks.
+Loaded 2,880 paired runs from 3 benchmarks.
+Loaded 1,920 paired runs from 2 benchmarks.
+known-function per-landscape fraction at 1 sigma from the first rating, floor gap: range [0.106, 4.789] (shekel to rosenbrock), median 0.601
+known-function per-landscape fraction at 1 sigma from the first rating, achievable improvement: range [0.033, 0.330] (eggholder to hartmann_6), median 0.132
+
+== corrected, augmentation on: 2,880 paired runs, seeds [np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16)]
+   runs beating the logged y_opt: ehmi: clean 0/10, noisy 0/10 seeds; opticarvis: clean 0/10, noisy 0/10 seeds; provoice: clean 0/10, noisy 1/10 seeds
+   floor gap (tab:fitted's unit)
+   -- optimum pooled
+       0.05 sigma onset  0: ehmi  0.026  opticarvis  0.010  provoice  0.073  mean  0.036  known-function  0.102  ratio  2.81 [0.88, 10.60]  fitted/known  0.36  landscapes below: ehmi>8  opticarvis>5  provoice>14
+       0.05 sigma onset 20: ehmi -0.006  opticarvis -0.003  provoice  0.018  mean  0.003  known-function  0.028  ratio  9.40 [-10.11, 18.89]  fitted/known  0.11  landscapes below: ehmi>1  opticarvis>1  provoice>10
+       0.25 sigma onset  0: ehmi  0.230  opticarvis  0.103  provoice  0.113  mean  0.148  known-function  0.443  ratio  2.99 [1.37, 5.65]  fitted/known  0.33  landscapes below: ehmi>11  opticarvis>5  provoice>6
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.047  provoice  0.023  mean  0.041  known-function  0.065  ratio  1.60 [0.89, 2.93]  fitted/known  0.62  landscapes below: ehmi>9  opticarvis>8  provoice>7
+          1 sigma onset  0: ehmi  0.753  opticarvis  0.315  provoice  0.308  mean  0.459  known-function  0.990  ratio  2.16 [1.00, 4.43]  fitted/known  0.46  landscapes below: ehmi>13  opticarvis>6  provoice>6
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.131  provoice  0.056  mean  0.095  known-function  0.103  ratio  1.08 [0.67, 1.86]  fitted/known  0.92  landscapes below: ehmi>9  opticarvis>12  provoice>6
+          5 sigma onset  0: ehmi  1.010  opticarvis  0.404  provoice  0.633  mean  0.682  known-function  1.484  ratio  2.17 [1.04, 4.24]  fitted/known  0.46  landscapes below: ehmi>13  opticarvis>5  provoice>8
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.159  provoice  0.025  mean  0.096  known-function  0.165  ratio  1.71 [0.90, 6.16]  fitted/known  0.59  landscapes below: ehmi>6  opticarvis>9  provoice>3
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.026  opticarvis  0.008  provoice  0.073  mean  0.036  known-function  0.102  ratio  2.88 [0.89, 13.07]  fitted/known  0.35  landscapes below: ehmi>8  opticarvis>5  provoice>14
+       0.05 sigma onset 20: ehmi -0.006  opticarvis -0.002  provoice  0.018  mean  0.003  known-function  0.028  ratio  8.68 [-12.36, 18.83]  fitted/known  0.12  landscapes below: ehmi>1  opticarvis>1  provoice>10
+       0.25 sigma onset  0: ehmi  0.230  opticarvis  0.077  provoice  0.113  mean  0.140  known-function  0.443  ratio  3.17 [1.41, 6.61]  fitted/known  0.32  landscapes below: ehmi>11  opticarvis>4  provoice>6
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.035  provoice  0.023  mean  0.037  known-function  0.065  ratio  1.77 [0.96, 3.21]  fitted/known  0.56  landscapes below: ehmi>9  opticarvis>7  provoice>7
+          1 sigma onset  0: ehmi  0.753  opticarvis  0.237  provoice  0.309  mean  0.433  known-function  0.990  ratio  2.29 [1.02, 5.14]  fitted/known  0.44  landscapes below: ehmi>13  opticarvis>5  provoice>6
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.098  provoice  0.056  mean  0.084  known-function  0.103  ratio  1.22 [0.80, 1.89]  fitted/known  0.82  landscapes below: ehmi>9  opticarvis>9  provoice>6
+          5 sigma onset  0: ehmi  1.010  opticarvis  0.304  provoice  0.633  mean  0.649  known-function  1.484  ratio  2.29 [1.07, 5.07]  fitted/known  0.44  landscapes below: ehmi>13  opticarvis>4  provoice>8
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.120  provoice  0.025  mean  0.083  known-function  0.165  ratio  1.98 [1.11, 6.15]  fitted/known  0.51  landscapes below: ehmi>6  opticarvis>7  provoice>3
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.026  opticarvis  0.013  provoice  0.073  mean  0.037  known-function  0.102  ratio  2.74 [0.87, 9.37]  fitted/known  0.36  landscapes below: ehmi>8  opticarvis>7  provoice>14
+       0.05 sigma onset 20: ehmi -0.006  opticarvis -0.004  provoice  0.018  mean  0.003  known-function  0.028  ratio 10.23 [-8.64, 18.96]  fitted/known  0.10  landscapes below: ehmi>1  opticarvis>1  provoice>10
+       0.25 sigma onset  0: ehmi  0.230  opticarvis  0.129  provoice  0.113  mean  0.157  known-function  0.443  ratio  2.82 [1.31, 5.18]  fitted/known  0.35  landscapes below: ehmi>11  opticarvis>6  provoice>6
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.059  provoice  0.023  mean  0.045  known-function  0.065  ratio  1.46 [0.79, 2.83]  fitted/known  0.68  landscapes below: ehmi>9  opticarvis>10  provoice>7
+          1 sigma onset  0: ehmi  0.754  opticarvis  0.396  provoice  0.309  mean  0.486  known-function  0.990  ratio  2.04 [0.97, 4.02]  fitted/known  0.49  landscapes below: ehmi>13  opticarvis>8  provoice>6
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.164  provoice  0.056  mean  0.106  known-function  0.103  ratio  0.97 [0.56, 1.86]  fitted/known  1.03  landscapes below: ehmi>9  opticarvis>16  provoice>6
+          5 sigma onset  0: ehmi  1.011  opticarvis  0.506  provoice  0.633  mean  0.717  known-function  1.484  ratio  2.07 [1.02, 3.79]  fitted/known  0.48  landscapes below: ehmi>13  opticarvis>6  provoice>8
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.200  provoice  0.025  mean  0.110  known-function  0.165  ratio  1.50 [0.74, 6.15]  fitted/known  0.67  landscapes below: ehmi>6  opticarvis>13  provoice>3
+   achievable improvement (the headline unit: known-function excess / opt_z)
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.006  opticarvis  0.004  provoice  0.016  mean  0.009  known-function  0.010  ratio  1.14 [0.55, 2.75]  fitted/known  0.88  landscapes below: ehmi>6  opticarvis>5  provoice>17
+       0.05 sigma onset 20: ehmi -0.001  opticarvis -0.001  provoice  0.004  mean  0.000  known-function  0.004  ratio  8.90 [-4.64, 13.85]  fitted/known  0.11  landscapes below: ehmi>1  opticarvis>1  provoice>11
+       0.25 sigma onset  0: ehmi  0.050  opticarvis  0.040  provoice  0.024  mean  0.038  known-function  0.058  ratio  1.51 [1.02, 2.35]  fitted/known  0.66  landscapes below: ehmi>10  opticarvis>8  provoice>4
+       0.25 sigma onset 20: ehmi  0.011  opticarvis  0.018  provoice  0.005  mean  0.012  known-function  0.013  ratio  1.12 [0.53, 2.54]  fitted/known  0.89  landscapes below: ehmi>11  opticarvis>14  provoice>8
+          1 sigma onset  0: ehmi  0.165  opticarvis  0.124  provoice  0.067  mean  0.119  known-function  0.148  ratio  1.25 [0.84, 2.13]  fitted/known  0.80  landscapes below: ehmi>11  opticarvis>9  provoice>3
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.051  provoice  0.012  mean  0.028  known-function  0.027  ratio  0.95 [0.46, 2.27]  fitted/known  1.05  landscapes below: ehmi>9  opticarvis>18  provoice>7
+          5 sigma onset  0: ehmi  0.221  opticarvis  0.159  provoice  0.137  mean  0.172  known-function  0.219  ratio  1.27 [0.93, 1.76]  fitted/known  0.79  landscapes below: ehmi>11  opticarvis>7  provoice>5
+          5 sigma onset 20: ehmi  0.023  opticarvis  0.063  provoice  0.005  mean  0.030  known-function  0.048  ratio  1.58 [0.66, 8.27]  fitted/known  0.63  landscapes below: ehmi>9  opticarvis>12  provoice>6
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.006  opticarvis  0.005  provoice  0.016  mean  0.009  known-function  0.010  ratio  1.10 [0.53, 2.36]  fitted/known  0.91  landscapes below: ehmi>6  opticarvis>6  provoice>17
+       0.05 sigma onset 20: ehmi -0.001  opticarvis -0.001  provoice  0.004  mean  0.000  known-function  0.004  ratio 11.34 [-4.09, 16.96]  fitted/known  0.09  landscapes below: ehmi>1  opticarvis>1  provoice>11
+       0.25 sigma onset  0: ehmi  0.050  opticarvis  0.051  provoice  0.024  mean  0.042  known-function  0.058  ratio  1.38 [0.91, 2.29]  fitted/known  0.72  landscapes below: ehmi>10  opticarvis>10  provoice>4
+       0.25 sigma onset 20: ehmi  0.011  opticarvis  0.023  provoice  0.005  mean  0.013  known-function  0.013  ratio  0.98 [0.45, 2.54]  fitted/known  1.02  landscapes below: ehmi>11  opticarvis>15  provoice>8
+          1 sigma onset  0: ehmi  0.165  opticarvis  0.156  provoice  0.067  mean  0.129  known-function  0.148  ratio  1.15 [0.77, 2.09]  fitted/known  0.87  landscapes below: ehmi>11  opticarvis>11  provoice>3
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.065  provoice  0.012  mean  0.033  known-function  0.027  ratio  0.82 [0.37, 2.27]  fitted/known  1.22  landscapes below: ehmi>9  opticarvis>19  provoice>7
+          5 sigma onset  0: ehmi  0.221  opticarvis  0.200  provoice  0.137  mean  0.186  known-function  0.219  ratio  1.17 [0.86, 1.62]  fitted/known  0.85  landscapes below: ehmi>11  opticarvis>10  provoice>5
+          5 sigma onset 20: ehmi  0.023  opticarvis  0.079  provoice  0.005  mean  0.036  known-function  0.048  ratio  1.34 [0.53, 8.27]  fitted/known  0.75  landscapes below: ehmi>9  opticarvis>16  provoice>6
+
+== corrected, augmentation off: 2,880 paired runs, seeds [np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16)]
+   runs beating the logged y_opt: ehmi: clean 2/10, noisy 1/10 seeds; opticarvis: clean 0/10, noisy 0/10 seeds; provoice: clean 0/10, noisy 0/10 seeds
+   floor gap (tab:fitted's unit)
+   -- optimum pooled
+       0.05 sigma onset  0: ehmi  0.054  opticarvis  0.023  provoice  0.022  mean  0.033  known-function  0.102  ratio  3.11 [1.02, 7.24]  fitted/known  0.32  landscapes below: ehmi>13  opticarvis>8  provoice>8
+       0.05 sigma onset 20: ehmi  0.008  opticarvis  0.018  provoice  0.020  mean  0.016  known-function  0.028  ratio  1.81 [0.79, 3.59]  fitted/known  0.55  landscapes below: ehmi>8  opticarvis>10  provoice>10
+       0.25 sigma onset  0: ehmi  0.276  opticarvis  0.125  provoice  0.108  mean  0.170  known-function  0.443  ratio  2.61 [1.15, 5.31]  fitted/known  0.38  landscapes below: ehmi>12  opticarvis>6  provoice>5
+       0.25 sigma onset 20: ehmi  0.079  opticarvis  0.060  provoice  0.061  mean  0.067  known-function  0.065  ratio  0.98 [0.58, 1.49]  fitted/known  1.02  landscapes below: ehmi>13  opticarvis>10  provoice>10
+          1 sigma onset  0: ehmi  0.764  opticarvis  0.320  provoice  0.310  mean  0.465  known-function  0.990  ratio  2.13 [0.98, 4.38]  fitted/known  0.47  landscapes below: ehmi>13  opticarvis>6  provoice>6
+          1 sigma onset 20: ehmi  0.094  opticarvis  0.127  provoice  0.055  mean  0.092  known-function  0.103  ratio  1.12 [0.69, 1.91]  fitted/known  0.89  landscapes below: ehmi>9  opticarvis>12  provoice>6
+          5 sigma onset  0: ehmi  1.028  opticarvis  0.399  provoice  0.500  mean  0.642  known-function  1.484  ratio  2.31 [1.06, 4.67]  fitted/known  0.43  landscapes below: ehmi>13  opticarvis>5  provoice>6
+          5 sigma onset 20: ehmi  0.103  opticarvis  0.146  provoice  0.053  mean  0.101  known-function  0.165  ratio  1.64 [0.95, 3.12]  fitted/known  0.61  landscapes below: ehmi>5  opticarvis>9  provoice>4
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.054  opticarvis  0.017  provoice  0.022  mean  0.031  known-function  0.102  ratio  3.28 [1.07, 8.17]  fitted/known  0.30  landscapes below: ehmi>13  opticarvis>8  provoice>8
+       0.05 sigma onset 20: ehmi  0.008  opticarvis  0.014  provoice  0.020  mean  0.014  known-function  0.028  ratio  1.99 [0.88, 3.97]  fitted/known  0.50  landscapes below: ehmi>8  opticarvis>9  provoice>10
+       0.25 sigma onset  0: ehmi  0.276  opticarvis  0.096  provoice  0.109  mean  0.160  known-function  0.443  ratio  2.77 [1.18, 5.91]  fitted/known  0.36  landscapes below: ehmi>12  opticarvis>5  provoice>5
+       0.25 sigma onset 20: ehmi  0.079  opticarvis  0.046  provoice  0.062  mean  0.062  known-function  0.065  ratio  1.05 [0.61, 1.70]  fitted/known  0.95  landscapes below: ehmi>13  opticarvis>8  provoice>10
+          1 sigma onset  0: ehmi  0.764  opticarvis  0.244  provoice  0.311  mean  0.440  known-function  0.990  ratio  2.25 [1.01, 5.04]  fitted/known  0.44  landscapes below: ehmi>13  opticarvis>5  provoice>6
+          1 sigma onset 20: ehmi  0.094  opticarvis  0.097  provoice  0.055  mean  0.082  known-function  0.103  ratio  1.26 [0.82, 1.93]  fitted/known  0.80  landscapes below: ehmi>9  opticarvis>9  provoice>6
+          5 sigma onset  0: ehmi  1.028  opticarvis  0.304  provoice  0.503  mean  0.612  known-function  1.484  ratio  2.43 [1.09, 5.46]  fitted/known  0.41  landscapes below: ehmi>13  opticarvis>4  provoice>6
+          5 sigma onset 20: ehmi  0.103  opticarvis  0.112  provoice  0.053  mean  0.089  known-function  0.165  ratio  1.85 [1.15, 3.17]  fitted/known  0.54  landscapes below: ehmi>5  opticarvis>7  provoice>4
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.054  opticarvis  0.029  provoice  0.022  mean  0.035  known-function  0.102  ratio  2.92 [0.98, 6.33]  fitted/known  0.34  landscapes below: ehmi>13  opticarvis>8  provoice>8
+       0.05 sigma onset 20: ehmi  0.008  opticarvis  0.023  provoice  0.020  mean  0.017  known-function  0.028  ratio  1.63 [0.70, 3.45]  fitted/known  0.61  landscapes below: ehmi>8  opticarvis>12  provoice>10
+       0.25 sigma onset  0: ehmi  0.276  opticarvis  0.160  provoice  0.109  mean  0.182  known-function  0.443  ratio  2.44 [1.11, 4.75]  fitted/known  0.41  landscapes below: ehmi>12  opticarvis>8  provoice>5
+       0.25 sigma onset 20: ehmi  0.079  opticarvis  0.076  provoice  0.062  mean  0.072  known-function  0.065  ratio  0.90 [0.54, 1.35]  fitted/known  1.11  landscapes below: ehmi>13  opticarvis>12  provoice>10
+          1 sigma onset  0: ehmi  0.764  opticarvis  0.409  provoice  0.311  mean  0.495  known-function  0.990  ratio  2.00 [0.95, 3.95]  fitted/known  0.50  landscapes below: ehmi>13  opticarvis>8  provoice>6
+          1 sigma onset 20: ehmi  0.094  opticarvis  0.162  provoice  0.055  mean  0.104  known-function  0.103  ratio  0.99 [0.57, 1.90]  fitted/known  1.01  landscapes below: ehmi>9  opticarvis>16  provoice>6
+          5 sigma onset  0: ehmi  1.028  opticarvis  0.510  provoice  0.503  mean  0.680  known-function  1.484  ratio  2.18 [1.03, 4.17]  fitted/known  0.46  landscapes below: ehmi>13  opticarvis>6  provoice>6
+          5 sigma onset 20: ehmi  0.103  opticarvis  0.187  provoice  0.053  mean  0.114  known-function  0.165  ratio  1.44 [0.78, 3.11]  fitted/known  0.69  landscapes below: ehmi>5  opticarvis>11  provoice>4
+   achievable improvement (the headline unit: known-function excess / opt_z)
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.013  opticarvis  0.009  provoice  0.007  mean  0.010  known-function  0.010  ratio  0.99 [0.58, 1.60]  fitted/known  1.01  landscapes below: ehmi>14  opticarvis>11  provoice>8
+       0.05 sigma onset 20: ehmi  0.002  opticarvis  0.007  provoice  0.007  mean  0.005  known-function  0.004  ratio  0.79 [0.31, 2.03]  fitted/known  1.27  landscapes below: ehmi>9  opticarvis>14  provoice>13
+       0.25 sigma onset  0: ehmi  0.066  opticarvis  0.052  provoice  0.035  mean  0.051  known-function  0.058  ratio  1.14 [0.78, 1.70]  fitted/known  0.88  landscapes below: ehmi>12  opticarvis>10  provoice>5
+       0.25 sigma onset 20: ehmi  0.019  opticarvis  0.025  provoice  0.020  mean  0.021  known-function  0.013  ratio  0.61 [0.34, 0.91]  fitted/known  1.63  landscapes below: ehmi>14  opticarvis>16  provoice>14
+          1 sigma onset  0: ehmi  0.182  opticarvis  0.133  provoice  0.100  mean  0.138  known-function  0.148  ratio  1.07 [0.76, 1.57]  fitted/known  0.93  landscapes below: ehmi>12  opticarvis>11  provoice>7
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.052  provoice  0.018  mean  0.031  known-function  0.027  ratio  0.87 [0.45, 1.74]  fitted/known  1.14  landscapes below: ehmi>9  opticarvis>19  provoice>9
+          5 sigma onset  0: ehmi  0.245  opticarvis  0.165  provoice  0.161  mean  0.191  known-function  0.219  ratio  1.15 [0.84, 1.56]  fitted/known  0.87  landscapes below: ehmi>12  opticarvis>8  provoice>7
+          5 sigma onset 20: ehmi  0.025  opticarvis  0.061  provoice  0.017  mean  0.034  known-function  0.048  ratio  1.40 [0.67, 3.05]  fitted/known  0.71  landscapes below: ehmi>9  opticarvis>11  provoice>9
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.013  opticarvis  0.012  provoice  0.007  mean  0.011  known-function  0.010  ratio  0.91 [0.54, 1.47]  fitted/known  1.10  landscapes below: ehmi>14  opticarvis>14  provoice>8
+       0.05 sigma onset 20: ehmi  0.002  opticarvis  0.010  provoice  0.007  mean  0.006  known-function  0.004  ratio  0.70 [0.27, 1.98]  fitted/known  1.43  landscapes below: ehmi>9  opticarvis>17  provoice>13
+       0.25 sigma onset  0: ehmi  0.066  opticarvis  0.067  provoice  0.035  mean  0.056  known-function  0.058  ratio  1.04 [0.70, 1.63]  fitted/known  0.96  landscapes below: ehmi>12  opticarvis>12  provoice>5
+       0.25 sigma onset 20: ehmi  0.019  opticarvis  0.032  provoice  0.020  mean  0.023  known-function  0.013  ratio  0.55 [0.29, 0.89]  fitted/known  1.81  landscapes below: ehmi>14  opticarvis>17  provoice>14
+          1 sigma onset  0: ehmi  0.182  opticarvis  0.170  provoice  0.100  mean  0.151  known-function  0.148  ratio  0.99 [0.69, 1.46]  fitted/known  1.02  landscapes below: ehmi>12  opticarvis>12  provoice>7
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.067  provoice  0.018  mean  0.036  known-function  0.027  ratio  0.75 [0.36, 1.74]  fitted/known  1.33  landscapes below: ehmi>9  opticarvis>19  provoice>9
+          5 sigma onset  0: ehmi  0.245  opticarvis  0.212  provoice  0.161  mean  0.206  known-function  0.219  ratio  1.06 [0.79, 1.44]  fitted/known  0.94  landscapes below: ehmi>12  opticarvis>11  provoice>7
+          5 sigma onset 20: ehmi  0.025  opticarvis  0.078  provoice  0.017  mean  0.040  known-function  0.048  ratio  1.20 [0.53, 3.05]  fitted/known  0.83  landscapes below: ehmi>9  opticarvis>16  provoice>9
+
+== as-logged, augmentation on: 2,880 paired runs, seeds [np.int64(7), np.int64(8), np.int64(9), np.int64(10), np.int64(11), np.int64(12), np.int64(13), np.int64(14), np.int64(15), np.int64(16)]
+   runs beating the logged y_opt: ehmi: clean 0/10, noisy 0/10 seeds; opticarvis: clean 0/10, noisy 0/10 seeds; provoice: clean 1/10, noisy 1/10 seeds
+   floor gap (tab:fitted's unit)
+   -- optimum pooled
+       0.05 sigma onset  0: ehmi  0.026  opticarvis -0.041  provoice  0.030  mean  0.005  known-function  0.102  ratio 20.40 [-8.85, 36.21]  fitted/known  0.05  landscapes below: ehmi>8  opticarvis>0  provoice>8
+       0.05 sigma onset 20: ehmi -0.006  opticarvis  0.010  provoice  0.017  mean  0.007  known-function  0.028  ratio  4.23 [-34.50, 27.81]  fitted/known  0.24  landscapes below: ehmi>1  opticarvis>8  provoice>10
+       0.25 sigma onset  0: ehmi  0.230  opticarvis -0.003  provoice  0.090  mean  0.106  known-function  0.443  ratio  4.19 [-129.32, 18.53]  fitted/known  0.24  landscapes below: ehmi>11  opticarvis>0  provoice>4
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.009  provoice  0.026  mean  0.029  known-function  0.065  ratio  2.27 [1.06, 7.04]  fitted/known  0.44  landscapes below: ehmi>9  opticarvis>5  provoice>7
+          1 sigma onset  0: ehmi  0.753  opticarvis  0.052  provoice  0.192  mean  0.333  known-function  0.990  ratio  2.98 [1.08, 17.34]  fitted/known  0.34  landscapes below: ehmi>13  opticarvis>0  provoice>3
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.030  provoice  0.050  mean  0.059  known-function  0.103  ratio  1.73 [0.97, 3.48]  fitted/known  0.58  landscapes below: ehmi>9  opticarvis>3  provoice>6
+          5 sigma onset  0: ehmi  1.010  opticarvis  0.134  provoice  0.256  mean  0.467  known-function  1.484  ratio  3.18 [1.19, 11.64]  fitted/known  0.31  landscapes below: ehmi>13  opticarvis>0  provoice>3
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.059  provoice  0.084  mean  0.083  known-function  0.165  ratio  1.99 [1.31, 3.03]  fitted/known  0.50  landscapes below: ehmi>6  opticarvis>4  provoice>5
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.026  opticarvis -0.023  provoice  0.030  mean  0.011  known-function  0.102  ratio  9.29 [-26.91, 15.18]  fitted/known  0.11  landscapes below: ehmi>8  opticarvis>0  provoice>8
+       0.05 sigma onset 20: ehmi -0.006  opticarvis  0.006  provoice  0.017  mean  0.005  known-function  0.028  ratio  5.34 [-14.01, 29.09]  fitted/known  0.19  landscapes below: ehmi>1  opticarvis>6  provoice>10
+       0.25 sigma onset  0: ehmi  0.230  opticarvis -0.002  provoice  0.091  mean  0.106  known-function  0.443  ratio  4.17 [-229.62, 17.80]  fitted/known  0.24  landscapes below: ehmi>11  opticarvis>0  provoice>4
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.005  provoice  0.026  mean  0.028  known-function  0.065  ratio  2.36 [1.07, 12.19]  fitted/known  0.42  landscapes below: ehmi>9  opticarvis>4  provoice>7
+          1 sigma onset  0: ehmi  0.753  opticarvis  0.029  provoice  0.194  mean  0.326  known-function  0.990  ratio  3.04 [1.09, 29.35]  fitted/known  0.33  landscapes below: ehmi>13  opticarvis>0  provoice>3
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.017  provoice  0.050  mean  0.055  known-function  0.103  ratio  1.86 [0.97, 5.63]  fitted/known  0.54  landscapes below: ehmi>9  opticarvis>3  provoice>6
+          5 sigma onset  0: ehmi  1.010  opticarvis  0.075  provoice  0.258  mean  0.448  known-function  1.484  ratio  3.31 [1.19, 18.23]  fitted/known  0.30  landscapes below: ehmi>13  opticarvis>0  provoice>3
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.033  provoice  0.085  mean  0.074  known-function  0.165  ratio  2.22 [1.34, 4.51]  fitted/known  0.45  landscapes below: ehmi>6  opticarvis>3  provoice>5
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.026  opticarvis -0.066  provoice  0.046  mean  0.002  known-function  0.102  ratio 55.31 [-28.12, 80.82]  fitted/known  0.02  landscapes below: ehmi>8  opticarvis>0  provoice>10
+       0.05 sigma onset 20: ehmi -0.006  opticarvis  0.016  provoice  0.025  mean  0.012  known-function  0.028  ratio  2.41 [-3.38, 31.56]  fitted/known  0.41  landscapes below: ehmi>1  opticarvis>9  provoice>12
+       0.25 sigma onset  0: ehmi  0.230  opticarvis -0.005  provoice  0.139  mean  0.121  known-function  0.443  ratio  3.65 [-79.53, 12.10]  fitted/known  0.27  landscapes below: ehmi>11  opticarvis>0  provoice>6
+       0.25 sigma onset 20: ehmi  0.052  opticarvis  0.014  provoice  0.040  mean  0.035  known-function  0.065  ratio  1.85 [0.97, 4.37]  fitted/known  0.54  landscapes below: ehmi>9  opticarvis>6  provoice>8
+          1 sigma onset  0: ehmi  0.754  opticarvis  0.085  provoice  0.296  mean  0.378  known-function  0.990  ratio  2.62 [1.05, 10.87]  fitted/known  0.38  landscapes below: ehmi>13  opticarvis>0  provoice>6
+          1 sigma onset 20: ehmi  0.098  opticarvis  0.049  provoice  0.077  mean  0.075  known-function  0.103  ratio  1.38 [0.89, 2.18]  fitted/known  0.72  landscapes below: ehmi>9  opticarvis>6  provoice>9
+          5 sigma onset  0: ehmi  1.011  opticarvis  0.218  provoice  0.394  mean  0.541  known-function  1.484  ratio  2.74 [1.15, 7.29]  fitted/known  0.36  landscapes below: ehmi>13  opticarvis>2  provoice>5
+          5 sigma onset 20: ehmi  0.105  opticarvis  0.096  provoice  0.129  mean  0.110  known-function  0.165  ratio  1.50 [1.02, 2.05]  fitted/known  0.67  landscapes below: ehmi>6  opticarvis>5  provoice>7
+   achievable improvement (the headline unit: known-function excess / opt_z)
+   -- optimum oracle
+       0.05 sigma onset  0: ehmi  0.006  opticarvis -0.018  provoice  0.015  mean  0.001  known-function  0.010  ratio  9.01 [-5.11, 11.26]  fitted/known  0.11  landscapes below: ehmi>6  opticarvis>0  provoice>16
+       0.05 sigma onset 20: ehmi -0.001  opticarvis  0.004  provoice  0.009  mean  0.004  known-function  0.004  ratio  1.10 [-2.57, 10.15]  fitted/known  0.91  landscapes below: ehmi>1  opticarvis>11  provoice>17
+       0.25 sigma onset  0: ehmi  0.050  opticarvis -0.001  provoice  0.047  mean  0.032  known-function  0.058  ratio  1.81 [-41.91, 4.43]  fitted/known  0.55  landscapes below: ehmi>10  opticarvis>0  provoice>9
+       0.25 sigma onset 20: ehmi  0.011  opticarvis  0.004  provoice  0.013  mean  0.009  known-function  0.013  ratio  1.37 [0.70, 3.19]  fitted/known  0.73  landscapes below: ehmi>11  opticarvis>6  provoice>11
+          1 sigma onset  0: ehmi  0.165  opticarvis  0.023  provoice  0.100  mean  0.096  known-function  0.148  ratio  1.55 [0.88, 6.11]  fitted/known  0.65  landscapes below: ehmi>11  opticarvis>0  provoice>7
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.013  provoice  0.026  mean  0.020  known-function  0.027  ratio  1.34 [0.79, 2.19]  fitted/known  0.75  landscapes below: ehmi>9  opticarvis>8  provoice>9
+          5 sigma onset  0: ehmi  0.221  opticarvis  0.059  provoice  0.133  mean  0.138  known-function  0.219  ratio  1.59 [0.97, 3.49]  fitted/known  0.63  landscapes below: ehmi>11  opticarvis>2  provoice>4
+          5 sigma onset 20: ehmi  0.023  opticarvis  0.026  provoice  0.044  mean  0.031  known-function  0.048  ratio  1.55 [0.86, 2.54]  fitted/known  0.65  landscapes below: ehmi>9  opticarvis>9  provoice>9
+   -- optimum best_clean
+       0.05 sigma onset  0: ehmi  0.006  opticarvis -0.036  provoice  0.019  mean -0.004  known-function  0.010  ratio -2.42 [-3.02, 35.62]  fitted/known -0.41  landscapes below: ehmi>6  opticarvis>0  provoice>17
+       0.05 sigma onset 20: ehmi -0.001  opticarvis  0.009  provoice  0.010  mean  0.006  known-function  0.004  ratio  0.71 [-2.57, 2.61]  fitted/known  1.41  landscapes below: ehmi>1  opticarvis>17  provoice>17
+       0.25 sigma onset  0: ehmi  0.050  opticarvis -0.003  provoice  0.057  mean  0.035  known-function  0.058  ratio  1.66 [-20.52, 4.29]  fitted/known  0.60  landscapes below: ehmi>10  opticarvis>0  provoice>11
+       0.25 sigma onset 20: ehmi  0.011  opticarvis  0.008  provoice  0.016  mean  0.012  known-function  0.013  ratio  1.10 [0.59, 1.90]  fitted/known  0.91  landscapes below: ehmi>11  opticarvis>11  provoice>12
+          1 sigma onset  0: ehmi  0.165  opticarvis  0.047  provoice  0.122  mean  0.111  known-function  0.148  ratio  1.34 [0.85, 2.99]  fitted/known  0.75  landscapes below: ehmi>11  opticarvis>3  provoice>9
+          1 sigma onset 20: ehmi  0.022  opticarvis  0.027  provoice  0.032  mean  0.027  known-function  0.027  ratio  1.01 [0.62, 1.48]  fitted/known  0.99  landscapes below: ehmi>9  opticarvis>9  provoice>10
+          5 sigma onset  0: ehmi  0.221  opticarvis  0.120  provoice  0.162  mean  0.168  known-function  0.219  ratio  1.30 [0.92, 1.91]  fitted/known  0.77  landscapes below: ehmi>11  opticarvis>4  provoice>7
+          5 sigma onset 20: ehmi  0.023  opticarvis  0.053  provoice  0.053  mean  0.043  known-function  0.048  ratio  1.11 [0.61, 2.07]  fitted/known  0.90  landscapes below: ehmi>9  opticarvis>10  provoice>10

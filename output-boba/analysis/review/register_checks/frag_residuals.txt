@@ -1,0 +1,16 @@
+Loaded 76,800 paired runs from 20 benchmarks.
+640 landscape x condition cells over 20 landscapes; response: post-onset excess in landscape SDs (cell means over the ten model-based acquisitions)
+
+1. residuals of mediator_only (frag + indicators), correlated across the cells
+   log opt_z        Pearson +0.51 (p 3.8e-44)   Spearman +0.31 (p 1.2e-15)
+   log tail weight  Pearson +0.32 (p 1.6e-16)   Spearman +0.23 (p 6.6e-09)
+   dimension        Pearson -0.00 (p 1)   Spearman +0.08 (p 0.034)
+   ruggedness       Pearson +0.11 (p 0.007)   Spearman +0.05 (p 0.25)
+   per-landscape mean residual vs log opt_z        Spearman +0.01 (p 0.97, 20 landscapes)
+   per-landscape mean residual vs log tail weight  Spearman +0.66 (p 0.0015, 20 landscapes)
+
+2. in-sample and leave-one-landscape-out R^2
+   mediator_only      in-sample R^2 0.520   leave-one-landscape-out R^2 0.437
+   descriptors_only   in-sample R^2 0.526   leave-one-landscape-out R^2 0.407
+   magnitude_only     in-sample R^2 0.158   leave-one-landscape-out R^2 0.075
+   indicators_only    in-sample R^2 0.040   leave-one-landscape-out R^2 -0.009

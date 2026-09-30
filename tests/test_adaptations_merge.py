@@ -21,6 +21,7 @@ import pytest
 import analyse_boba_adaptations as aba
 
 DATASETS = ("d1", "d2", "d3")
+OPT_Z = {"d1": 1.0, "d2": 4.0, "d3": 10.0}
 SEEDS = (7, 8)
 ONSETS = (0, 20)
 EXTRA_COLUMNS = ["arm", "jitter_std", "jitter_iteration", "k", "tolerance", "median_extra_arm", "never_arm",
@@ -81,7 +82,8 @@ def tree(tmp_path, monkeypatch):
                            error_model="gaussian", variant="v1"),
     }
     monkeypatch.setattr(aba, "ARMS", arms)
-    monkeypatch.setattr(aba.bb, "load_stats", lambda *args, **kwargs: {})
+    # Every synthetic dataset needs a scale: paired_frame no longer falls back to 1.0.
+    monkeypatch.setattr(aba.bb, "load_stats", lambda *args, **kwargs: {d: {"opt_z": OPT_Z[d]} for d in DATASETS})
 
     def _no_subprocess(cmd):
         raise AssertionError(f"analyse_extra_runs.py should not run: {cmd}")
@@ -177,3 +179,172 @@ def test_a_mixed_call_merges_only_the_arms_that_computed_extra_trials(tree):
     assert sorted(after["arm"].unique()) == ["other", "plain"]
     recovery = pd.read_csv(tree / "adaptations_recovery.csv")
     assert sorted(recovery["arm"].unique()) == ["plain", "pooled", "variant"]
+
+
+# ---------------------------------------------------------------- the per-dataset scale
+# Until 2026-09-29 paired_frame divided by opt_z.get(dataset, 1.0), so the four
+# multi-objective halo problems were pooled in raw hypervolume (one of them 91% of
+# the summed cost) and the fitted-oracle datasets in raw rating units.
+
+
+def _pair_inputs(datasets=("a", "b")) -> tuple[pd.DataFrame, pd.DataFrame]:
+    response = aba.RESPONSES["deployed"]
+    rows_ref, rows_trt = [], []
+    for i, d in enumerate(datasets):
+        for seed in (7, 8):
+            key = {"dataset": d, "acquisition": "logei", "error_model": "gaussian", "jitter_std": 1.0,
+                   "jitter_iteration": 0, "seed": seed}
+            rows_ref.append({**key, f"{response}_jitter": 3.0 * (i + 1), f"{response}_baseline": 1.0 * (i + 1)})
+            rows_trt.append({**key, f"{response}_jitter": 2.0 * (i + 1), f"{response}_baseline": 1.5 * (i + 1)})
+    return pd.DataFrame(rows_ref), pd.DataFrame(rows_trt)
+
+
+def test_paired_frame_raises_on_a_dataset_without_a_scale():
+    ref, trt = _pair_inputs()
+    with pytest.raises(KeyError, match=r"no scale for \['b'\]"):
+        aba.paired_frame(ref, trt, aba.RESPONSES["deployed"], {"a": 2.0}, pool=False)
+    with pytest.raises(KeyError):
+        aba.paired_frame(ref, trt, aba.RESPONSES["deployed"], {}, pool=False)
+
+
+def test_paired_frame_rejects_a_non_positive_scale():
+    ref, trt = _pair_inputs()
+    with pytest.raises(ValueError, match="non-positive scale"):
+        aba.paired_frame(ref, trt, aba.RESPONSES["deployed"], {"a": 2.0, "b": 0.0}, pool=False)
+
+
+def test_paired_frame_divides_by_each_datasets_own_scale():
+    ref, trt = _pair_inputs()
+    p = aba.paired_frame(ref, trt, aba.RESPONSES["deployed"], {"a": 2.0, "b": 8.0}, pool=False)
+    a, b = p[p.dataset == "a"].iloc[0], p[p.dataset == "b"].iloc[0]
+    assert (a.ref_noisy, a.ref_clean, a.trt_noisy, a.trt_clean) == (1.5, 0.5, 1.0, 0.75)
+    assert (b.ref_noisy, b.ref_clean, b.trt_noisy, b.trt_clean) == (0.75, 0.25, 0.5, 0.375)
+
+
+def test_a_datasets_recovery_does_not_depend_on_its_scale_and_the_pool_is_cost_weighted():
+    ref, trt = _pair_inputs()
+    response = aba.RESPONSES["deployed"]
+    for scale in ({"a": 1.0, "b": 1.0}, {"a": 2.0, "b": 8.0}):
+        p = aba.paired_frame(ref, trt, response, scale, pool=False)
+        per = aba.per_dataset(p).set_index("dataset")
+        # Both datasets: cost 2 (i+1), gain 1 (i+1), so each recovers exactly a half.
+        assert per.recovered.tolist() == [0.5, 0.5]
+        assert np.isclose(per.cost_share.sum(), 1.0)
+        pooled = aba.summarise(p, np.random.default_rng(aba.BOOTSTRAP_SEED))
+        assert np.isclose(pooled["recovered"], (per.recovered * per.cost_share).sum())
+        assert np.isclose(pooled["price"], per.price.mean())
+
+
+def test_arm_rejects_an_unknown_scale():
+    with pytest.raises(ValueError, match="unknown scale"):
+        aba.arm("x", "y", "logei", "an arm", scale="raw")
+
+
+def test_every_arm_names_a_scale_and_the_arms_without_opt_z_name_theirs():
+    assert {spec["scale"] for spec in aba.ARMS.values()} <= set(aba.SCALES)
+    assert aba.ARMS["fitted-rep10"]["scale"] == "fitted_achievable"
+    for name in ("mo-halo-cost", "mo-halo-backfit", "mo-halo-backfit-price"):
+        assert aba.ARMS[name]["scale"] == "hv_floor_gap"
+    others = {n for n, s in aba.ARMS.items() if s["scale"] != "opt_z"}
+    assert others == {"fitted-rep10", "mo-halo-cost", "mo-halo-backfit", "mo-halo-backfit-price"}
+
+
+def test_main_raises_rather_than_score_a_dataset_without_opt_z(tree, monkeypatch):
+    monkeypatch.setattr(aba.bb, "load_stats", lambda *args, **kwargs: {"d1": {"opt_z": 1.0}})
+    with pytest.raises(KeyError, match="no scale for"):
+        aba.main(["--arms", "plain", "--no-extra-trials", "--output-dir", str(tree)])
+    assert not (tree / "adaptations_recovery.csv").exists()
+
+
+def test_main_writes_the_scale_and_the_per_dataset_values(tree):
+    aba.main(["--arms", "plain,relative", "--no-extra-trials", "--output-dir", str(tree)])
+    recovery = pd.read_csv(tree / "adaptations_recovery.csv")
+    assert set(recovery["scale"]) == {"opt_z"}
+    assert (recovery["pooled_n_landscapes"] == len(DATASETS)).all()
+    per = pd.read_csv(tree / "adaptations_per_dataset.csv")
+    assert sorted(per["arm"].unique()) == ["plain", "relative"]
+    assert len(per) == 2 * len(aba.RESPONSES) * len(DATASETS)
+    assert dict(zip(per.dataset, per.scale_value)) == OPT_Z
+    for (arm, response), blk in per.groupby(["arm", "response"]):
+        row = recovery[(recovery.arm == arm) & (recovery.response == response)].iloc[0]
+        assert np.isclose(row["pooled_recovered"], (blk.recovered * blk.cost_share).sum())
+        assert np.isclose(row["pooled_recovered_range_lo"], blk.recovered.min())
+        assert np.isclose(row["pooled_recovered_range_hi"], blk.recovered.max())
+    # A second call for one arm keeps the other arm's per-dataset rows.
+    aba.main(["--arms", "plain", "--no-extra-trials", "--output-dir", str(tree)])
+    assert sorted(pd.read_csv(tree / "adaptations_per_dataset.csv")["arm"].unique()) == ["plain", "relative"]
+
+
+# ---------------------------------------------------------------- a recovery is a share only when its cost is
+# AGENTS.md: never report a recovery ratio whose reference cost is near zero or
+# changes sign. The observed-max incumbent's +67% of the trajectory loss at
+# 0.05 sigma from the first rating was quoted in the text on a cost of 0.0099
+# that is negative on one landscape. main() keeps recovered and flags it with
+# share_flags(), the same rule compare_boba_arms.py applies.
+
+
+def _block(costs, gains) -> pd.DataFrame:
+    """A paired frame with one row per landscape and the given cost and gain."""
+    costs, gains = np.asarray(costs, float), np.asarray(gains, float)
+    return pd.DataFrame({"dataset": [f"l{i}" for i in range(len(costs))], "ref_clean": 1.0,
+                         "ref_noisy": 1.0 + costs, "trt_noisy": 1.0 + costs - gains, "trt_clean": 1.0})
+
+
+def test_a_near_zero_cost_is_flagged_but_the_ratio_is_kept():
+    block = _block([0.004, 0.006, 0.009], [0.002, 0.003, 0.004])
+    f = aba.share_flags(block)
+    assert "below 0.01" in f["recovered_suppressed"] and f["n_cost_negative"] == 0
+    assert np.isclose(aba.summarise(block, np.random.default_rng(0))["recovered"], 0.009 / 0.019)
+
+
+def test_a_cost_that_is_negative_on_one_landscape_is_flagged():
+    f = aba.share_flags(_block([0.3, 0.2, -0.002], [0.1, 0.1, 0.0]))
+    assert f["recovered_suppressed"] == "reference negative on 1 of 3 landscapes"
+    assert f["n_cost_negative"] == 1
+
+
+def test_a_positive_cost_above_the_threshold_is_not_flagged():
+    block = _block([0.3, 0.2, 0.0], [0.1, 0.1, 0.0])
+    assert aba.share_flags(block) == {"n_cost_negative": 0, "recovered_suppressed": ""}
+    assert np.isclose(aba.summarise(block, np.random.default_rng(0))["recovered"], 0.2 / 0.5)
+
+
+def test_summarise_keeps_its_keys_for_the_scripts_that_spread_it():
+    # replay_end_of_study, replay_stopping and review_checks/tie_break write
+    # **summarise(...) into their own outputs; the flags must not leak into them.
+    keys = set(aba.summarise(_block([0.3, 0.2], [0.1, 0.1]), np.random.default_rng(0)))
+    assert keys == {"n_landscapes", "n_cells", "cost", "gain", "price", "recovered", "bootstrap_draws_kept",
+                    "recovered_lo", "recovered_hi", "wilcoxon_p"}
+
+
+def test_the_share_rule_skips_the_threshold_only_when_asked():
+    per = pd.DataFrame({"ref": [0.004, 0.006], "trt": [0.002, 0.003]})
+    assert "below" in aba.share_of_reference(per)["share_suppressed"]
+    assert np.isclose(aba.share_of_reference(per, near_zero=None)["share_removed"], 0.5)
+    zero = aba.share_of_reference(pd.DataFrame({"ref": [0.0, 0.0], "trt": [0.0, 0.0]}), near_zero=None)
+    assert np.isnan(zero["share_removed"]) and "not positive" in zero["share_suppressed"]
+
+
+def test_main_writes_the_share_flags_per_cell_and_pooled(tree):
+    aba.main(["--arms", "plain", "--no-extra-trials", "--output-dir", str(tree)])
+    recovery = pd.read_csv(tree / "adaptations_recovery.csv")
+    for column in ("n_cost_negative", "recovered_suppressed", "pooled_n_cost_negative",
+                   "pooled_recovered_suppressed"):
+        assert column in recovery.columns
+    # The synthetic reference cost is std * (1 + U) / opt_z > 0.0075 on every landscape,
+    # and its landscape mean is above 0.01 in every cell, so nothing is flagged.
+    assert (recovery["n_cost_negative"] == 0).all()
+    assert recovery["recovered_suppressed"].isna().all()
+    assert recovery["pooled_recovered_suppressed"].isna().all()
+
+
+REPO = Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.skipif(not (REPO / "output-boba-mo" / "run_metadata.json").is_file(),
+                    reason="the multi-objective sweep lives only on the simulation machine")
+def test_the_halo_problems_have_a_positive_floor_gap(monkeypatch):
+    monkeypatch.chdir(REPO)
+    gap = aba.dataset_scale("hv_floor_gap")
+    assert {"branincurrin", "dtlz2", "vehiclesafety", "zdt1"} <= set(gap)
+    assert all(v > 0 for v in gap.values())

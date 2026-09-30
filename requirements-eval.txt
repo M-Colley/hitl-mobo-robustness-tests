@@ -1,14 +1,41 @@
-numpy==2.5.2
+# Exact pins: the environment every simulation arm ran in (package_versions in
+# each arm's run_metadata.json; Python 3.12.9, Windows 11). pyproject.toml and
+# requirements.txt hold floors only. This file documents the simulation
+# machine's environment for a fresh install elsewhere. Do NOT install it over
+# the simulation machine (AGENTS.md): pip would rebuild BoTorch from git and
+# reinstall statsmodels over its broken dist-info, and nothing there needs it.
+#
+# BoTorch ran from an unreleased development build, 0.18.2.dev23+geea35f51a
+# (23 commits after the 0.18.1 tag), so it is pinned as a git requirement at
+# that commit (github.com/pytorch/botorch now redirects to meta-pytorch/botorch).
+#
+# torch ran as the CUDA 12.6 build 2.13.0+cu126, on the CPU only: the simulator
+# never uses the GPU. A fresh install of torch==2.13.0 gets the CPU wheel of the
+# same release unless the PyTorch cu126 index is given.
+#
+# Where the pins come from: the synthetic arms record numpy, pandas, scipy,
+# scikit-learn, botorch, torch, gpytorch and tqdm; the fitted-oracle and
+# oracle-isolation arms also record matplotlib, seaborn, xgboost, lightgbm,
+# catboost, statsmodels and tabpfn. Two pins are read from the installed
+# environment instead. statsmodels: the runs recorded null, because a leftover
+# 0.14.6 dist-info without METADATA hides the version from importlib.metadata;
+# the module that was imported reports 0.15.0. linear_operator: no run records
+# it; 0.6.1 was installed with gpytorch 1.15.2 on 2026-03-03 (dist-info dates)
+# and has not changed since, so every arm on this BoTorch build (installed
+# 2026-08-22) ran with it.
+numpy==2.5.3
 pandas==3.0.5
 scikit-learn==1.9.0
-scipy==1.18.0
+scipy==1.18.1
 matplotlib==3.11.1
 seaborn==0.13.2
-tqdm==4.68.3
-xgboost==3.4.0
+tqdm==4.70.0
+xgboost==3.4.1
 lightgbm==4.7.0
 catboost==1.2.10
-tabpfn==8.2.0
-statsmodels==0.14.6
-botorch==0.18.1
+tabpfn==8.5.0
+statsmodels==0.15.0
 torch==2.13.0
+gpytorch==1.15.2
+linear_operator==0.6.1
+botorch @ git+https://github.com/meta-pytorch/botorch.git@eea35f51a9d948ae0949144f4ae7814acbec1001

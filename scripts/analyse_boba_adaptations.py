@@ -20,8 +20,40 @@ on two responses: the post-onset per-iteration true simple regret (the
 trajectory), and the final regret of the design the experimenter would deploy.
 Aggregates are ratios of landscape means; intervals resample landscapes; the
 test is a Wilcoxon over per-landscape gains, BH-corrected within arm and
-response. Regret is divided by opt_z where the landscape has one, so cost, gain
-and price are fractions of the achievable improvement.
+response.
+
+Regret is divided by a per-dataset scale BEFORE any mean is taken, so that cost,
+gain and price are fractions of what there is to win and no landscape outweighs
+another. Each arm names its scale (SCALES), and a dataset without one raises;
+until 2026-09-29 a missing opt_z silently became 1.0, which scored the
+multi-objective halo arms in raw hypervolume (VehicleSafety carried 91% of the
+summed cost) and the fitted-oracle arm in raw rating units:
+
+    opt_z              the analytic landscapes: the achievable improvement
+    hv_floor_gap       the multi-objective problems, which have no scalar optimum:
+                       the published maximum hypervolume less what a same-budget
+                       model-free design reaches, the normaliser of the
+                       multi-objective table (analyse_boba_mo.achievable_gain)
+    fitted_achievable  the fitted-oracle datasets: mean over seeds of the seed's
+                       oracle optimum less its mean over the search box, the
+                       achievable-improvement analogue
+                       (analyse_fitted_companion.fitted_achievable)
+
+A dataset's own recovery gain/cost does not depend on its scale; the scale only
+weights the datasets in a pooled ratio. adaptations_per_dataset.csv holds every
+arm's per-dataset cost, gain, price and recovery pooled over its cells, which is
+what an arm with three or four clusters should be reported by: with n clusters
+the exact two-sided Wilcoxon cannot go below 2 / 2**n (0.25 at three, 0.125 at
+four), and with three the percentile bootstrap returns the range of the three
+per-dataset values (each extreme dataset is the whole resample with probability
+1/27 > 2.5%).
+
+A recovery is a share only when its denominator is. Every row of
+adaptations_recovery.csv keeps its recovered value, but recovered_suppressed
+(and pooled_recovered_suppressed) gives the reason when the cell's cost is below
+NEAR_ZERO_REFERENCE = 0.01 of the scale or negative on any landscape
+(n_cost_negative counts those); there the gain, in the same units, is what may
+be quoted. The rule is share_of_reference, which compare_boba_arms.py imports.
 
 Most arms change the process for the same acquisitions and pair at
 (landscape, acquisition, magnitude, onset, seed). The robust-baseline arms
@@ -68,16 +100,60 @@ BOOTSTRAP_SEED = 20260913
 S5 = "7,8,9,10,11"
 S10 = "7,8,9,10,11,12,13,14,15,16"
 TEN = "logei,ei,pi,ucb,qucb,qnei,logpi,qei,qpi,greedy"
+# The per-dataset scales an arm can name (see the module docstring), and where
+# the two that are not landscape statistics are computed from. The halo arms run
+# the multi-objective arm's budget (50 trials, 5 initial) on four of its
+# problems with the same reference points and maximum hypervolumes, so its
+# floor is theirs; the fitted-oracle arm refits the oracle per seed, identically
+# in output-fitted and output-fitted-adapt-rep10.
+SCALES = ("opt_z", "hv_floor_gap", "fitted_achievable")
+MO_FLOOR_DIR = Path("output-boba-mo")
+FITTED_DIR = Path("output-fitted")
+# Below this pooled reference cost, in units of the dataset's scale, a share of
+# it is not a number worth quoting. compare_boba_arms.py's docstring gives the
+# choice; the rule is defined once, here, and imported there.
+NEAR_ZERO_REFERENCE = 0.01
+
+
+def share_of_reference(per_landscape: pd.DataFrame, near_zero: float | None = NEAR_ZERO_REFERENCE) -> dict:
+    """The share of the reference's cost removed, or why it is not reported.
+
+    ``per_landscape`` holds one row per landscape with the landscape means ``ref``
+    (the reference cost) and ``trt`` (what is left of it). Returns share_removed,
+    1 - mean(trt) / mean(ref) or NaN when suppressed; the reason (share_suppressed,
+    empty when reported); and the counts of landscapes whose reference cost is
+    negative or exactly zero. The share is suppressed when the pooled reference is
+    below ``near_zero`` or negative on any landscape (AGENTS.md: never a recovery
+    ratio whose reference cost is near zero or changes sign). An exactly zero
+    landscape (solved before a mid-run onset) is counted but does not suppress.
+    ``near_zero=None`` skips the magnitude test, for values that are not in units
+    of an achievable improvement, where 0.01 means nothing.
+    """
+    ref, trt = per_landscape["ref"], per_landscape["trt"]
+    mean_ref = float(ref.mean())
+    negative, zero = int((ref < 0).sum()), int((ref == 0).sum())
+    reasons = []
+    if near_zero is not None and not mean_ref >= near_zero:
+        reasons.append(f"reference {mean_ref:.4f} below {near_zero:g}")
+    if negative:
+        reasons.append(f"reference negative on {negative} of {len(ref)} landscapes")
+    if not mean_ref > 0 and not reasons:
+        reasons.append(f"reference {mean_ref:.4f} is not positive")
+    share = np.nan if reasons else float(1.0 - trt.mean() / mean_ref)
+    return {"share_removed": share, "share_suppressed": "; ".join(reasons),
+            "n_reference_negative": negative, "n_reference_zero": zero}
 
 
 def arm(dir_, ref, acqs, what, seeds=S5, ref_acqs=None, pool=False, relative=False, error_model=None,
-        variant=None, ref_variant=None):
+        variant=None, ref_variant=None, scale="opt_z"):
     # variant/ref_variant select one condition out of a directory that holds
     # several (four spike sizes, two ceiling modes, a halo rho). None means "the
     # whole directory", which is every arm that predates the variant column.
+    if scale not in SCALES:
+        raise ValueError(f"unknown scale {scale!r}; choose from {SCALES}")
     return dict(dir=dir_, ref=ref, acqs=acqs, ref_acqs=ref_acqs or acqs, seeds=seeds, what=what,
                 pool=pool, relative=relative, error_model=error_model,
-                variant=variant, ref_variant=ref_variant)
+                variant=variant, ref_variant=ref_variant, scale=scale)
 
 
 ARMS = {
@@ -130,17 +206,17 @@ ARMS = {
                         error_model="misclick"),
     "fitted-rep10": arm("output-fitted-adapt-rep10", "output-fitted", "logei,qnei",
                         "first ten rated twice, on the three fitted-oracle datasets",
-                        seeds="7,8,9,10,11,12,13,14,15,16", relative=True, error_model="gaussian"),
+                        seeds="7,8,9,10,11,12,13,14,15,16", relative=True, error_model="gaussian",
+                        scale="fitted_achievable"),
 
     # ---------------------------------------------------------------- budget-neutral
     # The 2026-09-14/16 sweep (run_boba_budget_neutral.ps1). Every arm here keeps
     # the number of human trials equal to the standard process, or lowers it, so
     # each is scored against the standard process on the same trial budget. The
     # arms whose variants differ only in a filename SUFFIX (spike, spike-clip,
-    # spike-rrp, relay, ceiling, mo-halo, mo-halo-backfit) are absent: one
-    # directory holds several conditions and evaluate_research_question.py
-    # refuses to average them, correctly. They need a variant-aware evaluation
-    # before they can appear here.
+    # spike-rrp, relay, ceiling, mo-halo, mo-halo-backfit) share one directory
+    # per family, so each names its variant (and its reference's) explicitly;
+    # they are defined further down.
     # ------------------------------------------------- the 2026-09-21 idea round
     # Five process changes aimed at the selection term. run_boba_hitl_ideas.ps1
     # owns their sweep; handover/hitl-ideas-2026-09-21.md states each prediction
@@ -251,15 +327,16 @@ ARMS = {
     # remove.
     "mo-halo-cost": arm("output-boba-mo-halo", "output-boba-mo-halo", "qlognehvi",
                         "rating error shared across objectives, against independent error",
-                        seeds=S10, error_model="gaussian", variant="xc0.85", ref_variant=""),
+                        seeds=S10, error_model="gaussian", variant="xc0.85", ref_variant="",
+                        scale="hv_floor_gap"),
     "mo-halo-backfit": arm("output-boba-mo-halo-backfit", "output-boba-mo-halo", "qlognehvi",
                            "the shared factor estimated and removed, under halo error",
                            seeds=S10, error_model="gaussian", variant="xc0.85_halo-backfit",
-                           ref_variant="xc0.85"),
+                           ref_variant="xc0.85", scale="hv_floor_gap"),
     "mo-halo-backfit-price": arm("output-boba-mo-halo-backfit", "output-boba-mo-halo", "qlognehvi",
                                  "the same model where there is no shared factor to remove",
                                  seeds=S10, error_model="gaussian", variant="halo-backfit",
-                                 ref_variant=""),
+                                 ref_variant="", scale="hv_floor_gap"),
 }
 
 # The gross-fault family. Four spike sizes share one directory each, so every
@@ -269,7 +346,7 @@ for _sp in ("sp0.05-5", "sp0.05-20", "sp0.15-5", "sp0.15-20"):
     _prob, _size = _sp[2:].split("-")
     ARMS[f"spike-clip-{_sp}"] = arm(
         "output-boba-spike-clip", "output-boba-spike", "logei,qnei",
-        f"the response clipped to the observed range, {_prob} of trials spiking at {_size} SD",
+        f"the response clipped to the landscape's known range, {_prob} of trials spiking at {_size} SD",
         error_model="spike", variant=_sp, ref_variant=_sp)
     ARMS[f"spike-rrp-{_sp}"] = arm(
         "output-boba-spike-rrp", "output-boba-spike", "logei,qnei",
@@ -318,8 +395,43 @@ def rank_magnitudes(frame: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
-def paired_frame(ref: pd.DataFrame, trt: pd.DataFrame, response: str, opt_z: dict[str, float],
+def dataset_scale(kind: str) -> dict[str, float]:
+    """The per-dataset scale ``kind`` (one of SCALES), as {dataset: scale}.
+
+    Computed from the recorded outputs each time it is asked for, with the same
+    functions that produce the paper's other tables in that unit, so the two
+    cannot drift. Every value is checked to be finite and positive.
+    """
+    if kind == "opt_z":
+        stats = bb.load_stats(bb.DEFAULT_STATS_PATH)
+        out = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+    elif kind == "hv_floor_gap":
+        import analyse_boba_mo as abm
+        import analyse_boba_robustness as ab
+        gain = abm.achievable_gain(MO_FLOOR_DIR, ab.load_paired(MO_FLOOR_DIR))
+        out = {str(d): float(g) for d, g in zip(gain["dataset"], gain["gain"]) if pd.notna(g)}
+    elif kind == "fitted_achievable":
+        import analyse_boba_robustness as ab
+        import analyse_fitted_companion as afc
+        raw = ab.load_paired(FITTED_DIR)
+        out = {str(d): float(g) for d, g in
+               afc.fitted_achievable(raw, afc.box_means(FITTED_DIR, raw), "oracle").items()}
+    else:
+        raise ValueError(f"unknown scale {kind!r}; choose from {SCALES}")
+    bad = {d: v for d, v in out.items() if not (np.isfinite(v) and v > 0)}
+    if bad:
+        raise ValueError(f"scale {kind!r} is not a positive number for {bad}")
+    return out
+
+
+def paired_frame(ref: pd.DataFrame, trt: pd.DataFrame, response: str, scale: dict[str, float],
                  pool: bool) -> pd.DataFrame:
+    """Pair the two arms and divide every regret by its dataset's ``scale``.
+
+    A dataset missing from ``scale`` raises. The old fallback to 1.0 mixed units
+    across datasets without a word (analyse_ship_rules.landscape_opt_z named it
+    as the bug it guards against).
+    """
     cols = [f"{response}_jitter", f"{response}_baseline"]
     keys = POOLED_KEYS if pool else PAIR_KEYS
     if pool:
@@ -328,11 +440,36 @@ def paired_frame(ref: pd.DataFrame, trt: pd.DataFrame, response: str, opt_z: dic
     m = ref[keys + cols].merge(trt[keys + cols], on=keys, suffixes=("_ref", "_trt"), validate="one_to_one")
     if m.empty:
         raise ValueError("the two arms share no paired cells")
-    z = m["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    lacking = sorted(set(m["dataset"]) - set(scale))
+    if lacking:
+        raise KeyError(f"no scale for {lacking}: every dataset needs one (opt_z, a floor gap or an "
+                       f"achievable improvement) before regrets from different datasets are pooled")
+    z = m["dataset"].map(scale).astype(float)
+    if not (np.isfinite(z) & (z > 0)).all():
+        raise ValueError(f"non-positive scale for {sorted(set(m.loc[~(z > 0), 'dataset']))}")
     return m.assign(
         ref_noisy=m[f"{response}_jitter_ref"] / z, ref_clean=m[f"{response}_baseline_ref"] / z,
         trt_noisy=m[f"{response}_jitter_trt"] / z, trt_clean=m[f"{response}_baseline_trt"] / z,
     )
+
+
+def per_dataset(block: pd.DataFrame) -> pd.DataFrame:
+    """Each dataset's cost, gain, price and recovery over the cells of ``block``.
+
+    The means are the ones summarise() pools, so the pooled recovery is the
+    cost-weighted mean of these recoveries; cost_share is each dataset's weight.
+    """
+    per = block.groupby("dataset")[["ref_noisy", "ref_clean", "trt_noisy", "trt_clean"]].mean()
+    out = pd.DataFrame({
+        "n_cells": block.groupby("dataset").size(),
+        "cost": per.ref_noisy - per.ref_clean,
+        "gain": per.ref_noisy - per.trt_noisy,
+        "price": per.trt_clean - per.ref_clean,
+    })
+    out["recovered"] = np.where(out["cost"] > 0, out["gain"] / out["cost"].where(out["cost"] > 0), np.nan)
+    total = out["cost"].sum()
+    out["cost_share"] = out["cost"] / total if total > 0 else np.nan
+    return out.reset_index()
 
 
 def summarise(block: pd.DataFrame, rng: np.random.Generator) -> dict:
@@ -373,6 +510,21 @@ def summarise(block: pd.DataFrame, rng: np.random.Generator) -> dict:
     }
 
 
+def share_flags(block: pd.DataFrame) -> dict:
+    """Whether the recovery of ``block`` is a share to quote (share_of_reference).
+
+    recovered stays in the output (the tables and the replays read it), but where
+    its denominator, the landscape-mean cost, is near zero or negative on any
+    landscape it is not a share: recovered_suppressed says why, and the gain is
+    the result. Kept apart from summarise(), whose dict other scripts spread into
+    their own outputs.
+    """
+    per = block.groupby("dataset")[["ref_noisy", "ref_clean", "trt_noisy"]].mean()
+    cost = per.ref_noisy - per.ref_clean
+    guard = share_of_reference(pd.DataFrame({"ref": cost, "trt": per.trt_noisy - per.ref_clean}))
+    return {"n_cost_negative": guard["n_reference_negative"], "recovered_suppressed": guard["share_suppressed"]}
+
+
 def run(cmd: list[str]) -> None:
     print("  $", " ".join(str(c) for c in cmd[1:]))
     subprocess.run(cmd, check=True)
@@ -386,10 +538,9 @@ def main(argv=None) -> None:
     parser.add_argument("--no-extra-trials", action="store_true")
     args = parser.parse_args(argv)
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    stats = bb.load_stats(bb.DEFAULT_STATS_PATH)
-    opt_z = {k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v}
+    scales: dict[str, dict[str, float]] = {}
 
-    rows, extra_rows = [], []
+    rows, extra_rows, dataset_rows = [], [], []
     for name in [a.strip() for a in args.arms.split(",") if a.strip()]:
         spec = ARMS[name]
         arm_dir, ref_dir = Path(spec["dir"]), Path(spec["ref"])
@@ -403,31 +554,54 @@ def main(argv=None) -> None:
                       spec.get("variant"))
         if spec["relative"]:
             ref_df, arm_df = rank_magnitudes(ref_df), rank_magnitudes(arm_df)
-        print(f"\n=== {name}: {spec['what']} (reference {ref_dir}) ===")
+        kind = spec.get("scale", "opt_z")
+        if kind not in scales:
+            scales[kind] = dataset_scale(kind)
+        print(f"\n=== {name}: {spec['what']} (reference {ref_dir}; scale {kind}) ===")
         for label, response in RESPONSES.items():
-            paired = paired_frame(ref_df, arm_df, response, {} if spec["relative"] else opt_z, spec["pool"])
+            paired = paired_frame(ref_df, arm_df, response, scales[kind], spec["pool"])
             rng = np.random.default_rng(BOOTSTRAP_SEED)
             cond_rows = []
             for (std, onset), block in paired.groupby(["jitter_std", "jitter_iteration"]):
                 cond_rows.append({"arm": name, "reference": str(ref_dir), "response": label,
                                   "jitter_std": float(std), "jitter_iteration": int(onset),
-                                  **summarise(block, rng)})
-            pooled = summarise(paired, np.random.default_rng(BOOTSTRAP_SEED))
+                                  **summarise(block, rng), **share_flags(block)})
+            pooled = {**summarise(paired, np.random.default_rng(BOOTSTRAP_SEED)), **share_flags(paired)}
+            per = per_dataset(paired)
+            valid = per["recovered"].dropna()
             ps = [r["wilcoxon_p"] for r in cond_rows]
             for r, q in zip(cond_rows, multipletests(ps, method="fdr_bh")[1]):
                 r["wilcoxon_p_fdr"] = float(q)
                 for key in ("recovered", "recovered_lo", "recovered_hi", "price", "cost", "gain"):
                     r[f"pooled_{key}"] = pooled[key]
                 r["pooled_wilcoxon_p"] = pooled["wilcoxon_p"]
+                # With three or four clusters the pooled row is reported by its
+                # per-dataset values; these give their range and the count.
+                r["pooled_n_landscapes"] = pooled["n_landscapes"]
+                r["pooled_recovered_range_lo"] = float(valid.min()) if len(valid) else np.nan
+                r["pooled_recovered_range_hi"] = float(valid.max()) if len(valid) else np.nan
+                r["scale"] = kind
+                r["pooled_n_cost_negative"] = pooled["n_cost_negative"]
+                r["pooled_recovered_suppressed"] = pooled["recovered_suppressed"]
             rows.extend(cond_rows)
+            dataset_rows.append(per.assign(arm=name, reference=str(ref_dir), response=label, scale=kind,
+                                           scale_value=per["dataset"].map(scales[kind])))
             print(f"  {label}: pooled recovered {pooled['recovered']:+.0%} "
                   f"[{pooled['recovered_lo']:+.0%}, {pooled['recovered_hi']:+.0%}], "
                   f"cost {pooled['cost']:.3f}, gain {pooled['gain']:+.3f}, price without error {pooled['price']:+.3f}")
+            if pooled["n_landscapes"] <= 4:
+                print(f"    only {pooled['n_landscapes']} clusters: the smallest exact two-sided Wilcoxon p "
+                      f"is {2 / 2 ** pooled['n_landscapes']:.3g}; per dataset: "
+                      + ", ".join(f"{d} {v:+.1%} (cost share {s:.0%}, price {p:+.3f})" for d, v, s, p in
+                                  per[["dataset", "recovered", "cost_share", "price"]].itertuples(index=False)))
+            if pooled["recovered_suppressed"]:
+                print(f"    pooled share not to be quoted ({pooled['recovered_suppressed']}); the gain is the result")
             for r in cond_rows:
                 star = "*" if r["wilcoxon_p_fdr"] < 0.05 else " "
                 print(f"     {r['jitter_std']:>5g} / it.{r['jitter_iteration'] + 1:<3d} cost {r['cost']:7.3f}  "
                       f"gain {r['gain']:+7.3f}  price {r['price']:+7.3f}  recovered {r['recovered']:+6.0%} "
-                      f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]{star}")
+                      f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]{star}"
+                      + (f"  (no share: {r['recovered_suppressed']})" if r["recovered_suppressed"] else ""))
 
         # analyse_extra_runs.py reads a whole directory, so an arm that is one
         # variant among several in its directory (spike sizes, cap modes) would
@@ -495,6 +669,15 @@ def main(argv=None) -> None:
             out.loc[sel, "pooled_wilcoxon_p_fdr"] = out.loc[sel, "arm"].map(q).astype(float)
     out = out.sort_values(["arm", "response", "jitter_std", "jitter_iteration"], kind="stable")
     out.to_csv(recovery_path, index=False)
+    # Per-dataset values, merged on arm the same way.
+    per_path = args.output_dir / "adaptations_per_dataset.csv"
+    per_out = pd.concat(dataset_rows, ignore_index=True)[
+        ["arm", "reference", "response", "scale", "dataset", "scale_value", "n_cells",
+         "cost", "gain", "price", "recovered", "cost_share"]]
+    if per_path.is_file():
+        previous = pd.read_csv(per_path)
+        per_out = pd.concat([previous[~previous["arm"].isin(set(per_out["arm"]))], per_out], ignore_index=True)
+    per_out.sort_values(["arm", "response", "dataset"], kind="stable").to_csv(per_path, index=False)
     # The extra-trials file is merged the same way, and a call that computed no
     # extra trials (--no-extra-trials, or only relative/pooled arms) leaves it
     # alone: on 2026-09-22 such calls truncated it to an empty frame, and the
@@ -508,7 +691,8 @@ def main(argv=None) -> None:
                 extra = pd.concat([previous[~previous["arm"].isin(set(extra["arm"]))], extra],
                                   ignore_index=True)
         extra.to_csv(extra_path, index=False)
-    print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'} and adaptations_extra_runs.csv")
+    print(f"\nWrote {args.output_dir / 'adaptations_recovery.csv'}, adaptations_per_dataset.csv "
+          f"and adaptations_extra_runs.csv")
 
 
 if __name__ == "__main__":

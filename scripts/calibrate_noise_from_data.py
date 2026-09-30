@@ -257,6 +257,13 @@ def main() -> None:
     table["sd_as_pct_of_range"] = 100.0 * table.apply(
         lambda r: preferred_sd(r)[0], axis=1
     ) / table["value_range"]
+    # The commit of the archival data each row was computed from (the cached
+    # clone's HEAD; the dataset config pins it). Last, so no column moves.
+    provenance = bo_sim.dataset_provenance(datasets)
+    table["data_commit"] = table["dataset"].map(
+        lambda name: ";".join(str(entry["commit"]) for entry in
+                              provenance.get(name, {}).get("data_dirs", []))
+    )
 
     args.output_path.parent.mkdir(parents=True, exist_ok=True)
     table.to_csv(args.output_path, index=False)

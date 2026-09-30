@@ -13,6 +13,15 @@
     "sigma_f_recomputed": 0.36471327481282595,
     "anchor_ratio_stored": 0.738162629734823,
     "raw_scale_rows": 0,
+    "data": {
+      "data_dirs": [
+        {
+          "data_dir": ".dataset_cache/ehmi-optimization-chi25-data",
+          "commit": "232eb6bbb2a72c9542c81d318b6ea008fb5a75d7",
+          "pinned_commit": null
+        }
+      ]
+    },
     "pipeline_basis": {
       "n_participants": 37,
       "n_ratings": 735,
@@ -80,6 +89,15 @@
     "sigma_f_recomputed": 0.37370851526455484,
     "anchor_ratio_stored": 3.354293141885068,
     "raw_scale_rows": 40,
+    "data": {
+      "data_dirs": [
+        {
+          "data_dir": ".dataset_cache/opticarvis-data",
+          "commit": "101aec3c4f3e85c494ece01409317f27e2d24af7",
+          "pinned_commit": null
+        }
+      ]
+    },
     "raw_scale_runs": [
       0
     ],
@@ -205,6 +223,15 @@
     "sigma_f_recomputed": 0.29836396764640083,
     "anchor_ratio_stored": 1.018587167917271,
     "raw_scale_rows": 0,
+    "data": {
+      "data_dirs": [
+        {
+          "data_dir": ".dataset_cache/ProVoiceData",
+          "commit": "9c76fbcee1e6027a3731b544ed84e36a96240354",
+          "pinned_commit": null
+        }
+      ]
+    },
     "sigma_f_sign_corrected": 0.44858875107732876,
     "sign_corrected_composite": [
       "-Predictability",

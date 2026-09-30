@@ -1,0 +1,25 @@
+metric,comparison,magnitude,n_cells,spearman_mean_ranks,best_acquisition_agrees,expected_by_chance,p_binomial_at_least,order_a,order_b
+trajectory,fitted vs exact seeds 7-16 (cell_means),0.25sigma,20,-0.894,3,5.0,0.9087,logei > ei > qnei > ucb,ucb > qnei > logei > ei
+trajectory,fitted vs exact seeds 7-16 (cell_means),1sigma,20,0.0,8,5.0,0.1018,ei > ucb > qnei > logei,ucb > qnei > logei > ei
+trajectory,fitted vs exact seeds 7-16 (cell_means),5sigma,20,0.2,2,5.0,0.9757,ucb > logei > ei > qnei,ucb > qnei > ei > logei
+trajectory,fitted vs exact seeds 7-16 (cell_means),pooled,60,-0.8,13,15.0,0.7684,logei > ei > ucb > qnei,ucb > qnei > ei > logei
+trajectory,fitted vs exact seeds 7-11,0.25sigma,20,-0.6,5,5.0,0.5852,logei > ei > qnei > ucb,qnei > ucb > logei > ei
+trajectory,fitted vs exact seeds 7-11,1sigma,20,-0.2,7,5.0,0.2142,ei > ucb > qnei > logei,ucb > qnei > logei > ei
+trajectory,fitted vs exact seeds 7-11,5sigma,20,0.4,7,5.0,0.2142,ucb > logei > ei > qnei,ucb > qnei > logei > ei
+trajectory,fitted vs exact seeds 7-11,pooled,60,-0.6,19,15.0,0.1486,logei > ei > ucb > qnei,ucb > qnei > logei > ei
+trajectory,exact seeds 7-11 vs exact seeds 12-16,0.25sigma,20,0.0,2,5.0,0.9757,qnei > ucb > logei > ei,ucb > ei > qnei > logei
+trajectory,exact seeds 7-11 vs exact seeds 12-16,1sigma,20,0.8,8,5.0,0.1018,ucb > qnei > logei > ei,ucb > qnei > ei > logei
+trajectory,exact seeds 7-11 vs exact seeds 12-16,5sigma,20,0.0,6,5.0,0.3828,ucb > qnei > logei > ei,qnei > ei > ucb > logei
+trajectory,exact seeds 7-11 vs exact seeds 12-16,pooled,60,0.8,16,15.0,0.4312,ucb > qnei > logei > ei,ucb > qnei > ei > logei
+deployed,fitted vs exact seeds 7-16 (cell_means),0.25sigma,20,0.8,5,5.0,0.5852,logei > ei > ucb > qnei,logei > ei > qnei > ucb
+deployed,fitted vs exact seeds 7-16 (cell_means),1sigma,20,-0.2,4,5.0,0.7748,ei > logei > qnei > ucb,ucb > ei > logei > qnei
+deployed,fitted vs exact seeds 7-16 (cell_means),5sigma,20,0.889,5,5.0,0.5852,ei > logei > ucb > qnei,logei > ei > qnei > ucb
+deployed,fitted vs exact seeds 7-16 (cell_means),pooled,60,1.0,14,15.0,0.6651,logei > ei > ucb > qnei,logei > ei > ucb > qnei
+deployed,fitted vs exact seeds 7-11,0.25sigma,20,0.6,3,5.0,0.9087,logei > ei > ucb > qnei,ei > logei > qnei > ucb
+deployed,fitted vs exact seeds 7-11,1sigma,20,-0.4,4,5.0,0.7748,ei > logei > qnei > ucb,ucb > ei > qnei > logei
+deployed,fitted vs exact seeds 7-11,5sigma,20,0.949,2,5.0,0.9757,ei > logei > ucb > qnei,logei > ei > ucb > qnei
+deployed,fitted vs exact seeds 7-11,pooled,60,0.4,9,15.0,0.9788,logei > ei > ucb > qnei,ei > ucb > logei > qnei
+deployed,exact seeds 7-11 vs exact seeds 12-16,0.25sigma,20,0.6,7,5.0,0.2142,ei > logei > qnei > ucb,logei > ei > ucb > qnei
+deployed,exact seeds 7-11 vs exact seeds 12-16,1sigma,20,-0.4,6,5.0,0.3828,ucb > ei > qnei > logei,logei > ucb > qnei > ei
+deployed,exact seeds 7-11 vs exact seeds 12-16,5sigma,20,0.632,4,5.0,0.7748,logei > ei > ucb > qnei,logei > ei > qnei > ucb
+deployed,exact seeds 7-11 vs exact seeds 12-16,pooled,60,0.0,17,15.0,0.3204,ei > ucb > logei > qnei,logei > ei > qnei > ucb

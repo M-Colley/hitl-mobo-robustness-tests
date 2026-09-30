@@ -1,0 +1,14 @@
+{
+  "n_runs": 2880,
+  "benchmarks": [
+    "bump_d11",
+    "bump_d4",
+    "bump_d7"
+  ],
+  "floor_check_max_abs_excess": 0.0,
+  "currency_verdicts": {
+    "both (underpowered)": 2
+  },
+  "most_robust_acquisition": "ucb",
+  "best_absolute_acquisition": "ucb"
+}

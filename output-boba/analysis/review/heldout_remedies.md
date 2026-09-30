@@ -94,7 +94,7 @@ Selected on seeds 7-11 (gaussian, >= 0.25 sigma, ten acquisitions): `lcb2` (trai
 | lucb_k4_rho0.5 | +10.8% [+6, +16] | +11.1% | +10.5% [+5, +16] | 0.0027 |
 | lucb_k8_rho0.5 | +16.1% [+11, +21] | +15.8% | +16.4% [+10, +21] | 2.1e-04 |
 
-Main sweep: four error processes, four magnitudes, both onsets, LogEI and qNEI. The rank rule the paper tables is `ordinal_lcb1` ("ship 1, chosen on ranks"). The gross-fault (spike) and capped-scale arms were run on seeds 7-11 only, so their rank-rule numbers (51%, 36%) cannot be held out by seed; section 2 holds them out by landscape.
+Main sweep: four error processes, four magnitudes, both onsets, LogEI and qNEI. The rank rule the paper tables is `ordinal_lcb1` ("ship 1, chosen on ranks"). The gross-fault (spike) and capped-scale arms' rank-rule numbers (51%, 36%) are full-data values on seeds 7-11 (analysis/hitl_remedies); their seeds 12-16 were replayed separately (analysis/hitl_remedies_heldout, paper/COMMANDS.md), and section 4b tests the rank rules there, in the scope of those numbers. Section 2 also holds them out by landscape.
 
 ## 2. Landscape splits
 
@@ -192,6 +192,31 @@ Two-sided Wilcoxon signed-rank test of the 20 per-landscape gains over the stand
 Survive Holm at 0.05 on the test seeds, core family (8): `tournament_k3_lcb_rho0.5_look`, `tournament_k3_obs_rho0.5_look`, `tournament_k5_lcb_rho0.5_look`, `tournament_k5_obs_rho0.5_look`, `tournament_k5_obs_rho0.5_post`, `shortlist_m2`, `shortlist_m3`, `shortlist_m5`.
 Survive Holm at 0.05 on the test seeds, all replayed arms (9): `tournament_k3_lcb_rho0.5_look`, `tournament_k3_obs_rho0.5_look`, `tournament_k5_lcb_rho0.5_look`, `tournament_k5_obs_rho0.5_look`, `shortlist_m2`, `shortlist_m3`, `shortlist_m5`, `fixed_k30` (a significant LOSS), `lucb_k8_rho0.5`.
 With 20 landscapes the smallest two-sided Wilcoxon p is 1.9e-06, and Holm's first threshold is 0.05/27 = 0.0019 (core) or 0.05/41 = 0.0012 (all), so a procedure must gain on nearly every landscape to survive.
+
+## 4b. The rank rules in the scope of their headline recoveries, test seeds only
+
+Section 4 tests the two rank rules on the main sweep. The recoveries the paper quotes for them come from the gross-fault and capped-scale arms, so here each is tested on those arms' seeds 12-16 (analysis/hitl_remedies_heldout), with the same per-landscape gains and Wilcoxon test. Holm is recomputed over section 4's core family (a) with its two main-sweep rank-rule tests replaced by these four, (b) with these four added, and (c) with the two main-sweep tests replaced by the two `ordinal_lcb1` tests. Section 4's columns are unchanged.
+
+| scope | procedure | recovered, test | mean gain, test | landscapes gaining | p, test | Holm (a), tests | Holm (b), tests | Holm (c), tests |
+|---|---|---|---|---|---|---|---|---|
+| gross faults (sp0.15-20, 0.25 sigma, from the first rating) | ordinal_lcb1 | +48.8% [+35, +63] | +0.432 | 19/20 | 5.7e-06 | 1.4e-04 (29) | 1.5e-04 (31) | 1.4e-04 (27) |
+| gross faults (sp0.15-20, 0.25 sigma, from the first rating) | ordinal_pm | +48.5% [+33, +63] | +0.429 | 19/20 | 5.7e-06 | 1.4e-04 (29) | 1.5e-04 (31) |  |
+| capped scale (ceil0.9-fixed, 0.25 and 1 sigma, from the first rating) | ordinal_lcb1 | +37.9% [+31, +45] | +0.178 | 20/20 | 1.9e-06 | 5.5e-05 (29) | 5.9e-05 (31) | 5.1e-05 (27) |
+| capped scale (ceil0.9-fixed, 0.25 and 1 sigma, from the first rating) | ordinal_pm | +37.1% [+30, +44] | +0.174 | 20/20 | 1.9e-06 | 5.5e-05 (29) | 5.9e-05 (31) |  |
+
+## 4c. The best-arm sittings' one-look-each comparators added to the all family
+
+Each LUCB sitting of section 4 competes with a fixed-allocation sitting that gives one look to each of the top k by the posterior mean less one SD, on the same runs (replay_hitl_remedies.py). The four comparators are tested in the same scope, and Holm is recomputed over the all family with them added (45 tests). Section 4's columns are unchanged.
+
+| comparator | mean gain, test | landscapes gaining | p, test | Holm, all family + 4 (45 tests) |
+|---|---|---|---|---|
+| T k4 lcb rho1 look | +0.016 | 13/20 | 0.033 | 0.62 |
+| T k8 lcb rho1 look | +0.023 | 13/20 | 0.012 | 0.29 |
+| T k4 lcb rho0.5 look | +0.029 | 16/20 | 0.001 | 0.037 |
+| T k8 lcb rho0.5 look | +0.042 | 18/20 | 2.1e-04 | 0.0086 |
+
+Of the 9 all-family survivors of section 4, 9 still survive in the larger family.
+Their adjusted p, all family -> larger family: `tournament_k3_lcb_rho0.5_look` 0.034 -> 0.037, `tournament_k3_obs_rho0.5_look` 0.011 -> 0.012, `tournament_k5_lcb_rho0.5_look` 0.0078 -> 0.0086, `tournament_k5_obs_rho0.5_look` 0.0014 -> 0.0016, `shortlist_m2` 0.0064 -> 0.007, `shortlist_m3` 7.8e-05 -> 8.6e-05, `shortlist_m5` 7.8e-05 -> 8.6e-05, `fixed_k30` 0.029 -> 0.031, `lucb_k8_rho0.5` 0.0078 -> 0.0086.
 
 ## 5. The derived budget rule against a fixed k
 

@@ -1,9 +1,17 @@
-scope,factor,variance_share
-all cells,magnitude,0.24
-all cells,onset,0.17
-all cells,landscape,0.096
-all cells,acquisition,0.036
-all cells,error process,0.002
-"1 sigma, first rating",landscape,0.486
-"1 sigma, first rating",acquisition,0.224
-"1 sigma, first rating",error process,0.019
+scope,factor,variance_share,response
+all cells,magnitude,0.24,fragility
+all cells,onset,0.17,fragility
+all cells,landscape,0.096,fragility
+all cells,acquisition,0.036,fragility
+all cells,error process,0.002,fragility
+"1 sigma, first rating",landscape,0.486,fragility
+"1 sigma, first rating",acquisition,0.224,fragility
+"1 sigma, first rating",error process,0.019,fragility
+all cells,magnitude,0.097,excess_sd
+all cells,onset,0.031,excess_sd
+all cells,landscape,0.321,excess_sd
+all cells,acquisition,0.007,excess_sd
+all cells,error process,0.001,excess_sd
+"1 sigma, first rating",landscape,0.765,excess_sd
+"1 sigma, first rating",acquisition,0.023,excess_sd
+"1 sigma, first rating",error process,0.004,excess_sd

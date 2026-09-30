@@ -1,0 +1,35 @@
+{
+  "ehmi": {
+    "config": "output\\per_dataset\\datasets-ehmi.json",
+    "sigma_f": 0.3647132748128259,
+    "jitter_stds": "0.018236,0.091178,0.364713,1.823566",
+    "sigma_grid": [
+      0.05,
+      0.25,
+      1.0,
+      5.0
+    ]
+  },
+  "opticarvis": {
+    "config": "output\\per_dataset\\datasets-opticarvis.json",
+    "sigma_f": 0.3737085152645548,
+    "jitter_stds": "0.018685,0.093427,0.373709,1.868543",
+    "sigma_grid": [
+      0.05,
+      0.25,
+      1.0,
+      5.0
+    ]
+  },
+  "provoice": {
+    "config": "output\\per_dataset\\datasets-provoice.json",
+    "sigma_f": 0.2983639676464009,
+    "jitter_stds": "0.014918,0.074591,0.298364,1.49182",
+    "sigma_grid": [
+      0.05,
+      0.25,
+      1.0,
+      5.0
+    ]
+  }
+}

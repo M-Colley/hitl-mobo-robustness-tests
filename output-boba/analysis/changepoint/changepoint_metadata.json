@@ -1,0 +1,33 @@
+{
+  "args": {
+    "cache": "output-boba/analysis/stopping/cache_n015_rep3",
+    "output_dir": "output-boba/analysis/changepoint",
+    "n0": 15,
+    "tune_seeds": "7,8,9,10,11",
+    "score_seeds": "12,13,14,15,16",
+    "false_alarm": "0.05,0.10,0.20",
+    "kappa_grid": "0.25,0.5,1.0,2.0",
+    "hazard_grid": "0.01,0.02,0.05",
+    "rmax": 5,
+    "freeze_params": "output-boba/analysis/stopping/stopping_tuned_A.json",
+    "per_run": "output-boba/analysis/stopping/stopping_per_run.csv"
+  },
+  "n_streams": 13200,
+  "stream_length": 35,
+  "n_tune": 6600,
+  "n_score": 6600,
+  "n_changed": 6400,
+  "freeze_params": {
+    "h": 2000.0,
+    "kappa": 16.0,
+    "w": 3,
+    "source": "output-boba/analysis/stopping/stopping_tuned_A.json"
+  },
+  "per_run_check": {
+    "per_run_path": "output-boba/analysis/stopping/stopping_per_run.csv",
+    "per_run_rows_rule_A": 13200,
+    "streams_checked": 13200,
+    "streams_missing_from_per_run": 0,
+    "alarm_mismatches": 0
+  }
+}

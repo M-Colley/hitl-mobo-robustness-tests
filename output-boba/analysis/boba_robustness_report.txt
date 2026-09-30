@@ -45,11 +45,14 @@ Onsets             : [np.int64(0), np.int64(20)]
   onset 0 the bias arm should therefore match the gaussian arm up to its
   noise draw.
 
-   error SD    gaussian        bias  difference
-       0.05      0.0755      0.0728     -0.0027
-       0.25      0.3188      0.3299      0.0111
-          1      0.9504      0.9488     -0.0016
-          5      1.4218      1.4210     -0.0008
+  Post-onset excess regret, landscape SDs. The two arms draw independent
+  noise streams; SE and 95% interval treat the landscape as the cluster;
+  SE stream clusters on acquisition x seed, SE 2-way on both.
+   error SD    gaussian        bias  difference      SE             95% CI  SE stream  SE 2-way
+       0.05      0.0755      0.0728     -0.0027  0.0132 [-0.0300,+0.0198]     0.0248    0.0133
+       0.25      0.3188      0.3299      0.0111  0.0232 [-0.0338,+0.0534]     0.0333    0.0260
+          1      0.9504      0.9488     -0.0016  0.0254 [-0.0490,+0.0483]     0.0384    0.0342
+          5      1.4218      1.4210     -0.0008  0.0261 [-0.0531,+0.0455]     0.0273    0.0293
 
 1d. WHERE THE ERROR HELPED
 ------------------------------------------------------------------------
@@ -88,22 +91,24 @@ Onsets             : [np.int64(0), np.int64(20)]
   2000-replicate bootstrap that resamples BENCHMARKS, not rows.
 
   [primary]  R^2 = 0.526 over 640 cells in 20 benchmarks
-  term                  beta               95% CI    p(FDR)
-  log_noise           0.3699 [   0.147,   0.659]   0.00125
-  dim                -0.0251 [  -0.259,   0.121]     0.768
-  log_opt_z           0.6357 [   0.243,   0.743]   0.00125
-  ruggedness         -0.0913 [  -0.383,   0.118]    0.5187
-  log_tail_ratio      0.1987 [   0.029,   0.331]  0.008333
+  term                  beta               95% CI    p(FDR)    VIF
+  log_noise           0.3699 [   0.147,   0.659]   0.00125   1.00
+  dim                -0.0251 [  -0.259,   0.121]     0.768   1.02
+  log_opt_z           0.6357 [   0.243,   0.743]   0.00125   1.21
+  ruggedness         -0.0913 [  -0.383,   0.118]    0.5187   1.21
+  log_tail_ratio      0.1987 [   0.029,   0.331]  0.008333   1.02
+  (VIF on this model's own design matrix, indicators included)
 
   [sensitivity]  R^2 = 0.542 over 640 cells in 20 benchmarks
-  term                  beta               95% CI    p(FDR)
-  log_noise           0.3699 [   0.147,   0.659]    0.0035
-  dim                -0.0163 [  -0.144,   0.173]     0.901
-  log_opt_z           0.9365 [   0.046,   1.314]     0.098
-  ruggedness         -0.0611 [  -0.264,   0.107]     0.532
-  log_tail_ratio      0.1490 [   0.010,   0.309]     0.098
-  log_sparsity        0.3214 [  -0.104,   0.606]    0.3553
-  skew               -0.0258 [  -0.408,   0.369]     0.901
+  term                  beta               95% CI    p(FDR)    VIF
+  log_noise           0.3699 [   0.147,   0.659]    0.0035   1.00
+  dim                -0.0163 [  -0.144,   0.173]     0.901   1.03
+  log_opt_z           0.9365 [   0.046,   1.314]     0.098   9.21
+  ruggedness         -0.0611 [  -0.264,   0.107]     0.532   1.27
+  log_tail_ratio      0.1490 [   0.010,   0.309]     0.098   1.24
+  log_sparsity        0.3214 [  -0.104,   0.606]    0.3553   5.83
+  skew               -0.0258 [  -0.408,   0.369]     0.901   6.34
+  (VIF on this model's own design matrix, indicators included)
 
 3b. DOES IT REDUCE TO ONE-SHOT SELECTION LOSS?
 ------------------------------------------------------------------------
@@ -114,6 +119,22 @@ Onsets             : [np.int64(0), np.int64(20)]
   mediator_only      R^2 = 0.520   beta(frag_at_c) = +0.7477
   descriptors_only   R^2 = 0.526   beta(frag_at_c) =      -
   both               R^2 = 0.701   beta(frag_at_c) = +0.6628
+  (response: post-onset excess regret in landscape SDs)
+
+  Unit sensitivity, opt_z-free rows only (mediator_model_normalised.csv):
+  model                       R^2 excess (SDs)  R^2 fraction of opt_z
+  indicators_only                        0.040                  0.216
+  magnitude_only                         0.158                  0.510
+  mediator_only                          0.520                  0.462
+  magnitude_mediator                     0.543                  0.543
+  mediator_scaled_only                   0.043                  0.438  (shares the opt_z divisor)
+  magnitude_mediator_scaled              0.387                  0.510  (shares the opt_z divisor)
+  corr(frag_at_c, log10 opt_z) over the cells = +0.310
+  frag beside the magnitude (z-scored; 95% landscape-bootstrap interval):
+    excess_sd  frag_at_c        beta = +0.8936 [+0.3657, +0.9837]  p = 0.0005  R^2 = 0.5433
+    fragility  frag_at_c        beta = +0.0219 [+0.0067, +0.0662]  p = 0.0010  R^2 = 0.5433
+    excess_sd  frag_over_opt_z  beta = -1.0097 [-1.6935, -0.0378]  p = 0.0280  R^2 = 0.3874
+    fragility  frag_over_opt_z  beta = +0.0020 [-0.0180, +0.0209]  p = 0.7950  R^2 = 0.5099
 
 4. ACQUISITION ROBUSTNESS, POOLED OVER CONDITIONS
 ------------------------------------------------------------------------

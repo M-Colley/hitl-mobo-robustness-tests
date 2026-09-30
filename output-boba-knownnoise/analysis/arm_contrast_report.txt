@@ -1,0 +1,53 @@
+ARM CONTRAST: known noise vs learned noise
+========================================================================
+
+Paired on dataset, acquisition, error_model, jitter_std, jitter_iteration, seed; 4,800 cells, 20 benchmarks, 6 acquisitions, 5 seeds.
+Positive delta = the treatment arm suffers MORE from feedback error.
+
+OVERALL: learned noise 0.0570 -> known noise 0.0550  (+3.4% of the measured cost)
+
+A share is not reported (--) where the reference cost is below 0.01 of the achievable improvement or negative on a landscape; the delta is the result there.
+
+      error      SD  onset       ref       trt     delta    share      dz    p(FDR)  ref<0 ref=0
+   gaussian    0.05      0    0.0062    0.0059   -0.0003       --   -0.02    0.9919      3     0
+   gaussian    0.05     20    0.0014    0.0029   +0.0015       --    0.12    0.9919      5     3
+   gaussian    0.25      0    0.0382    0.0325   -0.0058   +15.1%   -0.18    0.9919      0     0
+   gaussian    0.25     20    0.0099    0.0081   -0.0018       --   -0.16    0.9919      1     2
+   gaussian       1      0    0.1170    0.1179   +0.0009    -0.8%    0.03         1      0     0
+   gaussian       1     20    0.0231    0.0228   -0.0002    +1.0%   -0.02    0.9919      0     3
+   gaussian       5      0    0.2134    0.2042   -0.0092    +4.3%   -0.23    0.9919      0     0
+   gaussian       5     20    0.0465    0.0457   -0.0008    +1.7%   -0.03         1      0     2
+
+Per acquisition (landscape means over every shared cell):
+
+  acquisition        ref       trt     delta    share
+  pi              0.0888    0.0829   -0.0059    +6.6%
+  ei              0.0582    0.0525   -0.0057    +9.8%
+  qnei            0.0487    0.0442   -0.0045       --  (reference negative on 1 of 20 landscapes)
+  ucb             0.0495    0.0467   -0.0028    +5.7%
+  logei           0.0562    0.0560   -0.0002    +0.3%
+  qucb            0.0405    0.0478   +0.0073   -18.1%
+
+Per benchmark (mean over every shared cell):
+
+  benchmark               opt_z       ref       trt     delta    share
+  ackley                  20.10    0.1130    0.0594   -0.0536   +47.4%
+  weber_fechner            2.15    0.0486    0.0354   -0.0132   +27.2%
+  hicks_law                5.40    0.0705    0.0577   -0.0128   +18.2%
+  stevens                  3.06    0.0520    0.0403   -0.0117   +22.5%
+  eggholder                3.21    0.0431    0.0357   -0.0074   +17.3%
+  power_law_practice       1.72    0.0563    0.0493   -0.0070   +12.4%
+  schwefel                 4.33    0.0424    0.0359   -0.0065   +15.3%
+  griewank                 2.75    0.0990    0.0934   -0.0056    +5.6%
+  levy_10                  2.62    0.0530    0.0480   -0.0050    +9.4%
+  branin                   1.25    0.0235    0.0185   -0.0049   +21.1%
+  steering_law             1.29    0.0388    0.0353   -0.0034    +8.8%
+  powell                   0.76    0.0074    0.0075   +0.0001       --
+  hartmann_3               3.05    0.0701    0.0708   +0.0008    -1.1%
+  rosenbrock               1.03    0.0072    0.0090   +0.0018       --
+  hartmann_6               7.97    0.1388    0.1419   +0.0031    -2.2%
+  moving_peaks             2.96    0.0609    0.0650   +0.0041    -6.7%
+  shekel                  56.77    0.0411    0.0484   +0.0072   -17.6%
+  rastrigin                3.64    0.0535    0.0670   +0.0135   -25.3%
+  yerkes_dodson            3.54    0.0671    0.0912   +0.0241   -36.0%
+  michalewicz              8.05    0.0532    0.0906   +0.0374   -70.2%

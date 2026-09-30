@@ -133,18 +133,22 @@ def test_adaptations_table_groups_arms_and_stars_the_corrected_test(tmp_path):
     # bootstrap interval. rep10 has a tiny q and is starred; nigp's interval also
     # excludes zero on one response but its q does not clear 0.05, so it is not.
     rows = []
-    spec = {  # arm: (recovered, lo, hi, price, pooled q)
-        "rep10": (-0.88, -1.13, -0.67, 0.051, 0.001),
-        "nigp": (-0.28, -0.43, -0.10, -0.001, 0.400),
-        "fitted-rep10": (-0.08, -0.17, 0.06, 0.024, 0.250),
+    spec = {  # arm: (recovered, lo, hi, price, pooled q, datasets, range lo, range hi)
+        "rep10": (-0.88, -1.13, -0.67, 0.051, 0.001, 20, -2.0, 0.1),
+        "nigp": (-0.28, -0.43, -0.10, -0.001, 0.400, 20, -1.0, 0.2),
+        # Three datasets: the bracket is the range of the per-dataset recoveries,
+        # never starred even at a small q, and the row has a price now that the
+        # fitted datasets have an achievable-improvement scale.
+        "fitted-rep10": (-0.67, -0.90, -0.40, 0.028, 0.001, 3, -0.78, -0.49),
     }
-    for arm, (rec, lo, hi, price, q) in spec.items():
+    for arm, (rec, lo, hi, price, q, n, rlo, rhi) in spec.items():
         for response in ("trajectory", "deployed"):
             for onset in (0, 20):
                 rows.append({"arm": arm, "reference": "r", "response": response, "jitter_std": 1.0,
                              "jitter_iteration": onset, "pooled_recovered": rec, "pooled_recovered_lo": lo,
                              "pooled_recovered_hi": hi, "pooled_price": price,
-                             "pooled_wilcoxon_p_fdr": q})
+                             "pooled_wilcoxon_p_fdr": q, "pooled_n_landscapes": n,
+                             "pooled_recovered_range_lo": rlo, "pooled_recovered_range_hi": rhi})
     pd.DataFrame(rows).to_csv(tmp_path / "adaptations_recovery.csv", index=False)
     mt.table_adaptations(tmp_path, tmp_path)
     tex = (tmp_path / "adaptations.tex").read_text(encoding="utf-8")
@@ -155,8 +159,11 @@ def test_adaptations_table_groups_arms_and_stars_the_corrected_test(tmp_path):
     assert len(body) == 3
     assert tex.count("$^{*}$") == 2  # rep10 on both responses; nigp's interval excludes
     # zero on both too, and is correctly unstarred because its q is 0.40
-    fitted = [l for l in body if "rated twice" in l and "--" in l]
-    assert len(fitted) == 1          # the fitted row has no price
+    fitted = [l for l in body if "rated twice" in l and "range" in l]
+    assert len(fitted) == 1
+    assert fitted[0] == ("first ten proposals rated twice & $-$67 {\\scriptsize range [$-$78, $-$49]} & "
+                         "$-$67 {\\scriptsize range [$-$78, $-$49]} & +2.8 & +2.8 \\\\")
+    assert any("seeds 7--16" in g for g in groups)
 
 
 def test_adaptations_table_never_prints_a_nonzero_bound_as_zero(tmp_path):

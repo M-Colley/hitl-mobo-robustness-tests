@@ -1,0 +1,15 @@
+{
+  "n_problems": 6,
+  "n_acquisitions": 4,
+  "conditions_total": 8,
+  "conditions_significant": 0,
+  "kendall_w": 0.05555555555555555,
+  "winners": {
+    "branincurrin": "qlognehvi",
+    "carsideimpact": "qnehvi",
+    "dtlz2": "qehvi",
+    "penicillin": "qlogehvi",
+    "vehiclesafety": "qlogehvi",
+    "zdt1": "qnehvi"
+  }
+}

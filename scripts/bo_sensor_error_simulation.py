@@ -30,10 +30,13 @@ if "PYTORCH_CUDA_ALLOC_CONF" in os.environ and "PYTORCH_ALLOC_CONF" not in os.en
 import argparse
 import dataclasses
 import functools
+import hashlib
+import importlib
 import importlib.metadata
 import json
 import math
 import re
+import shutil
 import subprocess
 import time
 import uuid
@@ -730,30 +733,132 @@ def adaptation_fields(args: "argparse.Namespace") -> dict:
         "anchor_set": int(getattr(args, "anchor_set", 3) or 3),
         "anchor_model": str(getattr(args, "anchor_model", "none") or "none"),
         "hold_early": int(getattr(args, "hold_early", 0) or 0),
-        "hold_until_frac": float(getattr(args, "hold_until_frac", 0.6) or 0.6),
+        "hold_until_frac": hold_until_fraction(args),
         # The multi-objective halo error and its remedy, likewise.
         "error_cross_corr": float(getattr(args, "error_cross_corr", 0.0) or 0.0),
         "mo_halo_model": getattr(args, "mo_halo_model", "none") or "none",
     }
 
 
-def code_stamp(repo_root: Path) -> dict:
-    """The code a run was produced with: the commit, and whether the simulator's
-    code or the dataset configs had uncommitted changes (register item I18)."""
+def hold_until_fraction(args: argparse.Namespace) -> float:
+    """The --hold-until fraction. The flag's dest is hold_until; hold_until_frac is
+    accepted for a namespace built by hand. Unset means the default 0.6, and 0 is
+    a value, not a request for the default."""
+    value = getattr(args, "hold_until", None)
+    if value is None:
+        value = getattr(args, "hold_until_frac", None)
+    return 0.6 if value is None else float(value)
+
+
+# What code_stamp treats as the code and the inputs of a run: the scripts, the
+# dataset configs and the landscape statistics the synthetic arm standardises by.
+PROVENANCE_PATHS = (
+    "scripts",
+    "datasets.json",
+    "datasets-ehmi.json",
+    "datasets-extended.json",
+    "datasets-provoice.json",
+    "boba_landscape_stats.json",
+    "boba_mo_stats.json",
+)
+
+
+def code_diff(repo_root: Path) -> tuple[str | None, bytes | None, list[str] | None]:
+    """The uncommitted state of PROVENANCE_PATHS: (sha256, patch bytes, dirty files).
+
+    The patch is `git diff HEAD --binary` over those paths followed by every
+    untracked file under them (path, NUL, contents), so a new module that was
+    never committed is covered too. The sha256 is taken over exactly those bytes;
+    an empty patch hashes to the sha256 of b''. dirty_files lists `git status
+    --porcelain` lines, untracked files included. All three are None outside git."""
+    def _run(*args: str) -> bytes | None:
+        try:
+            return subprocess.run(["git", "-C", str(repo_root), *args], capture_output=True,
+                                  check=True).stdout
+        except Exception:
+            return None
+    diff = _run("diff", "HEAD", "--binary", "--", *PROVENANCE_PATHS)
+    status = _run("status", "--porcelain", "--untracked-files=all", "--", *PROVENANCE_PATHS)
+    if diff is None or status is None:
+        return None, None, None
+    lines = [line for line in status.decode("utf-8", "replace").splitlines() if line.strip()]
+    patch = bytearray(diff)
+    for line in sorted(line for line in lines if line.startswith("??")):
+        rel = line[3:].strip().strip('"')
+        path = Path(repo_root) / rel
+        if path.is_file():
+            patch += b"\n" + rel.encode("utf-8") + b"\0" + path.read_bytes()
+    return hashlib.sha256(bytes(patch)).hexdigest(), bytes(patch), lines
+
+
+# Where append_invocation writes the uncommitted patch. The output directories are
+# tracked and served by the anonymous mirror, and a patch carries diff context lines
+# and whole untracked files, so it goes to a git-ignored store instead:
+# $HITL_CODE_DIFF_DIR, else <repo>/output/code_diffs/ (output/ is git-ignored).
+CODE_DIFF_STORE_ENV = "HITL_CODE_DIFF_DIR"
+
+
+def code_diff_store(repo_root: Path) -> Path:
+    override = os.environ.get(CODE_DIFF_STORE_ENV)
+    return Path(override) if override else Path(repo_root) / "output" / "code_diffs"
+
+
+def mask_home(data: bytes) -> bytes:
+    """data with the home directory replaced by '~', in each spelling a Windows
+    checkout writes it (C:\\Users\\x, C:/Users/x, C:\\\\Users\\\\x, /c/Users/x)."""
+    home = str(Path.home())
+    spellings = {home, home.replace("\\", "/"), home.replace("\\", "\\\\")}
+    if len(home) > 2 and home[1] == ":":
+        tail = home[2:].replace("\\", "/")
+        spellings |= {"/" + home[0].lower() + tail, "/" + home[0].upper() + tail}
+        spellings |= {s[0].swapcase() + s[1:] for s in list(spellings) if s[:1].isalpha()}
+    for spelling in sorted(spellings, key=len, reverse=True):
+        if len(spelling.strip("/\\")) > 1:
+            data = data.replace(spelling.encode("utf-8"), b"~")
+    return data
+
+
+def code_stamp(repo_root: Path, patch_dir: Path | None = None) -> dict:
+    """The code a run was produced with: the commit, whether the simulator's code or
+    its inputs had uncommitted changes (register item I18), and, because a dirty bit
+    alone cannot say WHICH changes, the sha256 of the uncommitted patch and the list
+    of dirty files (code_diff). With patch_dir, a non-empty patch is also written
+    there as code_diff_<sha12>.patch, so the exact code can be rebuilt from HEAD.
+    The file has the home directory masked; when that changed it, its own sha256 is
+    recorded as code_diff_patch_sha256 (code_diff_sha256 stays the hash of the code)."""
     def _git(*args: str) -> str | None:
         try:
             return subprocess.run(["git", "-C", str(repo_root), *args], capture_output=True,
                                   text=True, check=True).stdout.strip()
         except Exception:
             return None
-    status = _git("status", "--porcelain", "--untracked-files=no", "--", "scripts", "datasets.json")
-    return {
+    sha, patch, dirty_files = code_diff(repo_root)
+    stamp = {
         "git_commit": _git("rev-parse", "HEAD"),
-        "code_dirty": None if status is None else bool(status),
+        "code_dirty": None if dirty_files is None else bool(dirty_files),
+        "code_diff_sha256": sha,
+        "dirty_files": dirty_files,
         "stamped_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         # the home directory is masked so that metadata served by the anonymous mirror stays anonymous
         "argv": [arg.replace(str(Path.home()), "~") for arg in sys.argv],
     }
+    if patch_dir is not None and patch and sha:
+        try:
+            patch_path = Path(patch_dir) / f"code_diff_{sha[:12]}.patch"
+            written = mask_home(patch)
+            if not patch_path.is_file():
+                patch_path.parent.mkdir(parents=True, exist_ok=True)
+                patch_path.write_bytes(written)
+            try:
+                stamp["code_diff_patch"] = patch_path.resolve().relative_to(
+                    Path(repo_root).resolve()).as_posix()
+            except ValueError:
+                stamp["code_diff_patch"] = patch_path.name
+            if written != patch:
+                stamp["code_diff_patch_sha256"] = hashlib.sha256(written).hexdigest()
+        except OSError:
+            pass
+    return stamp
 
 
 def append_invocation(metadata_path: Path, payload: dict, repo_root: Path) -> dict:
@@ -770,9 +875,10 @@ def append_invocation(metadata_path: Path, payload: dict, repo_root: Path) -> di
                             "stamped_at": None, "argv": None, "note": "recorded before invocations were kept"}]
         except Exception:
             history = []
-    stamp = code_stamp(repo_root)
+    stamp = code_stamp(repo_root, patch_dir=code_diff_store(repo_root))
     payload = dict(payload)
     payload["code_dirty"] = stamp["code_dirty"]
+    payload["code_diff_sha256"] = stamp["code_diff_sha256"]
     payload["invocations"] = history + [stamp]
     return payload
 
@@ -798,6 +904,9 @@ class DatasetConfig:
     # value rescaled to [-1, 1], and averaging the two scales puts a spike of
     # about 4 on a surface that otherwise lies in [-1, 1].
     column_ranges: dict[str, tuple[float, float]] = dataclasses.field(default_factory=dict)
+    # The data commit each remote data_dir is pinned to, {resolved dir: sha}, from
+    # the dataset entry's data_commit field. Empty for local directories.
+    data_commits: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass(frozen=True)
@@ -1570,6 +1679,10 @@ def _build_oracle_model(oracle_model: str, seed: int, tree_scale: float) -> obje
             random_seed=seed,
             thread_count=1,
             verbose=False,
+            # No catboost_info/ training logs in the working directory: an
+            # in-process fit rewrote the tracked folder. Fitted values are
+            # bit-identical with and without it (checked on the oracle config).
+            allow_writing_files=False,
         )
     if oracle_model == "tabpfn":
         if TabPFNRegressor is None:
@@ -1837,12 +1950,85 @@ def sanitize_repo_name(value: str) -> str:
     return trimmed.split("/")[-1]
 
 
-def fetch_remote_dataset(url: str, cache_dir: Path) -> Path:
+# Set to "warn" to use a cached clone whose commit differs from its pin anyway.
+DATA_COMMIT_MISMATCH_ENV = "HITL_DATA_COMMIT_MISMATCH"
+
+
+def git_head(path: Path) -> str | None:
+    """HEAD of the git checkout at path, or None if it is not one."""
+    try:
+        return subprocess.run(["git", "-C", str(path), "rev-parse", "HEAD"], capture_output=True,
+                              text=True, check=True).stdout.strip() or None
+    except Exception:
+        return None
+
+
+def _remove_tree(path: Path) -> None:
+    """rmtree that also removes the read-only files git leaves in .git on Windows."""
+    def _writable_and_retry(func, target, _exc):
+        try:
+            os.chmod(target, 0o700)
+            func(target)
+        except OSError:
+            pass
+    if Path(path).exists():
+        shutil.rmtree(path, onexc=_writable_and_retry)
+
+
+def _clone_at_commit(url: str, target_dir: Path, commit: str) -> None:
+    """A checkout of url at exactly commit: a depth-1 fetch of that commit, or the
+    full history when the server refuses to serve a commit by id. A failed attempt
+    leaves no directory behind, so it cannot be mistaken for a cached clone later."""
+    try:
+        subprocess.run(["git", "init", "-q", str(target_dir)], check=True)
+        subprocess.run(["git", "-C", str(target_dir), "remote", "add", "origin", url], check=True)
+        fetched = subprocess.run(["git", "-C", str(target_dir), "fetch", "-q", "--depth", "1",
+                                  "origin", commit])
+        if fetched.returncode != 0:
+            subprocess.run(["git", "-C", str(target_dir), "fetch", "-q", "origin"], check=True)
+        subprocess.run(["git", "-C", str(target_dir), "checkout", "-q", "--detach", commit], check=True)
+    except Exception:
+        _remove_tree(target_dir)
+        raise
+
+
+def fetch_remote_dataset(url: str, cache_dir: Path, commit: str | None = None) -> Path:
+    """The cached clone of a remote dataset, cloned on first use.
+
+    With commit (a dataset entry's data_commit), a new clone is checked out at that
+    commit and a cached one must already be at it: a mismatch raises, unless
+    HITL_DATA_COMMIT_MISMATCH=warn, which only warns. Without commit the clone is
+    unpinned, as it always was, and a warning says so."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     repo_name = sanitize_repo_name(url)
     target_dir = cache_dir / repo_name
     if target_dir.exists():
+        if commit:
+            head = git_head(target_dir)
+            if head is None or not head.startswith(commit.lower()):
+                message = (
+                    f"The cached dataset {target_dir} is at commit {head or '<not a git checkout>'}, "
+                    f"but its dataset config pins data_commit {commit}. Check the pinned commit out "
+                    f"(git -C {target_dir} fetch --depth 1 origin {commit} && git -C {target_dir} "
+                    f"checkout --detach {commit}) or delete the directory so it is cloned again. "
+                    f"{DATA_COMMIT_MISMATCH_ENV}=warn proceeds on the cached data anyway."
+                )
+                if os.environ.get(DATA_COMMIT_MISMATCH_ENV, "").strip().lower() == "warn":
+                    print(f"WARNING: {message}", file=sys.stderr)
+                else:
+                    raise ValueError(message)
         return target_dir
+    if commit:
+        _clone_at_commit(url, target_dir, commit)
+        head = git_head(target_dir)
+        if head is None or not head.startswith(commit.lower()):
+            raise ValueError(f"Cloned {url} into {target_dir} but HEAD is {head}, not the pinned {commit}.")
+        return target_dir
+    print(
+        f"WARNING: cloning {url} with no data_commit pin; the data is whatever the default "
+        "branch holds today.",
+        file=sys.stderr,
+    )
     subprocess.run(
         ["git", "clone", "--depth", "1", url, str(target_dir)],
         check=True,
@@ -1850,14 +2036,57 @@ def fetch_remote_dataset(url: str, cache_dir: Path) -> Path:
     return target_dir
 
 
-def resolve_data_dirs(raw_dirs: list[str], cache_dir: Path) -> list[Path]:
+def _pinned_commit(entry: str, commits: str | dict[str, str] | None) -> str | None:
+    if not commits:
+        return None
+    if isinstance(commits, str):
+        return commits.strip() or None
+    value = commits.get(entry)
+    return str(value).strip() or None if value else None
+
+
+def resolve_data_dirs(
+    raw_dirs: list[str],
+    cache_dir: Path,
+    commits: str | dict[str, str] | None = None,
+) -> list[Path]:
+    """Local entries as paths; remote ones fetched into cache_dir. commits is the
+    dataset entry's data_commit: one sha for its remote entry, or {url: sha} when
+    it lists several."""
     resolved = []
     for entry in raw_dirs:
         if is_remote_dataset_path(entry):
-            resolved.append(fetch_remote_dataset(entry, cache_dir))
+            commit = _pinned_commit(entry, commits)
+            if commit:
+                resolved.append(fetch_remote_dataset(entry, cache_dir, commit=commit))
+            else:
+                resolved.append(fetch_remote_dataset(entry, cache_dir))
         else:
             resolved.append(Path(entry).expanduser())
     return resolved
+
+
+def dataset_provenance(datasets: list["DatasetConfig"]) -> dict[str, dict]:
+    """What data each dataset was read from: per dataset, each data directory with
+    the commit it is checked out at (None when it is not a git checkout) and the
+    commit its config pins (None when unpinned). Paths inside the repository are
+    recorded relative to it, so the record names no local directory."""
+    record: dict[str, dict] = {}
+    for dataset in datasets:
+        dirs = []
+        for data_dir in dataset.data_dirs:
+            text = str(data_dir)
+            try:
+                shown = Path(data_dir).resolve().relative_to(REPO_ROOT).as_posix()
+            except ValueError:
+                shown = text.replace(str(Path.home()), "~")
+            dirs.append({
+                "data_dir": shown,
+                "commit": git_head(Path(data_dir)),
+                "pinned_commit": dataset.data_commits.get(text),
+            })
+        record[dataset.name] = {"data_dirs": dirs}
+    return record
 
 
 def _default_dataset_config() -> Path | None:
@@ -1943,7 +2172,17 @@ def parse_dataset_configs(
                 raise ValueError(f"Dataset '{name}' column_ranges['{key}'] has low {low} above high {high}.")
             cleaned_ranges[str(key)] = (low, high)
 
-        resolved_dirs = resolve_data_dirs([str(path) for path in data_dirs], cache_dir)
+        # data_commit pins the remote data: one sha, or {url: sha} for several.
+        data_commit = entry.get("data_commit")
+        if data_commit is not None and not isinstance(data_commit, (str, dict)):
+            raise ValueError(f"Dataset '{name}' data_commit must be a commit sha or a {{url: sha}} dict.")
+        raw_entries = [str(path) for path in data_dirs]
+        resolved_dirs = resolve_data_dirs(raw_entries, cache_dir, commits=data_commit)
+        pinned = {
+            str(resolved): commit
+            for raw, resolved in zip(raw_entries, resolved_dirs)
+            if is_remote_dataset_path(raw) and (commit := _pinned_commit(raw, data_commit))
+        }
         datasets.append(
             DatasetConfig(
                 name=str(name),
@@ -1953,6 +2192,7 @@ def parse_dataset_configs(
                 observation_glob=str(observation_glob),
                 oracle_target=oracle_target,
                 column_ranges=cleaned_ranges,
+                data_commits=pinned,
             )
         )
 
@@ -1992,8 +2232,10 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
         return None
 
     combined_dirs: list[Path] = []
+    combined_commits: dict[str, str] = {}
     for dataset in datasets:
         combined_dirs.extend(dataset.data_dirs)
+        combined_commits.update(dataset.data_commits)
 
     return DatasetConfig(
         name=name,
@@ -2002,6 +2244,7 @@ def combine_dataset_configs(datasets: list[DatasetConfig], name: str = "combined
         objective_map=objective_map,
         observation_glob=first.observation_glob,
         oracle_target=first.oracle_target,
+        data_commits=combined_commits,
     )
 
 
@@ -2207,13 +2450,26 @@ def write_run_config(
     config_path.write_text("\n".join(lines))
 
 
+_IMPORT_NAMES = {"scikit-learn": "sklearn", "pyro-ppl": "pyro"}
+
+
 def collect_package_versions(packages: list[str]) -> dict[str, str]:
     versions = {}
     for package in packages:
         try:
-            versions[package] = importlib.metadata.version(package)
+            version = importlib.metadata.version(package)
         except importlib.metadata.PackageNotFoundError:
             versions[package] = "not_installed"
+            continue
+        if version is None:
+            # A leftover dist-info without METADATA (statsmodels here) makes the
+            # lookup return None; the imported module still knows its version.
+            try:
+                module = importlib.import_module(_IMPORT_NAMES.get(package, package.replace("-", "_")))
+                version = getattr(module, "__version__", None)
+            except Exception:
+                version = None
+        versions[package] = version
     return versions
 
 
@@ -5203,6 +5459,9 @@ def main() -> None:
         "python_version": sys.version,
         "platform": sys.platform,
         "data_dir_commits": data_dir_commits,
+        "data_commit_pins": {
+            path: commit for dataset in dataset_configs for path, commit in dataset.data_commits.items()
+        },
         "resolved_oracle_cv_r2": oracle_cv_scores,
         "failed_seeds": failed_seeds,
         "effective_jitter_stds": jitter_stds,
@@ -5241,6 +5500,8 @@ def main() -> None:
                 "catboost",
                 "statsmodels",
                 "botorch",
+                "gpytorch",
+                "linear_operator",
                 "torch",
                 "tabpfn",
             ]

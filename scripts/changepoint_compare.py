@@ -43,6 +43,28 @@ or before the onset of a late change.
 Reads the residual cache that replay_stopping.py already wrote, so it refits
 nothing.
 
+The freeze rule's own operating point. The comparison above re-tunes the CUSUM
+from its own kappa grid, so the CUSUM it compares is not the one the freeze rule
+runs: replay_stopping.py tunes (h, kappa, w) to deployed regret and lands on
+kappa = 16, h = 2000, w = 3 (stopping_tuned_A.json). w only chooses which prefix
+the shipped design is refitted on, so the detector is (kappa, h). The script
+therefore also writes changepoint_freeze_point.csv:
+
+    freeze_rule_fixed   that CUSUM at its own (kappa, h), tuning and held-out
+                        seeds, with the false alarms split into clean runs and
+                        runs with error from trial 1;
+    freeze_rule_budget  every detector (the re-tuned CUSUM with the freeze
+                        kappa added to its grid, the CUSUM at the freeze kappa,
+                        the GLR, BOCPD) re-thresholded to the freeze rule's own
+                        pooled false-alarm rate on the tuning seeds and scored on
+                        the held-out seeds, pooled and by magnitude;
+    budget              the CUSUM at the freeze kappa re-thresholded to each
+                        common budget, beside the kappa-grid CUSUM and the GLR.
+
+and checks that the fixed operating point reproduces the alarm trial rule A
+logged for every run in stopping_per_run.csv. changepoint_metadata.json records
+the arguments.
+
     python scripts/changepoint_compare.py
     python scripts/changepoint_compare.py --false-alarm 0.05,0.10,0.20
 """
@@ -81,6 +103,15 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--hazard-grid", type=str, default="0.01,0.02,0.05")
     p.add_argument("--rmax", type=int, default=5,
                    help="bocpd alarms when P(run length <= rmax) exceeds its threshold")
+    p.add_argument("--freeze-params", type=str,
+                   default="output-boba/analysis/stopping/stopping_tuned_A.json",
+                   help="the freeze rule's tuned (h, kappa, w) written by replay_stopping.py; its CUSUM "
+                        "is scored at that fixed operating point and every detector is re-tuned to its "
+                        "false-alarm rate ('none' skips this)")
+    p.add_argument("--per-run", type=str,
+                   default="output-boba/analysis/stopping/stopping_per_run.csv",
+                   help="replay_stopping.py's per-run table: the fixed operating point must reproduce "
+                        "rule A's logged alarm trial on every run ('none' skips the check)")
     return p.parse_args(argv)
 
 
@@ -252,6 +283,158 @@ def threshold_for(path: np.ndarray, block: pd.DataFrame, target: float, n0: int)
     return float(np.quantile(peaks, 1.0 - target))
 
 
+# ---------------------------------------------------------------------------
+# The freeze rule's own operating point
+# ---------------------------------------------------------------------------
+
+
+def load_freeze_params(raw: str | None) -> dict | None:
+    """(h, kappa, w) of the freeze rule, from replay_stopping.py's stopping_tuned_A.json."""
+    if raw is None or str(raw).strip().lower() in ("", "none"):
+        return None
+    path = Path(raw)
+    if not path.is_file():
+        raise SystemExit(f"{path} not found: run scripts/replay_stopping.py first, or pass --freeze-params none")
+    got = json.loads(path.read_text(encoding="utf-8"))
+    h, kappa, w = float(got["h"]), float(got["kappa"]), int(got["w"])
+    if not np.isfinite(h):
+        raise SystemExit(f"{path} holds the never-stop rule (h = inf); there is no operating point to score")
+    return {"h": h, "kappa": kappa, "w": w, "source": path.as_posix()}
+
+
+def steady_split(alarms: np.ndarray, block: pd.DataFrame) -> dict:
+    """False alarms split as replay_stopping.py constrains them, plus pre-onset alarms on late runs.
+
+    Clean runs and runs with error from trial 1 are the two kinds of steady run;
+    the freeze rule's tuning caps each at 10% separately, while the comparison
+    above budgets their pool.
+    """
+    clean = block["clean"].to_numpy(bool)
+    changed = block["changed"].to_numpy(bool)
+    onset0 = ~clean & ~changed
+    fired = alarms > 0
+    early = fired & changed & (alarms <= block["onset"].to_numpy())
+    return {
+        "false_alarm_clean": float(fired[clean].mean()) if clean.any() else float("nan"),
+        "false_alarm_onset0": float(fired[onset0].mean()) if onset0.any() else float("nan"),
+        "pre_onset_alarm_late": float(early[changed].mean()) if changed.any() else float("nan"),
+        "n_clean": int(clean.sum()), "n_onset0": int(onset0.sum()),
+    }
+
+
+def _point_row(comparison: str, detector: str, params: dict, h: float, target: float, split: str,
+               alarms: np.ndarray, block: pd.DataFrame, magnitude="all") -> dict:
+    return {"comparison": comparison, "detector": detector, "params": json.dumps(params),
+            "threshold": h, "target_false_alarm": target, "split": split, "jitter_std": magnitude,
+            **rates(alarms, block), **steady_split(alarms, block)}
+
+
+def freeze_point_table(tune: pd.DataFrame, score: pd.DataFrame, Z_tune: np.ndarray, Z_score: np.ndarray,
+                       freeze: dict, kappas: list[float], hazards: list[float], targets: list[float],
+                       rmax: int, n0: int) -> pd.DataFrame:
+    """The freeze rule's CUSUM at its own (kappa, h), and every detector at its false-alarm rate.
+
+    Three blocks (column ``comparison``):
+
+    freeze_rule_fixed   the CUSUM at the freeze rule's (kappa, h), not re-tuned, on
+                        both seed splits;
+    freeze_rule_budget  each detector's threshold tuned on the tuning seeds to the
+                        freeze rule's own pooled steady false-alarm rate there,
+                        then scored on the held-out seeds (pooled, and by
+                        magnitude, where the false-alarm rate is that of the runs
+                        with error from trial 1 at that magnitude);
+    budget              at each common budget, the CUSUM at the freeze kappa
+                        beside the kappa-grid CUSUM and the GLR, as scored in
+                        changepoint_detectors.csv.
+
+    Within a family (the kappa grid, the hazard grid) the variant with the highest
+    tuning-seed detection rate is kept, exactly as in the main comparison.
+    """
+    kf, hf = freeze["kappa"], freeze["h"]
+    fixed = {"kappa": kf}
+    rows = []
+    fixed_tune = first_alarm(cusum_path(Z_tune, kf), hf, n0)
+    fixed_score = first_alarm(cusum_path(Z_score, kf), hf, n0)
+    params_fixed = {"kappa": kf, "h": hf, "w": freeze["w"]}
+    rows.append(_point_row("freeze_rule_fixed", "cusum_freeze_rule", params_fixed, hf, float("nan"),
+                           "tune", fixed_tune, tune))
+    rows.append(_point_row("freeze_rule_fixed", "cusum_freeze_rule", params_fixed, hf, float("nan"),
+                           "score", fixed_score, score))
+    budget_freeze = rates(fixed_tune, tune)["false_alarm_rate"]
+
+    grid_plus = sorted(set(kappas) | {kf})
+    families = {
+        "cusum": [("cusum", {"kappa": k}) for k in grid_plus],
+        "cusum_freeze_kappa": [("cusum", fixed)],
+        "glr": [("glr", {})],
+        "bocpd": [("bocpd", {"hazard": h}) for h in hazards],
+    }
+
+    def build(name: str, params: dict, Z: np.ndarray) -> np.ndarray:
+        if name == "cusum":
+            return cusum_path(Z, params["kappa"])
+        if name == "glr":
+            return glr_path(Z)
+        return bocpd_path(Z, params["hazard"], rmax)
+
+    def tuned(variants, target):
+        best = None
+        for name, params in variants:
+            p_tune = build(name, params, Z_tune)
+            h = threshold_for(p_tune, tune, target, n0)
+            got = rates(first_alarm(p_tune, h, n0), tune)
+            if best is None or got["detection_rate"] > best["tune_detection"]:
+                best = {"name": name, "params": params, "h": h, "tune_detection": got["detection_rate"],
+                        "tune_false_alarm": got["false_alarm_rate"]}
+        return best
+
+    magnitudes = sorted(score.loc[score["changed"], "jitter_std"].dropna().unique())
+    for label, variants in families.items():
+        best = tuned(variants, budget_freeze)
+        alarms = first_alarm(build(best["name"], best["params"], Z_score), best["h"], n0)
+        extra = {"tune_detection": best["tune_detection"], "tune_false_alarm": best["tune_false_alarm"]}
+        rows.append({**_point_row("freeze_rule_budget", label, best["params"], best["h"], budget_freeze,
+                                  "score", alarms, score), **extra})
+        for m in magnitudes:
+            sel = (score["jitter_std"] == m).to_numpy()
+            rows.append({**_point_row("freeze_rule_budget", label, best["params"], best["h"], budget_freeze,
+                                      "score", alarms[sel], score[sel].reset_index(drop=True),
+                                      magnitude=float(m)), **extra})
+
+    budget_families = {"cusum": [("cusum", {"kappa": k}) for k in kappas],
+                       "cusum_freeze_kappa": [("cusum", fixed)], "glr": [("glr", {})]}
+    for target in targets:
+        for label, variants in budget_families.items():
+            best = tuned(variants, target)
+            alarms = first_alarm(build(best["name"], best["params"], Z_score), best["h"], n0)
+            rows.append({**_point_row("budget", label, best["params"], best["h"], target, "score", alarms, score),
+                         "tune_detection": best["tune_detection"], "tune_false_alarm": best["tune_false_alarm"]})
+    return pd.DataFrame(rows)
+
+
+def check_against_per_run(path: Path, frame: pd.DataFrame, freeze: dict, n0: int) -> dict:
+    """The fixed operating point must reproduce rule A's logged alarm trial on every run.
+
+    stopping_per_run.csv logs rule A's stop trial (empty when it never alarmed)
+    and the (h, kappa, w) it ran with. A mismatch means the cache and the
+    per-run table are from different analyses, and the fixed point is not the
+    freeze rule's detector.
+    """
+    per = pd.read_csv(path, usecols=["file", "rule", "stop_t", "h", "kappa", "w"])
+    per = per[per["rule"] == "A"]
+    logged_params = {(float(h), float(k), int(w)) for h, k, w in per[["h", "kappa", "w"]].itertuples(index=False)}
+    if logged_params != {(freeze["h"], freeze["kappa"], freeze["w"])}:
+        raise SystemExit(f"{path} ran rule A at {sorted(logged_params)}, not at the freeze parameters {freeze}")
+    logged = dict(zip(per["file"].map(lambda f: Path(f).name), per["stop_t"].fillna(0).astype(int)))
+    alarms = first_alarm(cusum_path(np.stack(frame["z"].to_numpy()), freeze["kappa"]), freeze["h"], n0)
+    names = frame["file"].map(lambda f: Path(f).name)
+    missing = int((~names.isin(logged.keys())).sum())
+    mismatches = int(sum(logged.get(n, -1) != int(a) for n, a in zip(names, alarms)))
+    return {"per_run_path": Path(path).as_posix(), "per_run_rows_rule_A": int(len(per)),
+            "streams_checked": int(len(frame)), "streams_missing_from_per_run": missing,
+            "alarm_mismatches": mismatches}
+
+
 def main(argv=None) -> pd.DataFrame:
     args = parse_args(argv)
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -314,6 +497,37 @@ def main(argv=None) -> pd.DataFrame:
                   f"{r['detection_rate'] * 100:8.1f}% {r['false_alarm_rate'] * 100:6.1f}% "
                   f"{r['median_delay']:6.1f}")
     print(f"\nWrote {args.output_dir / 'changepoint_detectors.csv'}")
+
+    metadata = {"args": {k: (v.as_posix() if isinstance(v, Path) else v) for k, v in vars(args).items()},
+                "n_streams": int(len(frame)), "stream_length": int(Z_tune.shape[1]),
+                "n_tune": int(len(tune)), "n_score": int(len(score)),
+                "n_changed": int(frame["changed"].sum())}
+    freeze = load_freeze_params(args.freeze_params)
+    if freeze is not None:
+        metadata["freeze_params"] = freeze
+        if args.per_run and str(args.per_run).strip().lower() not in ("", "none") and Path(args.per_run).is_file():
+            check = check_against_per_run(Path(args.per_run), frame, freeze, args.n0)
+            metadata["per_run_check"] = check
+            if check["alarm_mismatches"] or check["streams_missing_from_per_run"]:
+                raise SystemExit(f"the freeze rule's operating point does not reproduce rule A's logged "
+                                 f"alarms: {check}")
+            print(f"\nfreeze rule CUSUM (kappa = {freeze['kappa']:g}, h = {freeze['h']:g}) reproduces rule A's "
+                  f"logged alarm trial on all {check['streams_checked']:,} streams")
+        point = freeze_point_table(tune, score, Z_tune, Z_score, freeze, kappas, hazards, targets,
+                                   args.rmax, args.n0)
+        point.to_csv(args.output_dir / "changepoint_freeze_point.csv", index=False)
+        pooled = point[point["jitter_std"].astype(str) == "all"]
+        print("\nThe freeze rule's operating point (w only picks the refit prefix, so the detector is (kappa, h)):\n")
+        print(f"  {'block':<19} {'detector':<19} {'split':<6} {'budget':>7} {'detected':>9} {'false':>7} "
+              f"{'clean':>6} {'onset0':>7} {'delay':>6}")
+        for _, r in pooled.iterrows():
+            budget = "" if not np.isfinite(r["target_false_alarm"]) else f"{r['target_false_alarm'] * 100:6.1f}%"
+            print(f"  {r['comparison']:<19} {r['detector']:<19} {r['split']:<6} {budget:>7} "
+                  f"{r['detection_rate'] * 100:8.1f}% {r['false_alarm_rate'] * 100:6.1f}% "
+                  f"{r['false_alarm_clean'] * 100:5.1f}% {r['false_alarm_onset0'] * 100:6.1f}% "
+                  f"{r['median_delay']:6.1f}")
+        print(f"\nWrote {args.output_dir / 'changepoint_freeze_point.csv'}")
+    (args.output_dir / "changepoint_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     return summary
 
 

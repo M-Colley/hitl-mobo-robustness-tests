@@ -1116,7 +1116,10 @@ def main(argv: list[str] | None = None) -> None:
                    "order_problem_files": order_problems,
                    "nugget_reproduced": repro, "nugget_stored": stored,
                    "sigma_f_manifest": sigma_manifest, "sigma_f_recomputed": sigma_recomputed,
-                   "anchor_ratio_stored": stored_ratio, "raw_scale_rows": int(mixed.sum())}
+                   "anchor_ratio_stored": stored_ratio, "raw_scale_rows": int(mixed.sum()),
+                   # the archival data read: each data directory, the commit it is
+                   # checked out at and the commit the dataset config pins
+                   "data": sim.dataset_provenance([dataset])[name]}
         n_p, n_r = df["participant"].nunique(), len(df)
         rows_meta = [
             simple_row(name, "pipeline", "sigma_f_manifest", sigma_manifest, "composite points",

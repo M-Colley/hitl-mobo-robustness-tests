@@ -34,7 +34,12 @@ Protocol
    headline number is reported in, Holm-adjusted over (i) the family the review
    names (sitting variants, ship rules, shortlist sizes, rank rule) and (ii) that
    family plus every other replayed arm the paper reports (the nine fixed k, the
-   derived budget rule, the four LUCB sittings).
+   derived budget rule, the four LUCB sittings). Two sensitivities leave those
+   columns unchanged: 4b tests the rank rules in the scope of their headline
+   recoveries (the gross-fault and capped-scale arms' held-out seeds 12-16,
+   analysis/hitl_remedies_heldout) with Holm over the core family with and
+   without the main-sweep rank-rule tests; 4c adds the four one-look-each
+   comparators of the LUCB sittings to the all family.
 5. The derived budget rule against the best fixed k at rho = 1, with a paired
    landscape bootstrap on the difference; and against the TRAIN-selected k on the
    test seeds, which is the comparison that does not favour the fixed rule by
@@ -479,6 +484,105 @@ def holm_rows(tests: list[dict]) -> list[dict]:
     return df.to_dict("records")
 
 
+# The arms whose rank-rule recoveries the paper quotes, with the scope of those
+# recoveries. Their seeds 12-16 were replayed into analysis/hitl_remedies_heldout
+# (paper/COMMANDS.md), which holds exactly that scope.
+RANK_SCOPE_ARMS = (
+    ("output-boba-spike", "gross faults (sp0.15-20, 0.25 sigma, from the first rating)"),
+    ("output-boba-ceiling", "capped scale (ceil0.9-fixed, 0.25 and 1 sigma, from the first rating)"),
+)
+RANK_PROCS = ("ordinal_lcb1", "ordinal_pm")
+
+
+def rank_scope_rows(holm: list[dict], opt_z: dict[str, float], root: Path = Path(".")) -> list[dict]:
+    """The rank rules tested in the scope of their headline recoveries (section 4b).
+
+    Section 4 tests the rank rules on the main sweep, where they recover nothing
+    to speak of; the recoveries the paper quotes come from the gross-fault and
+    capped-scale arms. Here each rank rule is tested on those arms' held-out
+    seeds 12-16 with the same per-landscape gains and Wilcoxon test, and Holm is
+    recomputed over three families built from section 4's core family: (a) the
+    two main-sweep rank-rule tests replaced by these four, (b) these four added,
+    and (c) the two main-sweep tests replaced by the two ``ordinal_lcb1`` tests,
+    the rule the paper tables. Section 4's own columns are not changed.
+    """
+    tests = []
+    for arm, scope in RANK_SCOPE_ARMS:
+        path = root / arm / "analysis" / "hitl_remedies_heldout" / "hitl_remedies_per_run.csv.gz"
+        if not path.is_file():
+            raise FileNotFoundError(f"{path}: the held-out replay of {arm} (paper/COMMANDS.md) is missing")
+        long = load_remedies(path, opt_z)
+        cube = Cube(long)
+        if tuple(cube.seeds) != TEST_SEEDS:
+            raise ValueError(f"{path} holds seeds {cube.seeds}, not the test seeds {TEST_SEEDS}")
+        for proc in RANK_PROCS:
+            g = per_landscape_gains(cube, proc, TEST_SEEDS)
+            rec = recovery_summary(long, proc, TEST_SEEDS)
+            tests.append({"section": "4b_holm_rank_scope", "problem": arm, "group": "rank rule, arm scope",
+                          "candidate": proc, "scope": scope, "n_landscapes": int(np.isfinite(g).sum()),
+                          "mean_gain_test": float(np.nanmean(g)), "landscapes_gaining_test": int((g > 0).sum()),
+                          "p_test": _wilcoxon_p(g), "test_value": rec["value"], "test_lo": rec["lo"],
+                          "test_hi": rec["hi"], "metric": "recovery"})
+    core = pd.DataFrame(holm)
+    core = core[core["family"] == "core"]
+    main_rank = core["group"] == "rank rule"
+    base_other = core.loc[~main_rank, "p_test"].to_numpy()
+    base_all = core["p_test"].to_numpy()
+    arm_p = np.array([t["p_test"] for t in tests])
+    lcb1 = np.array([t["candidate"] == PAPER_RANK_RULE for t in tests])
+    fams = {"p_holm_core_replaced_test": (base_other, np.ones(len(tests), bool)),
+            "p_holm_core_added_test": (base_all, np.ones(len(tests), bool)),
+            "p_holm_core_lcb1_replaced_test": (base_other, lcb1)}
+    for col, (base, take) in fams.items():
+        adj = multipletests(np.concatenate([base, arm_p[take]]), method="holm")[1][len(base):]
+        values = np.full(len(tests), np.nan)
+        values[take] = adj
+        for t, v in zip(tests, values):
+            t[col] = float(v)
+            t[col.replace("_test", "_n_tests")] = int(len(base) + take.sum())
+    return tests
+
+
+LUCB_COMPARATORS = tuple(f"tournament_k{k}_lcb_rho{r}_look" for r in ("1", "0.5") for k in (4, 8))
+
+
+def lucb_comparator_rows(holm: list[dict], rem_cube: Cube) -> list[dict]:
+    """The best-arm sittings' one-look-each comparators, added to the 'all' family (section 4c).
+
+    replay_hitl_remedies.py scores each LUCB sitting beside the fixed-allocation
+    sitting it competes with (one look to each of the top k by the posterior
+    mean less one SD) on the same runs. Section 4's 'all' family holds the LUCB
+    sittings but not these comparators. Here the four comparators are tested
+    in the same scope and Holm is recomputed over the 'all' family with them
+    added; each existing member's adjusted p in that larger family is given too,
+    so a reader can see whether a published survivor depends on the family size.
+    Section 4's own columns are not changed.
+    """
+    df = pd.DataFrame(holm)
+    fam = df[df["family"].isin(("core", "extra"))]
+    rows = []
+    rem_scope = "four error processes, LogEI/qNEI, all magnitudes and onsets"
+    for proc in LUCB_COMPARATORS:
+        if proc not in rem_cube.procs:
+            raise KeyError(f"{proc} is not in the main sweep's remedy replay")
+        g = per_landscape_gains(rem_cube, proc, TEST_SEEDS)
+        rows.append({"section": "4c_holm_lucb_comparators", "group": "one look each (LUCB comparator)",
+                     "candidate": proc, "scope": rem_scope, "n_landscapes": int(np.isfinite(g).sum()),
+                     "mean_gain_test": float(np.nanmean(g)), "landscapes_gaining_test": int((g > 0).sum()),
+                     "p_test": _wilcoxon_p(g), "role": "added"})
+    p = np.concatenate([fam["p_test"].to_numpy(), [r["p_test"] for r in rows]])
+    adj = multipletests(p, method="holm")[1]
+    for r, a in zip(rows, adj[len(fam):]):
+        r["p_holm_all_plus_test"] = float(a)
+        r["p_holm_all_plus_n_tests"] = int(len(p))
+    for (_, r), a in zip(fam.iterrows(), adj[:len(fam)]):
+        rows.append({"section": "4c_holm_lucb_comparators", "group": r["group"], "candidate": r["candidate"],
+                     "scope": r["scope"], "p_test": r["p_test"], "p_holm_all_test": r["p_holm_all_test"],
+                     "p_holm_all_plus_test": float(a), "p_holm_all_plus_n_tests": int(len(p)),
+                     "role": "existing"})
+    return rows
+
+
 def per_landscape_gains(cube: Cube, proc: str, seeds) -> np.ndarray:
     g, _ = cube.gain_cost(seeds)
     return g[cube.procs.index(proc)]
@@ -709,6 +813,10 @@ def main(argv=None) -> None:
         add_test("extra", "LUCB sitting", proc, rem_cube, rem_scope)
     holm = holm_rows(tests)
     rows += holm
+    rank_scope = rank_scope_rows(holm, opt_z)
+    rows += rank_scope
+    lucb_cmp = lucb_comparator_rows(holm, rem_cube)
+    rows += lucb_cmp
 
     # ---- 5. the derived budget rule -----------------------------------------
     d_rows = []
@@ -775,7 +883,8 @@ def main(argv=None) -> None:
     table.to_csv(out_dir / "heldout_remedies.csv", index=False)
 
     md = render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_rows, split_heads, holm,
-                d_rows, derived_test, share_pm, kpub, kpub05, para, checks, balance, args)
+                d_rows, derived_test, share_pm, kpub, kpub05, para, checks, balance, args,
+                rank_scope=rank_scope, lucb_cmp=lucb_cmp)
     (out_dir / "heldout_remedies.md").write_text(md, encoding="utf-8")
     print(f"\nwrote {out_dir / 'heldout_remedies.csv'}, {out_dir / 'heldout_remedies.md'}, "
           f"{out_dir / 'heldout_remedies_splits.csv.gz'}")
@@ -787,7 +896,7 @@ def main(argv=None) -> None:
 
 
 def render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_rows, split_heads, holm, d_rows,
-           derived_test, share_pm, kpub, kpub05, para, checks, balance, args) -> str:
+           derived_test, share_pm, kpub, kpub05, para, checks, balance, args, rank_scope=(), lucb_cmp=()) -> str:
     P = {p.name: p for p in problems}
     sit_long, ship_long = longs["sitting19"], longs["ship_rule"]
     L = []
@@ -892,9 +1001,10 @@ def render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_ro
                       f_pct(t_["value"], t_["lo"], t_["hi"]), f_p(t_["p"])])
     w(md_table(["procedure", "full data (published)", "seeds 7-11", "test, seeds 12-16", "Wilcoxon p, test"], trows))
     w("\nMain sweep: four error processes, four magnitudes, both onsets, LogEI and qNEI. The rank rule the paper "
-      "tables is `ordinal_lcb1` (\"ship 1, chosen on ranks\"). The gross-fault (spike) and capped-scale arms were "
-      "run on seeds 7-11 only, so their rank-rule numbers (51%, 36%) cannot be held out by seed; section 2 holds "
-      "them out by landscape.\n")
+      "tables is `ordinal_lcb1` (\"ship 1, chosen on ranks\"). The gross-fault (spike) and capped-scale arms' "
+      "rank-rule numbers (51%, 36%) are full-data values on seeds 7-11 (analysis/hitl_remedies); their seeds "
+      "12-16 were replayed separately (analysis/hitl_remedies_heldout, paper/COMMANDS.md), and section 4b tests "
+      "the rank rules there, in the scope of those numbers. Section 2 also holds them out by landscape.\n")
 
     # ---- 2
     w("## 2. Landscape splits\n")
@@ -983,6 +1093,52 @@ def render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_ro
     w(f"With 20 landscapes the smallest two-sided Wilcoxon p is 1.9e-06, and Holm's first threshold is "
       f"0.05/{n_core} = {0.05 / n_core:.4f} (core) or 0.05/{n_all} = {0.05 / n_all:.4f} (all), so a procedure "
       "must gain on nearly every landscape to survive.\n")
+
+    # ---- 4b
+    if len(rank_scope):
+        rdf = pd.DataFrame(rank_scope)
+        w("## 4b. The rank rules in the scope of their headline recoveries, test seeds only\n")
+        w("Section 4 tests the two rank rules on the main sweep. The recoveries the paper quotes for them come from "
+          "the gross-fault and capped-scale arms, so here each is tested on those arms' seeds 12-16 "
+          "(analysis/hitl_remedies_heldout), with the same per-landscape gains and Wilcoxon test. Holm is "
+          "recomputed over section 4's core family (a) with its two main-sweep rank-rule tests replaced by these "
+          "four, (b) with these four added, and (c) with the two main-sweep tests replaced by the two "
+          "`ordinal_lcb1` tests. Section 4's columns are unchanged.\n")
+        trows = []
+        for _, r in rdf.iterrows():
+            c = r["p_holm_core_lcb1_replaced_test"]
+            trows.append([r["scope"], short(r["candidate"]), f_pct(r["test_value"], r["test_lo"], r["test_hi"]),
+                          f_gain(r["mean_gain_test"]),
+                          f"{int(r['landscapes_gaining_test'])}/{int(r['n_landscapes'])}", f_p(r["p_test"]),
+                          f"{f_p(r['p_holm_core_replaced_test'])} ({int(r['p_holm_core_replaced_n_tests'])})",
+                          f"{f_p(r['p_holm_core_added_test'])} ({int(r['p_holm_core_added_n_tests'])})",
+                          f"{f_p(c)} ({int(r['p_holm_core_lcb1_replaced_n_tests'])})" if np.isfinite(c) else ""])
+        w(md_table(["scope", "procedure", "recovered, test", "mean gain, test", "landscapes gaining", "p, test",
+                    "Holm (a), tests", "Holm (b), tests", "Holm (c), tests"], trows))
+        w("")
+    # ---- 4c
+    if len(lucb_cmp):
+        cdf = pd.DataFrame(lucb_cmp)
+        added, existing = cdf[cdf["role"] == "added"], cdf[cdf["role"] == "existing"]
+        n_plus = int(added["p_holm_all_plus_n_tests"].iloc[0])
+        w("## 4c. The best-arm sittings' one-look-each comparators added to the all family\n")
+        w("Each LUCB sitting of section 4 competes with a fixed-allocation sitting that gives one look to each of "
+          "the top k by the posterior mean less one SD, on the same runs (replay_hitl_remedies.py). The four "
+          "comparators are tested in the same scope, and Holm is recomputed over the all family with them added "
+          f"({n_plus} tests). Section 4's columns are unchanged.\n")
+        trows = [[short(r["candidate"]), f_gain(r["mean_gain_test"]),
+                  f"{int(r['landscapes_gaining_test'])}/{int(r['n_landscapes'])}", f_p(r["p_test"]),
+                  f_p(r["p_holm_all_plus_test"])] for _, r in added.iterrows()]
+        w(md_table(["comparator", "mean gain, test", "landscapes gaining", "p, test",
+                    f"Holm, all family + 4 ({n_plus} tests)"], trows))
+        before = set(existing.loc[existing["p_holm_all_test"] < 0.05, "candidate"])
+        after = set(existing.loc[existing["p_holm_all_plus_test"] < 0.05, "candidate"])
+        lost = sorted(before - after)
+        w(f"\nOf the {len(before)} all-family survivors of section 4, {len(before & after)} still survive in the "
+          "larger family" + (f"; lost: {', '.join(f'`{c}`' for c in lost)}." if lost else "."))
+        moved = [f"`{r.candidate}` {f_p(r.p_holm_all_test)} -> {f_p(r.p_holm_all_plus_test)}"
+                 for r in existing.itertuples() if r.candidate in before]
+        w("Their adjusted p, all family -> larger family: " + (", ".join(moved) or "none") + ".\n")
 
     # ---- 5
     w("## 5. The derived budget rule against a fixed k\n")

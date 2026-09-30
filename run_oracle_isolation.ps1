@@ -13,7 +13,9 @@
 param([string]$Family = "", [int]$Workers = 8)
 $ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
-$PYTHON = if ($env:HITL_PYTHON) { $env:HITL_PYTHON } else { "python" }
+# $env:PYTHON as every other driver; $env:HITL_PYTHON is kept as an alias. The
+# fallback is the Python312 interpreter with torch, never a bare "python".
+$PYTHON = if ($env:PYTHON) { $env:PYTHON } elseif ($env:HITL_PYTHON) { $env:HITL_PYTHON } else { "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe" }
 if ($Family) {
     $root = "output-oracle-iso-$Family"
     $augmentation = "none"

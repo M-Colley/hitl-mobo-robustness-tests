@@ -1,0 +1,125 @@
+{
+  "cv_folds_requested": 5,
+  "selection_metric": "r2",
+  "tie_breaker_metric": "rmse",
+  "oracle_models": [
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "tabpfn",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "hist_gradient_boosting"
+  ],
+  "datasets": [
+    {
+      "name": "ehmi",
+      "objectives": {
+        "composite": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": 0.5300238024970362,
+            "lightgbm": 0.5034027914513761,
+            "catboost": 0.5422889200839736,
+            "tabpfn": 0.44937706132543387,
+            "random_forest": 0.527459932048945,
+            "extra_trees": 0.5474910874610203,
+            "gradient_boosting": 0.5174112411818483,
+            "hist_gradient_boosting": 0.4782874641039013
+          },
+          "rmse": {
+            "xgboost": 0.47719637846715185,
+            "lightgbm": 0.4905643704785847,
+            "catboost": 0.47293597487364025,
+            "tabpfn": 0.5111632369998785,
+            "random_forest": 0.4800393117568998,
+            "extra_trees": 0.4711464621344253,
+            "gradient_boosting": 0.48425138023384184,
+            "hist_gradient_boosting": 0.5015908103721712
+          },
+          "validation_strategy": "kfold",
+          "group_source": null,
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.017639077340569877,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "mean"
+        }
+      }
+    },
+    {
+      "name": "opticarvis",
+      "objectives": {
+        "composite": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": -0.1552759814072229,
+            "lightgbm": -0.22896457245214377,
+            "catboost": -0.09653362102411374,
+            "tabpfn": -0.43759599495548895,
+            "random_forest": -0.12901157635459454,
+            "extra_trees": -0.09102610649733282,
+            "gradient_boosting": -0.16248033754540253,
+            "hist_gradient_boosting": -0.1964593914862743
+          },
+          "rmse": {
+            "xgboost": 0.38437404938940445,
+            "lightgbm": 0.3959039328863937,
+            "catboost": 0.37550506732458405,
+            "tabpfn": 0.42776022621065624,
+            "random_forest": 0.3809419907334041,
+            "extra_trees": 0.3745767288266285,
+            "gradient_boosting": 0.38563104607009085,
+            "hist_gradient_boosting": 0.390352321908204
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.02197802197802198,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "individual"
+        }
+      }
+    },
+    {
+      "name": "provoice",
+      "objectives": {
+        "composite": {
+          "best_model": "extra_trees",
+          "scores": {
+            "xgboost": -0.146593095340351,
+            "lightgbm": -0.2095738247366825,
+            "catboost": -0.11728766088049865,
+            "tabpfn": -0.11022190691112292,
+            "random_forest": -0.10458624179114662,
+            "extra_trees": -0.06856431534257815,
+            "gradient_boosting": -0.1588912239552794,
+            "hist_gradient_boosting": -0.1940653141992284
+          },
+          "rmse": {
+            "xgboost": 1.3553014480326673,
+            "lightgbm": 1.3887028473269238,
+            "catboost": 1.3368228416272874,
+            "tabpfn": 1.3363503725299368,
+            "random_forest": 1.329535524996017,
+            "extra_trees": 1.307976629698006,
+            "gradient_boosting": 1.3629564455367358,
+            "hist_gradient_boosting": 1.3821319501646592
+          },
+          "validation_strategy": "group_kfold",
+          "group_source": "User_ID",
+          "effective_cv_folds": 5,
+          "cv_folds_requested": 5,
+          "duplicate_row_fraction": 0.17293233082706766,
+          "deduplicated": false,
+          "oracle_augmentation": "jitter",
+          "oracle_target": "individual"
+        }
+      }
+    }
+  ]
+}

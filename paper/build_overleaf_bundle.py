@@ -2,11 +2,13 @@
 
 A bundle that compiles here but not there is worse than none, so this script
 does not trust the working directory. It copies exactly the files a submission
-needs into a fresh temporary directory, runs pdflatex -> bibtex -> pdflatex x2
-there with the same toolchain Overleaf uses, and refuses to write the zip unless
-BibTeX exits 0, LaTeX reports no error, and the log carries no undefined
-citation or reference. What it then zips is that verified directory, so the zip
-and the test are the same bytes.
+needs into a fresh temporary directory, runs pdflatex -> bibtex -> pdflatex there
+with the same toolchain Overleaf uses, repeating the last pdflatex until the log
+no longer asks for a rerun (at most MAX_PASSES_AFTER_BIBTEX passes; from a clean
+directory this paper needs three), and refuses to write the zip unless BibTeX
+exits 0, LaTeX reports no error, and the log carries no undefined citation or
+reference and no rerun request. What it then zips is that verified directory,
+so the zip and the test are the same bytes.
 
 It also measures where the main text ends and prints it. TMLR sets no page
 limit, but a paper's length should be justified by its content and an unusually
@@ -34,7 +36,10 @@ DEFAULT_OUT = PAPER / "hitl-noisy-feedback-tmlr.zip"
 # collected from the sources in stage(). The three style files are the official
 # ones from https://github.com/JmlrOrg/tmlr-style-file; tmlr.sty loads natbib.
 STYLE_FILES = ["tmlr.sty", "tmlr.bst", "fancyhdr.sty"]
-TOP_FILES = ["main.tex", "references.bib", "README_OVERLEAF.md"] + STYLE_FILES
+TOP_FILES = ["main.tex", "references.bib"] + STYLE_FILES
+# Copied when present. README_OVERLEAF.md is git-ignored (it names a handle), so a
+# fresh checkout lacks it and the build must not require it.
+OPTIONAL_FILES = ["README_OVERLEAF.md"]
 
 # The statements (AI use, broader impact, reproducibility) follow the main text;
 # the first of them closes the main text that the length refers to.
@@ -90,6 +95,9 @@ def stage(dst: Path) -> None:
     # The zip is private to Overleaf, the repository mirror is not.
     if (PAPER / "authors.tex").is_file():
         shutil.copy2(PAPER / "authors.tex", dst / "authors.tex")
+    for name in OPTIONAL_FILES:
+        if (PAPER / name).is_file():
+            shutil.copy2(PAPER / name, dst / name)
     for rel in all_inputs(PAPER / "main.tex"):
         target = dst / f"{rel}.tex"
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -108,6 +116,20 @@ def stage(dst: Path) -> None:
             shutil.copy2(src, target)
 
 
+# pdflatex passes after bibtex. Two were not enough from a clean directory: the
+# log still said "Label(s) may have changed", which a third pass clears.
+MAX_PASSES_AFTER_BIBTEX = 4
+# What LaTeX, natbib, hyperref and rerunfilecheck print when another pass would
+# change the output.
+RERUN_REQUEST = re.compile(r"Label\(s\) may have changed|Rerun to get|Please rerun LaTeX|"
+                           r"rerunfilecheck Warning|Citation\(s\) may have changed")
+
+
+def needs_rerun(log: str) -> bool:
+    """Whether a pdflatex log asks for another pass."""
+    return RERUN_REQUEST.search(log) is not None
+
+
 def run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, errors="replace")
 
@@ -120,11 +142,19 @@ def compile_in(dst: Path) -> Path:
     bib = run(["bibtex", "main"], dst)
     if bib.returncode != 0:
         raise SystemExit(f"bibtex exited {bib.returncode}; Overleaf would show this as an error:\n{bib.stdout}")
-    for _ in range(2):
+    passes = 0
+    while True:
         again = run(latex, dst)
+        passes += 1
         if again.returncode != 0:
             raise SystemExit(f"pdflatex failed after bibtex:\n{again.stdout[-3000:]}")
-    log = (dst / "main.log").read_text(encoding="utf-8", errors="replace")
+        log = (dst / "main.log").read_text(encoding="utf-8", errors="replace")
+        if not needs_rerun(log):
+            break
+        if passes >= MAX_PASSES_AFTER_BIBTEX:
+            raise SystemExit(f"the log still asks for a rerun after {passes} pdflatex passes "
+                             "following bibtex; the cross-references have not settled")
+    print(f"pdflatex passes after bibtex: {passes}")
     errors = [ln for ln in log.splitlines() if ln.startswith("! ")]
     undefined = [ln for ln in log.splitlines()
                  if "Warning" in ln and ("undefined" in ln.lower())]
@@ -182,7 +212,8 @@ def main(argv=None) -> None:
         names = zipfile.ZipFile(args.out).namelist()
 
     print(f"wrote {args.out}  ({args.out.stat().st_size / 1024:.0f} KB, {len(names)} files)")
-    print(f"compiled clean in a fresh directory: bibtex 0, no LaTeX errors, no undefined references")
+    print("compiled clean in a fresh directory: bibtex 0, no LaTeX errors, no undefined references, "
+          "no rerun request")
     print(verdict)
 
 

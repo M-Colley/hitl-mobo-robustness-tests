@@ -218,8 +218,17 @@ def process_group(arm: str, n_init: int, runs: list[tuple[dict, str, list[tuple[
 # ---------------------------------------------------------------------------
 
 
-def discover(arm: str, root: Path, acqs: set[str] | None, seeds: set[int] | None):
-    """Group the per-run logs of one arm into (landscape, acquisition) tasks."""
+def discover(arm: str, root: Path, acqs: set[str] | None, seeds: set[int] | None,
+             base_re: re.Pattern | None = None, noisy_re: re.Pattern | None = None):
+    """Group the per-run logs of one arm into (landscape, acquisition) tasks.
+
+    ``base_re`` and ``noisy_re`` replace the scalar arm's file-name patterns, so
+    another arm's logs (the multi-objective arm names its objective
+    ``multi_objective``, scripts/review_checks/mo_onset_bound.py) are grouped by
+    the same code; they must define the same named groups.
+    """
+    base_re = BASE_RE if base_re is None else base_re
+    noisy_re = NOISY_RE if noisy_re is None else noisy_re
     meta = json.loads((root / "run_metadata.json").read_text(encoding="utf-8"))
     n_init = int(meta["args"]["initial_samples"])
     tasks = []
@@ -228,11 +237,11 @@ def discover(arm: str, root: Path, acqs: set[str] | None, seeds: set[int] | None
         for entry in os.scandir(ds_dir):
             if not entry.name.endswith(".csv"):
                 continue
-            m = BASE_RE.match(entry.name)
+            m = base_re.match(entry.name)
             if m:
                 bases[(m["acq"], int(m["seed"]))] = entry.path
                 continue
-            m = NOISY_RE.match(entry.name)
+            m = noisy_re.match(entry.name)
             if m:
                 meta_row = {"error_model": m["em"], "onset": int(m["onset"]),
                             "jitter_std": float(m["std"]),

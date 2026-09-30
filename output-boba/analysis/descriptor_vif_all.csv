@@ -1,0 +1,12 @@
+term,vif,r2_on_others,kind,design
+log_opt_z,9.214278276061616,0.8914727806085512,continuous,all_descriptors
+skew,6.338414307574066,0.8422318341031994,continuous,all_descriptors
+log_sparsity,5.82578277562512,0.8283492470429954,continuous,all_descriptors
+error_model_drift,1.5,0.33333333333333337,indicator,all_descriptors
+error_model_bias,1.4999999999999996,0.33333333333333315,indicator,all_descriptors
+error_model_gaussian,1.4999999999999996,0.33333333333333315,indicator,all_descriptors
+ruggedness,1.265623174183563,0.20987540336001909,continuous,all_descriptors
+log_tail_ratio,1.2393646972110697,0.19313499710755822,continuous,all_descriptors
+dim,1.0253765669066017,0.024748534075787143,continuous,all_descriptors
+onset_20,1.0,0.0,indicator,all_descriptors
+log_noise,0.9999999999999996,-4.440892098500626e-16,continuous,all_descriptors

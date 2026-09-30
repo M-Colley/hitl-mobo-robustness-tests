@@ -1,0 +1,3 @@
+rerun: 96 runs (--functions branin,stevens,weber_fechner --error-models bias,drift,ceiling,gaussian --magnitudes 1 --seeds 8,9 --iterations 20 --workers 6); matched in the log: 96
+columns compared: 8 (every column but the keys and ['seconds'])
+verdict: exact

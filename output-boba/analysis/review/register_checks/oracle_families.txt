@@ -1,24 +1,395 @@
 == tree ensemble (selected): 20 landscapes; models {'gradient_boosting': 15, 'extra_trees': 3, 'catboost': 2}
-   fidelity median 0.840 range [0.453, 0.935]; sigma_f range [0.78, 1.21]; grouped CV R2 median 0.512 range [0.240, 0.809]
-   trajectory 0.25sigma  fitted  0.0184  exact  0.1436  ratio 0.128 [-0.146, 0.357]  lower 16/20  p 0.00059  spearman(fidelity, ratio) +0.31
-   trajectory  1.0sigma  fitted  0.1771  exact  0.5792  ratio 0.306 [0.202, 0.518]  lower 18/20  p 0.00026  spearman(fidelity, ratio) -0.13
-   trajectory  5.0sigma  fitted  0.3941  exact  1.1275  ratio 0.350 [0.217, 0.592]  lower 16/20  p 0.00059  spearman(fidelity, ratio) -0.55
-   deployed   0.25sigma  fitted  0.1124  exact  0.7605  ratio 0.148 [0.079, 0.527]  lower 14/20  p 0.0056  spearman(fidelity, ratio) -0.02
-   deployed    1.0sigma  fitted  0.6506  exact  2.5561  ratio 0.255 [0.145, 0.776]  lower 15/20  p 0.014  spearman(fidelity, ratio) -0.50
-   deployed    5.0sigma  fitted  1.6484  exact  8.7264  ratio 0.189 [0.092, 0.555]  lower 14/20  p 0.019  spearman(fidelity, ratio) -0.53
+   fidelity median 0.840 range [0.453, 0.935]; sigma_f (seed 7) range [0.78, 1.21]; grouped CV R2 median 0.512 range [0.240, 0.809]
 == gaussian_process: 20 landscapes; models {'gaussian_process': 20}
-   fidelity median 0.864 range [0.157, 0.988]; sigma_f range [0.40, 1.22]; grouped CV R2 median 0.561 range [0.105, 0.833]
-   trajectory 0.25sigma  fitted  0.1682  exact  0.1436  ratio 1.172 [0.793, 1.866]  lower 7/20  p 0.37  spearman(fidelity, ratio) -0.08
-   trajectory  1.0sigma  fitted  0.5459  exact  0.5792  ratio 0.943 [0.748, 1.215]  lower 10/20  p 0.7  spearman(fidelity, ratio) +0.13
-   trajectory  5.0sigma  fitted  0.9162  exact  1.1275  ratio 0.813 [0.633, 1.098]  lower 11/20  p 0.37  spearman(fidelity, ratio) -0.12
-   deployed   0.25sigma  fitted  0.3356  exact  0.7605  ratio 0.441 [0.303, 1.062]  lower 9/20  p 0.62  spearman(fidelity, ratio) -0.16
-   deployed    1.0sigma  fitted  1.3671  exact  2.5561  ratio 0.535 [0.339, 1.140]  lower 10/20  p 0.62  spearman(fidelity, ratio) +0.12
-   deployed    5.0sigma  fitted  3.2878  exact  8.7264  ratio 0.377 [0.198, 0.924]  lower 11/20  p 0.67  spearman(fidelity, ratio) -0.13
+   fidelity median 0.864 range [0.157, 0.988]; sigma_f (seed 7) range [0.40, 1.22]; grouped CV R2 median 0.561 range [0.105, 0.833]
 == mlp: 20 landscapes; models {'mlp': 20}
-   fidelity median 0.842 range [0.033, 0.978]; sigma_f range [0.27, 1.95]; grouped CV R2 median 0.510 range [0.018, 0.830]
-   trajectory 0.25sigma  fitted  0.1134  exact  0.1436  ratio 0.790 [0.477, 1.331]  lower 12/20  p 0.78  spearman(fidelity, ratio) +0.18
-   trajectory  1.0sigma  fitted  0.4438  exact  0.5792  ratio 0.766 [0.533, 1.209]  lower 10/20  p 0.9  spearman(fidelity, ratio) -0.53
-   trajectory  5.0sigma  fitted  0.7456  exact  1.1275  ratio 0.661 [0.460, 1.014]  lower 11/20  p 0.39  spearman(fidelity, ratio) -0.50
-   deployed   0.25sigma  fitted  0.2091  exact  0.7605  ratio 0.275 [0.167, 0.948]  lower 12/20  p 0.28  spearman(fidelity, ratio) -0.23
-   deployed    1.0sigma  fitted  0.8908  exact  2.5561  ratio 0.349 [0.208, 0.981]  lower 9/20  p 0.62  spearman(fidelity, ratio) -0.20
-   deployed    5.0sigma  fitted  2.4908  exact  8.7264  ratio 0.285 [0.158, 0.799]  lower 10/20  p 0.29  spearman(fidelity, ratio) -0.40
+   fidelity median 0.842 range [0.033, 0.978]; sigma_f (seed 7) range [0.27, 1.95]; grouped CV R2 median 0.510 range [0.018, 0.830]
+
+== fidelity against the tree ensembles (tree minimum correlation 0.453, on eggholder)
+   GP   correlation with the truth: median 0.864 (tree 0.840); below the tree minimum on 5/20 (shekel 0.157, rastrigin 0.265, michalewicz 0.358, schwefel 0.373, levy_10 0.397); lower than the tree's on 8/20, higher on 12/20
+        grouped CV R2: median 0.561 (tree 0.512); beats the tree on 15/20; median difference +0.039; below 0.1 on 0 ()
+   MLP  correlation with the truth: median 0.842 (tree 0.840); below the tree minimum on 4/20 (schwefel 0.033, eggholder 0.058, michalewicz 0.242, levy_10 0.375); lower than the tree's on 12/20, higher on 8/20
+        grouped CV R2: median 0.510 (tree 0.512); beats the tree on 9/20; median difference -0.009; below 0.1 on 3 (eggholder 0.018, schwefel 0.038, michalewicz 0.049)
+
+== each family's own achievable improvement (y_opt_s - mean_f,s, mean over seeds) over sigma_f,s * opt_z (the landscape's achievable improvement in the oracle's SD units)
+   tree median 1.267, range [0.277, 3.190], above 1 on 14/20; with the best clean value as the optimum median 1.048
+   GP   median 0.970, range [0.532, 1.771], above 1 on 9/20; with the best clean value as the optimum median 0.924
+   MLP  median 0.994, range [0.116, 2.168], above 1 on 10/20; with the best clean value as the optimum median 0.992
+   exact arm: best clean value over opt_z median 0.997, range [0.456, 1.000]
+
+######## share of the achievable improvement (primary: the paper's headline unit)
+
+== share of the achievable improvement; optimum per seed: oracle (primary)
+
+   -- trajectory
+      0.25 sigma  (exact arm 2.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    0.8  ratio 0.274 [-0.154, 0.830]  median 0.251  w/o small 0.235 [-0.169, 0.770]  lower 12/20 (w/o small 11/17)  p 0.09  rho(cost) +0.03  rho(fidelity, ratio) +0.45
+        GP   fitted    3.8  ratio 1.296 [0.664, 2.505]  median 1.184  w/o small 1.084 [0.531, 2.207]  lower 7/20 (w/o small 7/17)  p 0.18  rho(cost) -0.21  rho(fidelity, ratio) +0.13
+        MLP  fitted    3.7  ratio 1.271 [0.858, 1.964]  median 1.119  w/o small 1.098 [0.673, 1.639]  lower 7/20 (w/o small 7/17)  p 0.22  rho(cost) +0.37  rho(fidelity, ratio) +0.29
+        GP - tree: ratio difference +1.022 [+0.457, +2.005]  w/o small +0.849 [+0.384, +1.735]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0014)
+        MLP - tree: ratio difference +0.996 [+0.515, +1.637]  w/o small +0.863 [+0.430, +1.365]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00085)
+      1 sigma  (exact arm 10.8, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    7.7  ratio 0.716 [0.559, 0.932]  median 0.722  w/o small 0.689 [0.530, 0.907]  lower 15/20 (w/o small 14/17)  p 0.03  rho(cost) +0.64  rho(fidelity, ratio) +0.29
+        GP   fitted   12.0  ratio 1.112 [0.892, 1.422]  median 1.067  w/o small 1.004 [0.810, 1.251]  lower 8/20 (w/o small 8/17)  p 0.35  rho(cost) +0.48  rho(fidelity, ratio) +0.37
+        MLP  fitted   15.3  ratio 1.411 [1.150, 1.755]  median 1.479  w/o small 1.321 [1.097, 1.638]  lower 5/20 (w/o small 5/17)  p 0.0032  rho(cost) +0.57  rho(fidelity, ratio) -0.38
+        GP - tree: ratio difference +0.395 [+0.089, +0.736]  w/o small +0.315 [-0.004, +0.641]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.014)
+        MLP - tree: ratio difference +0.695 [+0.449, +1.023]  w/o small +0.632 [+0.409, +0.931]  fitted fraction higher than the tree's on 18/20 landscapes (Wilcoxon p 2.7e-05)
+      5 sigma  (exact arm 21.3, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   17.0  ratio 0.797 [0.702, 0.911]  median 0.866  w/o small 0.772 [0.673, 0.878]  lower 15/20 (w/o small 15/17)  p 0.017  rho(cost) +0.83  rho(fidelity, ratio) +0.05
+        GP   fitted   21.8  ratio 1.022 [0.882, 1.224]  median 1.095  w/o small 0.950 [0.836, 1.097]  lower 9/20 (w/o small 9/17)  p 0.73  rho(cost) +0.82  rho(fidelity, ratio) +0.01
+        MLP  fitted   26.1  ratio 1.222 [1.069, 1.442]  median 1.214  w/o small 1.149 [1.012, 1.312]  lower 6/20 (w/o small 6/17)  p 0.017  rho(cost) +0.76  rho(fidelity, ratio) -0.41
+        GP - tree: ratio difference +0.226 [+0.040, +0.420]  w/o small +0.179 [+0.001, +0.358]  fitted fraction higher than the tree's on 18/20 landscapes (Wilcoxon p 0.0056)
+        MLP - tree: ratio difference +0.425 [+0.300, +0.587]  w/o small +0.378 [+0.261, +0.506]  fitted fraction higher than the tree's on 19/20 landscapes (Wilcoxon p 3.8e-06)
+
+   -- deployed
+      0.25 sigma  (exact arm 5.2, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    4.0  ratio 0.764 [0.406, 1.204]  median 0.915  w/o small 0.698 [0.307, 1.231]  lower 10/20 (w/o small 9/17)  p 0.47  rho(cost) -0.08  rho(fidelity, ratio) +0.24
+        GP   fitted    6.7  ratio 1.289 [0.708, 1.954]  median 1.287  w/o small 1.139 [0.549, 1.955]  lower 6/20 (w/o small 5/17)  p 0.22  rho(cost) +0.00  rho(fidelity, ratio) -0.01
+        MLP  fitted    6.1  ratio 1.164 [0.960, 1.427]  median 1.176  w/o small 1.104 [0.886, 1.409]  lower 7/20 (w/o small 6/17)  p 0.09  rho(cost) +0.57  rho(fidelity, ratio) +0.12
+        GP - tree: ratio difference +0.525 [+0.026, +1.015]  w/o small +0.442 [-0.059, +1.014]  fitted fraction higher than the tree's on 13/20 landscapes (Wilcoxon p 0.036)
+        MLP - tree: ratio difference +0.400 [+0.048, +0.691]  w/o small +0.407 [-0.011, +0.742]  fitted fraction higher than the tree's on 13/20 landscapes (Wilcoxon p 0.044)
+      1 sigma  (exact arm 23.7, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   24.1  ratio 1.017 [0.884, 1.192]  median 0.917  w/o small 0.968 [0.834, 1.142]  lower 12/20 (w/o small 12/17)  p 0.87  rho(cost) +0.49  rho(fidelity, ratio) +0.18
+        GP   fitted   27.7  ratio 1.166 [0.980, 1.368]  median 1.130  w/o small 1.072 [0.902, 1.251]  lower 6/20 (w/o small 6/17)  p 0.12  rho(cost) +0.53  rho(fidelity, ratio) +0.47
+        MLP  fitted   28.6  ratio 1.206 [1.053, 1.372]  median 1.229  w/o small 1.166 [1.017, 1.332]  lower 5/20 (w/o small 5/17)  p 0.019  rho(cost) +0.61  rho(fidelity, ratio) -0.05
+        GP - tree: ratio difference +0.149 [-0.093, +0.381]  w/o small +0.104 [-0.163, +0.362]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.18)
+        MLP - tree: ratio difference +0.189 [+0.055, +0.324]  w/o small +0.198 [+0.064, +0.342]  fitted fraction higher than the tree's on 13/20 landscapes (Wilcoxon p 0.019)
+      5 sigma  (exact arm 69.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   62.5  ratio 0.901 [0.812, 1.004]  median 0.920  w/o small 0.908 [0.810, 1.029]  lower 12/20 (w/o small 10/17)  p 0.15  rho(cost) +0.42  rho(fidelity, ratio) -0.34
+        GP   fitted   70.5  ratio 1.017 [0.921, 1.117]  median 1.063  w/o small 1.001 [0.903, 1.108]  lower 9/20 (w/o small 8/17)  p 0.67  rho(cost) +0.64  rho(fidelity, ratio) -0.01
+        MLP  fitted   77.3  ratio 1.115 [1.013, 1.239]  median 1.102  w/o small 1.103 [0.990, 1.244]  lower 6/20 (w/o small 6/17)  p 0.11  rho(cost) +0.56  rho(fidelity, ratio) -0.36
+        GP - tree: ratio difference +0.116 [-0.033, +0.236]  w/o small +0.093 [-0.070, +0.223]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.044)
+        MLP - tree: ratio difference +0.214 [+0.131, +0.298]  w/o small +0.194 [+0.098, +0.292]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00032)
+
+== share of the achievable improvement; optimum per seed: best_clean (sensitivity)
+
+   -- trajectory
+      0.25 sigma  (exact arm 2.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    1.0  ratio 0.332 [-0.181, 0.988]  median 0.320  w/o small 0.279 [-0.195, 0.907]  lower 11/20 (w/o small 10/17)  p 0.25  rho(cost) +0.05  rho(fidelity, ratio) +0.45
+        GP   fitted    4.1  ratio 1.400 [0.705, 2.725]  median 1.197  w/o small 1.193 [0.584, 2.504]  lower 7/20 (w/o small 7/17)  p 0.19  rho(cost) -0.24  rho(fidelity, ratio) +0.09
+        MLP  fitted    3.7  ratio 1.275 [0.863, 1.961]  median 1.114  w/o small 1.102 [0.681, 1.646]  lower 7/20 (w/o small 7/17)  p 0.25  rho(cost) +0.39  rho(fidelity, ratio) +0.29
+        GP - tree: ratio difference +1.068 [+0.444, +2.122]  w/o small +0.914 [+0.403, +1.933]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0023)
+        MLP - tree: ratio difference +0.943 [+0.401, +1.601]  w/o small +0.822 [+0.347, +1.333]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0037)
+      1 sigma  (exact arm 10.8, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    9.0  ratio 0.836 [0.645, 1.095]  median 0.868  w/o small 0.793 [0.612, 1.054]  lower 12/20 (w/o small 12/17)  p 0.25  rho(cost) +0.58  rho(fidelity, ratio) +0.27
+        GP   fitted   12.4  ratio 1.142 [0.942, 1.433]  median 1.064  w/o small 1.036 [0.861, 1.269]  lower 8/20 (w/o small 8/17)  p 0.23  rho(cost) +0.55  rho(fidelity, ratio) +0.36
+        MLP  fitted   15.2  ratio 1.408 [1.149, 1.757]  median 1.479  w/o small 1.317 [1.097, 1.636]  lower 5/20 (w/o small 5/17)  p 0.0042  rho(cost) +0.53  rho(fidelity, ratio) -0.38
+        GP - tree: ratio difference +0.306 [-0.002, +0.628]  w/o small +0.243 [-0.090, +0.549]  fitted fraction higher than the tree's on 15/20 landscapes (Wilcoxon p 0.04)
+        MLP - tree: ratio difference +0.572 [+0.309, +0.901]  w/o small +0.525 [+0.291, +0.823]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00059)
+      5 sigma  (exact arm 21.3, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   19.7  ratio 0.923 [0.816, 1.070]  median 1.028  w/o small 0.882 [0.773, 1.011]  lower 9/20 (w/o small 9/17)  p 0.62  rho(cost) +0.82  rho(fidelity, ratio) -0.03
+        GP   fitted   22.7  ratio 1.063 [0.933, 1.257]  median 1.106  w/o small 0.992 [0.893, 1.123]  lower 9/20 (w/o small 9/17)  p 0.35  rho(cost) +0.82  rho(fidelity, ratio) -0.05
+        MLP  fitted   26.0  ratio 1.221 [1.067, 1.440]  median 1.215  w/o small 1.148 [1.013, 1.316]  lower 6/20 (w/o small 6/17)  p 0.021  rho(cost) +0.75  rho(fidelity, ratio) -0.38
+        GP - tree: ratio difference +0.140 [-0.017, +0.299]  w/o small +0.110 [-0.044, +0.252]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.024)
+        MLP - tree: ratio difference +0.298 [+0.180, +0.431]  w/o small +0.266 [+0.153, +0.375]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00021)
+
+   -- deployed
+      0.25 sigma  (exact arm 5.2, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    4.9  ratio 0.945 [0.510, 1.482]  median 1.173  w/o small 0.836 [0.367, 1.474]  lower 9/20 (w/o small 9/17)  p 0.99  rho(cost) -0.02  rho(fidelity, ratio) +0.27
+        GP   fitted    7.2  ratio 1.372 [0.750, 2.117]  median 1.251  w/o small 1.240 [0.584, 2.179]  lower 6/20 (w/o small 5/17)  p 0.15  rho(cost) -0.06  rho(fidelity, ratio) -0.05
+        MLP  fitted    6.1  ratio 1.157 [0.957, 1.415]  median 1.136  w/o small 1.094 [0.880, 1.395]  lower 7/20 (w/o small 6/17)  p 0.097  rho(cost) +0.60  rho(fidelity, ratio) +0.10
+        GP - tree: ratio difference +0.426 [-0.049, +0.926]  w/o small +0.404 [-0.093, +1.011]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.048)
+        MLP - tree: ratio difference +0.211 [-0.211, +0.558]  w/o small +0.259 [-0.249, +0.665]  fitted fraction higher than the tree's on 11/20 landscapes (Wilcoxon p 0.37)
+      1 sigma  (exact arm 23.7, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   29.1  ratio 1.229 [1.062, 1.445]  median 1.127  w/o small 1.140 [0.987, 1.351]  lower 6/20 (w/o small 6/17)  p 0.033  rho(cost) +0.35  rho(fidelity, ratio) +0.14
+        GP   fitted   28.3  ratio 1.192 [1.028, 1.371]  median 1.158  w/o small 1.102 [0.956, 1.258]  lower 6/20 (w/o small 6/17)  p 0.07  rho(cost) +0.57  rho(fidelity, ratio) +0.38
+        MLP  fitted   28.5  ratio 1.202 [1.049, 1.372]  median 1.198  w/o small 1.160 [1.009, 1.328]  lower 5/20 (w/o small 5/17)  p 0.019  rho(cost) +0.61  rho(fidelity, ratio) -0.02
+        GP - tree: ratio difference -0.037 [-0.270, +0.165]  w/o small -0.039 [-0.312, +0.189]  fitted fraction higher than the tree's on 12/20 landscapes (Wilcoxon p 0.9)
+        MLP - tree: ratio difference -0.027 [-0.190, +0.132]  w/o small +0.020 [-0.132, +0.181]  fitted fraction higher than the tree's on 9/20 landscapes (Wilcoxon p 0.65)
+      5 sigma  (exact arm 69.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   74.4  ratio 1.073 [0.975, 1.188]  median 1.116  w/o small 1.059 [0.955, 1.191]  lower 8/20 (w/o small 7/17)  p 0.19  rho(cost) +0.44  rho(fidelity, ratio) -0.35
+        GP   fitted   72.8  ratio 1.050 [0.962, 1.148]  median 1.076  w/o small 1.039 [0.951, 1.145]  lower 9/20 (w/o small 8/17)  p 0.39  rho(cost) +0.64  rho(fidelity, ratio) -0.08
+        MLP  fitted   77.2  ratio 1.114 [1.007, 1.246]  median 1.099  w/o small 1.101 [0.983, 1.252]  lower 6/20 (w/o small 6/17)  p 0.12  rho(cost) +0.50  rho(fidelity, ratio) -0.30
+        GP - tree: ratio difference -0.023 [-0.146, +0.074]  w/o small -0.020 [-0.157, +0.088]  fitted fraction higher than the tree's on 10/20 landscapes (Wilcoxon p 0.96)
+        MLP - tree: ratio difference +0.041 [-0.052, +0.127]  w/o small +0.041 [-0.061, +0.148]  fitted fraction higher than the tree's on 10/20 landscapes (Wilcoxon p 0.65)
+
+== share of the achievable improvement; fitted normaliser sigma_f,s * opt_z per seed (sensitivity)
+
+   -- trajectory
+      0.25 sigma  (exact arm 2.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    1.2  ratio 0.414 [-0.200, 1.203]  median 0.280  w/o small 0.342 [-0.132, 0.972]  lower 11/20 (w/o small 10/17)  p 0.28  rho(cost) +0.05  rho(fidelity, ratio) +0.50
+        GP   fitted    4.4  ratio 1.522 [0.726, 2.986]  median 1.150  w/o small 1.173 [0.562, 2.547]  lower 8/20 (w/o small 8/17)  p 0.2  rho(cost) -0.24  rho(fidelity, ratio) +0.19
+        MLP  fitted    3.3  ratio 1.153 [0.670, 2.071]  median 0.825  w/o small 0.807 [0.457, 1.277]  lower 10/20 (w/o small 10/17)  p 0.87  rho(cost) +0.18  rho(fidelity, ratio) +0.48
+        GP - tree: ratio difference +1.108 [+0.309, +2.523]  w/o small +0.830 [+0.278, +1.932]  fitted fraction higher than the tree's on 15/20 landscapes (Wilcoxon p 0.012)
+        MLP - tree: ratio difference +0.739 [+0.111, +1.741]  w/o small +0.464 [+0.156, +0.752]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.03)
+      1 sigma  (exact arm 10.8, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    9.0  ratio 0.835 [0.622, 1.138]  median 0.830  w/o small 0.730 [0.561, 0.956]  lower 14/20 (w/o small 14/17)  p 0.23  rho(cost) +0.51  rho(fidelity, ratio) +0.57
+        GP   fitted   12.9  ratio 1.188 [0.862, 1.662]  median 1.039  w/o small 1.011 [0.750, 1.368]  lower 9/20 (w/o small 9/17)  p 0.45  rho(cost) +0.04  rho(fidelity, ratio) +0.31
+        MLP  fitted   13.7  ratio 1.268 [0.966, 1.738]  median 1.102  w/o small 1.066 [0.855, 1.350]  lower 7/20 (w/o small 7/17)  p 0.15  rho(cost) +0.17  rho(fidelity, ratio) +0.02
+        GP - tree: ratio difference +0.353 [+0.030, +0.789]  w/o small +0.280 [-0.001, +0.650]  fitted fraction higher than the tree's on 13/20 landscapes (Wilcoxon p 0.13)
+        MLP - tree: ratio difference +0.433 [+0.106, +0.863]  w/o small +0.335 [+0.108, +0.638]  fitted fraction higher than the tree's on 13/20 landscapes (Wilcoxon p 0.03)
+      5 sigma  (exact arm 21.3, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   20.3  ratio 0.949 [0.783, 1.195]  median 0.846  w/o small 0.846 [0.709, 1.028]  lower 12/20 (w/o small 12/17)  p 0.73  rho(cost) +0.58  rho(fidelity, ratio) +0.37
+        GP   fitted   22.4  ratio 1.052 [0.813, 1.390]  median 1.036  w/o small 0.927 [0.757, 1.143]  lower 10/20 (w/o small 10/17)  p 0.7  rho(cost) +0.46  rho(fidelity, ratio) +0.03
+        MLP  fitted   23.4  ratio 1.095 [0.856, 1.455]  median 1.066  w/o small 0.935 [0.772, 1.119]  lower 9/20 (w/o small 9/17)  p 0.62  rho(cost) +0.40  rho(fidelity, ratio) +0.02
+        GP - tree: ratio difference +0.103 [-0.084, +0.344]  w/o small +0.081 [-0.081, +0.293]  fitted fraction higher than the tree's on 11/20 landscapes (Wilcoxon p 0.55)
+        MLP - tree: ratio difference +0.146 [-0.043, +0.394]  w/o small +0.089 [-0.057, +0.267]  fitted fraction higher than the tree's on 9/20 landscapes (Wilcoxon p 0.35)
+
+   -- deployed
+      0.25 sigma  (exact arm 5.2, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    6.0  ratio 1.148 [0.620, 1.796]  median 1.382  w/o small 0.814 [0.384, 1.386]  lower 9/20 (w/o small 9/17)  p 0.6  rho(cost) +0.10  rho(fidelity, ratio) +0.42
+        GP   fitted    8.3  ratio 1.583 [0.842, 2.423]  median 1.316  w/o small 1.263 [0.624, 2.123]  lower 8/20 (w/o small 7/17)  p 0.26  rho(cost) +0.07  rho(fidelity, ratio) +0.03
+        MLP  fitted    6.5  ratio 1.241 [0.877, 1.684]  median 1.097  w/o small 0.982 [0.750, 1.271]  lower 9/20 (w/o small 9/17)  p 0.43  rho(cost) +0.53  rho(fidelity, ratio) +0.20
+        GP - tree: ratio difference +0.435 [-0.128, +1.013]  w/o small +0.449 [-0.128, +1.143]  fitted fraction higher than the tree's on 12/20 landscapes (Wilcoxon p 0.26)
+        MLP - tree: ratio difference +0.092 [-0.306, +0.434]  w/o small +0.168 [-0.253, +0.503]  fitted fraction higher than the tree's on 9/20 landscapes (Wilcoxon p 0.87)
+      1 sigma  (exact arm 23.7, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   33.0  ratio 1.390 [1.069, 1.805]  median 1.149  w/o small 1.098 [0.915, 1.295]  lower 8/20 (w/o small 8/17)  p 0.097  rho(cost) +0.19  rho(fidelity, ratio) +0.43
+        GP   fitted   31.3  ratio 1.322 [0.988, 1.699]  median 1.094  w/o small 1.125 [0.858, 1.431]  lower 9/20 (w/o small 9/17)  p 0.26  rho(cost) +0.39  rho(fidelity, ratio) +0.38
+        MLP  fitted   27.8  ratio 1.173 [0.911, 1.503]  median 1.205  w/o small 0.986 [0.798, 1.204]  lower 9/20 (w/o small 9/17)  p 0.73  rho(cost) +0.30  rho(fidelity, ratio) +0.43
+        GP - tree: ratio difference -0.069 [-0.386, +0.262]  w/o small +0.027 [-0.264, +0.361]  fitted fraction higher than the tree's on 7/20 landscapes (Wilcoxon p 0.26)
+        MLP - tree: ratio difference -0.217 [-0.484, +0.027]  w/o small -0.111 [-0.315, +0.120]  fitted fraction higher than the tree's on 6/20 landscapes (Wilcoxon p 0.07)
+      5 sigma  (exact arm 69.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   81.8  ratio 1.179 [1.005, 1.403]  median 0.989  w/o small 1.025 [0.921, 1.166]  lower 10/20 (w/o small 10/17)  p 0.5  rho(cost) +0.27  rho(fidelity, ratio) +0.33
+        GP   fitted   76.1  ratio 1.097 [0.907, 1.296]  median 1.091  w/o small 1.009 [0.850, 1.175]  lower 9/20 (w/o small 8/17)  p 0.47  rho(cost) +0.36  rho(fidelity, ratio) +0.03
+        MLP  fitted   73.7  ratio 1.063 [0.893, 1.266]  median 0.995  w/o small 0.924 [0.819, 1.025]  lower 10/20 (w/o small 10/17)  p 0.96  rho(cost) +0.51  rho(fidelity, ratio) +0.25
+        GP - tree: ratio difference -0.082 [-0.257, +0.091]  w/o small -0.017 [-0.171, +0.150]  fitted fraction higher than the tree's on 7/20 landscapes (Wilcoxon p 0.23)
+        MLP - tree: ratio difference -0.116 [-0.250, -0.011]  w/o small -0.101 [-0.223, +0.005]  fitted fraction higher than the tree's on 5/20 landscapes (Wilcoxon p 0.09)
+
+== share of the achievable improvement; both arms' optima their best clean value per seed (sensitivity)
+
+   -- trajectory
+      0.25 sigma  (exact arm 3.2, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    1.0  ratio 0.304 [-0.161, 0.935]  median 0.306  w/o small 0.255 [-0.182, 0.830]  lower 12/20 (w/o small 11/17)  p 0.15  rho(cost) +0.07  rho(fidelity, ratio) +0.49
+        GP   fitted    4.1  ratio 1.283 [0.661, 2.473]  median 1.158  w/o small 1.090 [0.543, 2.248]  lower 7/20 (w/o small 7/17)  p 0.2  rho(cost) -0.21  rho(fidelity, ratio) +0.15
+        MLP  fitted    3.7  ratio 1.168 [0.792, 1.802]  median 1.020  w/o small 1.006 [0.636, 1.504]  lower 8/20 (w/o small 8/17)  p 0.43  rho(cost) +0.40  rho(fidelity, ratio) +0.40
+        GP - tree: ratio difference +0.979 [+0.413, +1.957]  w/o small +0.835 [+0.385, +1.729]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0023)
+        MLP - tree: ratio difference +0.864 [+0.366, +1.454]  w/o small +0.751 [+0.327, +1.203]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0037)
+      1 sigma  (exact arm 11.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    9.0  ratio 0.760 [0.609, 0.945]  median 0.795  w/o small 0.718 [0.577, 0.888]  lower 13/20 (w/o small 13/17)  p 0.053  rho(cost) +0.77  rho(fidelity, ratio) +0.34
+        GP   fitted   12.4  ratio 1.038 [0.822, 1.328]  median 1.064  w/o small 0.938 [0.745, 1.175]  lower 8/20 (w/o small 8/17)  p 0.52  rho(cost) +0.37  rho(fidelity, ratio) +0.39
+        MLP  fitted   15.2  ratio 1.280 [1.074, 1.549]  median 1.268  w/o small 1.193 [1.021, 1.422]  lower 6/20 (w/o small 6/17)  p 0.014  rho(cost) +0.65  rho(fidelity, ratio) -0.19
+        GP - tree: ratio difference +0.278 [-0.001, +0.589]  w/o small +0.220 [-0.074, +0.515]  fitted fraction higher than the tree's on 15/20 landscapes (Wilcoxon p 0.04)
+        MLP - tree: ratio difference +0.520 [+0.278, +0.808]  w/o small +0.475 [+0.255, +0.742]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00059)
+      5 sigma  (exact arm 23.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   19.7  ratio 0.841 [0.762, 0.951]  median 0.913  w/o small 0.802 [0.725, 0.885]  lower 15/20 (w/o small 15/17)  p 0.024  rho(cost) +0.92  rho(fidelity, ratio) +0.17
+        GP   fitted   22.7  ratio 0.968 [0.818, 1.161]  median 1.001  w/o small 0.901 [0.769, 1.035]  lower 10/20 (w/o small 10/17)  p 0.99  rho(cost) +0.74  rho(fidelity, ratio) +0.15
+        MLP  fitted   26.0  ratio 1.112 [0.998, 1.281]  median 1.135  w/o small 1.043 [0.957, 1.145]  lower 7/20 (w/o small 7/17)  p 0.15  rho(cost) +0.86  rho(fidelity, ratio) -0.23
+        GP - tree: ratio difference +0.128 [-0.014, +0.281]  w/o small +0.100 [-0.036, +0.236]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.024)
+        MLP - tree: ratio difference +0.272 [+0.166, +0.388]  w/o small +0.241 [+0.142, +0.336]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00021)
+
+   -- deployed
+      0.25 sigma  (exact arm 5.6, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    4.9  ratio 0.885 [0.475, 1.382]  median 1.169  w/o small 0.772 [0.336, 1.366]  lower 9/20 (w/o small 9/17)  p 0.84  rho(cost) -0.05  rho(fidelity, ratio) +0.33
+        GP   fitted    7.2  ratio 1.284 [0.700, 1.974]  median 1.208  w/o small 1.146 [0.542, 1.974]  lower 7/20 (w/o small 6/17)  p 0.26  rho(cost) -0.04  rho(fidelity, ratio) -0.00
+        MLP  fitted    6.1  ratio 1.082 [0.876, 1.339]  median 1.039  w/o small 1.011 [0.805, 1.289]  lower 9/20 (w/o small 8/17)  p 0.45  rho(cost) +0.57  rho(fidelity, ratio) +0.26
+        GP - tree: ratio difference +0.399 [-0.048, +0.865]  w/o small +0.374 [-0.089, +0.918]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.048)
+        MLP - tree: ratio difference +0.198 [-0.196, +0.519]  w/o small +0.239 [-0.227, +0.608]  fitted fraction higher than the tree's on 11/20 landscapes (Wilcoxon p 0.37)
+      1 sigma  (exact arm 26.0, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   29.1  ratio 1.119 [0.975, 1.297]  median 1.053  w/o small 1.026 [0.904, 1.160]  lower 8/20 (w/o small 8/17)  p 0.2  rho(cost) +0.46  rho(fidelity, ratio) +0.35
+        GP   fitted   28.3  ratio 1.085 [0.910, 1.274]  median 1.086  w/o small 0.992 [0.832, 1.163]  lower 8/20 (w/o small 8/17)  p 0.43  rho(cost) +0.52  rho(fidelity, ratio) +0.56
+        MLP  fitted   28.5  ratio 1.094 [0.977, 1.226]  median 1.162  w/o small 1.044 [0.937, 1.150]  lower 6/20 (w/o small 6/17)  p 0.13  rho(cost) +0.70  rho(fidelity, ratio) +0.29
+        GP - tree: ratio difference -0.034 [-0.236, +0.154]  w/o small -0.035 [-0.264, +0.174]  fitted fraction higher than the tree's on 12/20 landscapes (Wilcoxon p 0.9)
+        MLP - tree: ratio difference -0.024 [-0.171, +0.121]  w/o small +0.018 [-0.117, +0.161]  fitted fraction higher than the tree's on 9/20 landscapes (Wilcoxon p 0.65)
+      5 sigma  (exact arm 75.2, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   74.4  ratio 0.989 [0.926, 1.068]  median 1.013  w/o small 0.965 [0.903, 1.038]  lower 9/20 (w/o small 8/17)  p 0.73  rho(cost) +0.71  rho(fidelity, ratio) -0.03
+        GP   fitted   72.8  ratio 0.967 [0.868, 1.064]  median 1.000  w/o small 0.947 [0.841, 1.046]  lower 10/20 (w/o small 9/17)  p 0.87  rho(cost) +0.64  rho(fidelity, ratio) +0.12
+        MLP  fitted   77.2  ratio 1.027 [0.958, 1.094]  median 1.021  w/o small 1.003 [0.933, 1.076]  lower 8/20 (w/o small 8/17)  p 0.5  rho(cost) +0.74  rho(fidelity, ratio) -0.09
+        GP - tree: ratio difference -0.021 [-0.129, +0.071]  w/o small -0.018 [-0.134, +0.083]  fitted fraction higher than the tree's on 10/20 landscapes (Wilcoxon p 0.96)
+        MLP - tree: ratio difference +0.038 [-0.049, +0.115]  w/o small +0.038 [-0.057, +0.133]  fitted fraction higher than the tree's on 10/20 landscapes (Wilcoxon p 0.65)
+
+   the six human-performance laws (yerkes_dodson, stevens, hicks_law, weber_fechner, power_law_practice, steering_law): mean fitted / mean exact fraction, and their ratio
+   oracle     trajectory tree 0.25s 0.013/0.020 (0.66), 1s 0.076/0.112 (0.68), 5s 0.176/0.240 (0.73) | GP 0.25s 0.029/0.020 (1.48), 1s 0.119/0.112 (1.06), 5s 0.218/0.240 (0.91) | MLP 0.25s 0.018/0.020 (0.92), 1s 0.109/0.112 (0.97), 5s 0.231/0.240 (0.96)
+   oracle     deployed   tree 0.25s 0.032/0.035 (0.90), 1s 0.193/0.213 (0.90), 5s 0.559/0.684 (0.82) | GP 0.25s 0.058/0.035 (1.66), 1s 0.255/0.213 (1.20), 5s 0.681/0.684 (1.00) | MLP 0.25s 0.041/0.035 (1.17), 1s 0.194/0.213 (0.91), 5s 0.645/0.684 (0.94)
+   best_clean trajectory tree 0.25s 0.016/0.020 (0.80), 1s 0.090/0.112 (0.81), 5s 0.205/0.240 (0.86) | GP 0.25s 0.029/0.020 (1.48), 1s 0.118/0.112 (1.06), 5s 0.217/0.240 (0.91) | MLP 0.25s 0.018/0.020 (0.92), 1s 0.108/0.112 (0.97), 5s 0.230/0.240 (0.96)
+   best_clean deployed   tree 0.25s 0.039/0.035 (1.12), 1s 0.235/0.213 (1.10), 5s 0.665/0.684 (0.97) | GP 0.25s 0.058/0.035 (1.65), 1s 0.254/0.213 (1.19), 5s 0.679/0.684 (0.99) | MLP 0.25s 0.041/0.035 (1.17), 1s 0.193/0.213 (0.91), 5s 0.643/0.684 (0.94)
+   sigma_f    trajectory tree 0.25s 0.021/0.020 (1.09), 1s 0.106/0.112 (0.95), 5s 0.236/0.240 (0.99) | GP 0.25s 0.030/0.020 (1.54), 1s 0.118/0.112 (1.06), 5s 0.212/0.240 (0.88) | MLP 0.25s 0.021/0.020 (1.08), 1s 0.113/0.112 (1.01), 5s 0.236/0.240 (0.99)
+   sigma_f    deployed   tree 0.25s 0.054/0.035 (1.53), 1s 0.293/0.213 (1.38), 5s 0.783/0.684 (1.15) | GP 0.25s 0.060/0.035 (1.71), 1s 0.262/0.213 (1.23), 5s 0.669/0.684 (0.98) | MLP 0.25s 0.047/0.035 (1.35), 1s 0.211/0.213 (0.99), 5s 0.677/0.684 (0.99)
+   both_best_clean trajectory tree 0.25s 0.016/0.020 (0.80), 1s 0.090/0.112 (0.81), 5s 0.205/0.240 (0.86) | GP 0.25s 0.029/0.020 (1.48), 1s 0.118/0.112 (1.06), 5s 0.217/0.240 (0.91) | MLP 0.25s 0.018/0.020 (0.92), 1s 0.108/0.112 (0.97), 5s 0.230/0.240 (0.96)
+   both_best_clean deployed   tree 0.25s 0.039/0.035 (1.11), 1s 0.235/0.213 (1.10), 5s 0.665/0.684 (0.97) | GP 0.25s 0.058/0.035 (1.65), 1s 0.254/0.213 (1.19), 5s 0.679/0.684 (0.99) | MLP 0.25s 0.041/0.035 (1.17), 1s 0.193/0.213 (0.91), 5s 0.643/0.684 (0.94)
+
+   smooth families restricted to landscapes with correlation >= 0.453 (the tree minimum), primary optimum, 1 sigma
+   trajectory GP   15 landscapes: ratio 1.118, median 1.067, lower 5/15
+   trajectory MLP  16 landscapes: ratio 1.275, median 1.333, lower 5/16
+   deployed   GP   15 landscapes: ratio 1.187, median 1.190, lower 4/15
+   deployed   MLP  16 landscapes: ratio 1.166, median 1.190, lower 4/16
+
+######## fraction of the floor gap (the unit of tab:fitted)
+
+== fraction of the floor gap; optimum per seed: oracle (primary)
+
+   -- trajectory
+      0.25 sigma  (exact arm 14.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    1.8  ratio 0.125 [-0.071, 0.328]  median 0.137  w/o small 0.170 [-0.125, 0.439]  lower 16/20 (w/o small 13/17)  p 0.00032  rho(cost) +0.30  rho(fidelity, ratio) +0.30
+        GP   fitted   17.2  ratio 1.196 [0.806, 1.912]  median 1.243  w/o small 1.290 [0.809, 1.988]  lower 7/20 (w/o small 6/17)  p 0.31  rho(cost) +0.52  rho(fidelity, ratio) -0.08
+        MLP  fitted   15.0  ratio 1.045 [0.661, 1.718]  median 1.081  w/o small 1.207 [0.749, 1.782]  lower 9/20 (w/o small 8/17)  p 0.35  rho(cost) +0.63  rho(fidelity, ratio) +0.18
+        GP - tree: ratio difference +1.071 [+0.692, +1.787]  w/o small +1.120 [+0.677, +1.783]  fitted fraction higher than the tree's on 18/20 landscapes (Wilcoxon p 6.3e-05)
+        MLP - tree: ratio difference +0.920 [+0.567, +1.563]  w/o small +1.037 [+0.671, +1.543]  fitted fraction higher than the tree's on 19/20 landscapes (Wilcoxon p 9.5e-06)
+      1 sigma  (exact arm 57.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   15.4  ratio 0.265 [0.164, 0.459]  median 0.393  w/o small 0.450 [0.335, 0.616]  lower 18/20 (w/o small 15/17)  p 0.00021  rho(cost) +0.05  rho(fidelity, ratio) -0.12
+        GP   fitted   55.8  ratio 0.963 [0.767, 1.239]  median 0.971  w/o small 1.147 [0.940, 1.475]  lower 10/20 (w/o small 8/17)  p 0.9  rho(cost) +0.82  rho(fidelity, ratio) +0.11
+        MLP  fitted   59.7  ratio 1.030 [0.744, 1.609]  median 1.196  w/o small 1.506 [1.142, 2.140]  lower 7/20 (w/o small 4/17)  p 0.37  rho(cost) +0.36  rho(fidelity, ratio) -0.60
+        GP - tree: ratio difference +0.698 [+0.488, +0.908]  w/o small +0.697 [+0.425, +1.021]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00026)
+        MLP - tree: ratio difference +0.765 [+0.554, +1.204]  w/o small +1.056 [+0.741, +1.637]  fitted fraction higher than the tree's on 20/20 landscapes (Wilcoxon p 1.9e-06)
+      5 sigma  (exact arm 112.7, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   34.0  ratio 0.302 [0.184, 0.517]  median 0.513  w/o small 0.491 [0.386, 0.667]  lower 17/20 (w/o small 14/17)  p 0.00017  rho(cost) -0.04  rho(fidelity, ratio) -0.47
+        GP   fitted   93.5  ratio 0.830 [0.649, 1.119]  median 0.935  w/o small 1.046 [0.871, 1.301]  lower 11/20 (w/o small 8/17)  p 0.47  rho(cost) +0.75  rho(fidelity, ratio) -0.14
+        MLP  fitted   97.4  ratio 0.864 [0.627, 1.300]  median 1.044  w/o small 1.208 [0.963, 1.659]  lower 9/20 (w/o small 6/17)  p 0.7  rho(cost) +0.60  rho(fidelity, ratio) -0.58
+        GP - tree: ratio difference +0.528 [+0.373, +0.698]  w/o small +0.554 [+0.342, +0.765]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00013)
+        MLP - tree: ratio difference +0.562 [+0.424, +0.820]  w/o small +0.716 [+0.533, +1.044]  fitted fraction higher than the tree's on 20/20 landscapes (Wilcoxon p 1.9e-06)
+
+   -- deployed
+      0.25 sigma  (exact arm 76.0, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    8.6  ratio 0.114 [0.057, 0.427]  median 0.344  w/o small 0.461 [0.243, 0.751]  lower 14/20 (w/o small 11/17)  p 0.0027  rho(cost) +0.43  rho(fidelity, ratio) -0.02
+        GP   fitted   34.4  ratio 0.452 [0.309, 1.079]  median 1.320  w/o small 1.207 [0.759, 1.758]  lower 9/20 (w/o small 6/17)  p 0.67  rho(cost) +0.72  rho(fidelity, ratio) -0.17
+        MLP  fitted   29.3  ratio 0.385 [0.244, 1.239]  median 0.929  w/o small 1.314 [1.006, 1.759]  lower 11/20 (w/o small 8/17)  p 0.99  rho(cost) +0.82  rho(fidelity, ratio) -0.27
+        GP - tree: ratio difference +0.338 [+0.222, +0.673]  w/o small +0.746 [+0.312, +1.216]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00085)
+        MLP - tree: ratio difference +0.272 [+0.170, +0.771]  w/o small +0.853 [+0.547, +1.211]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 6.3e-05)
+      1 sigma  (exact arm 255.6, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   51.2  ratio 0.200 [0.111, 0.621]  median 0.611  w/o small 0.635 [0.492, 0.831]  lower 18/20 (w/o small 15/17)  p 0.0014  rho(cost) +0.49  rho(fidelity, ratio) -0.50
+        GP   fitted  139.7  ratio 0.546 [0.347, 1.171]  median 1.070  w/o small 1.161 [0.906, 1.478]  lower 9/20 (w/o small 6/17)  p 0.78  rho(cost) +0.82  rho(fidelity, ratio) +0.08
+        MLP  fitted  123.1  ratio 0.481 [0.304, 1.271]  median 1.253  w/o small 1.302 [0.999, 1.719]  lower 6/20 (w/o small 3/17)  p 0.45  rho(cost) +0.72  rho(fidelity, ratio) -0.39
+        GP - tree: ratio difference +0.346 [+0.197, +0.635]  w/o small +0.526 [+0.277, +0.791]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00071)
+        MLP - tree: ratio difference +0.281 [+0.182, +0.646]  w/o small +0.666 [+0.472, +0.933]  fitted fraction higher than the tree's on 20/20 landscapes (Wilcoxon p 1.9e-06)
+      5 sigma  (exact arm 872.6, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted  132.1  ratio 0.151 [0.075, 0.474]  median 0.614  w/o small 0.574 [0.437, 0.794]  lower 14/20 (w/o small 11/17)  p 0.0027  rho(cost) +0.05  rho(fidelity, ratio) -0.48
+        GP   fitted  335.0  ratio 0.384 [0.203, 0.948]  median 0.879  w/o small 1.084 [0.873, 1.349]  lower 11/20 (w/o small 8/17)  p 0.7  rho(cost) +0.82  rho(fidelity, ratio) -0.15
+        MLP  fitted  338.0  ratio 0.387 [0.216, 1.002]  median 1.182  w/o small 1.195 [0.944, 1.607]  lower 8/20 (w/o small 5/17)  p 0.99  rho(cost) +0.66  rho(fidelity, ratio) -0.49
+        GP - tree: ratio difference +0.233 [+0.110, +0.513]  w/o small +0.510 [+0.278, +0.719]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.00059)
+        MLP - tree: ratio difference +0.236 [+0.131, +0.559]  w/o small +0.621 [+0.427, +0.892]  fitted fraction higher than the tree's on 19/20 landscapes (Wilcoxon p 3.8e-06)
+
+== fraction of the floor gap; optimum per seed: best_clean (sensitivity)
+
+   -- trajectory
+      0.25 sigma  (exact arm 14.4, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted    2.9  ratio 0.199 [-0.190, 0.495]  median 0.292  w/o small 0.226 [-0.257, 0.666]  lower 16/20 (w/o small 13/17)  p 0.0023  rho(cost) +0.32  rho(fidelity, ratio) +0.36
+        GP   fitted   18.0  ratio 1.253 [0.839, 2.058]  median 1.230  w/o small 1.395 [0.861, 2.216]  lower 7/20 (w/o small 6/17)  p 0.25  rho(cost) +0.48  rho(fidelity, ratio) -0.16
+        MLP  fitted   15.1  ratio 1.052 [0.667, 1.729]  median 1.070  w/o small 1.207 [0.753, 1.772]  lower 9/20 (w/o small 8/17)  p 0.35  rho(cost) +0.65  rho(fidelity, ratio) +0.16
+        GP - tree: ratio difference +1.054 [+0.605, +1.926]  w/o small +1.169 [+0.652, +1.963]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 4.8e-05)
+        MLP - tree: ratio difference +0.853 [+0.456, +1.574]  w/o small +0.981 [+0.600, +1.519]  fitted fraction higher than the tree's on 18/20 landscapes (Wilcoxon p 4.8e-05)
+      1 sigma  (exact arm 57.9, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   23.7  ratio 0.408 [0.275, 0.661]  median 0.590  w/o small 0.649 [0.505, 0.869]  lower 16/20 (w/o small 13/17)  p 0.0027  rho(cost) +0.17  rho(fidelity, ratio) -0.19
+        GP   fitted   57.0  ratio 0.983 [0.786, 1.279]  median 0.994  w/o small 1.187 [0.979, 1.548]  lower 10/20 (w/o small 8/17)  p 0.84  rho(cost) +0.80  rho(fidelity, ratio) -0.01
+        MLP  fitted   59.5  ratio 1.027 [0.744, 1.594]  median 1.168  w/o small 1.491 [1.123, 2.108]  lower 8/20 (w/o small 5/17)  p 0.41  rho(cost) +0.37  rho(fidelity, ratio) -0.57
+        GP - tree: ratio difference +0.575 [+0.373, +0.766]  w/o small +0.539 [+0.281, +0.844]  fitted fraction higher than the tree's on 18/20 landscapes (Wilcoxon p 0.00048)
+        MLP - tree: ratio difference +0.618 [+0.425, +1.008]  w/o small +0.842 [+0.543, +1.393]  fitted fraction higher than the tree's on 19/20 landscapes (Wilcoxon p 3.8e-06)
+      5 sigma  (exact arm 112.7, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   52.1  ratio 0.462 [0.306, 0.747]  median 0.701  w/o small 0.714 [0.580, 0.931]  lower 12/20 (w/o small 9/17)  p 0.014  rho(cost) +0.35  rho(fidelity, ratio) -0.65
+        GP   fitted   96.2  ratio 0.854 [0.666, 1.166]  median 1.022  w/o small 1.090 [0.903, 1.385]  lower 9/20 (w/o small 6/17)  p 0.87  rho(cost) +0.75  rho(fidelity, ratio) -0.34
+        MLP  fitted   97.0  ratio 0.860 [0.625, 1.292]  median 1.042  w/o small 1.196 [0.951, 1.649]  lower 9/20 (w/o small 6/17)  p 0.73  rho(cost) +0.58  rho(fidelity, ratio) -0.54
+        GP - tree: ratio difference +0.391 [+0.241, +0.525]  w/o small +0.375 [+0.176, +0.559]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00059)
+        MLP - tree: ratio difference +0.398 [+0.296, +0.582]  w/o small +0.481 [+0.330, +0.751]  fitted fraction higher than the tree's on 19/20 landscapes (Wilcoxon p 3.8e-06)
+
+   -- deployed
+      0.25 sigma  (exact arm 76.0, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   16.0  ratio 0.210 [0.120, 0.672]  median 0.600  w/o small 0.752 [0.406, 1.153]  lower 12/20 (w/o small 9/17)  p 0.064  rho(cost) +0.72  rho(fidelity, ratio) -0.04
+        GP   fitted   35.5  ratio 0.466 [0.315, 1.179]  median 1.307  w/o small 1.291 [0.803, 1.955]  lower 9/20 (w/o small 6/17)  p 0.9  rho(cost) +0.62  rho(fidelity, ratio) -0.20
+        MLP  fitted   29.0  ratio 0.382 [0.244, 1.206]  median 0.914  w/o small 1.281 [0.964, 1.734]  lower 11/20 (w/o small 8/17)  p 0.93  rho(cost) +0.81  rho(fidelity, ratio) -0.20
+        GP - tree: ratio difference +0.256 [+0.143, +0.534]  w/o small +0.539 [+0.110, +1.080]  fitted fraction higher than the tree's on 15/20 landscapes (Wilcoxon p 0.0042)
+        MLP - tree: ratio difference +0.171 [+0.096, +0.489]  w/o small +0.528 [+0.184, +0.923]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0014)
+      1 sigma  (exact arm 255.6, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted   89.8  ratio 0.351 [0.211, 1.014]  median 0.950  w/o small 1.017 [0.798, 1.283]  lower 11/20 (w/o small 8/17)  p 0.55  rho(cost) +0.77  rho(fidelity, ratio) -0.64
+        GP   fitted  142.9  ratio 0.559 [0.355, 1.213]  median 1.063  w/o small 1.209 [0.933, 1.568]  lower 9/20 (w/o small 6/17)  p 0.93  rho(cost) +0.80  rho(fidelity, ratio) -0.06
+        MLP  fitted  122.1  ratio 0.478 [0.304, 1.251]  median 1.265  w/o small 1.277 [0.968, 1.696]  lower 7/20 (w/o small 4/17)  p 0.62  rho(cost) +0.70  rho(fidelity, ratio) -0.35
+        GP - tree: ratio difference +0.208 [+0.052, +0.414]  w/o small +0.192 [-0.063, +0.454]  fitted fraction higher than the tree's on 14/20 landscapes (Wilcoxon p 0.048)
+        MLP - tree: ratio difference +0.127 [+0.061, +0.279]  w/o small +0.260 [+0.071, +0.504]  fitted fraction higher than the tree's on 17/20 landscapes (Wilcoxon p 0.00071)
+      5 sigma  (exact arm 872.6, mean over landscapes; without branin, powell, rosenbrock: exact floor gap below 2% of opt_z)
+        tree fitted  224.4  ratio 0.257 [0.135, 0.728]  median 0.951  w/o small 0.905 [0.684, 1.229]  lower 11/20 (w/o small 8/17)  p 0.33  rho(cost) +0.68  rho(fidelity, ratio) -0.69
+        GP   fitted  344.3  ratio 0.395 [0.208, 0.999]  median 1.011  w/o small 1.132 [0.903, 1.448]  lower 9/20 (w/o small 6/17)  p 0.99  rho(cost) +0.75  rho(fidelity, ratio) -0.34
+        MLP  fitted  336.8  ratio 0.386 [0.215, 0.990]  median 1.155  w/o small 1.180 [0.929, 1.598]  lower 8/20 (w/o small 5/17)  p 0.99  rho(cost) +0.67  rho(fidelity, ratio) -0.45
+        GP - tree: ratio difference +0.137 [+0.028, +0.327]  w/o small +0.227 [-0.089, +0.475]  fitted fraction higher than the tree's on 15/20 landscapes (Wilcoxon p 0.024)
+        MLP - tree: ratio difference +0.129 [+0.050, +0.308]  w/o small +0.275 [+0.008, +0.538]  fitted fraction higher than the tree's on 16/20 landscapes (Wilcoxon p 0.0037)
+
+   the six human-performance laws (yerkes_dodson, stevens, hicks_law, weber_fechner, power_law_practice, steering_law): mean fitted / mean exact fraction, and their ratio
+   oracle     trajectory tree 0.25s 0.028/0.085 (0.33), 1s 0.159/0.403 (0.39), 5s 0.361/0.830 (0.43) | GP 0.25s 0.135/0.085 (1.59), 1s 0.454/0.403 (1.13), 5s 0.789/0.830 (0.95) | MLP 0.25s 0.100/0.085 (1.17), 1s 0.431/0.403 (1.07), 5s 0.858/0.830 (1.03)
+   oracle     deployed   tree 0.25s 0.070/0.154 (0.45), 1s 0.412/0.898 (0.46), 5s 1.167/2.623 (0.44) | GP 0.25s 0.270/0.154 (1.75), 1s 1.044/0.898 (1.16), 5s 2.727/2.623 (1.04) | MLP 0.25s 0.220/0.154 (1.42), 1s 0.866/0.898 (0.96), 5s 2.717/2.623 (1.04)
+   best_clean trajectory tree 0.25s 0.046/0.085 (0.54), 1s 0.244/0.403 (0.60), 5s 0.532/0.830 (0.64) | GP 0.25s 0.133/0.085 (1.57), 1s 0.449/0.403 (1.11), 5s 0.780/0.830 (0.94) | MLP 0.25s 0.098/0.085 (1.15), 1s 0.426/0.403 (1.06), 5s 0.846/0.830 (1.02)
+   best_clean deployed   tree 0.25s 0.119/0.154 (0.77), 1s 0.677/0.898 (0.75), 5s 1.808/2.623 (0.69) | GP 0.25s 0.266/0.154 (1.72), 1s 1.031/0.898 (1.15), 5s 2.694/2.623 (1.03) | MLP 0.25s 0.215/0.154 (1.39), 1s 0.851/0.898 (0.95), 5s 2.673/2.623 (1.02)
+
+   smooth families restricted to landscapes with correlation >= 0.453 (the tree minimum), primary optimum, 1 sigma
+   trajectory GP   15 landscapes: ratio 0.952, median 1.008, lower 7/15
+   trajectory MLP  16 landscapes: ratio 0.856, median 1.083, lower 7/16
+   deployed   GP   15 landscapes: ratio 0.515, median 1.044, lower 7/15
+   deployed   MLP  16 landscapes: ratio 0.401, median 1.152, lower 6/16
+
+== achievable improvement: the oracle mean over 20,000 points against the mean over the 100 clean floor designs per seed (optimum 'empirical')
+   tree trajectory 0.25s ratio 0.274->0.273 median 0.251->0.251 lower 12->12; 1s ratio 0.716->0.714 median 0.722->0.725 lower 15->15; 5s ratio 0.797->0.794 median 0.866->0.865 lower 15->15
+   tree deployed   0.25s ratio 0.764->0.763 median 0.915->0.921 lower 10->10; 1s ratio 1.017->1.015 median 0.917->0.918 lower 12->12; 5s ratio 0.901->0.899 median 0.920->0.926 lower 12->12
+   GP   trajectory 0.25s ratio 1.296->1.283 median 1.184->1.186 lower 7->7; 1s ratio 1.112->1.107 median 1.067->1.050 lower 8->8; 5s ratio 1.022->1.017 median 1.095->1.073 lower 9->9
+   GP   deployed   0.25s ratio 1.289->1.279 median 1.287->1.294 lower 6->6; 1s ratio 1.166->1.160 median 1.130->1.136 lower 6->7; 5s ratio 1.017->1.011 median 1.063->1.060 lower 9->9
+   MLP  trajectory 0.25s ratio 1.271->1.266 median 1.119->1.106 lower 7->7; 1s ratio 1.411->1.408 median 1.479->1.495 lower 5->5; 5s ratio 1.222->1.220 median 1.214->1.220 lower 6->6
+   MLP  deployed   0.25s ratio 1.164->1.164 median 1.176->1.197 lower 7->7; 1s ratio 1.206->1.205 median 1.229->1.235 lower 5->5; 5s ratio 1.115->1.114 median 1.102->1.103 lower 6->6
+
+== achievable improvement: the logged y_opt against the best value any run visited (optimum 'visited')
+   tree trajectory 0.25s ratio 0.274->0.271 median 0.251->0.251 lower 12->12; 1s ratio 0.716->0.713 median 0.722->0.719 lower 15->15; 5s ratio 0.797->0.794 median 0.866->0.865 lower 15->15
+   tree deployed   0.25s ratio 0.764->0.760 median 0.915->0.915 lower 10->10; 1s ratio 1.017->1.013 median 0.917->0.917 lower 12->12; 5s ratio 0.901->0.898 median 0.920->0.915 lower 12->13
+   GP   trajectory 0.25s ratio 1.296->1.285 median 1.184->1.184 lower 7->7; 1s ratio 1.112->1.099 median 1.067->1.064 lower 8->8; 5s ratio 1.022->1.012 median 1.095->1.093 lower 9->9
+   GP   deployed   0.25s ratio 1.289->1.276 median 1.287->1.237 lower 6->6; 1s ratio 1.166->1.152 median 1.130->1.127 lower 6->6; 5s ratio 1.017->1.007 median 1.063->1.022 lower 9->10
+   MLP  trajectory 0.25s ratio 1.271->1.265 median 1.119->1.114 lower 7->7; 1s ratio 1.411->1.399 median 1.479->1.477 lower 5->5; 5s ratio 1.222->1.212 median 1.214->1.214 lower 6->6
+   MLP  deployed   0.25s ratio 1.164->1.150 median 1.176->1.128 lower 7->7; 1s ratio 1.206->1.193 median 1.229->1.188 lower 5->5; 5s ratio 1.115->1.105 median 1.102->1.092 lower 6->6
+
+== achievable improvement: the primary against sigma_f * opt_z with the seed-7 sigma_f, the one that scales every seed's error grid ('sigma_f_seed7')
+   tree trajectory 0.25s ratio 0.274->0.409 median 0.251->0.279 lower 12->11; 1s ratio 0.716->0.833 median 0.722->0.815 lower 15->14; 5s ratio 0.797->0.948 median 0.866->0.840 lower 15->11
+   tree deployed   0.25s ratio 0.764->1.142 median 0.915->1.390 lower 10->8; 1s ratio 1.017->1.386 median 0.917->1.150 lower 12->8; 5s ratio 0.901->1.177 median 0.920->0.991 lower 12->10
+   GP   trajectory 0.25s ratio 1.296->1.475 median 1.184->1.150 lower 7->8; 1s ratio 1.112->1.174 median 1.067->1.039 lower 8->9; 5s ratio 1.022->1.037 median 1.095->1.025 lower 9->10
+   GP   deployed   0.25s ratio 1.289->1.534 median 1.287->1.316 lower 6->8; 1s ratio 1.166->1.300 median 1.130->1.094 lower 6->9; 5s ratio 1.017->1.079 median 1.063->0.998 lower 9->10
+   MLP  trajectory 0.25s ratio 1.271->1.230 median 1.119->0.831 lower 7->10; 1s ratio 1.411->1.339 median 1.479->1.115 lower 5->7; 5s ratio 1.222->1.145 median 1.214->1.051 lower 6->8
+   MLP  deployed   0.25s ratio 1.164->1.328 median 1.176->1.066 lower 7->9; 1s ratio 1.206->1.260 median 1.229->1.257 lower 5->9; 5s ratio 1.115->1.120 median 1.102->0.970 lower 6->10
+
+== floor gap: runs above the logged y_opt
+   tree landscape-seeds on which a run beat y_opt: 6/100, by at most 0.447 (on michalewicz)
+   GP   landscape-seeds on which a run beat y_opt: 59/100, by at most 0.737 (on shekel)
+   MLP  landscape-seeds on which a run beat y_opt: 61/100, by at most 0.415 (on levy_10)
+
+== floor gap: the logged y_opt against the best value any run visited (optimum 'visited')
+   tree trajectory 0.25s ratio 0.125->0.122 median 0.137->0.135 lower 16->16; 1s ratio 0.265->0.263 median 0.393->0.393 lower 18->18; 5s ratio 0.302->0.300 median 0.513->0.513 lower 17->17
+   tree deployed   0.25s ratio 0.114->0.113 median 0.344->0.340 lower 14->15; 1s ratio 0.200->0.199 median 0.611->0.611 lower 18->18; 5s ratio 0.151->0.150 median 0.614->0.614 lower 14->14
+   GP   trajectory 0.25s ratio 1.196->1.176 median 1.243->1.230 lower 7->7; 1s ratio 0.963->0.946 median 0.971->0.966 lower 10->10; 5s ratio 0.830->0.816 median 0.935->0.911 lower 11->11
+   GP   deployed   0.25s ratio 0.452->0.443 median 1.320->1.307 lower 9->9; 1s ratio 0.546->0.537 median 1.070->0.981 lower 9->10; 5s ratio 0.384->0.378 median 0.879->0.853 lower 11->11
+   MLP  trajectory 0.25s ratio 1.045->1.035 median 1.081->1.056 lower 9->9; 1s ratio 1.030->1.011 median 1.196->1.162 lower 7->8; 5s ratio 0.864->0.847 median 1.044->1.042 lower 9->9
+   MLP  deployed   0.25s ratio 0.385->0.376 median 0.929->0.897 lower 11->11; 1s ratio 0.481->0.470 median 1.253->1.249 lower 6->7; 5s ratio 0.387->0.380 median 1.182->1.149 lower 8->8
+
+== every achievable-unit estimator side by side: ratio of landscape means [95% landscape-bootstrap interval]; family contrasts are differences of ratios on the same resamples
+   trajectory 0.25 sigma
+      oracle          tree 0.274 [-0.154, 0.830]  GP 1.296 [0.664, 2.505]  MLP 1.271 [0.858, 1.964]  GP-tree +1.022 [+0.457, +2.005]  MLP-tree +0.996 [+0.515, +1.637]
+      best_clean      tree 0.332 [-0.181, 0.988]  GP 1.400 [0.705, 2.725]  MLP 1.275 [0.863, 1.961]  GP-tree +1.068 [+0.444, +2.122]  MLP-tree +0.943 [+0.401, +1.601]
+      sigma_f         tree 0.414 [-0.200, 1.203]  GP 1.522 [0.726, 2.986]  MLP 1.153 [0.670, 2.071]  GP-tree +1.108 [+0.309, +2.523]  MLP-tree +0.739 [+0.111, +1.741]
+      both_best_clean tree 0.304 [-0.161, 0.935]  GP 1.283 [0.661, 2.473]  MLP 1.168 [0.792, 1.802]  GP-tree +0.979 [+0.413, +1.957]  MLP-tree +0.864 [+0.366, +1.454]
+      empirical       tree 0.273 [-0.153, 0.827]  GP 1.283 [0.661, 2.485]  MLP 1.266 [0.853, 1.953]  GP-tree +1.010 [+0.451, +1.973]  MLP-tree +0.993 [+0.510, +1.633]
+      visited         tree 0.271 [-0.155, 0.827]  GP 1.285 [0.659, 2.481]  MLP 1.265 [0.856, 1.954]  GP-tree +1.014 [+0.459, +1.995]  MLP-tree +0.994 [+0.517, +1.632]
+      sigma_f_seed7   tree 0.409 [-0.203, 1.196]  GP 1.475 [0.711, 2.910]  MLP 1.230 [0.670, 2.310]  GP-tree +1.066 [+0.284, +2.459]  MLP-tree +0.821 [+0.115, +2.049]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 0.27 to 0.41 (interval below 1 in 3/4, above 1 in 0/4); GP 1.28 to 1.52 (interval below 1 in 0/4, above 1 in 0/4); MLP 1.15 to 1.28 (interval below 1 in 0/4, above 1 in 0/4); GP - tree +0.98 to +1.11 (interval above 0 in 4/4, below 0 in 0/4); MLP - tree +0.74 to +1.00 (interval above 0 in 4/4, below 0 in 0/4)
+   trajectory 1 sigma
+      oracle          tree 0.716 [0.559, 0.932]  GP 1.112 [0.892, 1.422]  MLP 1.411 [1.150, 1.755]  GP-tree +0.395 [+0.089, +0.736]  MLP-tree +0.695 [+0.449, +1.023]
+      best_clean      tree 0.836 [0.645, 1.095]  GP 1.142 [0.942, 1.433]  MLP 1.408 [1.149, 1.757]  GP-tree +0.306 [-0.002, +0.628]  MLP-tree +0.572 [+0.309, +0.901]
+      sigma_f         tree 0.835 [0.622, 1.138]  GP 1.188 [0.862, 1.662]  MLP 1.268 [0.966, 1.738]  GP-tree +0.353 [+0.030, +0.789]  MLP-tree +0.433 [+0.106, +0.863]
+      both_best_clean tree 0.760 [0.609, 0.945]  GP 1.038 [0.822, 1.328]  MLP 1.280 [1.074, 1.549]  GP-tree +0.278 [-0.001, +0.589]  MLP-tree +0.520 [+0.278, +0.808]
+      empirical       tree 0.714 [0.558, 0.928]  GP 1.107 [0.888, 1.418]  MLP 1.408 [1.150, 1.750]  GP-tree +0.393 [+0.088, +0.735]  MLP-tree +0.694 [+0.448, +1.022]
+      visited         tree 0.713 [0.556, 0.928]  GP 1.099 [0.884, 1.397]  MLP 1.399 [1.139, 1.740]  GP-tree +0.386 [+0.085, +0.715]  MLP-tree +0.685 [+0.444, +1.006]
+      sigma_f_seed7   tree 0.833 [0.621, 1.133]  GP 1.174 [0.851, 1.647]  MLP 1.339 [0.982, 1.924]  GP-tree +0.342 [+0.024, +0.768]  MLP-tree +0.506 [+0.143, +1.052]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 0.72 to 0.84 (interval below 1 in 2/4, above 1 in 0/4); GP 1.04 to 1.19 (interval below 1 in 0/4, above 1 in 0/4); MLP 1.27 to 1.41 (interval below 1 in 0/4, above 1 in 3/4); GP - tree +0.28 to +0.40 (interval above 0 in 2/4, below 0 in 0/4); MLP - tree +0.43 to +0.69 (interval above 0 in 4/4, below 0 in 0/4)
+   trajectory 5 sigma
+      oracle          tree 0.797 [0.702, 0.911]  GP 1.022 [0.882, 1.224]  MLP 1.222 [1.069, 1.442]  GP-tree +0.226 [+0.040, +0.420]  MLP-tree +0.425 [+0.300, +0.587]
+      best_clean      tree 0.923 [0.816, 1.070]  GP 1.063 [0.933, 1.257]  MLP 1.221 [1.067, 1.440]  GP-tree +0.140 [-0.017, +0.299]  MLP-tree +0.298 [+0.180, +0.431]
+      sigma_f         tree 0.949 [0.783, 1.195]  GP 1.052 [0.813, 1.390]  MLP 1.095 [0.856, 1.455]  GP-tree +0.103 [-0.084, +0.344]  MLP-tree +0.146 [-0.043, +0.394]
+      both_best_clean tree 0.841 [0.762, 0.951]  GP 0.968 [0.818, 1.161]  MLP 1.112 [0.998, 1.281]  GP-tree +0.128 [-0.014, +0.281]  MLP-tree +0.272 [+0.166, +0.388]
+      empirical       tree 0.794 [0.701, 0.909]  GP 1.017 [0.874, 1.218]  MLP 1.220 [1.068, 1.438]  GP-tree +0.223 [+0.036, +0.418]  MLP-tree +0.425 [+0.301, +0.583]
+      visited         tree 0.794 [0.699, 0.909]  GP 1.012 [0.872, 1.211]  MLP 1.212 [1.061, 1.432]  GP-tree +0.218 [+0.035, +0.410]  MLP-tree +0.417 [+0.296, +0.577]
+      sigma_f_seed7   tree 0.948 [0.782, 1.191]  GP 1.037 [0.805, 1.377]  MLP 1.145 [0.871, 1.597]  GP-tree +0.089 [-0.088, +0.327]  MLP-tree +0.198 [-0.014, +0.513]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 0.80 to 0.95 (interval below 1 in 2/4, above 1 in 0/4); GP 0.97 to 1.06 (interval below 1 in 0/4, above 1 in 0/4); MLP 1.10 to 1.22 (interval below 1 in 0/4, above 1 in 2/4); GP - tree +0.10 to +0.23 (interval above 0 in 1/4, below 0 in 0/4); MLP - tree +0.15 to +0.42 (interval above 0 in 3/4, below 0 in 0/4)
+   deployed 0.25 sigma
+      oracle          tree 0.764 [0.406, 1.204]  GP 1.289 [0.708, 1.954]  MLP 1.164 [0.960, 1.427]  GP-tree +0.525 [+0.026, +1.015]  MLP-tree +0.400 [+0.048, +0.691]
+      best_clean      tree 0.945 [0.510, 1.482]  GP 1.372 [0.750, 2.117]  MLP 1.157 [0.957, 1.415]  GP-tree +0.426 [-0.049, +0.926]  MLP-tree +0.211 [-0.211, +0.558]
+      sigma_f         tree 1.148 [0.620, 1.796]  GP 1.583 [0.842, 2.423]  MLP 1.241 [0.877, 1.684]  GP-tree +0.435 [-0.128, +1.013]  MLP-tree +0.092 [-0.306, +0.434]
+      both_best_clean tree 0.885 [0.475, 1.382]  GP 1.284 [0.700, 1.974]  MLP 1.082 [0.876, 1.339]  GP-tree +0.399 [-0.048, +0.865]  MLP-tree +0.198 [-0.196, +0.519]
+      empirical       tree 0.763 [0.408, 1.202]  GP 1.279 [0.707, 1.935]  MLP 1.164 [0.962, 1.419]  GP-tree +0.516 [+0.020, +0.999]  MLP-tree +0.400 [+0.042, +0.693]
+      visited         tree 0.760 [0.403, 1.195]  GP 1.276 [0.708, 1.940]  MLP 1.150 [0.951, 1.408]  GP-tree +0.516 [+0.032, +0.997]  MLP-tree +0.390 [+0.044, +0.676]
+      sigma_f_seed7   tree 1.142 [0.618, 1.784]  GP 1.534 [0.824, 2.319]  MLP 1.328 [0.892, 1.900]  GP-tree +0.392 [-0.134, +0.920]  MLP-tree +0.186 [-0.228, +0.576]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 0.76 to 1.15 (interval below 1 in 0/4, above 1 in 0/4); GP 1.28 to 1.58 (interval below 1 in 0/4, above 1 in 0/4); MLP 1.08 to 1.24 (interval below 1 in 0/4, above 1 in 0/4); GP - tree +0.40 to +0.53 (interval above 0 in 1/4, below 0 in 0/4); MLP - tree +0.09 to +0.40 (interval above 0 in 1/4, below 0 in 0/4)
+   deployed 1 sigma
+      oracle          tree 1.017 [0.884, 1.192]  GP 1.166 [0.980, 1.368]  MLP 1.206 [1.053, 1.372]  GP-tree +0.149 [-0.093, +0.381]  MLP-tree +0.189 [+0.055, +0.324]
+      best_clean      tree 1.229 [1.062, 1.445]  GP 1.192 [1.028, 1.371]  MLP 1.202 [1.049, 1.372]  GP-tree -0.037 [-0.270, +0.165]  MLP-tree -0.027 [-0.190, +0.132]
+      sigma_f         tree 1.390 [1.069, 1.805]  GP 1.322 [0.988, 1.699]  MLP 1.173 [0.911, 1.503]  GP-tree -0.069 [-0.386, +0.262]  MLP-tree -0.217 [-0.484, +0.027]
+      both_best_clean tree 1.119 [0.975, 1.297]  GP 1.085 [0.910, 1.274]  MLP 1.094 [0.977, 1.226]  GP-tree -0.034 [-0.236, +0.154]  MLP-tree -0.024 [-0.171, +0.121]
+      empirical       tree 1.015 [0.882, 1.188]  GP 1.160 [0.974, 1.363]  MLP 1.205 [1.050, 1.369]  GP-tree +0.145 [-0.094, +0.378]  MLP-tree +0.190 [+0.055, +0.329]
+      visited         tree 1.013 [0.881, 1.187]  GP 1.152 [0.973, 1.343]  MLP 1.193 [1.043, 1.359]  GP-tree +0.139 [-0.096, +0.359]  MLP-tree +0.179 [+0.053, +0.306]
+      sigma_f_seed7   tree 1.386 [1.070, 1.798]  GP 1.300 [0.965, 1.675]  MLP 1.260 [0.933, 1.705]  GP-tree -0.086 [-0.388, +0.241]  MLP-tree -0.127 [-0.405, +0.157]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 1.02 to 1.39 (interval below 1 in 0/4, above 1 in 2/4); GP 1.08 to 1.32 (interval below 1 in 0/4, above 1 in 1/4); MLP 1.09 to 1.21 (interval below 1 in 0/4, above 1 in 2/4); GP - tree -0.07 to +0.15 (interval above 0 in 0/4, below 0 in 0/4); MLP - tree -0.22 to +0.19 (interval above 0 in 1/4, below 0 in 0/4)
+   deployed 5 sigma
+      oracle          tree 0.901 [0.812, 1.004]  GP 1.017 [0.921, 1.117]  MLP 1.115 [1.013, 1.239]  GP-tree +0.116 [-0.033, +0.236]  MLP-tree +0.214 [+0.131, +0.298]
+      best_clean      tree 1.073 [0.975, 1.188]  GP 1.050 [0.962, 1.148]  MLP 1.114 [1.007, 1.246]  GP-tree -0.023 [-0.146, +0.074]  MLP-tree +0.041 [-0.052, +0.127]
+      sigma_f         tree 1.179 [1.005, 1.403]  GP 1.097 [0.907, 1.296]  MLP 1.063 [0.893, 1.266]  GP-tree -0.082 [-0.257, +0.091]  MLP-tree -0.116 [-0.250, -0.011]
+      both_best_clean tree 0.989 [0.926, 1.068]  GP 0.967 [0.868, 1.064]  MLP 1.027 [0.958, 1.094]  GP-tree -0.021 [-0.129, +0.071]  MLP-tree +0.038 [-0.049, +0.115]
+      empirical       tree 0.899 [0.810, 1.001]  GP 1.011 [0.916, 1.109]  MLP 1.114 [1.012, 1.237]  GP-tree +0.112 [-0.037, +0.232]  MLP-tree +0.215 [+0.132, +0.299]
+      visited         tree 0.898 [0.810, 1.000]  GP 1.007 [0.911, 1.106]  MLP 1.105 [1.003, 1.230]  GP-tree +0.109 [-0.039, +0.228]  MLP-tree +0.208 [+0.122, +0.294]
+      sigma_f_seed7   tree 1.177 [1.004, 1.401]  GP 1.079 [0.897, 1.275]  MLP 1.120 [0.905, 1.415]  GP-tree -0.097 [-0.261, +0.058]  MLP-tree -0.056 [-0.198, +0.081]
+      over the 4 estimators printed in full (oracle, best_clean, sigma_f, both_best_clean): tree 0.90 to 1.18 (interval below 1 in 0/4, above 1 in 1/4); GP 0.97 to 1.10 (interval below 1 in 0/4, above 1 in 0/4); MLP 1.03 to 1.11 (interval below 1 in 0/4, above 1 in 2/4); GP - tree -0.08 to +0.12 (interval above 0 in 0/4, below 0 in 0/4); MLP - tree -0.12 to +0.21 (interval above 0 in 1/4, below 0 in 1/4)

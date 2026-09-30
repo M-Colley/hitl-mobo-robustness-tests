@@ -1,0 +1,46 @@
+FRIEDMAN TESTS OVER LANDSCAPES, 32 CONDITIONS (trajectory loss, ten acquisitions)
+==============================================================================
+source: output-boba\analysis\acquisition_tests.csv
+alpha = 0.05; corrections over the 32 conditions (statsmodels multipletests)
+
+  raw         significant in 28 of 32
+  BH          significant in 28 of 32
+  Holm        significant in 25 of 32
+  Bonferroni  significant in 24 of 32
+  median Kendall's W over the 32 conditions: 0.247
+
+  process    sigma onset      p raw       p BH     p Holm      W
+  ar1         0.05     0   5.23e-07   1.13e-06   9.93e-06  0.257
+  ar1         0.25     0   6.88e-17   4.40e-16   1.93e-15  0.538
+  ar1            1     0   8.40e-15   3.36e-14   2.10e-13  0.480
+  ar1            5     0   1.98e-06   3.73e-06   3.17e-05  0.240
+  bias        0.05     0   5.28e-07   1.13e-06   9.93e-06  0.257
+  bias        0.25     0   8.98e-18   1.44e-16   2.78e-16  0.562
+  bias           1     0   1.23e-16   6.57e-16   3.33e-15  0.531
+  bias           5     0   3.01e-12   1.07e-11   7.22e-11  0.409
+  drift       0.05     0   5.03e-08   1.34e-07   1.06e-06  0.288
+  drift       0.25     0   6.00e-19   1.92e-17   1.92e-17  0.594
+  drift          1     0   1.74e-16   7.94e-16   4.52e-15  0.527
+  drift          5     0   2.21e-07   5.44e-07   4.42e-06  0.269
+  gaussian    0.05     0   3.92e-09   1.25e-08   9.01e-08  0.320
+  gaussian    0.25     0   2.07e-17   2.20e-16   6.20e-16  0.552
+  gaussian       1     0   6.15e-17   4.40e-16   1.78e-15  0.539
+  gaussian       5     0   7.42e-06   1.19e-05   9.64e-05  0.223
+  ar1         0.05    20   9.69e-03   1.19e-02   6.78e-02  0.121  <- lost under Holm
+  ar1         0.25    20   4.22e-06   7.11e-06   5.91e-05  0.230
+  ar1            1    20   2.22e-06   3.95e-06   3.33e-05  0.239
+  ar1            5    20   5.88e-02   6.21e-02   2.19e-01  0.091  <- not significant
+  bias        0.05    20   1.07e-02   1.27e-02   6.78e-02  0.119  <- lost under Holm
+  bias        0.25    20   6.61e-07   1.32e-06   1.12e-05  0.254
+  bias           1    20   5.48e-02   6.05e-02   2.19e-01  0.092  <- not significant
+  bias           5    20   6.02e-02   6.21e-02   2.19e-01  0.091  <- not significant
+  drift       0.05    20   4.58e-03   5.87e-03   3.67e-02  0.132
+  drift       0.25    20   1.86e-05   2.71e-05   2.05e-04  0.210
+  drift          1    20   5.67e-04   7.56e-04   5.10e-03  0.163
+  drift          5    20   1.43e-02   1.64e-02   7.16e-02  0.115  <- lost under Holm
+  gaussian    0.05    20   4.11e-05   5.72e-05   4.11e-04  0.200
+  gaussian    0.25    20   6.64e-09   1.93e-08   1.46e-07  0.313
+  gaussian       1    20   1.69e-05   2.57e-05   2.03e-04  0.212
+  gaussian       5    20   1.25e-01   1.25e-01   2.19e-01  0.077  <- not significant
+
+wrote output-boba\analysis\review\friedman_multiplicity.csv

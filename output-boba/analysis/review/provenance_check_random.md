@@ -1,44 +1,5 @@
-Code of the reruns: commit 736d91bd3be3d4ed89daec327e6518282a685953 plus the uncommitted diff of scripts/, the dataset configs and the landscape statistics, sha256 1a1600eed4eb435fb11d9208b88fef38fed600b31921ed8ba49fe09652003560 over 37 dirty file(s) (patch output/code_diffs/code_diff_1a1600eed4eb.patch, git-ignored), stamped at 2026-09-30T11:20:05+0100.
+Code of the reruns: commit 6268a4360bbd285bd8b23c97bd854b2cb1df5c9e plus the uncommitted diff of scripts/, the dataset configs and the landscape statistics, sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 over 0 dirty file(s), stamped at 2026-10-02T18:09:45+0100.
 No file that a rerun imported changed while the check ran.
-
-Dirty files at the start:
-- ` M datasets-ehmi.json`
-- ` M datasets-extended.json`
-- ` M datasets-provoice.json`
-- ` M datasets.json`
-- ` M scripts/analyse_boba_adaptations.py`
-- ` M scripts/analyse_boba_mo.py`
-- ` M scripts/analyse_boba_robustness.py`
-- ` M scripts/analyse_fitted_companion.py`
-- ` M scripts/anchor_noise_scale.py`
-- ` M scripts/bo_sensor_error_simulation.py`
-- ` M scripts/bo_synthetic_error_simulation.py`
-- ` M scripts/budget_split.py`
-- ` M scripts/calibrate_noise_from_data.py`
-- ` M scripts/changepoint_compare.py`
-- ` M scripts/compare_boba_arms.py`
-- ` M scripts/estimate_archival_error_processes.py`
-- ` M scripts/evaluate_research_question.py`
-- ` M scripts/factor_variance_shares.py`
-- ` M scripts/onset_bound.py`
-- ` M scripts/oracle_isolation.py`
-- ` M scripts/oracle_isolation_acq_ranking.py`
-- ` M scripts/replay_end_of_study.py`
-- ` M scripts/review_checks/fresh_seed_replication.py`
-- ` M scripts/review_checks/oracle_families.py`
-- ` M scripts/sitting_by_magnitude.py`
-- `?? scripts/check_provenance.py`
-- `?? scripts/review_checks/budget_split_by_onset.py`
-- `?? scripts/review_checks/floor_deployed.py`
-- `?? scripts/review_checks/friedman_multiplicity.py`
-- `?? scripts/review_checks/instrument_scale.py`
-- `?? scripts/review_checks/mo_onset_bound.py`
-- `?? scripts/review_checks/oracle_achievable.py`
-- `?? scripts/review_checks/oracle_companion_estimators.py`
-- `?? scripts/review_checks/oracle_sigmaf_seeds.py`
-- `?? scripts/review_checks/sitting_sequential.py`
-- `?? scripts/review_checks/sitting_vs_shiprule.py`
-- `?? scripts/review_checks/tie_break.py`
 
 | arm | driver | run | status | first differing column (trial or row) | rows differing | max abs diff | verdict |
 |---|---|---|---|---|---|---|---|

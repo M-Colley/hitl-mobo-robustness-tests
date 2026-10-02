@@ -446,7 +446,9 @@ separately against the same command.
 The recorded `git_commit` of an arm run before 2026-09-30 does not identify its
 code. The evidence is a rerun of one logged run per arm, compared with the log.
 The reports record the code of the reruns (commit plus the sha256 of the
-uncommitted diff, in the `.stamp.json`); rerun them once the tree is committed.
+uncommitted diff, in the `.stamp.json`). The reports in the repository were
+rerun on 2026-10-02 on commit 6268a4360 with a clean tree (the empty diff's
+sha256, e3b0c442…); rerun them after any change to the simulator.
 
 ```
 python scripts/check_provenance.py --out-dir <scratch>/prov --workers 6 --dataset-config-override "output-fitted*-prefix/*=git:3d2323aed~1" --report output-boba/analysis/review/provenance_check.csv

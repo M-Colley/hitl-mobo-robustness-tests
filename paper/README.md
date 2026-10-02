@@ -19,8 +19,10 @@ camera-ready and needs `\month`, `\year` and `\openreview`, which `main.tex`
 carries commented out. The real author block is `authors.tex`, git-ignored; the
 style prints "Anonymous authors" until one of the two options is set.
 
-The ICLR 2027 template this paper was first written for is kept in the
-git-ignored `archive/iclr2027_template/`.
+An earlier conference template is kept in the git-ignored `archive/`. Build
+outputs (`main.pdf`, `main.aux`, `main.bbl`, `main.blg`, `main.out`) are not
+tracked; `python paper/build_overleaf_bundle.py` builds the paper in a clean
+directory.
 
 ## Building
 

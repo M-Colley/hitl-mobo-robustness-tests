@@ -43,7 +43,7 @@ Reads the per-landscape evaluation outputs
 analyse_boba_robustness.load_paired, and, when present, cross-checks the noisy
 runs' values against output-boba/bo_synthetic_error_summary.csv.
 
-    python scripts/review_checks/floor_deployed.py
+    python scripts/checks/floor_deployed.py
 """
 from __future__ import annotations
 

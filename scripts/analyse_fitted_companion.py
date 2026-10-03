@@ -24,7 +24,7 @@ whole error the paper is about.
                  any run. A run can beat it: on the corrected data with
                  augmentation no clean run does (a noisy run does on 1 of the 10
                  provoice seeds); without augmentation clean runs do on 2 of the
-                 10 ehmi seeds (scripts/review_checks/oracle_companion_estimators.py).
+                 10 ehmi seeds (scripts/checks/oracle_companion_estimators.py).
      best_clean  (sensitivity) the best value any clean run of that seed
                  reached. It is attainable by construction, so it shrinks the gap
                  and inflates the fitted fraction.

@@ -1,6 +1,6 @@
 # E5: curvature, free-level and spline checks of the currency power law.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """E5 check. (1) Is log E[R] curved in log sigma_e inside the power law?
 (2) Does the GAIN/SPREAD verdict survive when h is left free (a spline) instead
 of a power law?  PPML = GLM Poisson (statsmodels), same cell means as

@@ -1,6 +1,6 @@
 # C6: two-sample bootstrap of the fitted-oracle companion ratio.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """C6: the fitted-oracle companion's ratio of known-function to fitted cost at 1 sigma from the first
 rating, with an interval from resampling the landscapes and the datasets independently."""
 import os, sys

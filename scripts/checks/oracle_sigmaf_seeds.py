@@ -17,14 +17,14 @@ manifest, and reports per family:
 
 It writes the per-seed table to output-oracle-iso/oracle_sigmaf_seeds.csv, with
 each oracle's mean over the same points (mean_f), which
-scripts/review_checks/oracle_achievable.py uses as the fitted arm's analogue of
+scripts/checks/oracle_achievable.py uses as the fitted arm's analogue of
 the landscape mean behind opt_z.
 
 Each fit runs in a temporary working directory (oracle_isolation.fit_outside_repo):
 the two CatBoost tree oracles would otherwise rewrite the tracked catboost_info/
 folder at the repository root. The numbers do not depend on it.
 
-    python scripts/review_checks/oracle_sigmaf_seeds.py [--workers 6]
+    python scripts/checks/oracle_sigmaf_seeds.py [--workers 6]
 """
 from __future__ import annotations
 

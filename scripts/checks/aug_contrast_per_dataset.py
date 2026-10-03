@@ -1,6 +1,6 @@
 # I8/D4: the augmentation contrast per archival dataset.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """I8/D4: the augmentation contrast per dataset, with the fraction destroyed at
 each magnitude in both arms. Reuses analyse_fitted_companion's own functions."""
 import os

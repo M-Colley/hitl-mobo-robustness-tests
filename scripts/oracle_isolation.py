@@ -50,7 +50,7 @@ five oracles' clean bests less the floor pooled over all five, which mixes five
 functions.
 
 The magnitudes and the fidelity figure (corr_oracle_truth) come from the seed-7
-oracle only (calibrate()); scripts/review_checks/oracle_sigmaf_seeds.py reports
+oracle only (calibrate()); scripts/checks/oracle_sigmaf_seeds.py reports
 how far the other seeds' sigma_f are from it.
 
 If the fitted fraction is well below the exact fraction on the same landscape,
@@ -61,10 +61,10 @@ THE NORMALISER MATTERS. The floor gap depends on how hard the objective is for
 random search as well as on its scale: it is 1-2% of opt_z for the exact
 objective on Branin, Powell and Rosenbrock, and a same-budget random run leaves
 more of the improvement unreached on a tree-ensemble oracle than on the exact
-landscape. scripts/review_checks/oracle_achievable.py divides the same excess by
+landscape. scripts/checks/oracle_achievable.py divides the same excess by
 the paper's headline unit instead, the achievable improvement (opt_z; for the
 fitted arm y_opt_s less seed s's oracle mean over the box, formed within each
-seed), and scripts/review_checks/oracle_families.py prints both. The paper's
+seed), and scripts/checks/oracle_families.py prints both. The paper's
 comparison is the achievable one; the floor gap is kept as tab:fitted's unit.
 Each family also sets its own achievable improvement (a tree oracle's
 y_opt - mean is a median 1.27 times sigma_f * opt_z, a GP's or MLP's about 1),
@@ -233,7 +233,7 @@ def oracle_stats(name: str, model: str, augmentation: str, seed: int = 7) -> tup
     The oracle is built as the simulator builds it for a run seed; sigma_f and
     the mean are over 20,000 uniform points in the data box (fixed, rng 7), and
     the correlation compares it there with the standardised true landscape. The
-    manifest holds seed 7; scripts/review_checks/oracle_sigmaf_seeds.py the rest.
+    manifest holds seed 7; scripts/checks/oracle_sigmaf_seeds.py the rest.
     The fit runs in a temporary working directory (fit_outside_repo), so that a
     CatBoost oracle's training logs do not land in the repository.
     """

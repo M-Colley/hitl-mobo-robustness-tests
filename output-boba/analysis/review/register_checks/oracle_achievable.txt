@@ -59,4 +59,4 @@ Share of the achievable improvement: fitted mean_s(excess_s) / mean_s(y_opt_s - 
    deployed   sigma_f_seed7   0.25s 1.328 [0.892, 1.900] median 1.066 lower 9/20 p 0.5; 1s 1.260 [0.933, 1.705] median 1.257 lower 9/20 p 0.6; 5s 1.120 [0.905, 1.415] median 0.970 lower 10/20 p 0.99
    deployed   both_best_clean 0.25s 1.082 [0.876, 1.339] median 1.039 lower 9/20 p 0.45; 1s 1.094 [0.977, 1.226] median 1.162 lower 6/20 p 0.13; 5s 1.027 [0.958, 1.094] median 1.021 lower 8/20 p 0.5
 
-The family comparison under every estimator: scripts/review_checks/oracle_families.py
+The family comparison under every estimator: scripts/checks/oracle_families.py

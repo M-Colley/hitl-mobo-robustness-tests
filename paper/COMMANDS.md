@@ -18,7 +18,7 @@ has torch and BoTorch 0.18.2.dev23 (`requirements-eval.txt` lists the
 environment); the PowerShell drivers read `$env:PYTHON`. `<scratch>` stands for
 any directory outside the repository. A command written as `... > file.txt`
 writes a check's standard output, which is its whole report; run it with
-`PYTHONIOENCODING=utf-8`, as `scripts/run_review_checks.py` does for the checks
+`PYTHONIOENCODING=utf-8`, as `scripts/run_checks.py` does for the checks
 it lists. The run logs of most arms stay on the simulation machine (they are
 git-ignored); the analysis outputs the tables and figures read are tracked,
 the per-landscape `evaluation/paired_excess_metrics.csv` files of the git-ignored
@@ -69,20 +69,20 @@ python scripts/factor_variance_shares.py               # factor_variance_shares.
 python scripts/rescore_ship_rules.py                   # ship_rules_per_run.csv
 python scripts/analyse_ship_rules.py                   # ship_rules_recovery.csv: the cautious rule's 10.1% [4.6, 15.9] at price 0.015 (gaussian, 0.25 sigma and above, ten acquisitions, seeds 7-16)
 python scripts/decompose_regret.py --input-dir output-boba
-python scripts/onset_bound.py                          # review/onset_bound.{csv,md} and onset_bound_runs.parquet (tracked: the input of review_checks/mo_onset_bound.py)
+python scripts/onset_bound.py                          # review/onset_bound.{csv,md} and onset_bound_runs.parquet (tracked: the input of checks/mo_onset_bound.py)
 python scripts/remedy_decomposition.py
 python scripts/smooth_subset_and_gp_diagnostics.py
 python scripts/bootstrap_coverage.py                   # review/bootstrap_coverage.csv: the selection-share t interval [32.7, 51.0] and the 20,000-resample percentile interval [33.6, 50.2]
 python scripts/analyse_pilot_frag.py                   # pilot_frag_summary.csv (tab:pilot: pooled columns over n = 80 landscape-by-magnitude cells)
-python scripts/review_checks/frag_residuals.py > output-boba/analysis/review/register_checks/frag_residuals.txt
+python scripts/checks/frag_residuals.py > output-boba/analysis/review/register_checks/frag_residuals.txt
     # Appendix C.2: the residuals of frag with the indicators (tab:mediation's mediator_only model) against log
     # opt_z and log tail weight over the 640 cells and per landscape, and the leave-one-landscape-out R^2 of that
     # model (0.44) and of the descriptors with the magnitude (0.41), reusing analyse_boba_robustness's cells
-python scripts/review_checks/floor_deployed.py > output-boba/analysis/review/register_checks/floor_deployed.txt
+python scripts/checks/floor_deployed.py > output-boba/analysis/review/register_checks/floor_deployed.txt
     # the floors' absolute deployed regret against each acquisition at onsets 0 and 20: paired landscape-bootstrap
     # differences (2000 resamples), Holm over the ten comparisons, a signed-rank check, and the split of the
     # deployed excess into search and selection (Section 6, 'On the deployed design'); writes review/floor_deployed.csv
-python scripts/review_checks/friedman_multiplicity.py > output-boba/analysis/review/register_checks/friedman_multiplicity.txt
+python scripts/checks/friedman_multiplicity.py > output-boba/analysis/review/register_checks/friedman_multiplicity.txt
     # BH, Holm and Bonferroni over the 32 Friedman p-values of the acquisition ranking (28 raw, 28 BH, 25 Holm; median W 0.247)
 python scripts/test_confirmatory_hypotheses.py --screening output-boba --confirmatory output-boba-confirmatory
     # output-boba-confirmatory/analysis/confirmatory_{report.txt,results.json}: the replication planned in advance (void by its own rule)
@@ -148,26 +148,26 @@ python scripts/oracle_isolation.py analyse
     # with the *_best_clean and *_visited summaries: the floor-gap blocks of tab:oracleiso, Appendix B.5
 python scripts/oracle_isolation.py analyse --family gaussian_process
 python scripts/oracle_isolation.py analyse --family mlp
-python scripts/review_checks/oracle_sigmaf_seeds.py --workers 6 > output-boba/analysis/review/register_checks/oracle_sigmaf_seeds.txt
+python scripts/checks/oracle_sigmaf_seeds.py --workers 6 > output-boba/analysis/review/register_checks/oracle_sigmaf_seeds.txt
     # sigma_f, fidelity and mean of every run seed's refitted oracle for the three families
     # (output-oracle-iso/oracle_sigmaf_seeds.csv): the seed-7 calibration caveat of Appendix B.5
-python scripts/review_checks/oracle_achievable.py > output-boba/analysis/review/register_checks/oracle_achievable.txt
+python scripts/checks/oracle_achievable.py > output-boba/analysis/review/register_checks/oracle_achievable.txt
     # the share of the achievable improvement for the three families (tab:oracleiso achievable blocks,
     # Section 4, Appendices B.1 and B.5): *_achievable*.csv under seven estimators, oracle (primary:
     # the seed's y_opt less that oracle's mean over the search box), best_clean, empirical, visited,
     # sigma_f, sigma_f_seed7 and both_best_clean; prints the mean_f check, A over sigma_f*opt_z, the
     # exact best clean over opt_z and the floor-share decomposition
-python scripts/run_review_checks.py --only oracle_families
+python scripts/run_checks.py --only oracle_families
     # register_checks/oracle_families.txt: the three families in both units under the primary, best_clean,
     # sigma_f and both_best_clean normalisers; ratios, medians and the ratio without Branin, Powell and
     # Rosenbrock; counts lower, Wilcoxon p, Spearman(cost) and Spearman(fidelity, ratio); the paired family
     # contrasts, the fidelity counts, the six laws and the fidelity-matched subset; each family's own
     # achievable improvement; and the closing table with every estimator side by side
-python scripts/review_checks/oracle_companion_estimators.py > output-boba/analysis/review/register_checks/oracle_companion_estimators.txt
+python scripts/checks/oracle_companion_estimators.py > output-boba/analysis/review/register_checks/oracle_companion_estimators.txt
     # the companion arm under the pooled, per-seed y_opt and per-seed best-clean optima, in both units, for
     # the corrected and the as-logged data, with the landscape-and-dataset ratio bootstrap and the
     # known-function per-landscape ranges (Appendix B.5)
-python scripts/run_review_checks.py --only c6_ratio,aug_contrast_per_dataset
+python scripts/run_checks.py --only c6_ratio,aug_contrast_per_dataset
     # the companion ratio interval and the per-dataset augmentation contrast, which import
     # analyse_fitted_companion's functions (Appendix B.5)
 python scripts/oracle_isolation_acq_ranking.py
@@ -225,7 +225,7 @@ python scripts/budget_split.py --workers 5 --ksweep-dir output-boba/analysis/end
 python scripts/budget_split.py --workers 5 --ksweep-dir output-boba/analysis/end_of_study_ksweep,output-boba/analysis/end_of_study_kwide --k-grid 2,3,5,8,12,16,20,25,30 --decision sequential --twin clean --output-suffix _decision_sequential_clean
     # the prices without error (trt_clean - ref_clean): each rule derived on the clean twins, beside every fixed k
     # and the no-trial rules: budget_split_{derived,price}_clean.csv and budget_split_{derived,price}_decision_sequential_clean.csv
-python scripts/review_checks/budget_split_by_onset.py
+python scripts/checks/budget_split_by_onset.py
     # register_checks/budget_split_by_onset.txt: the derived rule by onset and magnitude, without the 5 sigma
     # cell from trial 21, where it decides and whether it is blind, landscape groups, fit correlations, the
     # search-term inflation from the logs, the posterior-mean-to-LCB and clairvoyant counterfactuals, the
@@ -259,16 +259,16 @@ python scripts/sitting_by_magnitude.py --replay-dirs end_of_study_ksweep_seq,end
     # the sequential replays, random order: review/sitting_by_magnitude_seq{.csv,_ship_rules.csv,_selection.json}
 python scripts/sitting_by_magnitude.py --tag seqrank --replay-dirs end_of_study_ksweep_seqrank=drift+ar1,end_of_study_kwide_seqrank=drift+ar1,end_of_study_ksweep=gaussian+bias,end_of_study_kwide=gaussian+bias
     # rank order: drift and AR(1) from the rank-order replays, gaussian and bias from the shared ones
-python scripts/run_review_checks.py --only fresh_seed_replication
+python scripts/run_checks.py --only fresh_seed_replication
     # the untouched-seed test (seeds 27-36, gaussian): the zero-trial ship rules; the sitting's increment over
     # LCB1 per cell and k, with Holm over the 3 k and the 24 (cell, k); the looks-alone increment; the clean-twin
     # prices; and, in a last block, the increments over LCB2 and PM with the same Holm families
-python scripts/review_checks/sitting_vs_shiprule.py
+python scripts/checks/sitting_vs_shiprule.py
     # register_checks/sitting_vs_shiprule.txt: the sitting against the zero-trial ship rules side by side (four
     # processes and gaussian; seeds 7-11, 12-16, 7-16 and 27-36; the quoted cells; the pooled k-curve; the Holm
     # families; the prices; the look model; the increments over LCB2 and PM with the rule chosen on seeds 7-11).
     # It collates the outputs above, so it runs after them.
-python scripts/review_checks/sitting_sequential.py > output-boba/analysis/review/register_checks/sitting_sequential.txt
+python scripts/checks/sitting_sequential.py > output-boba/analysis/review/register_checks/sitting_sequential.txt
     # the shared against the sequential sitting: every pooled gain of the fixed-allocation sitting the paper
     # prints, re-scored with sitting_by_magnitude.run and heldout_remedies' k-curve scoring (the chosen k per
     # cell, the derived rule, the tab:heldout k row with its landscape-split column, the optimism of the choice
@@ -334,13 +334,13 @@ python scripts/design_rules_from_pilot.py --ceiling-seeds 7,8,9,10,11
     # (Spearman 0.65 over the 40 landscape-by-magnitude cells at 0.25 and 1 sigma; half split 0.153 / 0.316;
     # medians 0.219 / 0.104). Without --ceiling-seeds it reads the capped arm's seeds 12-16 as well and gives
     # other numbers. Its uncapped side is the main sweep's cell means over ten acquisitions and all seeds.
-python scripts/review_checks/tie_break.py scan --workers 6
+python scripts/checks/tie_break.py scan --workers 6
     # every per-run log of output-boba*, output-fitted* and output-oracle-iso*: per run, the first-index and the
     # uniform-tie (exact expectation) deployed regret of the noisy run and its clean twin, and the share of runs
     # with a tied maximum rating per arm, variant and condition. About 15 minutes on 6 workers. Writes
     # review/tie_break/tie_runs.parquet (git-ignored, 13 MB) and tie_share_by_{arm,condition}.csv. Rerun it
     # after any new run logs: rescore reads only its parquet.
-python scripts/review_checks/tie_break.py rescore
+python scripts/checks/tie_break.py rescore
     # every quoted deployed-design number of an arm with ties under both conventions, with the estimand
     # unchanged (arm contrasts through analyse_boba_adaptations' load, paired_frame and summarise; replayed
     # remedies through replay_hitl_remedies.recovery_table; the rank rule's landscape splits through
@@ -357,7 +357,7 @@ python scripts/review_checks/tie_break.py rescore
 ## 7. Checks behind individual sentences
 
 Each check behind an individual sentence is a script under
-`scripts/review_checks/`: the currency-test curvature and spline checks, the
+`scripts/checks/`: the currency-test curvature and spline checks, the
 manipulated-landscape intervals, the structural extra-trial zeros, the
 like-for-like Kendall's W, the multi-objective front, the nugget-radius
 sensitivity, the ehmi sigma_f on two surfaces, the companion ratio interval and
@@ -368,33 +368,33 @@ sequential rating process, the budget rule by onset, the floors' deployed
 regret, the Friedman multiplicity, the archival instruments' scales, the
 multi-objective onset bound, the extra-trial reach, the one-shot predictor's
 residuals and out-of-sample fit, the comparison loop's determinism and the
-tie-break sensitivity. `python scripts/run_review_checks.py` runs them all in dependency
+tie-break sensitivity. `python scripts/run_checks.py` runs them all in dependency
 order and writes each one's standard output to
 `output-boba/analysis/review/register_checks/<check>.txt`; `--only a,b` runs a
 subset, and the direct invocations given elsewhere in this file are equivalent.
 Its inputs must exist first: the analyses of Sections 2 to 6 above, the
 tie-break scan, `onset_bound_runs.parquet` and, for the checks the docstring of
-`run_review_checks.py` lists, the git-ignored run logs and archival clones.
+`run_checks.py` lists, the git-ignored run logs and archival clones.
 
 ```
-python scripts/run_review_checks.py        # every check in its CHECKS list, in that order
-python scripts/run_review_checks.py --only oracle_families,anchor_propagation,fresh_seed_replication,matched_optz
-    # the three-family isolation table, the anchor interval propagated (review_checks/anchor_propagation.py), the
-    # untouched-seed test (review_checks/fresh_seed_replication.py) and the headline on matched opt_z
-python scripts/run_review_checks.py --only ehmi_sigmaf,nugget_threshold
-    # the ehmi sigma_f on two surfaces (review_checks/ehmi_sigmaf.py) and the nugget-radius sensitivity; both take
+python scripts/run_checks.py        # every check in its CHECKS list, in that order
+python scripts/run_checks.py --only oracle_families,anchor_propagation,fresh_seed_replication,matched_optz
+    # the three-family isolation table, the anchor interval propagated (checks/anchor_propagation.py), the
+    # untouched-seed test (checks/fresh_seed_replication.py) and the headline on matched opt_z
+python scripts/run_checks.py --only ehmi_sigmaf,nugget_threshold
+    # the ehmi sigma_f on two surfaces (checks/ehmi_sigmaf.py) and the nugget-radius sensitivity; both take
     # datasets.json and read the archival data clones in .dataset_cache/
-python scripts/run_review_checks.py --only mo_front_check
+python scripts/run_checks.py --only mo_front_check
     # the reported multi-objective front: about half truly dominated at 1 sigma, and a shortfall above the evaluated set's in all eight cells
-python scripts/run_review_checks.py --only manipulation_intervals
+python scripts/run_checks.py --only manipulation_intervals
     # wide- and narrow-spike manipulation contrasts per magnitude, trajectory metric, five seeds (Appendices B.2 and D.3)
-python scripts/run_review_checks.py --only matched_optz
+python scripts/run_checks.py --only matched_optz
     # the clean twin's deployed regret, 0.1284 of the achievable improvement at 1 sigma from the first rating (Discussion)
-python scripts/review_checks/instrument_scale.py > output-boba/analysis/review/register_checks/instrument_scale.txt
+python scripts/checks/instrument_scale.py > output-boba/analysis/review/register_checks/instrument_scale.txt
     # each archival instrument's composite step, coarsest-item step, span and ceiling in its study's sigma_f
     # (review/instrument_scale.csv), the ratings at each item's logged ends, and where the instrument arm's
     # +-8 sigma clip meets the twenty landscapes (read from output-boba-instrument/run_metadata.json)
-python scripts/review_checks/mo_onset_bound.py --workers 6 > output-boba/analysis/review/register_checks/mo_onset_bound.txt
+python scripts/checks/mo_onset_bound.py --workers 6 > output-boba/analysis/review/register_checks/mo_onset_bound.txt
     # the running-maximum onset bound for the multi-objective arm, with the scalar arm on the same floor-gap
     # basis (review/mo_onset_bound.csv), and the split of the cross-arm log gap in raw onset ratio into bound and
     # normalised parts; needs onset_bound_runs.parquet from onset_bound.py and mo_vs_scalar.csv from analyse_boba_mo.py
@@ -404,7 +404,7 @@ python scripts/analyse_extra_runs.py --input-dir output-boba-budget100 --k 25,50
     # table also carries clean_origin, reach_trial and reach_over_k, and extra_runs.csv median_clean_origin,
     # median_reach_trial and median_reach_over_k: Appendix B.7's reach trial 56 and 2.2 (2.24) times k at k = 25,
     # gaussian 1 sigma from the first rating, tolerance 0.01. 'multiplier' is (k + extra) / k, not the reach over k
-python scripts/review_checks/extra_reach.py > output-boba/analysis/review/register_checks/extra_reach.txt
+python scripts/checks/extra_reach.py > output-boba/analysis/review/register_checks/extra_reach.txt
     # Appendix B.7: the noisy run's reach trial (origin + extra; median 56 at k = 25, 1 sigma from the first
     # rating, tolerance 0.01) and its ratio to k (2.2), recomputed with analyse_extra_runs' own functions
 ```
@@ -424,7 +424,7 @@ python scripts/elicitation_compare.py --summary-only --output-dir output-elicita
     # elicitation_runs.csv and elicitation_summary.csv: the own-twin share, the standard-process estimand
     # (cost, gain and price against the rating loop), and both tie conventions for the rating loop under the cap
     # (Appendix app:elicitation, tab:arms)
-python scripts/review_checks/elicitation_determinism.py > output-boba/analysis/review/register_checks/elicitation_determinism.txt
+python scripts/checks/elicitation_determinism.py > output-boba/analysis/review/register_checks/elicitation_determinism.txt
     # the determinism check of the reproducibility statement: the same command on branin, stevens and weber_fechner,
     # seeds 8 and 9 (96 of the 960 runs) with six workers, into a temporary directory; every column but seconds
     # equals output-elicitation-rerun's rows (merged on dataset, elicitation, error_model, magnitude, seed,

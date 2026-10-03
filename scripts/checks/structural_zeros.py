@@ -1,6 +1,6 @@
 # I5/D8: share of extra-trial zeros that are structural.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """Share of extra-trial zeros that are structural (clean run reached its target
 inside the prefix the noisy twin shares with it), for Table extra (budget-100)
 and Table extrafull (main sweep). Reuses analyse_extra_runs' own functions."""

@@ -17,12 +17,12 @@ import pytest
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO / "scripts"
-for p in (SCRIPTS, SCRIPTS / "review_checks"):
+for p in (SCRIPTS, SCRIPTS / "checks"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
 import analyse_extra_runs as aer  # noqa: E402
-import run_review_checks as rrc  # noqa: E402
+import run_checks as rrc  # noqa: E402
 
 STEM = "bo_sensor_error_hartmann_3_value_logei_seed7"
 CLEAN = [5.0, 4.0, 3.0, 2.0, 1.0, 1.0, 1.0, 1.0]
@@ -133,14 +133,14 @@ def test_the_scope_matched_rank_rule_tests_survive_holm():
 
 
 # ---------------------------------------------------------------------------
-# run_review_checks
+# run_checks
 # ---------------------------------------------------------------------------
 
 
 def test_every_check_is_a_script_and_listed_once():
     assert len(rrc.CHECKS) == len(set(rrc.CHECKS))
     for name in rrc.CHECKS:
-        assert (SCRIPTS / "review_checks" / f"{name}.py").is_file(), name
+        assert (SCRIPTS / "checks" / f"{name}.py").is_file(), name
     assert set(rrc.ARGS) <= set(rrc.CHECKS)
     for name in ("oracle_sigmaf_seeds", "oracle_achievable", "oracle_companion_estimators", "tie_break",
                  "sitting_vs_shiprule", "sitting_sequential", "floor_deployed", "friedman_multiplicity",

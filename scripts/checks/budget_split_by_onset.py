@@ -73,7 +73,7 @@ Inputs (read-only), all under output-boba/analysis:
   review/gp_diagnostics.csv                   the GP's fit per landscape
 and output-boba/<landscape>/<run>.csv, the run logs (for 6 only).
 
-    python scripts/review_checks/budget_split_by_onset.py
+    python scripts/checks/budget_split_by_onset.py
 
 writes output-boba/analysis/review/register_checks/budget_split_by_onset.txt and
 prints the same text.

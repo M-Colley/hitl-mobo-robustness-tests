@@ -353,7 +353,7 @@ def test_the_other_rules_leave_every_earlier_output_unchanged(monkeypatch):
 
 def _fresh_module():
     spec = importlib.util.spec_from_file_location(
-        "fresh_seed_replication", ROOT / "scripts" / "review_checks" / "fresh_seed_replication.py")
+        "fresh_seed_replication", ROOT / "scripts" / "checks" / "fresh_seed_replication.py")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod

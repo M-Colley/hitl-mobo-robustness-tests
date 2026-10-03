@@ -1,6 +1,6 @@
 # Register checks code-estimands-6 and code-sim-repro-8 (review of 2026-09-28): the final
 # sitting when the drift ramp and the AR(1) state move through it.
-#   python scripts/review_checks/sitting_sequential.py > output-boba/analysis/review/register_checks/sitting_sequential.txt
+#   python scripts/checks/sitting_sequential.py > output-boba/analysis/review/register_checks/sitting_sequential.txt
 """The final sitting under the shared and the sequential rating process.
 
 Every sitting number in the paper models the sitting as simultaneous: the drift

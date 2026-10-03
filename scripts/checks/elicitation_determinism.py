@@ -8,7 +8,7 @@ rows with the logged ones on dataset, elicitation, error_model, magnitude, seed
 and apply_error, and compares every other column except the wall-clock
 ``seconds``, exactly and then with np.isclose(rtol=1e-9, atol=1e-12).
 
-    python scripts/review_checks/elicitation_determinism.py
+    python scripts/checks/elicitation_determinism.py
 """
 from __future__ import annotations
 

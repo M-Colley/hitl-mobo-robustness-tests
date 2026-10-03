@@ -11,7 +11,7 @@ excess, as a fraction of opt_z) within each of the twenty landscapes. That file'
 within a condition, not across the 32), so the correction over conditions is
 done here with statsmodels' multipletests (BH, Holm and Bonferroni).
 
-    python scripts/review_checks/friedman_multiplicity.py
+    python scripts/checks/friedman_multiplicity.py
 """
 from __future__ import annotations
 

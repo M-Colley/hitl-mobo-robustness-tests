@@ -1,6 +1,6 @@
 """The first-index versus uniform tie-break of the standard ship rule.
 
-scripts/review_checks/tie_break.py re-scores the logs: the standard rule ships
+scripts/checks/tie_break.py re-scores the logs: the standard rule ships
 the FIRST design with the maximum rating (np.argmax), and the sensitivity
 replaces it with the exact expectation under a uniformly random choice among the
 tied designs. These fixtures pin the arithmetic, the tie tolerance, the handling
@@ -18,7 +18,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
-sys.path.insert(0, str(REPO / "scripts" / "review_checks"))
+sys.path.insert(0, str(REPO / "scripts" / "checks"))
 
 import tie_break as tb  # noqa: E402
 import analyse_boba_adaptations as aba  # noqa: E402

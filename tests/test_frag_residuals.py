@@ -1,4 +1,4 @@
-"""The out-of-sample fit of Appendix C.2 (scripts/review_checks/frag_residuals.py)."""
+"""The out-of-sample fit of Appendix C.2 (scripts/checks/frag_residuals.py)."""
 from __future__ import annotations
 
 import sys
@@ -10,7 +10,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
-sys.path.insert(0, str(REPO / "scripts" / "review_checks"))
+sys.path.insert(0, str(REPO / "scripts" / "checks"))
 
 pytest.importorskip("statsmodels")
 import frag_residuals as fr  # noqa: E402

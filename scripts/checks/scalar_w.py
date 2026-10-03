@@ -1,6 +1,6 @@
 # D9: Kendall's W over condition-averaged losses, scalar suite.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """D9: the scalar suite's Kendall W 'computed the same way' as analyse_boba_mo.acquisition_agreement."""
 import sys
 from pathlib import Path

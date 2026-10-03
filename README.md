@@ -160,7 +160,7 @@ Important methodological defaults:
   assumes the best design is recognized for free. The pick is the earliest
   design with the best observed rating. Under continuous error ties never
   matter, but on a capped, clipped or rounded rating scale many designs tie at
-  the top, and `scripts/review_checks/tie_break.py` gives the value under a
+  the top, and `scripts/checks/tie_break.py` gives the value under a
   uniformly random choice among the tied designs as well.
 - Regret is NOT clamped at zero: `y_opt` is a sampling-based estimate
   (anchored on the training data) that BO can legitimately exceed.

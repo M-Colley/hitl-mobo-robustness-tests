@@ -259,7 +259,7 @@ output-boba/analysis/stopping/cache_*/
 output-boba/analysis/*.jsonl
 output-boba/analysis/*.bak.csv
 output-boba/analysis/**/*.parquet
-# the onset bound's per-run table (3.8 MB) is the input of review_checks/mo_onset_bound.py
+# the onset bound's per-run table (3.8 MB) is the input of checks/mo_onset_bound.py
 !output-boba/analysis/review/onset_bound_runs.parquet
 output-boba/analysis/stopping/stopping_per_run.csv
 output-boba/analysis/extra_runs_per_run.csv

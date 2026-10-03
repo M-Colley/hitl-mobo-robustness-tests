@@ -41,7 +41,7 @@ opt_z. Writes output-boba/analysis/review/register_checks/sitting_vs_shiprule.tx
     python scripts/sitting_by_magnitude.py --processes gaussian --tag gaussian
     python scripts/sitting_by_magnitude.py --replay-dirs end_of_study_ksweep_seq,end_of_study_kwide_seq --tag seq
     python scripts/sitting_by_magnitude.py --tag seqrank --replay-dirs end_of_study_ksweep_seqrank=drift+ar1,end_of_study_kwide_seqrank=drift+ar1,end_of_study_ksweep=gaussian+bias,end_of_study_kwide=gaussian+bias
-    python scripts/review_checks/sitting_vs_shiprule.py
+    python scripts/checks/sitting_vs_shiprule.py
 """
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 # I9/E6: seed-bootstrap intervals for the manipulated-landscape contrasts.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """I9/E6: intervals for Table manipulation cells and the two contrasts the text
 rests on (narrow-spike amplitude 4 -> 16; fixed-opt_z ladder d = 7 -> 11).
 Same frame as make_boba_paper_tables.table_manipulation. Bootstrap resamples

@@ -1,4 +1,4 @@
-"""Run the register-triage checks and keep what each prints.
+"""Run the checks behind individual sentences of the paper and keep what each prints.
 
 The paper quotes numbers these checks compute: the currency-test curvature and
 spline checks, the manipulation intervals, the structural extra-trial zeros,
@@ -15,14 +15,14 @@ extra-trial appendix, the one-shot predictor's residuals and out-of-sample fit,
 the comparison loop's determinism in another worker schedule, and the
 tie-break sensitivity of every deployed-design number from an arm with ties.
 
-Each check is a script under scripts/review_checks/; this runs them in turn, in
+Each check is a script under scripts/checks/; this runs them in turn, in
 the order below (a check that reads another's output comes after it), and writes
 each one's stdout to output-boba/analysis/review/register_checks/<name>.txt.
 Some checks also write CSV files of their own beside that directory; a few write
 their register file themselves as well, with exactly what they print.
 
-    python scripts/run_review_checks.py
-    python scripts/run_review_checks.py --only c6_ratio,aug_contrast_per_dataset
+    python scripts/run_checks.py
+    python scripts/run_checks.py --only c6_ratio,aug_contrast_per_dataset
 
 A fresh checkout holds every table and figure input but not the run logs, so
 some checks run only on the machine that holds the arms. structural_zeros,
@@ -30,7 +30,7 @@ mo_front_check, budget_split_by_onset, extra_reach, mo_onset_bound and
 oracle_companion_estimators read git-ignored run logs. sitting_sequential reads
 the per-run tables of end_of_study_ksweep_seq, end_of_study_kwide_seq and
 end_of_study_ksweep_seqrank (over 5 MB each, untracked). tie_break reads the
-per-run table of ``python scripts/review_checks/tie_break.py scan --workers 6``
+per-run table of ``python scripts/checks/tie_break.py scan --workers 6``
 (about 15 minutes, git-ignored). ehmi_sigmaf, nugget_threshold and
 instrument_scale read the archival clones in .dataset_cache/, and
 instrument_scale also output-boba-instrument/run_metadata.json. The other
@@ -83,7 +83,7 @@ def main(argv=None) -> None:
     env = dict(os.environ, PYTHONIOENCODING="utf-8")
     failed = []
     for name in names:
-        cmd = [sys.executable, str(REPO / "scripts" / "review_checks" / f"{name}.py")] + ARGS.get(name, [])
+        cmd = [sys.executable, str(REPO / "scripts" / "checks" / f"{name}.py")] + ARGS.get(name, [])
         r = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", env=env)
         if r.returncode == 0:
             (out / f"{name}.txt").write_text(r.stdout, encoding="utf-8")

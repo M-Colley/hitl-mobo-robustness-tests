@@ -1,6 +1,6 @@
 # B3: sensitivity of the close-pair nugget to the closeness radius.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """B3: sensitivity of the close-pair nugget to the closeness threshold (0.05*sqrt(d) in the paper)."""
 import contextlib, io, os, sys
 from pathlib import Path

@@ -36,7 +36,7 @@ The scalar arm's per-run summaries are onset_bound.py's cache
 arm's are computed here from the logs in output-boba-mo. Both are checked
 against the pipeline's paired tables, and E reproduces mo_vs_scalar.csv.
 
-    python scripts/review_checks/mo_onset_bound.py [--workers 6]
+    python scripts/checks/mo_onset_bound.py [--workers 6]
 """
 from __future__ import annotations
 

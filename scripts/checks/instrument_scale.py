@@ -54,7 +54,7 @@ only where opt_z > 8, and above its sampled minimum only where that is more
 than 8 below the mean (output-boba-instrument/run_metadata.json, whose logged
 --response-clip and --response-round must be the arm settings used here).
 
-    python scripts/review_checks/instrument_scale.py
+    python scripts/checks/instrument_scale.py
 """
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ divided by (optimum - floor). Since 2026-09-28 a per-seed optimum forms the gap
 within each seed's oracle (every run seed refits the oracle), and the same
 holds for analyse_fitted_companion.py; the tests below pin both, on a fixture
 where the pooled and the per-seed gaps differ. Since 2026-09-30 the comparison
-is also made on the achievable improvement (scripts/review_checks/
+is also made on the achievable improvement (scripts/checks/
 oracle_achievable.py, analyse_fitted_companion.share_fraction), pinned on the
 same fixture.
 """
@@ -242,7 +242,7 @@ def test_the_companion_forms_its_gap_within_each_seed():
 def _oracle_achievable():
     import sys
     from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "review_checks"))
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "checks"))
     import oracle_achievable
     return oracle_achievable
 

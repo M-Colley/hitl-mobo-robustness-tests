@@ -5,9 +5,9 @@ Three scripts back sentences of the paper:
 * changepoint_compare.py scores the freeze rule's own CUSUM (kappa, h) beside
   the re-tuned detectors, re-tunes every detector to its false-alarm rate, and
   checks the fixed point against rule A's logged alarms;
-* review_checks/instrument_scale.py measures each archival instrument's step and
+* checks/instrument_scale.py measures each archival instrument's step and
   span on its composite's own grid;
-* review_checks/mo_onset_bound.py applies onset_bound.py's running-maximum bound
+* checks/mo_onset_bound.py applies onset_bound.py's running-maximum bound
   to the multi-objective arm, whose logs onset_bound.discover now groups through
   replaceable file-name patterns.
 
@@ -44,8 +44,8 @@ COLS = 35
 
 
 def _load(name: str):
-    path = SCRIPTS / "review_checks" / f"{name}.py"
-    spec = importlib.util.spec_from_file_location(f"review_checks_{name}", path)
+    path = SCRIPTS / "checks" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(f"checks_{name}", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

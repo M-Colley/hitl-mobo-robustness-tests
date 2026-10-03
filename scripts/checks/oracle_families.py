@@ -12,7 +12,7 @@ Two normalisers, each read from the per-landscape files of its producer:
 
   achievable improvement  (primary; the paper's headline unit) exact excess / opt_z
                           against the fitted mean_s(excess_s) / mean_s(y_opt_s -
-                          mean_f,s); scripts/review_checks/oracle_achievable.py,
+                          mean_f,s); scripts/checks/oracle_achievable.py,
                           files *_achievable*.csv
   floor gap               (the unit of tab:fitted) excess over the optimum less a
                           same-budget random/Sobol floor; scripts/oracle_isolation.py
@@ -67,8 +67,8 @@ ensembles' minimum. The landscapes share their random numbers by design; the
 bootstrap treats them as independent. Every interval printed here is checked
 against the family's summary file.
 
-    python scripts/review_checks/oracle_achievable.py   # the achievable-unit files
-    python scripts/run_review_checks.py --only oracle_families
+    python scripts/checks/oracle_achievable.py   # the achievable-unit files
+    python scripts/run_checks.py --only oracle_families
 """
 from __future__ import annotations
 

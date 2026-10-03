@@ -19,7 +19,7 @@ Both reuse analyse_boba_robustness's loading, cell means and design (predictors
 z-scored within each fit, first indicator level dropped), so the in-sample R^2
 printed beside them equals the mediation table's.
 
-    python scripts/review_checks/frag_residuals.py
+    python scripts/checks/frag_residuals.py
 """
 from __future__ import annotations
 

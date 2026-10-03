@@ -310,7 +310,7 @@ def test_a_positive_cost_above_the_threshold_is_not_flagged():
 
 
 def test_summarise_keeps_its_keys_for_the_scripts_that_spread_it():
-    # replay_end_of_study, replay_stopping and review_checks/tie_break write
+    # replay_end_of_study, replay_stopping and checks/tie_break write
     # **summarise(...) into their own outputs; the flags must not leak into them.
     keys = set(aba.summarise(_block([0.3, 0.2], [0.1, 0.1]), np.random.default_rng(0)))
     assert keys == {"n_landscapes", "n_cells", "cost", "gain", "price", "recovered", "bootstrap_draws_kept",

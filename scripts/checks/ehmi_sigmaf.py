@@ -1,6 +1,6 @@
 # B3/D5: ehmi's sigma_f on per-design means against individual ratings.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """D5: ehmi's sigma_f on the 'mean' surface (paper) vs the 'individual' surface the other two use."""
 import dataclasses, os, sys
 from pathlib import Path

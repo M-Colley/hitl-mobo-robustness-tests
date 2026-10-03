@@ -1,6 +1,6 @@
 # C1/D7: dominated designs, recall and shortfall of the multi-objective deployed front.
 # Moved from the 2026-09-23 register triage; run all checks with
-#   python scripts/run_review_checks.py
+#   python scripts/run_checks.py
 """C1/D7: can '5.2 of 10.9 designs truly dominated', 'misses most truly
 non-dominated evaluated designs' and 'hypervolume shortfall exceeds that of the
 evaluated set in every cell' be reproduced from the MO logs? No GP refit: the

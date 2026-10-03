@@ -42,11 +42,11 @@ Subcommands
               re-read from the logs of the tied runs, are the tied ratings
               exact and before the onset?)
 
-    python scripts/review_checks/tie_break.py scan --workers 6
-    python scripts/review_checks/tie_break.py rescore
+    python scripts/checks/tie_break.py scan --workers 6
+    python scripts/checks/tie_break.py rescore
 
 rescore prints exactly what it writes to register_checks/tie_break.txt, so it
-can also run under run_review_checks.py with the argument ``rescore``; scan must
+can also run under run_checks.py with the argument ``rescore``; scan must
 have run first (it reads the ~240,000 per-run logs, rescore only its table).
 """
 from __future__ import annotations
@@ -1045,7 +1045,7 @@ def cmd_rescore(args: argparse.Namespace) -> None:
 
     REGISTER_TXT.parent.mkdir(parents=True, exist_ok=True)
     REGISTER_TXT.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    # stdout is exactly the register text, so run_review_checks.py (which saves a
+    # stdout is exactly the register text, so run_checks.py (which saves a
     # check's stdout as its register file) writes the same file; the paths go to
     # stderr and never into a tracked output.
     print("\n".join(lines))

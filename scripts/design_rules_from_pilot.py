@@ -29,7 +29,7 @@ were written when the capped arm held seeds 7-11 only; it now also holds seeds
 
 Without --ceiling-seeds every seed of the capped arm is used. The standard ship
 rule under the cap deploys the earliest of the tied top-rated designs;
-scripts/review_checks/tie_break.py gives the same screen under a uniformly random
+scripts/checks/tie_break.py gives the same screen under a uniformly random
 tie-break, and a paired version on matched acquisitions and seeds.
 """
 from __future__ import annotations

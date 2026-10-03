@@ -14,7 +14,7 @@ log, the same tolerance), checks that extra, the censored flag, the origin
 appendix quotes (GAUSSIAN error from the first rating, tolerance 0.01 of opt_z,
 k = 25 and 50) at every magnitude.
 
-    python scripts/review_checks/extra_reach.py
+    python scripts/checks/extra_reach.py
 """
 from __future__ import annotations
 

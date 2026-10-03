@@ -26,7 +26,7 @@ Fitted-arm estimators of A_s, each written to its own column and summary file
               before any run) and mean_f,s its mean over 20,000 uniform points
               in the data box, the box the runs search
               (output-oracle-iso/oracle_sigmaf_seeds.csv,
-              scripts/review_checks/oracle_sigmaf_seeds.py). The analogue of
+              scripts/checks/oracle_sigmaf_seeds.py). The analogue of
               opt_z. Each family sets its own A_s, and the families set it
               differently (A_s over sigma_f,s * opt_z below).
   best_clean  (sensitivity) the best value any clean run of seed s reached in
@@ -73,11 +73,11 @@ part of the improvement over a random design that a same-budget random or Sobol
 run does not reach. Per landscape, the fitted/exact ratio in floor-gap units is
 the ratio in achievable units times (exact share / fitted share). The family
 comparison under every estimator is printed by
-scripts/review_checks/oracle_families.py. The landscapes share their random
+scripts/checks/oracle_families.py. The landscapes share their random
 numbers by design; the bootstrap treats them as independent.
 
-    python scripts/review_checks/oracle_sigmaf_seeds.py   # writes the per-seed means
-    python scripts/review_checks/oracle_achievable.py
+    python scripts/checks/oracle_sigmaf_seeds.py   # writes the per-seed means
+    python scripts/checks/oracle_achievable.py
 """
 from __future__ import annotations
 
@@ -227,7 +227,7 @@ def _range(x: pd.Series) -> str:
 def main() -> None:
     table = pd.read_csv(REPO / "output-oracle-iso" / "oracle_sigmaf_seeds.csv")
     if "mean_f" not in table:
-        raise SystemExit("oracle_sigmaf_seeds.csv has no mean_f; rerun scripts/review_checks/oracle_sigmaf_seeds.py")
+        raise SystemExit("oracle_sigmaf_seeds.csv has no mean_f; rerun scripts/checks/oracle_sigmaf_seeds.py")
     stats = bb.load_stats()
     opt_z = pd.Series({k: float(v["opt_z"]) for k, v in stats.items()})
     names = sorted(pd.read_csv(ROOTS["tree"] / "manifest.csv").landscape)
@@ -277,7 +277,7 @@ def main() -> None:
                       f"exact median {b.floor_share_exact.median():.3f} [{b.floor_share_exact.min():.3f}, "
                       f"{b.floor_share_exact.max():.3f}]; fitted share above the exact on "
                       f"{int((b.floor_share_fitted > b.floor_share_exact).sum())}/{len(b)} landscapes")
-    print("\nThe family comparison under every estimator: scripts/review_checks/oracle_families.py")
+    print("\nThe family comparison under every estimator: scripts/checks/oracle_families.py")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@ dataset's post-onset trajectory fraction under
   best_clean  the sensitivity: the best value any clean run of the seed reached
 
 with the arm mean, the known-function arm's mean on the same denominator, their
-ratio with the two-sample bootstrap of scripts/review_checks/c6_ratio.py
+ratio with the two-sample bootstrap of scripts/checks/c6_ratio.py
 (landscapes and datasets resampled independently, seed 20260910), and how many
 of the twenty landscapes' known-function fractions each dataset's 1 sigma,
 first-rating fraction exceeds. It also counts the seeds on which any run beat
@@ -25,7 +25,7 @@ arm's excess / opt_z against each dataset's mean_s(excess_s) / mean_s(optimum_s
 random and Sobol runs (analyse_fitted_companion.box_means), for the oracle and
 best_clean optima. Reads the evaluated logs and the floor runs' logs only.
 
-    python scripts/review_checks/oracle_companion_estimators.py
+    python scripts/checks/oracle_companion_estimators.py
 """
 from __future__ import annotations
 

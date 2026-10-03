@@ -17,7 +17,7 @@ import pytest
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO / "scripts"
-for p in (SCRIPTS, SCRIPTS / "review_checks"):
+for p in (SCRIPTS, SCRIPTS / "checks"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 

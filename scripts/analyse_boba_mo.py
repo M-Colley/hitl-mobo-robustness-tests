@@ -30,7 +30,7 @@ the denominator on each landscape. Pooled over landscapes it is a ratio of
 means, so the denominator still weights the landscapes: the scalar arm's
 gaussian ratio at 1 sigma is 9.6x on the floor gap and 5.5x on opt_z
 (onset_bound.csv). Both arms' ratios are also bounded by the clean run's
-improvement after the onset; scripts/review_checks/mo_onset_bound.py divides
+improvement after the onset; scripts/checks/mo_onset_bound.py divides
 each by that bound (mo_onset_bound.csv).
 
     python scripts/analyse_boba_mo.py

@@ -224,7 +224,7 @@ def discover(arm: str, root: Path, acqs: set[str] | None, seeds: set[int] | None
 
     ``base_re`` and ``noisy_re`` replace the scalar arm's file-name patterns, so
     another arm's logs (the multi-objective arm names its objective
-    ``multi_objective``, scripts/review_checks/mo_onset_bound.py) are grouped by
+    ``multi_objective``, scripts/checks/mo_onset_bound.py) are grouped by
     the same code; they must define the same named groups.
     """
     base_re = BASE_RE if base_re is None else base_re

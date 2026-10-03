@@ -1337,7 +1337,7 @@ SHORTLIST_ARMS = [
     ("output-boba-ceiling", "capped scale"),
 ]
 # The capped scale ties the top rating in almost every run, and the standard
-# rule ships the earliest tied design. review_checks/tie_break.py re-scores the
+# rule ships the earliest tied design. checks/tie_break.py re-scores the
 # same replay with the reference's tie broken uniformly at random.
 SHORTLIST_TIES = Path("output-boba") / "analysis" / "review" / "tie_break" / "replayed_remedies_deployed.csv"
 # The gross-fault and capped-scale arms share their clean twins (the same seeds,

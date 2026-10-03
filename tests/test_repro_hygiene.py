@@ -572,7 +572,7 @@ def test_the_bundle_builder_requires_no_git_ignored_file():
 @pytest.mark.parametrize("name", ["c6_ratio", "oracle_companion_estimators", "mo_onset_bound"])
 def test_these_checks_take_opt_z_from_the_tracked_statistics_file(name):
     # The main sweep's run_metadata.json is git-ignored and records local paths.
-    text = (REPO / "scripts" / "review_checks" / f"{name}.py").read_text(encoding="utf-8")
+    text = (REPO / "scripts" / "checks" / f"{name}.py").read_text(encoding="utf-8")
     code = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#"))
     assert '"run_metadata.json"' not in code
     assert "bb.load_stats(bb.DEFAULT_STATS_PATH)" in code

@@ -30,7 +30,7 @@ import factor_variance_shares as fvs  # noqa: E402
 
 
 def _load(name: str):
-    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / "review_checks" / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / "checks" / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

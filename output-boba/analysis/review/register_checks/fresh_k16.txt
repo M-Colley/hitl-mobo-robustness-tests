@@ -1,0 +1,67 @@
+== The sitting of sixteen on the untouched seeds 27-36 (gaussian error, LogEI and qNEI)
+   replay output-boba-confirmatory/analysis/end_of_study_fresh_k16: settings {'tournament_k': [16], 'confirm_k': [], 'rhos': [1.0], 'slip_look_sd': 0.25, 'alpha': 0.05, 'lcb_beta': 1.0}
+   output-boba-confirmatory, k = 16: 3.9% of the noisy runs (all acquisitions) are short of 16 distinct prefix designs, mean 15.86 looks
+   per cell (gain over the standard process; the paired increments over LCB1, LCB2 and PM after all 50
+   trials and over the sitting of twelve, per run / opt_z, landscape means, landscape bootstrap; two-sided
+   Wilcoxon over the twenty landscapes; Holm over the 8 cells at k = 16, over k in {2, 5, 12, 16} within
+   the cell (4k) and over the 32 (cell, k)):
+   pooled  (cost of error 0.2067)
+      gain -0.0067 [-0.0225, +0.0091] share -0.033 [-0.117, +0.041], gaining 9/20, p 0.43 (Holm 8 n/a)
+      over LCB1 (LCB1 gain +0.0093) -0.0160 [-0.0358, +0.0030] ahead 8/20 p 0.14 (Holm 8 n/a, 4k 0.57, 32 n/a)
+      over LCB2 (LCB2 gain +0.0173) -0.0240 [-0.0424, -0.0051] ahead 6/20 p 0.017 (Holm 8 n/a, 4k 0.069, 32 n/a)
+      over PM   (PM gain -0.0100) +0.0033 [-0.0192, +0.0271] ahead 11/20 p 0.9 (Holm 8 n/a, 4k 0.9, 32 n/a)
+      over the sitting of 12 -0.0108 [-0.0184, -0.0024] ahead 5/20 p 0.036 (Holm 8 n/a); over its own top candidate +0.0234; 3200 runs
+   0.05sigma_from_trial_1  (cost of error -0.0108)
+      gain -0.0340 [-0.0557, -0.0147] share n/a (cost not positive on every landscape), gaining 2/20, p 0.00026 (Holm 8 0.0016)
+      over LCB1 (LCB1 gain -0.0203) -0.0137 [-0.0383, +0.0080] ahead 5/20 p 0.064 (Holm 8 0.13, 4k 0.25, 32 1)
+      over LCB2 (LCB2 gain -0.0202) -0.0138 [-0.0389, +0.0085] ahead 6/20 p 0.11 (Holm 8 0.11, 4k 0.42, 32 1)
+      over PM   (PM gain -0.0217) -0.0123 [-0.0357, +0.0091] ahead 5/20 p 0.11 (Holm 8 0.3, 4k 0.46, 32 1)
+      over the sitting of 12 -0.0129 [-0.0219, -0.0052] ahead 2/20 p 0.00017 (Holm 8 0.0013); over its own top candidate +0.0160; 400 runs
+   0.05sigma_from_trial_21  (cost of error 0.0039)
+      gain -0.0297 [-0.0467, -0.0145] share n/a (cost not positive on every landscape), gaining 3/20, p 0.00097 (Holm 8 0.0048)
+      over LCB1 (LCB1 gain -0.0138) -0.0160 [-0.0329, -0.0034] ahead 5/20 p 0.0037 (Holm 8 0.022, 4k 0.015, 32 0.11)
+      over LCB2 (LCB2 gain -0.0141) -0.0156 [-0.0334, -0.0022] ahead 3/20 p 0.0014 (Holm 8 0.01, 4k 0.0057, 32 0.044)
+      over PM   (PM gain -0.0161) -0.0137 [-0.0306, -0.0015] ahead 6/20 p 0.03 (Holm 8 0.15, 4k 0.12, 32 0.74)
+      over the sitting of 12 -0.0065 [-0.0114, -0.0019] ahead 5/20 p 0.024 (Holm 8 0.12); over its own top candidate +0.0183; 400 runs
+   0.25sigma_from_trial_1  (cost of error 0.0343)
+      gain -0.0306 [-0.0479, -0.0161] share n/a (cost not positive on every landscape), gaining 2/20, p 0.00013 (Holm 8 0.00093)
+      over LCB1 (LCB1 gain -0.0070) -0.0236 [-0.0420, -0.0058] ahead 3/20 p 0.0048 (Holm 8 0.024, 4k 0.019, 32 0.13)
+      over LCB2 (LCB2 gain -0.0060) -0.0247 [-0.0426, -0.0088] ahead 3/20 p 0.0043 (Holm 8 0.026, 4k 0.017, 32 0.13)
+      over PM   (PM gain -0.0087) -0.0219 [-0.0412, -0.0017] ahead 3/20 p 0.016 (Holm 8 0.095, 4k 0.063, 32 0.41)
+      over the sitting of 12 -0.0104 [-0.0156, -0.0057] ahead 2/20 p 0.00054 (Holm 8 0.0038); over its own top candidate +0.0018; 400 runs
+   0.25sigma_from_trial_21  (cost of error 0.0308)
+      gain -0.0290 [-0.0461, -0.0133] share n/a (cost not positive on every landscape), gaining 5/20, p 0.0048 (Holm 8 0.019)
+      over LCB1 (LCB1 gain -0.0098) -0.0193 [-0.0339, -0.0055] ahead 6/20 p 0.017 (Holm 8 0.069, 4k 0.069, 32 0.43)
+      over LCB2 (LCB2 gain -0.0126) -0.0165 [-0.0326, -0.0005] ahead 6/20 p 0.033 (Holm 8 0.11, 4k 0.13, 32 0.82)
+      over PM   (PM gain -0.0138) -0.0153 [-0.0306, -0.0007] ahead 7/20 p 0.076 (Holm 8 0.3, 4k 0.3, 32 1)
+      over the sitting of 12 -0.0087 [-0.0154, -0.0026] ahead 4/20 p 0.013 (Holm 8 0.076); over its own top candidate +0.0069; 400 runs
+   1sigma_from_trial_1  (cost of error 0.2613)
+      gain -0.0352 [-0.0614, -0.0088] share -0.135 [-0.249, -0.031], gaining 5/20, p 0.015 (Holm 8 0.046)
+      over LCB1 (LCB1 gain +0.0357) -0.0710 [-0.0974, -0.0420] ahead 2/20 p 0.00032 (Holm 8 0.0026, 4k 0.0013, 32 0.01)
+      over LCB2 (LCB2 gain +0.0298) -0.0650 [-0.0923, -0.0337] ahead 2/20 p 0.00071 (Holm 8 0.0057, 4k 0.0028, 32 0.023)
+      over PM   (PM gain +0.0397) -0.0749 [-0.1029, -0.0441] ahead 3/20 p 0.00026 (Holm 8 0.0018, 4k 0.001, 32 0.0076)
+      over the sitting of 12 -0.0208 [-0.0371, -0.0041] ahead 5/20 p 0.03 (Holm 8 0.12); over its own top candidate +0.0086; 400 runs
+   1sigma_from_trial_21  (cost of error 0.1350)
+      gain -0.0088 [-0.0321, +0.0160] share -0.065 [-0.275, +0.109], gaining 9/20, p 0.57 (Holm 8 0.57)
+      over LCB1 (LCB1 gain +0.0219) -0.0307 [-0.0592, -0.0018] ahead 6/20 p 0.033 (Holm 8 0.098, 4k 0.13, 32 0.75)
+      over LCB2 (LCB2 gain +0.0222) -0.0310 [-0.0555, -0.0042] ahead 6/20 p 0.0064 (Holm 8 0.032, 4k 0.026, 32 0.19)
+      over PM   (PM gain +0.0166) -0.0254 [-0.0524, +0.0033] ahead 7/20 p 0.076 (Holm 8 0.3, 4k 0.3, 32 1)
+      over the sitting of 12 -0.0163 [-0.0327, +0.0004] ahead 6/20 p 0.083 (Holm 8 0.25); over its own top candidate -0.0068; 400 runs
+   5sigma_from_trial_1  (cost of error 0.7447)
+      gain -0.0328 [-0.0662, -0.0023] share -0.044 [-0.091, -0.002], gaining 9/20, p 0.23 (Holm 8 0.46)
+      over LCB1 (LCB1 gain +0.0418) -0.0746 [-0.1512, -0.0048] ahead 8/20 p 0.11 (Holm 8 0.13, 4k 0.46, 32 1)
+      over LCB2 (LCB2 gain +0.0562) -0.0890 [-0.1632, -0.0251] ahead 7/20 p 0.048 (Holm 8 0.11, 4k 0.19, 32 1)
+      over PM   (PM gain -0.0086) -0.0242 [-0.1117, +0.0549] ahead 12/20 p 0.96 (Holm 8 0.96, 4k 1, 32 1)
+      over the sitting of 12 -0.0202 [-0.0684, +0.0243] ahead 6/20 p 0.31 (Holm 8 0.62); over its own top candidate +0.0115; 400 runs
+   5sigma_from_trial_21  (cost of error 0.4547)
+      gain +0.1464 [+0.0940, +0.2000] share +0.322 [+0.234, +0.403], gaining 18/20, p 2.7e-05 (Holm 8 0.00021)
+      over LCB1 (LCB1 gain +0.0257) +0.1207 [+0.0639, +0.1821] ahead 16/20 p 0.001 (Holm 8 0.0071, 4k 0.0041, 32 0.032)
+      over LCB2 (LCB2 gain +0.0827) +0.0637 [+0.0155, +0.1230] ahead 13/20 p 0.027 (Holm 8 0.11, 4k 0.11, 32 0.69)
+      over PM   (PM gain -0.0674) +0.2138 [+0.1464, +0.2800] ahead 18/20 p 1.9e-05 (Holm 8 0.00015, 4k 5.7e-05, 32 0.00059)
+      over the sitting of 12 +0.0093 [-0.0195, +0.0401] ahead 7/20 p 0.96 (Holm 8 0.96); over its own top candidate +0.1307; 400 runs
+   clean-twin price of the sitting of 16: +0.0297 [+0.0147, +0.0445] of opt_z (the zero-trial rules: pm +0.0220, lcb1 +0.0210, lcb2 +0.0225)
+   for comparison, the main sweep's seeds 12-16, gaussian error alone, k = 16:
+      5 sigma from trial 21: gain +0.2102 [+0.1056, +0.3396]  share of cost +0.409 [+0.235, +0.565]  landscapes gaining 16/20  Wilcoxon p 0.000851  (200 runs)
+      1 sigma from trial 1:  gain -0.0188 [-0.0556, +0.0163]  share of cost -0.068 [-0.211, +0.059]  landscapes gaining 9/20  Wilcoxon p 0.349  (200 runs)
+
+wrote output-boba/analysis/review/gated_sitting_fresh_k16.csv

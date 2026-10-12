@@ -225,6 +225,57 @@ def test_share_is_reported_only_on_a_positive_reference():
     assert not sbm.share_defined(np.array([]))
 
 
+def test_share_suppressed_follows_analyse_boba_adaptations():
+    assert sbm.share_suppressed(np.array([0.1, 0.2])) == ""
+    assert sbm.share_suppressed(np.array([0.1, 0.0])) == ""          # an exactly zero landscape does not suppress
+    assert "negative on 1 of 2" in sbm.share_suppressed(np.array([0.1, -0.2]))
+    assert "below 0.01" in sbm.share_suppressed(np.array([0.004, 0.006]))
+    assert sbm.share_suppressed(np.array([])) != ""
+
+
+def _with_a_negative_cost(raw: pd.DataFrame, ship: pd.DataFrame, land: str, sigma: float, onset: int):
+    """Move one landscape's runs of one cell below their clean twins (cost -0.05 raw), keeping every gain."""
+    raw, ship = raw.copy(), ship.copy()
+    at = (raw["dataset"] == land) & (raw["jitter_std"] == sigma) & (raw["jitter_iteration"] == onset)
+    shift = raw.loc[at, "ref_noisy"] - raw.loc[at, "ref_clean"] + 0.05
+    for col in ("ref_noisy", "regret_noisy", "top_candidate_regret_noisy"):
+        raw.loc[at, col] -= shift
+    files = dict(zip(raw.loc[at, "file"], shift))
+    noisy = ship["file"].map(lambda f: Path(f).name).map(files)
+    hit = ~ship["baseline"] & noisy.notna()
+    for col in ("regret_best_observed", "regret_pm", "regret_lcb1", "regret_lcb2"):
+        ship.loc[hit, col] -= noisy[hit]
+    return raw, ship
+
+
+def test_the_share_guard_withholds_only_the_shares(monkeypatch):
+    raw, ship, oz = make_fixture(n_land=12, ks=(2, 12), cells=((1.0, 0), (5.0, 20)))
+    raw, ship = _with_a_negative_cost(raw, ship, "land00", 5.0, 20)
+    d = as_loaded(raw, oz)
+    frame, rules, summaries = sbm.run(d, ship, processes=("gaussian",))
+    monkeypatch.setattr(sbm, "SHARE_GUARD", False)
+    off_frame, off_rules, off_summaries = sbm.run(d, ship, processes=("gaussian",))
+    guarded = frame["cell"] == "5sigma_from_trial_21"
+    assert frame.loc[guarded, ["recovered_all", "recovered_test"]].isna().all().all()
+    assert np.isfinite(off_frame.loc[guarded, ["recovered_all", "recovered_test"]].to_numpy()).all()
+    assert frame.loc[guarded, "recovered_test_suppressed"].str.contains("negative on 1 of 12").all()
+    assert (frame.loc[~guarded, "recovered_test_suppressed"] == "").all()
+    shares = ["recovered_all", "recovered_test", "recovered_all_suppressed", "recovered_test_suppressed"]
+    rest = [c for c in frame.columns if c not in shares]
+    pd.testing.assert_frame_equal(frame[rest], off_frame[rest])
+    pd.testing.assert_frame_equal(frame.loc[~guarded, shares[:2]], off_frame.loc[~guarded, shares[:2]])
+    pd.testing.assert_frame_equal(rules, off_rules)
+    share_keys = ("test_recovered_share", "test_recovered_lo", "test_recovered_hi", "share_suppressed")
+    for new, old in zip(summaries, off_summaries):
+        if new.get("cell") == "5sigma_from_trial_21":
+            assert all(np.isnan(new[k]) for k in share_keys[:3]) and np.isfinite(old["test_recovered_share"])
+            assert new["test_gain"] == old["test_gain"]          # the absolute gain is still the result
+        drop = share_keys if new.get("cell") == "5sigma_from_trial_21" else ("share_suppressed",)
+        # JSON text, so that a NaN compares equal to a NaN
+        assert (json.dumps({k: v for k, v in new.items() if k not in drop}, sort_keys=True)
+                == json.dumps({k: v for k, v in old.items() if k not in drop}, sort_keys=True))
+
+
 def test_signed_prints_a_value_that_rounds_to_zero_without_a_sign():
     assert sbm._signed(-0.00004) == "0.000"
     assert sbm._signed(0.00040) == "0.000"

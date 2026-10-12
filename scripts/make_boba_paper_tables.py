@@ -184,6 +184,7 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
     # deployed excess is computed independently by both.
     decomp = analysis / "regret_decomposition.csv"
     dec = None
+    note = ""
     if not decomp.is_file():
         # Without it the table would lose its final-trial search and selection blocks.
         _missing("dose_response", decomp)
@@ -210,20 +211,37 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
                     f"{r['jitter_std']}sigma onset {r['jitter_iteration']:.0f}: "
                     f"{mine:.4f} against {r['mean_excess_deployed']:.4f}"
                 )
+        # A share of a deployed excess that is near zero or negative on some
+        # landscape is not a share (decompose_regret.py screens it with
+        # share_of_reference, the rule of compare_boba_arms.py). Such a cell
+        # prints "--" with a note; its selection loss is the final deployed
+        # row less the final search row, both printed above.
+        if "excess_selection_share_suppressed" not in dec.columns:
+            raise ValueError(f"{decomp} has no excess_selection_share_suppressed column; rerun "
+                             "scripts/decompose_regret.py, which screens the shares of a near-zero "
+                             "or sign-changing deployed excess")
+        dec["_suppressed"] = dec["excess_selection_share_suppressed"].map(
+            lambda v: isinstance(v, str) and v.strip() != "")
         grid = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
                                values="excess_selection_share")
         lo = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
                              values="excess_selection_share_lo")
         hi = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
                              values="excess_selection_share_hi")
+        hidden = dec.pivot_table(index="jitter_iteration", columns="jitter_std",
+                                 values="_suppressed", aggfunc="max")
         rows = [f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}"
                 f"{{\\emph{{of that deployed excess, the share that is selection loss}}}} \\\\"]
         for onset in grid.index:
             cells_tex = " & ".join(
+                "--$^{\\dagger}$" if hidden.loc[onset, c] else
                 f"{grid.loc[onset, c] * 100:.0f}\\% {{\\scriptsize $[{lo.loc[onset, c] * 100:.0f},"
                 f"{hi.loc[onset, c] * 100:.0f}]$}}" for c in grid.columns)
             rows.append(f"\\quad {labels.get(int(onset), f'onset {int(onset)}')} & {cells_tex} \\\\")
         blocks.append(chr(10).join(rows))
+        if bool(hidden.to_numpy().any()):
+            note = (f"\\multicolumn{{{len(grid.columns) + 1}}}{{l}}{{\\scriptsize $^{{\\dagger}}$No share: "
+                    "the deployed excess is negative on a landscape or below $1\\%$.} \\\\")
 
     body = "\n\\addlinespace\n".join(blocks)
     write(out / "dose_response.tex", f"""\\begin{{tabular}}{{l{'r' * 4}}}
@@ -231,7 +249,7 @@ def table_dose_response(analysis: Path, out: Path, stats_path: Path | None = Non
 error present & {columns} \\\\
 \\midrule
 {body}
-\\bottomrule
+\\bottomrule{chr(10) + note if note else ''}
 \\end{{tabular}}""")
 
 

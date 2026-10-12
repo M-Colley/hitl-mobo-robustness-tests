@@ -389,7 +389,10 @@ def search_term(joined: pd.DataFrame, opt_z: dict[str, float], window: int = 10)
     """
     rates = run_rates(joined, window)
     runs = rates["file"].unique()
-    z = rates["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    missing = sorted(set(rates["dataset"]) - set(opt_z))
+    if missing:
+        raise KeyError(f"no opt_z for {missing}; a silent scale of 1.0 would mix units")
+    z = rates["dataset"].map(opt_z)
     frame = rates.assign(rated=rates["rated"] / z, true=rates["true"] / z)
     means = frame.groupby(["onset", "sd", "n", "dataset"])[["rated", "true"]].mean().groupby(
         level=["onset", "sd", "n"]).mean()

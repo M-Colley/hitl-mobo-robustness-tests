@@ -291,7 +291,9 @@ def test_recovery_and_claim_tables():
                          "claim_noisy": i == 0, "truly_better_noisy": True, "false_claim_noisy": False,
                          "claim_clean": True})
     frame = pd.DataFrame(rows)
-    rec = eos.recovery_table(frame, {"a": 2.0})
+    with pytest.raises(KeyError, match="no opt_z"):   # a landscape without a scale is refused, not given 1.0
+        eos.recovery_table(frame, {"a": 2.0})
+    rec = eos.recovery_table(frame, {"a": 2.0, "b": 1.0, "c": 1.0})
     assert set(rec["procedure"]) == {"confirm_k2"}
     cell = rec[rec["scope"] == "cell"].iloc[0]
     # cost 1, gain 0.5, price 0.1 on every landscape; landscape a is in units of opt_z = 2
@@ -305,3 +307,126 @@ def test_recovery_and_claim_tables():
     standard = claims.loc[("standard", "cell")]
     assert standard["claim_rate"] == pytest.approx(1 / 3) and standard["power"] == pytest.approx(1 / 3)
     assert np.isnan(standard["size"])
+
+
+def test_fdr_leaves_a_missing_p_out_of_the_family():
+    from statsmodels.stats.multitest import multipletests
+    q = eos.fdr_bh([0.01, np.nan, 0.04, 0.03])
+    assert np.isnan(q[1])
+    np.testing.assert_allclose(q[[0, 2, 3]], multipletests([0.01, 0.04, 0.03], method="fdr_bh")[1])
+    np.testing.assert_allclose(eos.fdr_bh([0.2, 0.01]), multipletests([0.2, 0.01], method="fdr_bh")[1])
+    assert np.isnan(eos.fdr_bh([np.nan])).all()
+
+
+# --- a sitting that cannot fill its trials ---------------------------------------------------
+
+
+def test_a_sitting_short_of_distinct_designs_records_the_looks_it_made():
+    run = eos.RunLog(name="r.csv", X=np.arange(6, dtype=float).reshape(-1, 1), observed=np.zeros(6),
+                     deployed=np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5]), logged_inference=np.zeros(6), y_opt=1.0)
+    state = eos.SearchState(n=6, first=np.arange(6), obs_mean=run.deployed.copy(), lcb=run.deployed.copy(), gp=None,
+                            train_X=torch.zeros(6, 1), train_Y=torch.zeros(6, 1),
+                            bounds=torch.tensor([[0.0], [5.0]]), gp_failed=True)
+    for k, looks in ((3, 3), (8, 6)):
+        for proc, res in eos.tournament(run, state, k, (1.0,), lambda trial: 1.0, T=20).items():
+            # one look per candidate shown: six distinct designs fill a sitting of three, not one of eight
+            assert res["n_looks"] == res["n_candidates"] == looks, proc
+            assert res["unused_trials"] == k - looks, proc
+
+
+def test_old_per_run_files_get_their_looks_and_the_short_share_is_tabulated():
+    rows = []
+    for i, (n_shown, k) in enumerate([(8, 8), (6, 8), (5, 5), (8, 8)]):
+        for proc in ("lcb_rho1_look", "obs_rho1_look"):
+            rows.append({"arm": "arm", "dataset": "a", "acquisition": "logei", "seed": i, "file": f"f{i}_k{k}",
+                         "family": "tournament", "k": k, "procedure": f"tournament_k{k}_{proc}",
+                         "n_candidates_noisy": n_shown, "n_candidates_clean": k})
+    rows.append({"arm": "arm", "dataset": "a", "acquisition": "logei", "seed": 0, "file": "f0_k8",
+                 "family": "standard", "k": np.nan, "procedure": "standard"})
+    frame = eos.derive_looks(pd.DataFrame(rows))
+    sit = frame[frame["family"] == "tournament"]
+    np.testing.assert_array_equal(sit["n_looks_noisy"], sit["n_candidates_noisy"])
+    np.testing.assert_array_equal(sit["unused_trials_noisy"], sit["k"] - sit["n_candidates_noisy"])
+    assert frame.loc[frame["family"] == "standard", "n_looks_noisy"].isna().all()
+    looks = eos.looks_table(frame).set_index("k")
+    assert looks.loc[8, "n_runs"] == 3 and looks.loc[8, "share_short_noisy"] == pytest.approx(1 / 3)
+    assert looks.loc[8, "min_looks_noisy"] == 6 and looks.loc[8, "mean_unused_noisy"] == pytest.approx(2 / 3)
+    assert looks.loc[5, "share_short_noisy"] == 0.0 and looks.loc[8, "share_short_clean"] == 0.0
+
+
+# --- improvement claims without the test, and with the chosen design equal to the start -----------
+
+
+def _old_claim_rates(block: pd.DataFrame, rng: np.random.Generator) -> dict:
+    """claim_rates as committed before the fresh-mean and D = C definitions were added."""
+    claim = eos._as_bool(block["claim_noisy"])
+    better = eos._as_bool(block["truly_better_noisy"])
+    false = claim & ~better
+    parts = pd.DataFrame({"dataset": block["dataset"].to_numpy(), "n": 1, "claim": claim.to_numpy(),
+                          "false": false.to_numpy(), "better": better.to_numpy(),
+                          "hit": (claim & better).to_numpy(), "not_better": (~better).to_numpy()})
+    per = parts.groupby("dataset")[["n", "claim", "false", "better", "hit", "not_better"]].sum()
+    cols = {c: i for i, c in enumerate(per.columns)}
+    counts = per.to_numpy(dtype=float)
+    boot = counts[rng.integers(0, len(per), size=(eos.aba.BOOTSTRAP_REPS, len(per)))].sum(axis=1)
+    total = counts.sum(axis=0)
+    out = {"n_runs": int(total[cols["n"]]), "n_landscapes": int(len(per))}
+    for name, (num, den) in {"claim_rate": ("claim", "n"), "false_claim_rate": ("false", "n"),
+                             "false_discovery_share": ("false", "claim"), "power": ("hit", "better"),
+                             "size": ("false", "not_better"), "truly_better_share": ("better", "n")}.items():
+        out[name] = float(total[cols[num]] / total[cols[den]]) if total[cols[den]] > 0 else np.nan
+        ok = boot[:, cols[den]] > 0
+        ratio = boot[ok, cols[num]] / boot[ok, cols[den]]
+        out[f"{name}_lo"] = float(np.percentile(ratio, 2.5)) if ok.sum() >= 100 else np.nan
+        out[f"{name}_hi"] = float(np.percentile(ratio, 97.5)) if ok.sum() >= 100 else np.nan
+    out["clean_claim_rate"] = float(eos._as_bool(block["claim_clean"]).mean())
+    if "shipped_d_noisy" in block and block["shipped_d_noisy"].notna().all():
+        out["shipped_d_share"] = float(eos._as_bool(block["shipped_d_noisy"]).mean())
+        out["d_is_c_share"] = float(eos._as_bool(block["d_is_c_noisy"]).mean())
+    return out
+
+
+def _confirmation_block() -> pd.DataFrame:
+    # (truly better, test claims, fresh mean higher, D is C), the same five runs on two landscapes
+    runs = [(True, True, True, False),    # a hit under every definition
+            (False, False, True, False),  # a false fresh-mean claim
+            (False, False, True, True),   # D is C: the fresh means differ by noise alone, a false claim
+            (False, True, True, True),    # D is C and the test claims too
+            (True, False, False, False)]  # a miss
+    rows = [{"dataset": ds, "truly_better_noisy": b, "claim_noisy": c, "fresh_mean_claim_noisy": f,
+             "shipped_d_noisy": f, "d_is_c_noisy": dc, "claim_clean": True}
+            for ds in ("a", "b") for b, c, f, dc in runs]
+    return pd.DataFrame(rows)
+
+
+def test_claims_without_the_test_and_without_the_runs_whose_choice_is_the_start():
+    block = _confirmation_block()
+    out = eos.claim_rates(block, np.random.default_rng(0))
+    assert out["fresh_mean_claim_rate"] == pytest.approx(4 / 5)
+    assert out["fresh_mean_false_claim_rate"] == pytest.approx(3 / 5)
+    assert out["fresh_mean_excl_dc_claim_rate"] == pytest.approx(2 / 5)
+    assert out["fresh_mean_excl_dc_false_claim_rate"] == pytest.approx(1 / 5)
+    assert out["fresh_mean_power"] == out["fresh_mean_excl_dc_power"] == pytest.approx(1 / 2)
+    assert out["false_claim_rate"] == pytest.approx(1 / 5) and out["false_claim_rate_excl_dc"] == 0.0
+    assert out["claim_rate_excl_dc"] == pytest.approx(1 / 5) and out["power_excl_dc"] == out["power"] == 0.5
+    # the columns that existed before, and their intervals, do not move
+    old = _old_claim_rates(block, np.random.default_rng(0))
+    assert {k: out[k] for k in old} == old
+    assert list(out)[:len(old)] == list(old)
+    # a per-run file without the fresh-mean column: in a noisy run the ship decision is the same event
+    legacy = eos.claim_rates(block.drop(columns="fresh_mean_claim_noisy"), np.random.default_rng(0))
+    assert legacy == out
+    mixed = block.astype({"fresh_mean_claim_noisy": object})
+    mixed.loc[0, "fresh_mean_claim_noisy"] = None
+    with pytest.raises(ValueError, match="mixes"):
+        eos.claim_rates(mixed, np.random.default_rng(0))
+    # the standard process has no D, so no extra columns
+    std = block.drop(columns=["fresh_mean_claim_noisy", "shipped_d_noisy", "d_is_c_noisy"])
+    assert eos.claim_rates(std, np.random.default_rng(0)) == _old_claim_rates(std, np.random.default_rng(0))
+
+
+def test_the_fresh_mean_claim_is_strict_and_the_ship_rule_is_not():
+    tie = eos.confirmation_decision(1.0, 1.0, np.array([1.0, 1.0]), np.array([1.0, 1.0]), 0.05)
+    assert tie["shipped_d"] and not tie["fresh_mean_claim"] and not tie["claim"]
+    up = eos.confirmation_decision(1.0, 0.0, np.array([1.2, 0.9]), np.array([0.1, 0.3]), 0.05)
+    assert up["fresh_mean_claim"] and up["shipped_d"]

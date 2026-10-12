@@ -13,7 +13,22 @@ The STANDARD is the best_observed rule (ship the single best rating). Regret is
 divided by the landscape's opt_z (boba_landscape_stats.json), so cost, gain and
 price are fractions of the achievable improvement; aggregates are ratios of
 landscape means, intervals resample landscapes, the test is a Wilcoxon over the
-per-landscape gains, BH-corrected within arm x rule x error process.
+per-landscape gains, BH-corrected within arm x rule x error process: the
+condition cells of every variant of one error process form one family
+(fdr_family_size gives its size). The main sweep's bias runs carry one variant
+per magnitude (bias0.05 ... bias5), so before 2026-10-09 each bias magnitude
+was corrected over its two onsets alone, while the other processes were
+corrected over their eight cells. The pooled rows are still formed within a
+variant, so for bias a "pooled_std_ge_0.25" row covers one magnitude (the one
+its variant names), not the magnitudes from 0.25 SD up.
+
+A recovery is a share only when its denominator is. Every row keeps its
+recovered value, but recovered_suppressed gives the reason when the cell's cost
+is below 0.01 of opt_z or negative on any landscape (n_cost_negative counts
+those), the rule of analyse_boba_adaptations.share_flags, which compare_boba_arms
+applies too; there the gain, in the same units, is what may be quoted. Every
+0.05 SD cell is suppressed, and so are cells whose cost is negative on a
+landscape, such as 0.25 SD from trial 21.
 
 Two modes.
 
@@ -65,7 +80,7 @@ DEFAULT_ARMS = (
     "output-boba-budget25", "output-boba-budget100", "output-boba-adapt-rerate", "output-boba-adapt-rep10",
 )
 SUMMARY_KEYS = ["n_landscapes", "n_cells", "cost", "gain", "price", "recovered", "recovered_lo",
-                "recovered_hi", "wilcoxon_p"]
+                "recovered_hi", "wilcoxon_p", "n_cost_negative", "recovered_suppressed"]
 
 
 # ---------------------------------------------------------------------------
@@ -169,24 +184,47 @@ def _summary(block: pd.DataFrame) -> dict:
     return aba.summarise(block, np.random.default_rng(aba.BOOTSTRAP_SEED))
 
 
-def cell_rows(paired: pd.DataFrame, pool_min_std: float) -> list[dict]:
-    """Per magnitude x onset, then pooled above and below the magnitude threshold."""
+def _flagged_summary(block: pd.DataFrame) -> dict:
+    """The summary and, beside it, whether its recovery is a share to quote.
+
+    share_flags is computed from the same per-landscape means and draws nothing,
+    so every value of _summary is unchanged by it.
+    """
+    return {**_summary(block), **aba.share_flags(block)}
+
+
+def benjamini_hochberg(rows: list[dict]) -> None:
+    """BH over the condition cells in ``rows``, in place: wilcoxon_p_fdr and fdr_family_size."""
+    if not rows:
+        return
+    for r, q in zip(rows, multipletests([r["wilcoxon_p"] for r in rows], method="fdr_bh")[1]):
+        r["wilcoxon_p_fdr"] = float(q)
+        r["fdr_family_size"] = len(rows)
+
+
+def cell_rows(paired: pd.DataFrame, pool_min_std: float, fdr: bool = True) -> list[dict]:
+    """Per magnitude x onset, then pooled above and below the magnitude threshold.
+
+    With ``fdr`` the condition cells are BH-corrected among themselves; a caller
+    whose family spans several calls (within_arm: every variant of one error
+    process) passes False and corrects the family itself.
+    """
     rows = []
     for (std, onset), block in paired.groupby(["jitter_std", "jitter_iteration"]):
         rows.append({"cell": "condition", "jitter_std": float(std), "jitter_iteration": float(onset),
-                     **_summary(block)})
-    if rows:
-        for r, q in zip(rows, multipletests([r["wilcoxon_p"] for r in rows], method="fdr_bh")[1]):
-            r["wilcoxon_p_fdr"] = float(q)
+                     **_flagged_summary(block)})
+    if fdr:
+        benjamini_hochberg(rows)
     big = paired["jitter_std"] >= pool_min_std - 1e-12
     for label, part in ((f"pooled_std_ge_{pool_min_std:g}", paired[big]),
                         (f"pooled_std_lt_{pool_min_std:g}", paired[~big])):
         if part.empty:
             continue
         for onset, block in part.groupby("jitter_iteration"):
-            rows.append({"cell": label, "jitter_std": np.nan, "jitter_iteration": float(onset), **_summary(block)})
+            rows.append({"cell": label, "jitter_std": np.nan, "jitter_iteration": float(onset),
+                         **_flagged_summary(block)})
         # jitter_iteration NaN: both onsets together.
-        rows.append({"cell": label, "jitter_std": np.nan, "jitter_iteration": np.nan, **_summary(part)})
+        rows.append({"cell": label, "jitter_std": np.nan, "jitter_iteration": np.nan, **_flagged_summary(part)})
     return rows
 
 
@@ -202,12 +240,21 @@ def within_arm(arm: str, runs: pd.DataFrame, opt_z: dict[str, float], rules: lis
         if rule == STANDARD:
             continue
         trt = twin_frame(runs, rule)
-        for (model, variant), ref_g in ref.groupby(["error_model", "variant"]):
-            trt_g = trt[(trt["error_model"] == model) & (trt["variant"] == variant)]
-            paired = aba.paired_frame(ref_g, trt_g, RESPONSE, opt_z, pool=False)
-            for r in cell_rows(paired, pool_threshold(model, args)):
-                rows.append({"mode": "within", "arm": arm, "reference": arm, "rule": rule, "error_model": model,
-                             "variant": variant, "reference_variant": variant, "pooled_acquisitions": False, **r})
+        for model, ref_m in ref.groupby("error_model"):
+            # One BH family per (rule, error process), across its variants: the
+            # main sweep's bias runs carry one variant per magnitude, so a family
+            # per variant held two cells for bias against eight for the others.
+            family = []
+            for variant, ref_g in ref_m.groupby("variant"):
+                trt_g = trt[(trt["error_model"] == model) & (trt["variant"] == variant)]
+                paired = aba.paired_frame(ref_g, trt_g, RESPONSE, opt_z, pool=False)
+                for r in cell_rows(paired, pool_threshold(model, args), fdr=False):
+                    row = {"mode": "within", "arm": arm, "reference": arm, "rule": rule, "error_model": model,
+                           "variant": variant, "reference_variant": variant, "pooled_acquisitions": False, **r}
+                    rows.append(row)
+                    if row["cell"] == "condition":
+                        family.append(row)
+            benjamini_hochberg(family)
     return rows
 
 
@@ -291,9 +338,14 @@ def _print_pooled(rows: list[dict], header: str) -> None:
     print(header)
     for r in pooled:
         tag = f"{r['error_model']}{' (' + r['variant'] + ')' if r['variant'] else ''}"
+        if r.get("recovered_suppressed"):
+            # Not a share: the gain, in units of opt_z, is the result.
+            share = f"recovered     --  ({r['recovered_suppressed']})"
+        else:
+            share = (f"recovered {r['recovered']:+6.1%} "
+                     f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]")
         print(f"  {r['rule']:<13} {tag:<24} {r['cell']:<20} cost {r['cost']:.3f}  gain {r['gain']:+.3f}  "
-              f"price {r['price']:+.3f}  recovered {r['recovered']:+6.1%} "
-              f"[{r['recovered_lo']:+.0%}, {r['recovered_hi']:+.0%}]  landscapes {r['n_landscapes']}")
+              f"price {r['price']:+.3f}  {share}  landscapes {r['n_landscapes']}")
 
 
 # ---------------------------------------------------------------------------

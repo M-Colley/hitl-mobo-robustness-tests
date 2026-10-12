@@ -39,9 +39,24 @@ and reports, per error process, magnitude and onset:
 
 Regret is divided by the landscape's opt_z (boba_landscape_stats.json) so that
 landscapes whose achievable improvement spans 74x -- 0.76 on powell to 56.8 on
-shekel -- can be averaged. Shares are ratios of landscape means with a landscape
-bootstrap, as everywhere else in this project. The landscapes share their random
-numbers by design, so that bootstrap treats correlated clusters as independent.
+shekel -- can be averaged; a landscape without an opt_z raises (it was once
+silently left in raw units). Shares are ratios of landscape means with a
+landscape bootstrap, as everywhere else in this project. The landscapes share
+their random numbers by design, so that bootstrap treats correlated clusters as
+independent.
+
+A share is a share only when its denominator is. The excess share's
+denominator, the deployed excess, is near zero or negative on some landscapes
+at the smallest errors (0.05 sigma: negative on hicks_law from the first rating,
+a mean of 0.0078 of opt_z and negative on four landscapes from trial 21), and a
+rule's selection-loss recovery is divided by a selection loss that is itself
+below 0.01 of opt_z at 0.05 sigma. Both are screened with the rule
+compare_boba_arms.py uses (analyse_boba_adaptations.share_of_reference: the
+pooled reference below NEAR_ZERO_REFERENCE = 0.01 of opt_z, or negative on any
+landscape). The value stays in the output, as in adaptations_recovery.csv, but
+excess_selection_share_suppressed (and <rule>_selection_recovered_suppressed)
+gives the reason, and there the absolute selection loss
+(mean_excess_selection, in units of opt_z) is what may be quoted.
 
     python scripts/decompose_regret.py
     python scripts/decompose_regret.py --input-dir output-boba --acquisitions logei,qnei
@@ -60,6 +75,9 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import boba_benchmarks as bb  # noqa: E402
+# The share guard is defined once, in analyse_boba_adaptations, and shared with
+# compare_boba_arms.py and analyse_ship_rules.py.
+from analyse_boba_adaptations import share_of_reference  # noqa: E402
 
 BOOTSTRAP_REPS = 2000
 BOOTSTRAP_SEED = 20260916
@@ -97,9 +115,22 @@ def load_runs(path: Path, acquisitions: set[str] | None) -> pd.DataFrame:
     return df
 
 
+def landscape_scale(datasets: pd.Series, opt_z: dict[str, float]) -> pd.Series:
+    """Each row's opt_z; a landscape without one raises instead of staying in raw units."""
+    lacking = sorted(set(datasets) - set(opt_z))
+    if lacking:
+        raise KeyError(f"no opt_z for {lacking}: regrets from landscapes in different units "
+                       "cannot be pooled (add them to the landscape statistics)")
+    z = datasets.map(opt_z).astype(float)
+    ok = np.isfinite(z) & (z > 0)
+    if not ok.all():
+        raise ValueError(f"opt_z is not a positive number for {sorted(set(datasets[~ok]))}")
+    return z
+
+
 def decompose(df: pd.DataFrame, opt_z: dict[str, float]) -> pd.DataFrame:
     """Per run: the two terms, in units of the landscape's achievable improvement."""
-    z = df["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    z = landscape_scale(df["dataset"], opt_z)
     out = df.copy()
     out["deployed"] = df["regret_best_observed"] / z
     out["search"] = df["regret_best_visited"] / z
@@ -180,8 +211,18 @@ def summarise(noisy: pd.DataFrame, clean: pd.DataFrame, rng: np.random.Generator
             perx = m.groupby("dataset")[["excess_deployed", "excess_search", "excess_selection"]].mean()
             share, lo, hi = _boot_ratio(perx["excess_selection"].to_numpy(),
                                         perx["excess_deployed"].to_numpy(), rng)
+            # The excess share is a share of the deployed excess, so it is screened
+            # like every other share of a cost (share_of_reference): the value is
+            # kept, the reason is given, and the absolute selection loss is what a
+            # suppressed cell may quote. Computed after the bootstrap, so the
+            # generator's draws (and every other output) are unchanged.
+            guard = share_of_reference(pd.DataFrame({
+                "ref": perx["excess_deployed"],
+                "trt": perx["excess_deployed"] - perx["excess_selection"]}))
             row.update(excess_selection_share=share, excess_selection_share_lo=lo,
                        excess_selection_share_hi=hi,
+                       excess_selection_share_suppressed=guard["share_suppressed"],
+                       n_landscapes_excess_negative=guard["n_reference_negative"],
                        mean_excess_deployed=float(perx["excess_deployed"].mean()),
                        mean_excess_search=float(perx["excess_search"].mean()),
                        mean_excess_selection=float(perx["excess_selection"].mean()),
@@ -189,12 +230,20 @@ def summarise(noisy: pd.DataFrame, clean: pd.DataFrame, rng: np.random.Generator
     return row
 
 
+def share_is_suppressed(reason) -> bool:
+    """True when a *_suppressed column holds a reason (empty or NaN when the share is reported)."""
+    return isinstance(reason, str) and reason.strip() != ""
+
+
 def rule_recovery(noisy: pd.DataFrame, rng: np.random.Generator) -> dict:
     """Share of the SELECTION loss each ship rule removes.
 
     The denominator is the selection loss of the standard rule, so 100% means the
     rule ships the best visited design every time and 0% means it ships what the
-    standard rule ships. It can go negative: a rule may be worse.
+    standard rule ships. It can go negative: a rule may be worse. The selection
+    loss is never negative, but at 0.05 sigma it is below 0.01 of opt_z, so the
+    share carries the same screen as every other share of a cost
+    (<rule>_selection_recovered_suppressed; the value is kept).
     """
     out: dict[str, object] = {}
     per = noisy.groupby("dataset")[["deployed", "search", "selection"]].mean()
@@ -209,6 +258,8 @@ def rule_recovery(noisy: pd.DataFrame, rng: np.random.Generator) -> dict:
         out[f"{rule}_selection_recovered"] = share
         out[f"{rule}_selection_recovered_lo"] = lo
         out[f"{rule}_selection_recovered_hi"] = hi
+        guard = share_of_reference(pd.DataFrame({"ref": den, "trt": den - num}))
+        out[f"{rule}_selection_recovered_suppressed"] = guard["share_suppressed"]
     return out
 
 
@@ -268,23 +319,33 @@ def main(argv=None) -> pd.DataFrame:
     for _, r in frame.iterrows():
         if r["jitter_std"] == "pooled" and r["error_model"] != "pooled":
             continue
-        label = (f"{r['error_model']:<9} std {str(r['jitter_std']):>6} onset {str(r['jitter_iteration']):>5}"
-                 if r["error_model"] != "pooled" else f"{'ALL':<9} {'':>10} {'':>11}")
+        # The rows pooled over the error processes keep their magnitude and onset;
+        # only the last row pools everything.
+        label = (f"{'ALL' if r['error_model'] == 'pooled' else r['error_model']:<9} "
+                 f"std {str(r['jitter_std']):>6} onset {str(r['jitter_iteration']):>5}"
+                 if r["jitter_std"] != "pooled" else f"{'ALL':<9} {'pooled':>10} {'':>11}")
         share = r.get("selection_share", float("nan"))
         ex = r.get("excess_selection_share", float("nan"))
+        if share_is_suppressed(r.get("excess_selection_share_suppressed")):
+            # Not a share: give the selection loss itself, in units of opt_z.
+            excess_text = (f"of the EXCESS    --  (selection loss {r['mean_excess_selection']:.4f} of opt_z; "
+                           f"{r['excess_selection_share_suppressed']})")
+        else:
+            excess_text = (f"of the EXCESS {ex * 100:5.1f}% [{r.get('excess_selection_share_lo', np.nan) * 100:4.0f},"
+                           f"{r.get('excess_selection_share_hi', np.nan) * 100:4.0f}]")
         print(f"  {label}  selection {share * 100:5.1f}% [{r.get('selection_share_lo', np.nan) * 100:4.0f},"
-              f"{r.get('selection_share_hi', np.nan) * 100:4.0f}]   "
-              f"of the EXCESS {ex * 100:5.1f}% [{r.get('excess_selection_share_lo', np.nan) * 100:4.0f},"
-              f"{r.get('excess_selection_share_hi', np.nan) * 100:4.0f}]")
+              f"{r.get('selection_share_hi', np.nan) * 100:4.0f}]   {excess_text}")
 
     print("\nShare of the SELECTION loss each ship rule removes (pooled over everything):")
     last = frame.iloc[-1]
     for rule in RULES:
         key = f"{rule}_selection_recovered"
         if key in last and pd.notna(last[key]):
+            flag = last.get(f"{key}_suppressed")
+            note = f"  (not a share: {flag})" if share_is_suppressed(flag) else ""
             print(f"  {rule:<14} {last[key] * 100:+6.1f}% "
                   f"[{last[f'{rule}_selection_recovered_lo'] * 100:+.0f},"
-                  f"{last[f'{rule}_selection_recovered_hi'] * 100:+.0f}]")
+                  f"{last[f'{rule}_selection_recovered_hi'] * 100:+.0f}]{note}")
 
     print(f"\nWrote {path}")
     return frame

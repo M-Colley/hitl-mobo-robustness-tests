@@ -262,10 +262,10 @@ ARMS = {
                     error_model="gaussian"),
     # An acquisition, so it is scored against LogEI like every other acquisition
     # arm, with the ten-mean version kept beside it.
-    "idea-shiplcb": arm("output-boba-idea-shiplcb", "output-boba", "shiplcb",
+    "idea-shiplcb": arm("output-boba-idea-shiplcb2", "output-boba", "shiplcb",
                        "an acquisition that values a rating by what it does to the ship rule",
                        ref_acqs="logei", pool=True, error_model="gaussian"),
-    "idea-shiplcb-ten": arm("output-boba-idea-shiplcb", "output-boba", "shiplcb",
+    "idea-shiplcb-ten": arm("output-boba-idea-shiplcb2", "output-boba", "shiplcb",
                            "the same, against the mean of the ten standard acquisitions",
                            ref_acqs=TEN, pool=True, error_model="gaussian"),
     "q-inclcb": arm("output-boba-q-inclcb", "output-boba", "logei,logpi",
@@ -375,6 +375,15 @@ def load(root: Path, acqs: set[str], seeds: set[int], error_model: str | None,
     # the variant column has none at all.
     df["variant"] = df["variant"].fillna("") if "variant" in df.columns else ""
     keep = ~df["acquisition"].isin(MODEL_FREE) & df["acquisition"].isin(acqs) & df["seed"].isin(seeds)
+    # A run whose acquisition fell back to a random point is not the arm it is
+    # labelled as (the first shiplcb arm fell back on every trial and was scored as
+    # an acquisition for weeks), so such an arm is refused, never scored.
+    if "acq_opt_failures" in df.columns:
+        failed = df[keep & (df["acq_opt_failures"] > 0)]
+        if len(failed):
+            cells = failed.groupby(["dataset", "acquisition"])["acq_opt_failures"].sum()
+            raise ValueError(f"{root}: {len(failed)} selected runs fell back to random proposals "
+                             f"({int(cells.sum())} trials); first cells:\n{cells.head().to_string()}")
     if error_model is not None:
         keep &= df["error_model"] == error_model
     if variant is not None:

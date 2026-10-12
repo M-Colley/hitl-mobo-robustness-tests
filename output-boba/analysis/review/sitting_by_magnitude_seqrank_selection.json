@@ -12,6 +12,10 @@
     "test_p_holm_over_k": 0.42159271240234375,
     "test_recovered_share": 0.06403477277343712,
     "cost_of_error_test": 0.22527073410646895,
+    "share_suppressed": {
+      "all_seeds": "",
+      "seeds_12_16": ""
+    },
     "k_chosen_on_12_16": 5,
     "reverse_test_gain": 0.01702032815378561,
     "reverse_lo": 0.004855313557716281,
@@ -261,8 +265,12 @@
     "test_landscapes_gaining": 6,
     "test_p": 0.0442084385246971,
     "test_p_holm_over_k": 0.0884168770493942,
-    "test_recovered_share": -2.128112035361707,
+    "test_recovered_share": NaN,
     "cost_of_error_test": 0.0048595935104253935,
+    "share_suppressed": {
+      "all_seeds": "reference 0.0067 below 0.01; reference negative on 4 of 20 landscapes",
+      "seeds_12_16": "reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes"
+    },
     "k_chosen_on_12_16": 5,
     "reverse_test_gain": -0.013873729358084971,
     "reverse_lo": -0.02511710135599753,
@@ -287,8 +295,8 @@
       "logei": -0.013902294364530846,
       "qnei": -0.006781224508473011
     },
-    "test_recovered_lo": -19.37553492216513,
-    "test_recovered_hi": 20.72339701700228,
+    "test_recovered_lo": NaN,
+    "test_recovered_hi": NaN,
     "test_p_holm_all_cells": 1.0,
     "increment_over_lcb1": {
       "k": 3,
@@ -512,8 +520,12 @@
     "test_landscapes_gaining": 7,
     "test_p": 0.02687559167118386,
     "test_p_holm_over_k": 0.08062677501355157,
-    "test_recovered_share": -4.024189877653632,
+    "test_recovered_share": NaN,
     "cost_of_error_test": 0.003405831315416219,
+    "share_suppressed": {
+      "all_seeds": "reference 0.0040 below 0.01; reference negative on 5 of 20 landscapes",
+      "seeds_12_16": "reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes"
+    },
     "k_chosen_on_12_16": 3,
     "reverse_test_gain": -0.014885817472608365,
     "reverse_lo": -0.030035568511745738,
@@ -539,8 +551,8 @@
       "logei": -0.017746333784529413,
       "qnei": -0.009665090024457992
     },
-    "test_recovered_lo": -34.731695753448314,
-    "test_recovered_hi": 31.44519811506296,
+    "test_recovered_lo": NaN,
+    "test_recovered_hi": NaN,
     "test_p_holm_all_cells": 0.779392158464332,
     "increment_over_lcb1": {
       "k": 5,
@@ -764,8 +776,12 @@
     "test_landscapes_gaining": 9,
     "test_p": 0.5958194732666016,
     "test_p_holm_over_k": 1.0,
-    "test_recovered_share": -0.14030924324611774,
+    "test_recovered_share": NaN,
     "cost_of_error_test": 0.04165851977744019,
+    "share_suppressed": {
+      "all_seeds": "reference negative on 2 of 20 landscapes",
+      "seeds_12_16": "reference negative on 2 of 20 landscapes"
+    },
     "k_chosen_on_12_16": 3,
     "reverse_test_gain": -0.005052355359793297,
     "reverse_lo": -0.012816084556049323,
@@ -790,8 +806,8 @@
       "logei": -0.013643028486305534,
       "qnei": 0.0019528777168534126
     },
-    "test_recovered_lo": -0.5341316727707306,
-    "test_recovered_hi": 0.06944752951415485,
+    "test_recovered_lo": NaN,
+    "test_recovered_hi": NaN,
     "test_p_holm_all_cells": 1.0,
     "increment_over_lcb1": {
       "k": 3,
@@ -1015,8 +1031,12 @@
     "test_landscapes_gaining": 11,
     "test_p": 0.4939012303138084,
     "test_p_holm_over_k": 1.0,
-    "test_recovered_share": -0.1971439325496932,
+    "test_recovered_share": NaN,
     "cost_of_error_test": 0.03295479729527344,
+    "share_suppressed": {
+      "all_seeds": "reference negative on 1 of 20 landscapes",
+      "seeds_12_16": "reference negative on 1 of 20 landscapes"
+    },
     "k_chosen_on_12_16": 3,
     "reverse_test_gain": -0.0034076129972710435,
     "reverse_lo": -0.012905933894299287,
@@ -1042,8 +1062,8 @@
       "logei": -0.015877141053818718,
       "qnei": 0.0028834643834823224
     },
-    "test_recovered_lo": -0.7458314436523241,
-    "test_recovered_hi": 0.10274108400063957,
+    "test_recovered_lo": NaN,
+    "test_recovered_hi": NaN,
     "test_p_holm_all_cells": 1.0,
     "increment_over_lcb1": {
       "k": 5,
@@ -1269,6 +1289,10 @@
     "test_p_holm_over_k": 0.025325775146484375,
     "test_recovered_share": 0.12017781132088291,
     "cost_of_error_test": 0.2612167520745954,
+    "share_suppressed": {
+      "all_seeds": "",
+      "seeds_12_16": ""
+    },
     "k_chosen_on_12_16": 2,
     "reverse_test_gain": 0.022135213647048978,
     "reverse_lo": 0.01226126593459155,
@@ -1519,6 +1543,10 @@
     "test_p_holm_over_k": 0.171875,
     "test_recovered_share": 0.11352695142899996,
     "cost_of_error_test": 0.14843668781565264,
+    "share_suppressed": {
+      "all_seeds": "",
+      "seeds_12_16": ""
+    },
     "k_chosen_on_12_16": 5,
     "reverse_test_gain": 0.021553795390066362,
     "reverse_lo": 0.008659868248483997,
@@ -1772,6 +1800,10 @@
     "test_p_holm_over_k": 0.07656097412109375,
     "test_recovered_share": 0.06701879225251707,
     "cost_of_error_test": 0.7534776858078692,
+    "share_suppressed": {
+      "all_seeds": "",
+      "seeds_12_16": ""
+    },
     "k_chosen_on_12_16": 2,
     "reverse_test_gain": 0.05641603442419356,
     "reverse_lo": 0.016108889712718573,
@@ -2025,6 +2057,10 @@
     "test_p_holm_over_k": 0.000492095947265625,
     "test_recovered_share": 0.38070522583304206,
     "cost_of_error_test": 0.5561560052550789,
+    "share_suppressed": {
+      "all_seeds": "",
+      "seeds_12_16": ""
+    },
     "k_chosen_on_12_16": 20,
     "reverse_test_gain": 0.19546474599727193,
     "reverse_lo": 0.12439611256097584,

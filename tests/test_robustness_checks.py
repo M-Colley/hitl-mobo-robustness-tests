@@ -238,8 +238,10 @@ def test_floor_table_averages_the_two_floors_and_counts_worse_arms():
 
 def test_floor_table_p_values_and_holm_over_the_arms():
     fd = _load("floor_deployed")
-    # The paper's intervals use 2000 landscape resamples.
-    assert fd.REPS == 2000
+    # A bootstrap p is floored at 1/REPS and Holm multiplies it by up to ten, so 2000
+    # resamples left a Holm p near 0.01 to chance (LogPI at 5 sigma: 0.010 printed,
+    # 0.031 with 200,000 resamples).
+    assert fd.REPS >= 100_000
     rng = np.random.default_rng(5)
     rows = []
     shifts = {"ei": 0.2, "ucb": 0.0, "pi": -0.2}  # floor - arm: + means the arm ships better
@@ -260,9 +262,21 @@ def test_floor_table_p_values_and_holm_over_the_arms():
     assert arms.loc["ei", "p_holm"] < 0.05 and arms.loc["pi", "p_holm"] < 0.05
     assert arms.loc["ucb", "p_holm"] > 0.05
     assert (arms["wilcoxon_p_holm"] >= arms["wilcoxon_p"] - 1e-12).all()
+    # The t test over the twenty landscape differences, with its own Holm family.
+    assert (arms["t_p_holm"] >= arms["t_p"] - 1e-12).all()
+    assert arms.loc["ei", "t_p_holm"] < 0.05 and arms.loc["pi", "t_p_holm"] < 0.05
+    assert arms.loc["ucb", "t_p_holm"] > 0.05
     first = table.iloc[0]
     assert int(first["acquisitions_better_than_floor_holm"]) == 1  # ei
     assert int(first["acquisitions_worse_than_floor_holm"]) == 1   # pi
+    for suffix in ("_t", "_wilcoxon", "_all"):
+        assert int(first[f"acquisitions_better_than_floor_holm{suffix}"]) == 1
+        assert int(first[f"acquisitions_worse_than_floor_holm{suffix}"]) == 1
+    # Detectable by all three is never more than detectable by any one.
+    for direction in ("better", "worse"):
+        every = int(first[f"acquisitions_{direction}_than_floor_holm_all"])
+        assert every <= min(int(first[f"acquisitions_{direction}_than_floor_holm{s}"])
+                            for s in ("", "_t", "_wilcoxon"))
 
 
 def test_floor_landscape_means_use_opt_z_and_the_four_processes():
@@ -312,3 +326,64 @@ def test_friedman_corrections_match_statsmodels():
     assert int(rows["reject_bh"].sum()) == int(multipletests(p, method="fdr_bh")[0].sum())
     assert int(rows["reject_holm"].sum()) == int(multipletests(p, method="holm")[0].sum())
     assert rows["reject_holm"].sum() <= rows["reject_bh"].sum() <= rows["reject_raw"].sum()
+
+
+# ---------------------------------------------------------------------------
+# The headroom screen and the ceiling screen (2026-10-09)
+# ---------------------------------------------------------------------------
+
+
+def test_low_headroom_marks_a_landscape_where_bo_barely_beats_random_search(tmp_path):
+    """The column was called ceiling_free and held the opposite of its name."""
+    rows = []
+    for land, best in (("A", 0.95), ("B", 0.5)):          # learner AUC against a floor AUC of 1.0
+        for acq, auc in (("random", 1.0), ("sobol", 1.0), ("ei", best)):
+            rows.append({"dataset": land, "acquisition": acq, "auc_simple_regret_true_baseline": auc})
+    table = ab.headroom_screen(pd.DataFrame(rows), tmp_path).set_index("dataset")
+    assert "ceiling_free" not in table.columns
+    assert table.loc["A", "headroom"] == pytest.approx(0.05) and bool(table.loc["A", "low_headroom"])
+    assert table.loc["B", "headroom"] == pytest.approx(0.5) and not bool(table.loc["B", "low_headroom"])
+
+
+def test_ceiling_screen_reads_the_clean_run_at_the_optimum_from_the_paired_metrics(tmp_path):
+    """Search loss never rises and is never negative, so a post-onset window mean of zero means
+    the clean run was at the optimum by trial 21, and a window mean equal to the final value
+    means it gained nothing after trial 21."""
+    rows = []
+    # (window mean of the clean twin's search loss over trials 21..T, its final value)
+    twins = {"A": [(0.0, 0.0), (0.0, 0.0), (0.0, 0.0), (0.3, 0.1)],    # 3 of 4 at the optimum by 21
+             "B": [(0.5, 0.2), (0.4, 0.4), (0.6, 0.0), (0.2, 0.1)]}    # none; one gains nothing
+    for land, pairs in twins.items():
+        for seed, (window, final) in enumerate(pairs):
+            for std in (1.0, 5.0):
+                for onset in (0, 20):
+                    rows.append({"dataset": land, "acquisition": "ei", "seed": seed, "jitter_std": std,
+                                 "jitter_iteration": onset, "opt_z": 2.0,
+                                 "auc_simple_regret_true_postonset_per_iter_baseline":
+                                     window if onset == 20 else window + 1.0,
+                                 "final_simple_regret_true_baseline": final,
+                                 "fragility": 0.0 if window == 0 else 0.1 * std,
+                                 ab.INFERENCE_METRIC: 0.4 * std})
+        rows.append({**rows[-1], "acquisition": "random"})          # floors are not learners
+    table = ab.ceiling_screen(pd.DataFrame(rows), tmp_path).set_index("dataset")
+    assert (tmp_path / "ceiling_screen.csv").is_file()
+    assert table.loc["A", "share_clean_at_optimum_t21"] == pytest.approx(0.75)
+    assert table.loc["A", "share_clean_at_optimum_T"] == pytest.approx(0.75)
+    assert table.loc["A", "share_late_runs_clean_gains_nothing_after_t21"] == pytest.approx(0.75)
+    assert bool(table.loc["A", "ceiling_limited_late"])
+    assert table.loc["B", "share_clean_at_optimum_t21"] == 0.0
+    assert table.loc["B", "share_late_runs_clean_gains_nothing_after_t21"] == pytest.approx(0.25)
+    assert not bool(table.loc["B", "ceiling_limited_late"])
+    assert table.loc["A", "n_clean_runs"] == 4
+    # The deployed design is not bounded: 0.4 x sigma of 2.0 = 0.2 x sigma.
+    assert table.loc["A", "late_deployed_excess_s5"] == pytest.approx(1.0)
+    assert table.loc["B", "late_search_excess_s1"] == pytest.approx(0.1)
+
+
+def test_ceiling_screen_refuses_a_clean_twin_that_differs_between_its_noisy_runs(tmp_path):
+    base = {"dataset": "A", "acquisition": "ei", "seed": 0, "jitter_iteration": 20, "opt_z": 1.0,
+            "final_simple_regret_true_baseline": 0.0, "fragility": 0.0, ab.INFERENCE_METRIC: 0.1}
+    rows = [{**base, "jitter_std": 1.0, "auc_simple_regret_true_postonset_per_iter_baseline": 0.0},
+            {**base, "jitter_std": 5.0, "auc_simple_regret_true_postonset_per_iter_baseline": 0.2}]
+    with pytest.raises(ValueError, match="pairing is broken"):
+        ab.ceiling_screen(pd.DataFrame(rows), tmp_path)

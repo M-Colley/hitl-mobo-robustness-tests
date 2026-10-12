@@ -26,8 +26,10 @@ heldout_remedies' k-curve scoring (budget_split.score_policies with
 budget_split_derived*.csv, the derived budget rule, the tab:heldout k row with its
 landscape-split column, the optimism of the choice of k, and the Holm family of
 App. H). Its shared side must reproduce
-review/sitting_by_magnitude_selection.json, review/sitting_by_magnitude_gaussian_selection.json
-and review/heldout_remedies.csv before any sequential value is printed.
+review/sitting_by_magnitude_selection.json, review/sitting_by_magnitude_gaussian_selection.json,
+review/heldout_remedies.csv, budget_split_policies*.csv and end_of_study_claims.csv
+before any sequential value is printed: every check runs first, and the script exits
+non-zero, printing no sequential value, if any fails.
 The rows are those of sitting_by_magnitude.py and the k-curve: tournament,
 candidates by the posterior mean less one latent SD, the best look ships, looks
 at the full idiosyncratic SD (rho = 1), LogEI and qNEI, the four main processes.
@@ -112,8 +114,13 @@ def load(dirs: tuple[str, ...], rho: float = 1.0) -> pd.DataFrame:
     return d.reset_index(drop=True)
 
 
-def check_unchanged(shared: pd.DataFrame, seq: pd.DataFrame, label: str) -> pd.DataFrame:
-    """Gaussian and bias rows must be identical, and every clean-side column too; returns the paired frame."""
+def check_unchanged(shared: pd.DataFrame, seq: pd.DataFrame, label: str) -> tuple[pd.DataFrame, float]:
+    """Gaussian and bias rows must be identical, and every clean-side column too.
+
+    Returns the paired frame and the share of drift and ar1 rows whose shipped
+    design changed, a sequential value, which the caller prints only after every
+    check has passed.
+    """
     m = shared.merge(seq, on=KEY, suffixes=("", "_seq"), validate="one_to_one")
     if len(m) != len(seq):
         raise SystemExit(f"{label}: {len(seq) - len(m)} sequential rows have no shared twin")
@@ -124,11 +131,10 @@ def check_unchanged(shared: pd.DataFrame, seq: pd.DataFrame, label: str) -> pd.D
     moving = m[m["error_model"].isin(MOVING)]
     changed = float((moving["regret_noisy"] != moving["regret_noisy_seq"]).mean()) if len(moving) else float("nan")
     print(f"{label}: {len(m):,} paired rows. gaussian and bias rows identical: {same_fixed}; "
-          f"standard process and clean twin identical on every row: {same_clean}; "
-          f"drift and ar1 rows whose shipped design changed: {changed:.1%}")
+          f"standard process and clean twin identical on every row: {same_clean}")
     if not (same_fixed and same_clean):
         raise SystemExit(f"{label}: a row that the sequential process must not touch differs")
-    return m
+    return m, changed
 
 
 def boot(v: np.ndarray, rng: np.random.Generator) -> tuple[float, float]:
@@ -195,29 +201,34 @@ def print_pooled_curve(m: pd.DataFrame, label: str, rho_label: str) -> None:
               f"   | without 5sigma from trial 21: shared {fmt(*w['shared'])}  sequential {fmt(*w['seq'])}")
 
 
-def print_selection(frame: pd.DataFrame, label: str) -> dict[str, dict]:
+def selection(frame: pd.DataFrame) -> dict[str, dict]:
     """sitting_by_magnitude's per-cell choice of k (seeds 7-11) and held-out score (12-16), re-made.
 
     The cells are analysed in sitting_by_magnitude's order from its bootstrap seed, so the
     shared frame reproduces tab:sittingcell interval for interval and the sequential frames
-    get the same draws.
+    get the same draws. Prints nothing (print_selection does).
     """
     rng = np.random.default_rng(sbm.BOOTSTRAP_SEED)
-    print(f"\nPer-cell choice of k re-made on seeds 7-11 and scored on 12-16 ({label}; "
-          f"sitting_by_magnitude.analyse_cell)")
     cells = [("pooled", frame)] + [
         (f"{s:g}sigma_from_trial_{o + 1}", frame[np.isclose(frame["sigma"], s) & (frame["onset"] == o)])
         for s in (0.05, 0.25, 1.0, 5.0) for o in (0, 20)]
     out = {}
     for name, sub in cells:
-        _, sm = sbm.analyse_cell(sub, name, rng)
-        out[name] = sm
+        out[name] = sbm.analyse_cell(sub, name, rng)[1]
+    return out
+
+
+def print_selection(out: dict[str, dict], label: str) -> None:
+    print(f"\nPer-cell choice of k re-made on seeds 7-11 and scored on 12-16 ({label}; "
+          f"sitting_by_magnitude.analyse_cell)")
+    for name, sm in out.items():
         pp = ", ".join(f"{p} {v:+.3f}" for p, v in sm["per_process_test"].items())
+        share = ("share withheld" if np.isnan(sm["test_recovered_share"])
+                 else f"share {sm['test_recovered_share']:+.1%}")
         print(f"  {name:24s} k={sm['k_chosen_on_7_11']:2d} held-out gain {fmt(sm['test_gain'], sm['test_lo'], sm['test_hi'])}"
               f" on {sm['test_landscapes_gaining']:2d}/20, Holm p over k {sm['test_p_holm_over_k']:.3f}, "
-              f"share {sm['test_recovered_share']:+.1%}; per process {pp}; k=12 all seeds {sm['k12_gain_all']:+.3f}; "
+              f"{share}; per process {pp}; k=12 all seeds {sm['k12_gain_all']:+.3f}; "
               f"k chosen on 12-16 {sm['k_chosen_on_12_16']}")
-    return out
 
 
 def with_seq(shared: pd.DataFrame, seq: pd.DataFrame) -> pd.DataFrame:
@@ -253,12 +264,13 @@ def largest_moves(m: pd.DataFrame, label: str) -> None:
               f"{r['shared']:+.3f} -> {r['seq']:+.3f}); sign changes {sign_flips} of {len(x)}")
 
 
-def claims(dirs: dict[str, str]) -> None:
+def claims_tables(dirs: dict[str, str]) -> dict:
     """Confirmation's claims per process, by replay_end_of_study.claims_table on the same runs.
 
     end_of_study (the shared process, the paper's confirmation numbers) and the sequential
     k-sweep both hold LogEI, qNEI and UCB; they are re-tabulated on the (run, procedure) pairs
-    both hold, and the shared side is checked against end_of_study_claims.csv.
+    both hold. Prints nothing: check_claims compares the shared side with
+    end_of_study_claims.csv and print_claims reports both.
     """
     import replay_end_of_study as eos  # noqa: E402 - heavy (torch), only needed here
     cols = ["arm", "dataset", "acquisition", "seed", "error_model", "jitter_std", "jitter_iteration", "file",
@@ -269,9 +281,6 @@ def claims(dirs: dict[str, str]) -> None:
         frames[label] = f[(f["arm"] == "output-boba") & f["error_model"].isin(PROCESSES)
                           & f["family"].isin(("confirmation", "standard"))]
     common = set.intersection(*(set(zip(f["file"], f["procedure"])) for f in frames.values()))
-    print(f"\nConfirmation claims per process, pooled over the eight cells, on the {len(common):,} "
-          f"(run, procedure) pairs both replays hold ({', '.join(f'{k} = {v}' for k, v in dirs.items())}; "
-          f"LogEI, qNEI and UCB; replay_end_of_study.claims_table):")
     tables = {}
     for label, f in frames.items():
         f = f[[pair in common for pair in zip(f["file"], f["procedure"])]]
@@ -280,13 +289,31 @@ def claims(dirs: dict[str, str]) -> None:
     published = pd.read_csv(ANALYSIS / dirs["shared"] / "end_of_study_claims.csv")
     published = published[(published["arm"] == "output-boba") & (published["scope"] == "pooled")].set_index(
         ["error_model", "procedure"])
+    return {"dirs": dirs, "n_common": len(common), "tables": tables, "published": published}
+
+
+def check_claims(c: dict) -> int:
+    """The shared side's false-claim rates must be end_of_study_claims.csv's; returns the mismatches."""
+    shared, published = c["tables"]["shared"], c["published"]
+    bad = [idx for idx in sorted(shared.index)
+           if idx not in published.index or not np.isclose(published.loc[idx, "false_claim_rate"],
+                                                            shared.loc[idx, "false_claim_rate"], rtol=0, atol=1e-12)]
+    print(f"confirmation claims, shared, on the {c['n_common']:,} (run, procedure) pairs both replays hold, against "
+          f"{c['dirs']['shared']}/end_of_study_claims.csv: {len(shared) - len(bad)} of {len(shared)} pooled "
+          f"false-claim rates reproduced" + (f"; MISMATCH {bad}" if bad else ""))
+    return len(bad)
+
+
+def print_claims(c: dict) -> None:
+    dirs, tables = c["dirs"], c["tables"]
+    print(f"\nConfirmation claims per process, pooled over the eight cells, on the {c['n_common']:,} "
+          f"(run, procedure) pairs both replays hold ({', '.join(f'{k} = {v}' for k, v in dirs.items())}; "
+          f"LogEI, qNEI and UCB; replay_end_of_study.claims_table; the shared side reproduces "
+          f"{dirs['shared']}/end_of_study_claims.csv, checked above):")
     for idx in sorted(tables["shared"].index):
         a, b = tables["shared"].loc[idx], tables["sequential"].loc[idx]
-        same = (idx in published.index and np.isclose(published.loc[idx, "false_claim_rate"], a["false_claim_rate"],
-                                                      rtol=0, atol=1e-12))
         print(f"  {idx[0]:8s} {idx[1]:11s} false-claim rate shared {a['false_claim_rate']:.2%} "
-              f"[{a['false_claim_rate_lo']:.2%}, {a['false_claim_rate_hi']:.2%}] power {a['power']:.1%}"
-              f" ({'= ' + dirs['shared'] + '_claims' if same else 'NOT the published value'});"
+              f"[{a['false_claim_rate_lo']:.2%}, {a['false_claim_rate_hi']:.2%}] power {a['power']:.1%};"
               f"  sequential {b['false_claim_rate']:.2%} [{b['false_claim_rate_lo']:.2%}, "
               f"{b['false_claim_rate_hi']:.2%}] power {b['power']:.1%}")
 
@@ -376,6 +403,8 @@ def spike_corrected() -> None:
     (paper/COMMANDS.md), so the rows at the old look SD of 0.268 are no longer on disk and
     the left-hand side below is the logged directory as it now stands: the block checks
     that the in-place rerun and the two corrected replays agree, not the size of the fix.
+    All four remedy replays were rerun again on 2026-10-09 with the corrected best-arm
+    allocation (replay_hitl_remedies.lucb_sitting), so their LUCB rows agree as well.
     """
     print("\n=== code-estimands-9: gross faults (spike sp0.15-20), look-buying rows as now logged "
           "(rerun in place at the run's spikes) against the two corrected replays (pooled, recovered share "
@@ -805,9 +834,49 @@ def k_changes(sb: dict[str, dict], kr: dict[str, dict]) -> list[tuple]:
 
 def main() -> None:
     print(__doc__)
-    shared = load(DIRS["shared"])
-    seq = load(DIRS["sequential"])
-    m = check_unchanged(shared, seq, "shared vs sequential (random order)")
+    shared, seq = load(DIRS["shared"]), load(DIRS["sequential"])
+    rank_moving = load(DIRS["sequential_rank"])
+    half_shared, half_seq = load(DIRS["shared"], rho=0.5), load(DIRS["sequential"], rho=0.5)
+    half_rank_moving = load(DIRS["sequential_rank"], rho=0.5)
+
+    # ---- every check first: no sequential value is printed unless the shared side reproduces ----
+    print("=== Checks: the shared side against the published outputs (no sequential value is printed "
+          "unless every check passes) ===")
+    m, changed = check_unchanged(shared, seq, "shared vs sequential (random order)")
+    rank = pd.concat([seq[seq["error_model"].isin(("gaussian", "bias"))], rank_moving], ignore_index=True)
+    mr = shared.merge(rank, on=KEY, suffixes=("", "_seq"), validate="one_to_one")
+    if len(mr) != len(m):
+        raise SystemExit(f"rank order: {len(m) - len(mr)} rows have no rank-order twin")
+    mh, changed_half = check_unchanged(half_shared, half_seq, "rho = 0.5: shared vs sequential (random order)")
+    half_rank = pd.concat([half_seq[half_seq["error_model"].isin(("gaussian", "bias"))], half_rank_moving],
+                          ignore_index=True)
+    mhr = half_shared.merge(half_rank, on=KEY, suffixes=("", "_seq"), validate="one_to_one")
+    if len(mhr) != len(mh):
+        raise SystemExit(f"rho = 0.5, rank order: {len(mh) - len(mhr)} rows have no rank-order twin")
+    bad = check_against_published(m, mh)
+    claim_tables = claims_tables({"shared": "end_of_study", "sequential": "end_of_study_ksweep_seq"})
+    bad += check_claims(claim_tables)
+    sb, bad_sbm = sbm_results()
+    print("heldout_remedies' k-curve scoring re-run in-process:")
+    kr, bad_kc = kcurve_results()
+    bad += bad_sbm + bad_kc
+    sel = {"shared": selection(shared), "random": selection(with_seq(shared, seq)),
+           "rank": selection(with_seq(shared, rank))}
+    for label in LABELS:
+        for cell in PAPER_CELLS:
+            a, b = sel[label][cell], sb[label]["cells"][cell]
+            if _diff_leaves(_plain({k: a[k] for k in ("k_chosen_on_7_11", "test_gain", "test_lo", "test_hi")}),
+                            {k: b[k] for k in ("k_chosen_on_7_11", "test_gain", "test_lo", "test_hi")}):
+                bad += 1
+                print(f"  {label} {cell}: analyse_cell and sitting_by_magnitude.run disagree  MISMATCH")
+    if bad:
+        raise SystemExit(f"{bad} shared-model values do not reproduce the published ones; "
+                         f"no sequential value is printed")
+    print("All checks passed.")
+
+    # ---- the report ------------------------------------------------------------------------------
+    print(f"\ndrift and ar1 rows whose shipped design changed under the sequential process (random order): "
+          f"{changed:.1%} at rho = 1, {changed_half:.1%} at rho = 0.5")
     print("\nReproduction of the paper's shared-model cells (seeds 12-16, pooled over processes):")
     for cell, (sigma, onset, _) in CELLS.items():
         for k in ((2, 16) if onset == 0 else (16,)):
@@ -820,51 +889,25 @@ def main() -> None:
     print_cells(m, "sequential = random order")
     largest_moves(m, "random order")
     print_pooled_curve(m, "sequential = random order", "rho = 1")
-    sel = {"shared": print_selection(shared, "shared"),
-           "random": print_selection(with_seq(shared, seq), "sequential, random order")}
+    print_selection(sel["shared"], "shared")
+    print_selection(sel["random"], "sequential, random order")
 
-    rank_moving = load(DIRS["sequential_rank"])
-    rank = pd.concat([seq[seq["error_model"].isin(("gaussian", "bias"))], rank_moving], ignore_index=True)
-    mr = shared.merge(rank, on=KEY, suffixes=("", "_seq"), validate="one_to_one")
-    if len(mr) != len(m):
-        raise SystemExit(f"rank order: {len(m) - len(mr)} rows have no rank-order twin")
     print("\n=== Sequential process, candidates shown best-ranked first (drift and ar1 replayed; "
           "gaussian and bias from the random-order replay, identical by construction) ===")
     print_cells(mr, "sequential = rank order")
     largest_moves(mr, "rank order")
     print_pooled_curve(mr, "sequential = rank order", "rho = 1")
-    sel["rank"] = print_selection(with_seq(shared, rank), "sequential, rank order")
+    print_selection(sel["rank"], "sequential, rank order")
 
-    half_shared, half_seq = load(DIRS["shared"], rho=0.5), load(DIRS["sequential"], rho=0.5)
-    mh = check_unchanged(half_shared, half_seq, "rho = 0.5: shared vs sequential (random order)")
     print_pooled_curve(mh, "sequential = random order", "rho = 0.5, the half-SD sensitivity")
-    half_rank = pd.concat([half_seq[half_seq["error_model"].isin(("gaussian", "bias"))],
-                           load(DIRS["sequential_rank"], rho=0.5)], ignore_index=True)
-    mhr = half_shared.merge(half_rank, on=KEY, suffixes=("", "_seq"), validate="one_to_one")
-    if len(mhr) != len(mh):
-        raise SystemExit(f"rho = 0.5, rank order: {len(mh) - len(mhr)} rows have no rank-order twin")
     print_pooled_curve(mhr, "sequential = rank order", "rho = 0.5, the half-SD sensitivity")
-    bad = check_against_published(m, mh)
-    claims({"shared": "end_of_study", "sequential": "end_of_study_ksweep_seq"})
+    print_claims(claim_tables)
     slip_sensitivity()
     spike_corrected()
-    print("\n=== The paper's own producers re-run on each replay set (shared = the published outputs) ===")
-    sb, bad_sbm = sbm_results()
-    print("heldout_remedies' k-curve scoring re-run in-process:")
-    kr, bad_kc = kcurve_results()
-    bad += bad_sbm + bad_kc
-    for label in LABELS:
-        for cell in PAPER_CELLS:
-            a, b = sel[label][cell], sb[label]["cells"][cell]
-            if _diff_leaves(_plain({k: a[k] for k in ("k_chosen_on_7_11", "test_gain", "test_lo", "test_hi")}),
-                            {k: b[k] for k in ("k_chosen_on_7_11", "test_gain", "test_lo", "test_hi")}):
-                bad += 1
-                print(f"  {label} {cell}: print_selection and sitting_by_magnitude.run disagree  MISMATCH")
+    print("\n=== The paper's own producers on each replay set (the shared side reproduced above) ===")
     moves = paper_values(sb, kr)
     changes = k_changes(sb, kr)
     headline(sel, m, mr, mh, mhr, sb, kr, moves, changes)
-    if bad:
-        raise SystemExit(f"{bad} shared-model values do not reproduce the published ones")
 
 
 def headline(sel: dict[str, dict], m: pd.DataFrame, mr: pd.DataFrame, mh: pd.DataFrame,

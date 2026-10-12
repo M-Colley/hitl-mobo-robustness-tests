@@ -39,7 +39,9 @@ Protocol
    recoveries (the gross-fault and capped-scale arms' held-out seeds 12-16,
    analysis/hitl_remedies_heldout) with Holm over the core family with and
    without the main-sweep rank-rule tests; 4c adds the four one-look-each
-   comparators of the LUCB sittings to the all family.
+   comparators of the LUCB sittings to the all family. 4d tests each LUCB
+   sitting against its one-look-each comparator directly: the paired
+   per-landscape difference of their deployed regrets, Holm over the four pairs.
 5. The derived budget rule against the best fixed k at rho = 1, with a paired
    landscape bootstrap on the difference; and against the TRAIN-selected k on the
    test seeds, which is the comparison that does not favour the fixed rule by
@@ -583,6 +585,52 @@ def lucb_comparator_rows(holm: list[dict], rem_cube: Cube) -> list[dict]:
     return rows
 
 
+LUCB_PAIRS = tuple((f"lucb_k{k}_rho{r}", f"tournament_k{k}_lcb_rho{r}_look") for r in ("1", "0.5") for k in (4, 8))
+ALLOCATION_COLS = ("n_distinct_looked_noisy", "n_relooks_noisy", "n_looked_outside_top_k_noisy",
+                   "same_as_one_each_noisy", "max_looks_on_one_noisy")
+
+
+def lucb_vs_one_each_rows(rem_long: pd.DataFrame, rem_cube: Cube) -> list[dict]:
+    """Each best-arm sitting against one look each to the top k at the same k and rho (section 4d).
+
+    The direct test of whether it matters where the looks go: the per-landscape
+    difference of the two deployed regrets at the final trial (one look each less
+    the best-arm sitting, in opt_z units, so positive favours the best-arm
+    sitting) on the same runs, with the landscape bootstrap of budget_split and a
+    two-sided Wilcoxon test over the twenty landscapes; Holm over the four pairs
+    on the test seeds. The price difference is the same on the clean twins. The
+    allocation columns are means over the noisy runs of all seeds.
+    """
+    rows = []
+    for lucb, one_each in LUCB_PAIRS:
+        for proc in (lucb, one_each):
+            if proc not in rem_cube.procs:
+                raise KeyError(f"{proc} is not in the main sweep's remedy replay")
+        i, j = rem_cube.procs.index(lucb), rem_cube.procs.index(one_each)
+        block = rem_long[rem_long["procedure"] == lucb]
+        alloc = {c: float(eos._as_bool(block[c]).mean()) if c.startswith("same_as") else float(block[c].mean())
+                 for c in ALLOCATION_COLS if c in block}
+        for seeds_label, seeds in (("test seeds 12-16", TEST_SEEDS), ("all seeds 7-16", ALL_SEEDS)):
+            m = rem_cube.landscape_means(seeds)
+            diff = m[2, j] - m[2, i]
+            v, lo, hi = bs._boot_mean_diff(m[2, j], m[2, i], np.random.default_rng(bs.BOOTSTRAP_SEED))
+            r_l, r_o = recovery_summary(rem_long, lucb, seeds), recovery_summary(rem_long, one_each, seeds)
+            rows.append({"section": "4d_lucb_vs_one_each", "problem": lucb, "candidate": lucb,
+                         "comparator": one_each, "direction": seeds_label, "metric": "gain difference",
+                         "test_value": v, "test_lo": lo, "test_hi": hi, "p_test": _wilcoxon_p(diff),
+                         "landscapes_gaining_test": int((diff > 0).sum()), "n_landscapes": int(np.isfinite(diff).sum()),
+                         "price_difference": float(np.nanmean(m[3, i] - m[3, j])),
+                         "recovered_lucb": r_l["value"], "recovered_lucb_lo": r_l["lo"], "recovered_lucb_hi": r_l["hi"],
+                         "recovered_one_each": r_o["value"], "recovered_one_each_lo": r_o["lo"],
+                         "recovered_one_each_hi": r_o["hi"],
+                         "price_lucb": float(np.nanmean(m[3, i] - m[1, i])),
+                         "price_one_each": float(np.nanmean(m[3, j] - m[1, j])), **alloc})
+    test = [r for r in rows if r["direction"] == "test seeds 12-16"]
+    for r, a in zip(test, multipletests([r["p_test"] for r in test], method="holm")[1]):
+        r["p_holm_pairs_test"] = float(a)
+    return rows
+
+
 def per_landscape_gains(cube: Cube, proc: str, seeds) -> np.ndarray:
     g, _ = cube.gain_cost(seeds)
     return g[cube.procs.index(proc)]
@@ -817,6 +865,8 @@ def main(argv=None) -> None:
     rows += rank_scope
     lucb_cmp = lucb_comparator_rows(holm, rem_cube)
     rows += lucb_cmp
+    lucb_pairs = lucb_vs_one_each_rows(rem_long, rem_cube)
+    rows += lucb_pairs
 
     # ---- 5. the derived budget rule -----------------------------------------
     d_rows = []
@@ -884,7 +934,7 @@ def main(argv=None) -> None:
 
     md = render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_rows, split_heads, holm,
                 d_rows, derived_test, share_pm, kpub, kpub05, para, checks, balance, args,
-                rank_scope=rank_scope, lucb_cmp=lucb_cmp)
+                rank_scope=rank_scope, lucb_cmp=lucb_cmp, lucb_pairs=lucb_pairs)
     (out_dir / "heldout_remedies.md").write_text(md, encoding="utf-8")
     print(f"\nwrote {out_dir / 'heldout_remedies.csv'}, {out_dir / 'heldout_remedies.md'}, "
           f"{out_dir / 'heldout_remedies_splits.csv.gz'}")
@@ -896,7 +946,8 @@ def main(argv=None) -> None:
 
 
 def render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_rows, split_heads, holm, d_rows,
-           derived_test, share_pm, kpub, kpub05, para, checks, balance, args, rank_scope=(), lucb_cmp=()) -> str:
+           derived_test, share_pm, kpub, kpub05, para, checks, balance, args, rank_scope=(), lucb_cmp=(),
+           lucb_pairs=()) -> str:
     P = {p.name: p for p in problems}
     sit_long, ship_long = longs["sitting19"], longs["ship_rule"]
     L = []
@@ -1139,6 +1190,35 @@ def render(problems, longs, full, full_best, seed_heads, fixed_rows, ship_all_ro
         moved = [f"`{r.candidate}` {f_p(r.p_holm_all_test)} -> {f_p(r.p_holm_all_plus_test)}"
                  for r in existing.itertuples() if r.candidate in before]
         w("Their adjusted p, all family -> larger family: " + (", ".join(moved) or "none") + ".\n")
+    # ---- 4d
+    if len(lucb_pairs):
+        pdf = pd.DataFrame(lucb_pairs)
+        w("## 4d. Does it matter where the looks go? Each best-arm sitting against one look each\n")
+        w("The best-arm sitting (replay_hitl_remedies.lucb_sitting: the first look to the top candidate, each later "
+          "look to the empirical leader or its strongest challenger by an upper bound of one SD, whichever bound is "
+          "wider; unseen candidates bounded by the prefix GP anchored to the looks) against one look to each of the "
+          "top k at the same k and look noise, on the same runs and, for the looks both make, the same noise draws. "
+          "Difference = one look each's deployed regret less the best-arm sitting's at the final trial, in units of "
+          "the achievable improvement (positive favours the best-arm sitting), landscape bootstrap; two-sided "
+          "Wilcoxon over the 20 landscapes, Holm over the four pairs on the test seeds. Recovered shares and prices "
+          "are each procedure's own (four processes, LogEI/qNEI, all magnitudes and onsets). Allocation: means over "
+          "the noisy runs of seeds 7-16.\n")
+        trows = []
+        for _, r in pdf.iterrows():
+            holm_p = r.get("p_holm_pairs_test", np.nan)
+            trows.append([r["candidate"], r["direction"], f_gain(r["test_value"], r["test_lo"], r["test_hi"]),
+                          f"{int(r['landscapes_gaining_test'])}/{int(r['n_landscapes'])}", f_p(r["p_test"]),
+                          f_p(holm_p) if np.isfinite(holm_p) else "",
+                          f"{f_pct(r['recovered_lucb'], r['recovered_lucb_lo'], r['recovered_lucb_hi'])} vs "
+                          f"{f_pct(r['recovered_one_each'], r['recovered_one_each_lo'], r['recovered_one_each_hi'])}",
+                          f"{r['price_lucb']:.3f} vs {r['price_one_each']:.3f}",
+                          f"{r.get('n_distinct_looked_noisy', np.nan):.2f} / {r.get('n_relooks_noisy', np.nan):.2f} / "
+                          f"{r.get('n_looked_outside_top_k_noisy', np.nan):.2f} / "
+                          f"{100 * r.get('same_as_one_each_noisy', np.nan):.1f}%"])
+        w(md_table(["best-arm sitting", "seeds", "difference [95% CI]", "landscapes ahead", "p", "Holm (4 pairs)",
+                    "recovered: best-arm vs one each", "price: best-arm vs one each",
+                    "distinct designs / re-looks / outside top k / same as one each"], trows))
+        w("")
 
     # ---- 5
     w("## 5. The derived budget rule against a fixed k\n")

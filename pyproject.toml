@@ -4,12 +4,13 @@ version = "0.1.0"
 description = "Simulation tooling for HITL Bayesian optimization sensor-error robustness studies."
 # The simulations ran on Python 3.12.9.
 requires-python = ">=3.12"
-# Floors match requirements.txt; exact pins live in requirements-eval.txt.
+# Floors match requirements.txt (see its header for why BoTorch is the commit
+# the runs used and scipy stays below 1.19); exact pins live in requirements-eval.txt.
 dependencies = [
   "numpy>=2.5.3",
   "pandas>=3.0.5",
   "scikit-learn>=1.9.0",
-  "scipy>=1.18.1",
+  "scipy>=1.18.1,<1.19",
   "matplotlib>=3.11.1",
   "seaborn>=0.13.2",
   "tqdm>=4.70.0",
@@ -18,7 +19,7 @@ dependencies = [
   "catboost>=1.2.10",
   "tabpfn>=8.5.0",
   "statsmodels>=0.14.6",
-  "botorch>=0.18.1",
+  "botorch @ git+https://github.com/meta-pytorch/botorch.git@eea35f51a9d948ae0949144f4ae7814acbec1001",
   "torch>=2.13.0",
 ]
 

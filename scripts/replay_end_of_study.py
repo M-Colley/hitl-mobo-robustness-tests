@@ -18,7 +18,13 @@ standard run's (column prefix_identical).
         look_i = f(x_i) + e_i,    e_i ~ N(0, (rho * s)^2),    rho in {1, 0.5}
     The winner is the candidate with the highest posterior mean once the GP is
     conditioned on the looks as extra observations (hyperparameters held fixed),
-    or, as a variant, the best look.
+    or, as a variant, the best look. A sitting shows each candidate once, so it
+    makes one look per distinct design it can show: when the prefix holds fewer
+    than k distinct designs (always when k > T - k, and in runs that revisited
+    designs) it shows every distinct prefix design once and leaves the remaining
+    trials unused. Per run, n_looks is the number of looks made and
+    unused_trials = k - n_looks; end_of_study_looks.csv gives the share of runs
+    short of k looks per arm and k.
 (B) Confirmation(k), k in {2, 4}
     Search trials 1..T-2k. D = the ship-rule choice at that point; C = the best of
     the initial designs by observed rating (what a study would compare against).
@@ -27,6 +33,12 @@ standard run's (column prefix_identical).
     a one-sided paired t-test p < 0.05 that D beats C; it is false if f(D) <= f(C).
     The standard process claims an improvement when its best search rating exceeds
     C's rating, falsely when the design it ships is truly no better than C.
+    end_of_study_claims.csv also scores two claims that spend the trials but run no
+    test: claiming whenever D's mean fresh rating exceeds C's (fresh_mean_*), and
+    the same with no claim when D is C (fresh_mean_excl_dc_*), as the standard
+    process makes none when it ships C. When D is C, a fresh-mean claim is a coin
+    flip between two sets of ratings of one design, and always false. The test's
+    own claims with the D = C runs excluded in the same way are *_excl_dc.
 
 The rating noise s of the new trials
 ------------------------------------
@@ -753,6 +765,10 @@ def tournament(run: RunLog, state: SearchState, k: int, rhos: tuple[float, ...],
                     "top_candidate_regret": run.y_opt - float(truth[0]),
                     "best_candidate_regret": run.y_opt - float(truth.max()),
                     "gp_failed": state.gp_failed,
+                    # one look per candidate shown: a prefix with fewer than k distinct
+                    # designs leaves the sitting's last k - m trials unused
+                    "n_looks": m,
+                    "unused_trials": int(k - m),
                 }
     return out
 
@@ -763,7 +779,9 @@ def confirmation_decision(f_d: float, f_c: float, r_d: np.ndarray, r_c: np.ndarr
     claim = bool(p < alpha)
     truly_better = bool(f_d > f_c)
     return {"shipped_value": f_d if shipped_d else f_c, "shipped_d": shipped_d, "p_value": p,
-            "claim": claim, "truly_better": truly_better, "false_claim": claim and not truly_better}
+            "claim": claim, "truly_better": truly_better, "false_claim": claim and not truly_better,
+            # the claim without the test: D's mean fresh rating above C's (a tie claims nothing)
+            "fresh_mean_claim": bool(np.mean(r_d) > np.mean(r_c))}
 
 
 def confirmation(run: RunLog, state: SearchState, k: int, initial: int, sd_of_trial, T: int, alpha: float) -> dict:
@@ -1007,6 +1025,56 @@ def _as_bool(series: pd.Series) -> pd.Series:
     return series.map(lambda v: bool(v) if isinstance(v, (bool, np.bool_)) else str(v).strip().lower() == "true")
 
 
+def derive_looks(frame: pd.DataFrame) -> pd.DataFrame:
+    """n_looks and unused_trials of every tournament row, filled where a per-run file predates them.
+
+    A sitting makes one look per candidate it shows, so n_looks is n_candidates
+    exactly; per-run files written before the column existed get it from there.
+    """
+    if not len(frame) or "family" not in frame:
+        return frame
+    frame = frame.copy()
+    sitting = (frame["family"] == "tournament").to_numpy()
+    for sfx in ("noisy", "clean"):
+        shown = f"n_candidates_{sfx}"
+        if shown not in frame:
+            continue
+        for col in (f"n_looks_{sfx}", f"unused_trials_{sfx}"):
+            if col not in frame:
+                frame[col] = np.nan
+        looks, unused = f"n_looks_{sfx}", f"unused_trials_{sfx}"
+        fill = sitting & frame[looks].isna().to_numpy()
+        frame.loc[fill, looks] = frame.loc[fill, shown]
+        fill = sitting & frame[unused].isna().to_numpy()
+        frame.loc[fill, unused] = frame.loc[fill, "k"].astype(float) - frame.loc[fill, looks].astype(float)
+    return frame
+
+
+def looks_table(frame: pd.DataFrame) -> pd.DataFrame:
+    """How many of a sitting's k trials it could use: per arm and k, noisy runs and their clean twins.
+
+    A sitting shows each distinct prefix design at most once, so it is short of k
+    looks whenever the T - k searched trials hold fewer than k distinct designs.
+    The candidate rule, rho and the winner rule do not change the count, so each
+    run counts once per k; each clean twin counts once per k.
+    """
+    t = frame[frame["family"] == "tournament"]
+    if t.empty or "n_looks_noisy" not in t:
+        return pd.DataFrame()
+    rows = []
+    for (arm, k), g in t.groupby(["arm", "k"], sort=True):
+        k = int(k)
+        noisy = g.drop_duplicates("file")
+        clean = g.drop_duplicates(["dataset", "acquisition", "seed"])
+        row = {"arm": arm, "k": k, "n_runs": int(len(noisy)), "n_clean_twins": int(len(clean))}
+        for sfx, part in (("noisy", noisy), ("clean", clean)):
+            looks = part[f"n_looks_{sfx}"].astype(float)
+            row.update({f"share_short_{sfx}": float((looks < k).mean()), f"mean_looks_{sfx}": float(looks.mean()),
+                        f"min_looks_{sfx}": int(looks.min()), f"mean_unused_{sfx}": float((k - looks).mean())})
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def load_per_run(out_dir: Path, arm_names: list[str], filters: Filters) -> pd.DataFrame:
     files = [f for name in arm_names for f in sorted((out_dir / "per_run" / name).glob("*/*.csv"))]
     if not files:
@@ -1027,7 +1095,7 @@ def load_per_run(out_dir: Path, arm_names: list[str], filters: Filters) -> pd.Da
         keep &= np.isclose(frame["jitter_std"].to_numpy()[:, None], np.asarray(filters.stds)[None, :]).any(axis=1)
     if filters.variants is not None and "variant" in frame:
         keep &= frame["variant"].fillna("").astype(str).isin(filters.variants).to_numpy()
-    frame = frame[keep].reset_index(drop=True)
+    frame = derive_looks(frame[keep].reset_index(drop=True))
     if "variant" in frame and len(frame):
         # One variant per cell: the summaries do not split by it (the bias arm's
         # bias<std> is one variant per magnitude, so it passes).
@@ -1039,12 +1107,30 @@ def load_per_run(out_dir: Path, arm_names: list[str], filters: Filters) -> pd.Da
     return frame
 
 
+def fdr_bh(p) -> np.ndarray:
+    """Benjamini-Hochberg q-values; a missing p stays missing and is left out of the family.
+
+    statsmodels' multipletests returns NaN for every member once one p is NaN.
+    """
+    p = np.asarray(p, dtype=float)
+    q = np.full(p.shape, np.nan)
+    ok = np.isfinite(p)
+    if ok.any():
+        q[ok] = multipletests(p[ok], method="fdr_bh")[1]
+    return q
+
+
 def recovery_table(frame: pd.DataFrame, opt_z: dict[str, float], split_acquisition: bool = False) -> pd.DataFrame:
     """analyse_boba_adaptations' estimand, per cell and pooled, for every treatment procedure."""
     df = frame[frame["family"].isin(TREATMENT_FAMILIES)]
     if df.empty:
         return pd.DataFrame()
-    z = df["dataset"].map(lambda d: opt_z.get(d, 1.0)).astype(float)
+    z = df["dataset"].map(opt_z).astype(float)
+    if z.isna().any():
+        # A landscape without a scale is an error, never a silent opt_z of 1.
+        raise KeyError(f"no opt_z for {sorted(df.loc[z.isna(), 'dataset'].unique())}")
+    if (z <= 0).any():
+        raise ValueError(f"non-positive opt_z for {sorted(df.loc[z <= 0, 'dataset'].unique())}")
     df = df.assign(ref_noisy=df["ref_noisy"] / z, ref_clean=df["ref_clean"] / z,
                    trt_noisy=df["regret_noisy"] / z, trt_clean=df["regret_clean"] / z)
     keys = ["arm", "procedure", "error_model"] + (["acquisition"] if split_acquisition else [])
@@ -1055,7 +1141,7 @@ def recovery_table(frame: pd.DataFrame, opt_z: dict[str, float], split_acquisiti
         cells = [{**base, "scope": "cell", "jitter_std": float(std), "jitter_iteration": int(onset),
                   **aba.summarise(block, rng)}
                  for (std, onset), block in group.groupby(["jitter_std", "jitter_iteration"])]
-        for cell, q in zip(cells, multipletests([c["wilcoxon_p"] for c in cells], method="fdr_bh")[1]):
+        for cell, q in zip(cells, fdr_bh([c["wilcoxon_p"] for c in cells])):
             cell["wilcoxon_p_fdr"] = float(q)
         pooled = {**base, "scope": "pooled", "jitter_std": np.nan, "jitter_iteration": np.nan,
                   **aba.summarise(group, np.random.default_rng(aba.BOOTSTRAP_SEED)), "wilcoxon_p_fdr": np.nan}
@@ -1063,33 +1149,78 @@ def recovery_table(frame: pd.DataFrame, opt_z: dict[str, float], split_acquisiti
     return pd.DataFrame(rows)
 
 
+def fresh_mean_claims(block: pd.DataFrame) -> pd.Series:
+    """Per noisy run: does D's mean fresh rating exceed C's? (confirmation rows)
+
+    From fresh_mean_claim_noisy where the per-run file has it. Files written before
+    that column existed have shipped_d_noisy, mean(r_D) >= mean(r_C), which is the
+    same event in every noisy run: the confirmation trials of a noisy run all fall
+    after its onset and carry a positive look SD, so the two means tie with
+    probability zero (they tie for sure only without noise, when D is C).
+    """
+    col = "fresh_mean_claim_noisy"
+    if col in block and block[col].notna().all():
+        return _as_bool(block[col])
+    if col in block and block[col].notna().any():
+        raise ValueError("a block mixes runs with and without fresh_mean_claim_noisy; replay them alike")
+    return _as_bool(block["shipped_d_noisy"])
+
+
 def claim_rates(block: pd.DataFrame, rng: np.random.Generator) -> dict:
-    """Shares of runs, with landscape-bootstrap intervals (landscapes resampled, counts pooled)."""
+    """Shares of runs, with landscape-bootstrap intervals (landscapes resampled, counts pooled).
+
+    For confirmation rows also the claims that need no test (fresh_mean_*: D's mean
+    fresh rating above C's), and both those and the test's claims with no claim
+    when D is C (*_excl_dc), the convention of the standard process, which claims
+    nothing when it ships C. A D = C claim is always false and never a hit, so the
+    exclusion moves the claim and false-claim rates and leaves power unchanged.
+    Every rate is over all runs. The extra counts share the bootstrap's landscape
+    draws, so the intervals of the original columns do not move.
+    """
     claim = _as_bool(block["claim_noisy"])
     better = _as_bool(block["truly_better_noisy"])
     false = claim & ~better
     parts = pd.DataFrame({"dataset": block["dataset"].to_numpy(), "n": 1, "claim": claim.to_numpy(),
                           "false": false.to_numpy(), "better": better.to_numpy(),
                           "hit": (claim & better).to_numpy(), "not_better": (~better).to_numpy()})
-    per = parts.groupby("dataset")[["n", "claim", "false", "better", "hit", "not_better"]].sum()
+    ratios = {"claim_rate": ("claim", "n"), "false_claim_rate": ("false", "n"),
+              "false_discovery_share": ("false", "claim"), "power": ("hit", "better"),
+              "size": ("false", "not_better"), "truly_better_share": ("better", "n")}
+    confirm = ("shipped_d_noisy" in block and block["shipped_d_noisy"].notna().all()
+               and "d_is_c_noisy" in block and block["d_is_c_noisy"].notna().all())
+    if confirm:
+        not_c = ~_as_bool(block["d_is_c_noisy"])
+        fresh = fresh_mean_claims(block)
+        for label, c in (("fresh", fresh), ("fresh_x", fresh & not_c), ("claim_x", claim & not_c)):
+            parts[label] = c.to_numpy()
+            parts[f"{label}_false"] = (c & ~better).to_numpy()
+            parts[f"{label}_hit"] = (c & better).to_numpy()
+        for prefix, label in (("fresh_mean_", "fresh"), ("fresh_mean_excl_dc_", "fresh_x")):
+            ratios.update({f"{prefix}claim_rate": (label, "n"), f"{prefix}false_claim_rate": (f"{label}_false", "n"),
+                           f"{prefix}power": (f"{label}_hit", "better")})
+        ratios.update({"claim_rate_excl_dc": ("claim_x", "n"), "false_claim_rate_excl_dc": ("claim_x_false", "n"),
+                       "power_excl_dc": ("claim_x_hit", "better")})
+    value_cols = [c for c in parts.columns if c != "dataset"]
+    per = parts.groupby("dataset")[value_cols].sum()
     cols = {c: i for i, c in enumerate(per.columns)}
     counts = per.to_numpy(dtype=float)
     boot = counts[rng.integers(0, len(per), size=(aba.BOOTSTRAP_REPS, len(per)))].sum(axis=1)
     total = counts.sum(axis=0)
     out = {"n_runs": int(total[cols["n"]]), "n_landscapes": int(len(per))}
-    for name, (num, den) in {"claim_rate": ("claim", "n"), "false_claim_rate": ("false", "n"),
-                             "false_discovery_share": ("false", "claim"), "power": ("hit", "better"),
-                             "size": ("false", "not_better"), "truly_better_share": ("better", "n")}.items():
-        out[name] = float(total[cols[num]] / total[cols[den]]) if total[cols[den]] > 0 else np.nan
+    extra = {}
+    for name, (num, den) in ratios.items():
+        target = out if name in ("claim_rate", "false_claim_rate", "false_discovery_share", "power", "size",
+                                 "truly_better_share") else extra
+        target[name] = float(total[cols[num]] / total[cols[den]]) if total[cols[den]] > 0 else np.nan
         ok = boot[:, cols[den]] > 0
         ratio = boot[ok, cols[num]] / boot[ok, cols[den]]
-        out[f"{name}_lo"] = float(np.percentile(ratio, 2.5)) if ok.sum() >= 100 else np.nan
-        out[f"{name}_hi"] = float(np.percentile(ratio, 97.5)) if ok.sum() >= 100 else np.nan
+        target[f"{name}_lo"] = float(np.percentile(ratio, 2.5)) if ok.sum() >= 100 else np.nan
+        target[f"{name}_hi"] = float(np.percentile(ratio, 97.5)) if ok.sum() >= 100 else np.nan
     out["clean_claim_rate"] = float(_as_bool(block["claim_clean"]).mean())
-    if "shipped_d_noisy" in block and block["shipped_d_noisy"].notna().all():
+    if confirm:
         out["shipped_d_share"] = float(_as_bool(block["shipped_d_noisy"]).mean())
         out["d_is_c_share"] = float(_as_bool(block["d_is_c_noisy"]).mean())
-    return out
+    return {**out, **extra}
 
 
 def claims_table(frame: pd.DataFrame) -> pd.DataFrame:
@@ -1239,6 +1370,15 @@ def main(argv=None) -> None:
     claims = claims_table(frame)
     claims.to_csv(out_dir / "end_of_study_claims.csv", index=False)
     written = ["end_of_study_per_run.csv.gz", "end_of_study_recovery.csv", "end_of_study_claims.csv"]
+    looks = looks_table(frame)
+    if not looks.empty:
+        looks.to_csv(out_dir / "end_of_study_looks.csv", index=False)
+        written.append("end_of_study_looks.csv")
+        short = looks[looks["share_short_noisy"] > 0]
+        print("sittings short of k looks (a sitting shows each distinct prefix design once): "
+              + ("none" if short.empty else "; ".join(
+                  f"{r.arm} k={r.k}: {r.share_short_noisy:.1%} of runs, mean {r.mean_looks_noisy:.1f} looks"
+                  for r in short.itertuples())))
     if (frame["family"] == "rerate").any():
         matched = recovery_table(matched_to_rerate(frame), opt_z, args.split_acquisition)
         matched.to_csv(out_dir / "end_of_study_recovery_rerate_matched.csv", index=False)

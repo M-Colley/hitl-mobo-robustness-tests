@@ -1,0 +1,190 @@
+Decision map over the end-of-study procedures: LogEI and qNEI, four processes pooled, main sweep.
+Choices on seeds 7-11, scores on seeds 12-16; gains over the standard process and prices in units of
+the achievable improvement opt_z; post hoc and outside every Holm family of the paper.
+runs: 12800 noisy runs (6400 on seeds 7-11); gate thresholds (gated_sitting.py's rule on seeds 7-11): G16 1 landscape SDs, G2 0.6 landscape SDs
+known-variance ship rules (only in the candidate set 'main+variance', at the levels each policy may use): KV-LCB1, KV-LCB2, KVm-LCB1, KVm-LCB2, KVc-LCB1, KVc-LCB2, KVr-LCB1, KVr-LCB2, KVrc-LCB1, KVrc-LCB2, KVi-LCB1, KVi-LCB2 from review/known_variance_ship_per_run.csv.gz
+
+== held-out gain over the standard process per cell (seeds 12-16), price and V (eight cells and no error)
+           0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21   5s/t1  5s/t21   price   value
+procedure                                                                                          
+standard     0.0000     0.0000    0.0000     0.0000  0.0000  0.0000  0.0000  0.0000  0.0000  0.0000
+PM          -0.0218    -0.0182   -0.0148    -0.0140  0.0200  0.0002  0.0085 -0.0649  0.0269 -0.0146
+LCB1        -0.0216    -0.0169   -0.0127    -0.0102  0.0270  0.0106  0.0456 -0.0221  0.0211 -0.0024
+LCB2        -0.0207    -0.0181   -0.0093    -0.0090  0.0260  0.0141  0.0631  0.0091  0.0231  0.0036
+sit2        -0.0137    -0.0143   -0.0082    -0.0041  0.0303  0.0112  0.0643  0.0236  0.0176  0.0079
+sit3        -0.0103    -0.0123   -0.0055    -0.0033  0.0250  0.0163  0.0642  0.0557  0.0119  0.0131
+sit5        -0.0098    -0.0138   -0.0055    -0.0063  0.0249  0.0169  0.0656  0.1034  0.0140  0.0179
+sit8        -0.0127    -0.0166   -0.0104    -0.0090  0.0138  0.0133  0.0576  0.1456  0.0156  0.0184
+sit12       -0.0170    -0.0216   -0.0149    -0.0149 -0.0094  0.0163  0.0478  0.1512  0.0236  0.0127
+sit16       -0.0242    -0.0306   -0.0262    -0.0255 -0.0160  0.0110  0.0605  0.2271  0.0325  0.0160
+sit20       -0.0345    -0.0446   -0.0439    -0.0402 -0.0451 -0.0025  0.0338  0.2416  0.0456  0.0021
+sit25       -0.0599    -0.0707   -0.0706    -0.0623 -0.0753 -0.0240 -0.0024  0.1716  0.0705 -0.0293
+sit30       -0.0931    -0.1033   -0.1096    -0.0968 -0.1266 -0.0516 -0.0186  0.1302  0.1025 -0.0635
+freeze      -0.0297    -0.0261   -0.0203    -0.0186  0.0225 -0.0023  0.0476  0.2913  0.0280  0.0263
+F1          -0.0099    -0.0106   -0.0083    -0.0097 -0.0041 -0.0014  0.0057  0.2938  0.0091  0.0274
+G16          0.0000    -0.0006   -0.0003    -0.0003 -0.0049 -0.0012  0.0620  0.1897  0.0000  0.0272
+G2          -0.0040    -0.0029   -0.0063    -0.0027  0.0298  0.0074  0.0623  0.0198  0.0037  0.0111
+KV-LCB1      0.0016     0.0020    0.0070     0.0112  0.0297  0.0655  0.0645  0.3206  0.0000  0.0558
+KV-LCB2      0.0017     0.0021    0.0063     0.0122  0.0285  0.0757  0.0816  0.3790  0.0000  0.0652
+KVm-LCB1     0.0016     0.0012    0.0070     0.0076  0.0297  0.0132  0.0645  0.0232  0.0000  0.0164
+KVm-LCB2     0.0017     0.0010    0.0063     0.0079  0.0285  0.0160  0.0816  0.0747  0.0000  0.0242
+KVc-LCB1     0.0016     0.0011    0.0069     0.0076  0.0281 -0.0043  0.0615  0.2250  0.0000  0.0364
+KVc-LCB2     0.0017     0.0010    0.0061     0.0078  0.0260 -0.0011  0.0771  0.2610  0.0000  0.0422
+KVr-LCB1     0.0014     0.0010    0.0052     0.0047  0.0228  0.0125  0.0534  0.0195  0.0000  0.0134
+KVr-LCB2     0.0016     0.0009    0.0062     0.0057  0.0229  0.0136  0.0619  0.0505  0.0000  0.0182
+KVrc-LCB1    0.0015     0.0010    0.0052     0.0048  0.0202 -0.0039  0.0527  0.1722  0.0000  0.0282
+KVrc-LCB2    0.0017     0.0010    0.0062     0.0056  0.0202 -0.0026  0.0590  0.1965  0.0000  0.0319
+KVi-LCB1    -0.0021    -0.0028    0.0023     0.0029  0.0179  0.0123  0.0624  0.0586  0.0022  0.0166
+KVi-LCB2    -0.0021    -0.0027    0.0029     0.0025  0.0217  0.0177  0.0714  0.0908  0.0022  0.0222
+G16+G2      -0.0038    -0.0034   -0.0067    -0.0029  0.0251  0.0099  0.0597  0.1984  0.0037  0.0303
+F1+G2       -0.0127    -0.0129   -0.0143    -0.0117  0.0260 -0.0014  0.0644  0.2916  0.0117  0.0353
+F1+G16+G2   -0.0125    -0.0129   -0.0143    -0.0118  0.0215  0.0019  0.0600  0.2997  0.0117  0.0355
+
+== decision map, candidate set 'published' (14 procedures)
+   cell                     chosen on 7-11    held-out gain [95% CI]        share of cost       p (Holm)      price   runner-up on 7-11; best on 12-16
+   0.05sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   sit3 (-0.0127); standard (+0.0000)
+   0.05sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   sit5 (-0.0130); standard (+0.0000)
+   0.25sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   sit5 (-0.0050); standard (+0.0000)
+   0.25sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   sit5 (-0.0031); standard (+0.0000)
+   1sigma_from_trial_1      sit2             +0.0303 [+0.0130, +0.0489]  12% [5, 18]         0.0049 (0.015)  0.0176   sit3 (+0.0190); sit2 (+0.0303)
+   1sigma_from_trial_21     sit16            +0.0110 [-0.0133, +0.0327]  7% [-9, 21]           0.18 (0.18)  0.0325   sit5 (+0.0234); sit5 (+0.0169)
+   5sigma_from_trial_1      sit8             +0.0576 [+0.0174, +0.1038]  8% [3, 13]          0.0049 (0.015)  0.0156   sit12 (+0.0711); sit5 (+0.0656)
+   5sigma_from_trial_21     freeze           +0.2913 [+0.1941, +0.3950]  52% [39, 65]       9.5e-06 (3.8e-05)  0.0280   sit16 (+0.2242); freeze (+0.2913)
+   no error                 standard          gain 0, price 0 (the map ships by the standard rule)
+   best single procedure chosen on seeds 7-11: freeze; best on seeds 12-16: freeze
+   V on seeds 12-16 (eight cells and no error, equal weight) [95% CI], V on 7-11, V without the 5 sigma trial-21 cell, price, worst cell:
+     M1 map (cell known)          +0.0433 [+0.0272, +0.0598]  train +0.0437  without 5s/t21 +0.0124  price 0.0000  worst +0.0000
+     M2 map (onset unknown)       +0.0422 [+0.0266, +0.0600]  train +0.0411  without 5s/t21 +0.0111  price 0.0000  worst +0.0000
+     always freeze                +0.0263 [-0.0009, +0.0509]  train +0.0198  without 5s/t21 -0.0068  price 0.0280  worst -0.0297  <- single chosen on 7-11
+     always sit8                  +0.0184 [+0.0043, +0.0330]  train +0.0169  without 5s/t21 +0.0025  price 0.0156  worst -0.0166
+     always sit5                  +0.0179 [+0.0048, +0.0312]  train +0.0147  without 5s/t21 +0.0072  price 0.0140  worst -0.0138
+     always sit16                 +0.0160 [-0.0069, +0.0390]  train +0.0162  without 5s/t21 -0.0104  price 0.0325  worst -0.0306
+     always sit3                  +0.0131 [+0.0014, +0.0249]  train +0.0109  without 5s/t21 +0.0078  price 0.0119  worst -0.0123
+     always sit12                 +0.0127 [-0.0030, +0.0275]  train +0.0193  without 5s/t21 -0.0047  price 0.0236  worst -0.0216
+   M1 - best single (chosen on 7-11): +0.0171 [+0.0045, +0.0300], ahead on 14/20 landscapes, Wilcoxon p 0.048
+   M1 - best single on 12-16 (optimistic): +0.0171 [+0.0044, +0.0309], ahead on 14/20 landscapes, Wilcoxon p 0.048
+   M1 - M2 (knowing the onset): +0.0011 [-0.0026, +0.0049], ahead on 12/20 landscapes, Wilcoxon p 0.62
+   M1 - best single, without the 5 sigma trial-21 cell: +0.0192 [+0.0051, +0.0346], ahead on 14/20 landscapes, Wilcoxon p 0.048
+
+== decision map, candidate set 'main' (17 procedures)
+   cell                     chosen on 7-11    held-out gain [95% CI]        share of cost       p (Holm)      price   runner-up on 7-11; best on 12-16
+   0.05sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0005); G16 (+0.0000)
+   0.05sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0014); standard (+0.0000)
+   0.25sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0006); standard (+0.0000)
+   0.25sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0008); standard (+0.0000)
+   1sigma_from_trial_1      sit2             +0.0303 [+0.0129, +0.0486]  12% [5, 19]         0.0049 (0.015)  0.0176   G2 (+0.0204); sit2 (+0.0303)
+   1sigma_from_trial_21     sit16            +0.0110 [-0.0124, +0.0329]  7% [-10, 21]          0.18 (0.18)  0.0325   sit5 (+0.0234); sit5 (+0.0169)
+   5sigma_from_trial_1      sit8             +0.0576 [+0.0166, +0.1013]  8% [2, 13]          0.0049 (0.015)  0.0156   sit12 (+0.0711); sit5 (+0.0656)
+   5sigma_from_trial_21     F1               +0.2938 [+0.2007, +0.3997]  53% [39, 65]       9.5e-06 (3.8e-05)  0.0091   freeze (+0.2776); F1 (+0.2938)
+   no error                 standard          gain 0, price 0 (the map ships by the standard rule)
+   best single procedure chosen on seeds 7-11: G16; best on seeds 12-16: F1
+   V on seeds 12-16 (eight cells and no error, equal weight) [95% CI], V on 7-11, V without the 5 sigma trial-21 cell, price, worst cell:
+     M1 map (cell known)          +0.0436 [+0.0283, +0.0609]  train +0.0440  without 5s/t21 +0.0124  price 0.0000  worst +0.0000
+     M2 map (onset unknown)       +0.0422 [+0.0260, +0.0591]  train +0.0411  without 5s/t21 +0.0111  price 0.0000  worst +0.0000
+     always F1                    +0.0274 [+0.0108, +0.0435]  train +0.0242  without 5s/t21 -0.0059  price 0.0091  worst -0.0106
+     always G16                   +0.0272 [+0.0154, +0.0397]  train +0.0247  without 5s/t21 +0.0068  price 0.0000  worst -0.0049  <- single chosen on 7-11
+     always freeze                +0.0263 [+0.0007, +0.0515]  train +0.0198  without 5s/t21 -0.0068  price 0.0280  worst -0.0297
+     always sit8                  +0.0184 [+0.0037, +0.0326]  train +0.0169  without 5s/t21 +0.0025  price 0.0156  worst -0.0166
+     always sit5                  +0.0179 [+0.0050, +0.0316]  train +0.0147  without 5s/t21 +0.0072  price 0.0140  worst -0.0138
+     always sit16                 +0.0160 [-0.0073, +0.0390]  train +0.0162  without 5s/t21 -0.0104  price 0.0325  worst -0.0306
+   M1 - best single (chosen on 7-11): +0.0165 [+0.0082, +0.0248], ahead on 16/20 landscapes, Wilcoxon p 0.0012
+   M1 - best single on 12-16 (optimistic): +0.0163 [+0.0090, +0.0239], ahead on 17/20 landscapes, Wilcoxon p 0.0001
+   M1 - M2 (knowing the onset): +0.0014 [-0.0025, +0.0055], ahead on 12/20 landscapes, Wilcoxon p 0.6
+   M1 - best single, without the 5 sigma trial-21 cell: +0.0055 [+0.0008, +0.0104], ahead on 14/20 landscapes, Wilcoxon p 0.07
+   M2 (onset unknown) chooses: 0.05 sigma -> standard, 0.25 sigma -> standard, 1 sigma -> sit3, 5 sigma -> freeze
+   M3 (magnitude misjudged by one step; assumed 0 = no error assumed), held-out gain in the true cell:
+     0.05sigma_from_trial_1   map +0.0000; assumed 0.25: standard +0.0000; assumed 0: standard +0.0000
+     0.05sigma_from_trial_21  map +0.0000; assumed 0.25: standard +0.0000; assumed 0: standard +0.0000
+     0.25sigma_from_trial_1   map +0.0000; assumed 0.05: standard +0.0000; assumed 1: sit2 -0.0082; assumed 0: standard +0.0000
+     0.25sigma_from_trial_21  map +0.0000; assumed 0.05: standard +0.0000; assumed 1: sit16 -0.0255; assumed 0: standard +0.0000
+     1sigma_from_trial_1      map +0.0303; assumed 0.25: standard +0.0000; assumed 5: sit8 +0.0138; assumed 0: standard +0.0000
+     1sigma_from_trial_21     map +0.0110; assumed 0.25: standard +0.0000; assumed 5: F1 -0.0014; assumed 0: standard +0.0000
+     5sigma_from_trial_1      map +0.0576; assumed 1: sit2 +0.0643; assumed 0: standard +0.0000
+     5sigma_from_trial_21     map +0.2938; assumed 1: sit16 +0.2271; assumed 0: standard +0.0000
+
+== decision map, candidate set 'main+combinations' (20 procedures)
+   cell                     chosen on 7-11    held-out gain [95% CI]        share of cost       p (Holm)      price   runner-up on 7-11; best on 12-16
+   0.05sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0005); G16 (+0.0000)
+   0.05sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0014); standard (+0.0000)
+   0.25sigma_from_trial_1   standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0006); standard (+0.0000)
+   0.25sigma_from_trial_21  standard         +0.0000 [+0.0000, +0.0000]  n/a                    n/a (n/a)  0.0000   G16 (-0.0008); standard (+0.0000)
+   1sigma_from_trial_1      sit2             +0.0303 [+0.0129, +0.0493]  12% [5, 18]         0.0049 (0.015)  0.0176   G2 (+0.0204); sit2 (+0.0303)
+   1sigma_from_trial_21     sit16            +0.0110 [-0.0137, +0.0319]  7% [-9, 21]           0.18 (0.18)  0.0325   sit5 (+0.0234); sit5 (+0.0169)
+   5sigma_from_trial_1      sit8             +0.0576 [+0.0179, +0.1020]  8% [3, 13]          0.0049 (0.015)  0.0156   sit12 (+0.0711); sit5 (+0.0656)
+   5sigma_from_trial_21     F1+G16+G2        +0.2997 [+0.2037, +0.4055]  54% [41, 66]       9.5e-06 (3.8e-05)  0.0117   F1 (+0.2804); F1+G16+G2 (+0.2997)
+   no error                 standard          gain 0, price 0 (the map ships by the standard rule)
+   best single procedure chosen on seeds 7-11: F1+G16+G2; best on seeds 12-16: F1+G16+G2
+   V on seeds 12-16 (eight cells and no error, equal weight) [95% CI], V on 7-11, V without the 5 sigma trial-21 cell, price, worst cell:
+     M2 map (onset unknown)       +0.0446 [+0.0287, +0.0615]  train +0.0430  without 5s/t21 +0.0127  price 0.0000  worst +0.0000
+     M1 map (cell known)          +0.0443 [+0.0273, +0.0610]  train +0.0457  without 5s/t21 +0.0124  price 0.0000  worst +0.0000
+     always F1+G16+G2             +0.0355 [+0.0133, +0.0560]  train +0.0323  without 5s/t21 +0.0025  price 0.0117  worst -0.0143  <- single chosen on 7-11
+     always F1+G2                 +0.0353 [+0.0135, +0.0569]  train +0.0286  without 5s/t21 +0.0032  price 0.0117  worst -0.0143
+     always G16+G2                +0.0303 [+0.0164, +0.0445]  train +0.0260  without 5s/t21 +0.0093  price 0.0037  worst -0.0067
+     always F1                    +0.0274 [+0.0098, +0.0425]  train +0.0242  without 5s/t21 -0.0059  price 0.0091  worst -0.0106
+     always G16                   +0.0272 [+0.0151, +0.0400]  train +0.0247  without 5s/t21 +0.0068  price 0.0000  worst -0.0049
+     always freeze                +0.0263 [+0.0003, +0.0522]  train +0.0198  without 5s/t21 -0.0068  price 0.0280  worst -0.0297
+   M1 - best single (chosen on 7-11): +0.0087 [+0.0019, +0.0168], ahead on 14/20 landscapes, Wilcoxon p 0.021
+   M1 - best single on 12-16 (optimistic): +0.0087 [+0.0022, +0.0171], ahead on 14/20 landscapes, Wilcoxon p 0.021
+   M1 - M2 (knowing the onset): -0.0003 [-0.0035, +0.0034], ahead on 7/20 landscapes, Wilcoxon p 0.62
+   M1 - best single, without the 5 sigma trial-21 cell: +0.0098 [+0.0023, +0.0189], ahead on 14/20 landscapes, Wilcoxon p 0.021
+
+== decision map, candidate set 'main+variance' (29 procedures)
+   cell                     chosen on 7-11    held-out gain [95% CI]        share of cost       p (Holm)      price   runner-up on 7-11; best on 12-16
+   0.05sigma_from_trial_1   KVc-LCB1         +0.0016 [+0.0008, +0.0026]  n/a                 0.0025 (0.013)  0.0000   KVm-LCB1 (+0.0011); KV-LCB2 (+0.0017)
+   0.05sigma_from_trial_21  KV-LCB2          +0.0021 [+0.0009, +0.0035]  n/a                  0.011 (0.045)  0.0000   KV-LCB1 (+0.0023); KV-LCB2 (+0.0021)
+   0.25sigma_from_trial_1   KV-LCB1          +0.0070 [+0.0016, +0.0123]  n/a                  0.017 (0.052)  0.0000   KVm-LCB1 (+0.0071); KV-LCB1 (+0.0070)
+   0.25sigma_from_trial_21  KV-LCB2          +0.0122 [+0.0041, +0.0200]  n/a                  0.033 (0.053)  0.0000   KV-LCB1 (+0.0117); KV-LCB2 (+0.0122)
+   1sigma_from_trial_1      KV-LCB2          +0.0285 [+0.0041, +0.0497]  11% [2, 19]          0.027 (0.053)  0.0000   KVm-LCB2 (+0.0244); sit2 (+0.0303)
+   1sigma_from_trial_21     KV-LCB2          +0.0757 [+0.0497, +0.1051]  51% [35, 67]       4.8e-05 (0.00033)  0.0000   KV-LCB1 (+0.0619); KV-LCB2 (+0.0757)
+   5sigma_from_trial_1      KV-LCB2          +0.0816 [+0.0430, +0.1247]  11% [6, 16]        0.00017 (0.001)  0.0000   KVm-LCB2 (+0.0713); KV-LCB2 (+0.0816)
+   5sigma_from_trial_21     KV-LCB2          +0.3790 [+0.2905, +0.4760]  68% [58, 79]       1.9e-06 (1.5e-05)  0.0000   KV-LCB1 (+0.3137); KV-LCB2 (+0.3790)
+   no error                 standard          gain 0, price 0 (the map ships by the standard rule)
+   best single procedure chosen on seeds 7-11: KVrc-LCB2; best on seeds 12-16: KVrc-LCB2
+   V on seeds 12-16 (eight cells and no error, equal weight) [95% CI], V on 7-11, V without the 5 sigma trial-21 cell, price, worst cell:
+     M1 map (cell known)          +0.0653 [+0.0472, +0.0841]  train +0.0649  without 5s/t21 +0.0261  price 0.0000  worst +0.0016
+     always KV-LCB2               +0.0652 [+0.0476, +0.0855]  train +0.0648  without 5s/t21 +0.0260  price 0.0000  worst +0.0017  (needs the cell)
+     always KV-LCB1               +0.0558 [+0.0380, +0.0764]  train +0.0534  without 5s/t21 +0.0227  price 0.0000  worst +0.0016  (needs the cell)
+     M2 map (onset unknown)       +0.0442 [+0.0283, +0.0622]  train +0.0427  without 5s/t21 +0.0133  price 0.0000  worst +0.0011
+     always KVc-LCB2              +0.0422 [+0.0260, +0.0595]  train +0.0391  without 5s/t21 +0.0148  price 0.0000  worst -0.0011  (needs the magnitude)
+     always KVc-LCB1              +0.0364 [+0.0209, +0.0538]  train +0.0341  without 5s/t21 +0.0128  price 0.0000  worst -0.0043  (needs the magnitude)
+     always KVrc-LCB2             +0.0319 [+0.0197, +0.0452]  train +0.0302  without 5s/t21 +0.0114  price 0.0000  worst -0.0026  <- single chosen on 7-11
+     always KVrc-LCB1             +0.0282 [+0.0171, +0.0403]  train +0.0238  without 5s/t21 +0.0102  price 0.0000  worst -0.0039
+   M1 - best single (chosen on 7-11): +0.0334 [+0.0252, +0.0412], ahead on 20/20 landscapes, Wilcoxon p 1.9e-06
+   M1 - best single on 12-16 (optimistic): +0.0334 [+0.0253, +0.0408], ahead on 20/20 landscapes, Wilcoxon p 1.9e-06
+   M1 - M2 (knowing the onset): +0.0211 [+0.0163, +0.0262], ahead on 20/20 landscapes, Wilcoxon p 1.9e-06
+   M1 - best single, without the 5 sigma trial-21 cell: +0.0147 [+0.0094, +0.0201], ahead on 18/20 landscapes, Wilcoxon p 3.6e-05
+   M2 (the magnitude known, not the onset; no KV level) chooses: 0.05 sigma -> KVc-LCB1, 0.25 sigma -> KVm-LCB1, 1 sigma -> sit3, 5 sigma -> freeze
+   a single procedure may use only the levels that estimate the variance from the run's own repeats (KVr, KVrc: six ratings after the study; KVi: trials 48-50); no M3 in this set
+
+== F1 (freeze only on an alarm, otherwise the standard rule) against the published freeze rule, seeds 12-16
+   the published freeze rule's price on seeds 12-16, 0.0280 of opt_z, splits into 0.0189 from the LCB1 it ships at T on clean twins without an alarm and 0.0091 from false alarms (stopping and shipping the refitted LCB1); F1 pays only the second
+   alarms on clean twins, seeds 12-16: 7.5% (15 of 200); on noisy runs with error from trial 1: 6.6%, from trial 21: 41.5% (by magnitude: 0.05 sigma 7%, 0.25 sigma 7%, 1 sigma 29%, 5 sigma 53%)
+   freeze: price 0.0280 [0.0106, 0.0501]
+     0.05sigma_from_trial_1   gain -0.0297 [-0.0559, -0.0089] p 0.17 share n/a   alarms 6%
+     0.05sigma_from_trial_21  gain -0.0261 [-0.0483, -0.0077] p 0.17 share n/a   alarms 8%
+     0.25sigma_from_trial_1   gain -0.0203 [-0.0423, -0.0002] p 0.9 share n/a   alarms 6%
+     0.25sigma_from_trial_21  gain -0.0186 [-0.0397, +0.0015] p 0.62 share n/a   alarms 8%
+     1sigma_from_trial_1      gain +0.0225 [+0.0005, +0.0445] p 0.18 share 9%    alarms 5%  by process: gaussian 12%, bias 15%, drift 2%, ar1 2%
+     1sigma_from_trial_21     gain -0.0023 [-0.0209, +0.0169] p 0.99 share -2%   alarms 54%  by process: gaussian 4%, bias -6%, drift -9%, ar1 7%
+     5sigma_from_trial_1      gain +0.0476 [+0.0132, +0.0880] p 0.064 share 6%    alarms 9%  by process: gaussian 7%, bias 4%, drift 9%, ar1 6%
+     5sigma_from_trial_21     gain +0.2913 [+0.1984, +0.3995] p 9.5e-06 share 52%   alarms 96%  by process: gaussian 53%, bias 42%, drift 64%, ar1 47%
+   F1: price 0.0091 [0.0000, 0.0219]
+     0.05sigma_from_trial_1   gain -0.0099 [-0.0242, -0.0005] p 0.028 share n/a   alarms 6%
+     0.05sigma_from_trial_21  gain -0.0106 [-0.0268, +0.0000] p 0.14 share n/a   alarms 8%
+     0.25sigma_from_trial_1   gain -0.0083 [-0.0213, -0.0000] p 0.043 share n/a   alarms 6%
+     0.25sigma_from_trial_21  gain -0.0097 [-0.0259, +0.0006] p 0.26 share n/a   alarms 8%
+     1sigma_from_trial_1      gain -0.0041 [-0.0088, -0.0007] p 0.023 share -2%   alarms 5%  by process: gaussian -0%, bias 0%, drift -2%, ar1 -6%
+     1sigma_from_trial_21     gain -0.0014 [-0.0142, +0.0114] p 0.93 share -1%   alarms 54%  by process: gaussian 4%, bias -9%, drift -2%, ar1 5%
+     5sigma_from_trial_1      gain +0.0057 [+0.0027, +0.0091] p 0.0029 share 1%    alarms 9%  by process: gaussian 0%, bias 0%, drift 1%, ar1 2%
+     5sigma_from_trial_21     gain +0.2938 [+0.1986, +0.4008] p 9.5e-06 share 53%   alarms 96%  by process: gaussian 54%, bias 41%, drift 65%, ar1 48%
+   LCB1: price 0.0211 [0.0064, 0.0420]
+     0.05sigma_from_trial_1   gain -0.0216 [-0.0451, -0.0035] p 0.47 share n/a   alarms 6%
+     0.05sigma_from_trial_21  gain -0.0169 [-0.0338, -0.0036] p 0.2 share n/a   alarms 8%
+     0.25sigma_from_trial_1   gain -0.0127 [-0.0329, +0.0037] p 0.9 share n/a   alarms 6%
+     0.25sigma_from_trial_21  gain -0.0102 [-0.0282, +0.0042] p 0.9 share n/a   alarms 8%
+     1sigma_from_trial_1      gain +0.0270 [+0.0066, +0.0477] p 0.04 share 10%   alarms 5%  by process: gaussian 12%, bias 16%, drift 5%, ar1 7%
+     1sigma_from_trial_21     gain +0.0106 [-0.0056, +0.0257] p 0.14 share 7%    alarms 54%  by process: gaussian 20%, bias 8%, drift -3%, ar1 7%
+     5sigma_from_trial_1      gain +0.0456 [+0.0120, +0.0865] p 0.064 share 6%    alarms 9%  by process: gaussian 6%, bias 3%, drift 8%, ar1 7%
+     5sigma_from_trial_21     gain -0.0221 [-0.0430, -0.0023] p 0.11 share -4%   alarms 96%  by process: gaussian 22%, bias -22%, drift -12%, ar1 -1%
+
+wrote review/decision_map_table.csv (the appendix table; paper/tables/decision_map.tex), decision_map_table_all.csv, decision_map_gains.csv, decision_map_policies.csv, decision_map_comparisons.csv, decision_map_misjudged.csv, decision_map_f1.csv

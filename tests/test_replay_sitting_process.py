@@ -331,3 +331,51 @@ def test_spikes_are_drawn_per_look_at_the_runs_rate_and_size():
     # the spike stream is its own: the Gaussian part is the shared model's draw
     quiet = eos.tournament_look_errors(run, dataclasses.replace(noise, spike_prob=0.0), k, k, _z(run.name, k), 1.0, T)
     np.testing.assert_allclose(quiet, 0.25 * _z(run.name, k))
+
+
+# --- the sensitivity check: the shared side first --------------------------------------------------
+
+
+def _sitting_sequential(monkeypatch):
+    """scripts/checks/sitting_sequential.py as a module; it changes directory on import, monkeypatch restores it."""
+    import importlib.util
+    monkeypatch.chdir(SCRIPTS.parent)
+    spec = importlib.util.spec_from_file_location("sitting_sequential_under_test",
+                                                  SCRIPTS / "checks" / "sitting_sequential.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+@pytest.mark.parametrize("failing", [True, False])
+def test_the_sequential_check_prints_no_sequential_value_before_the_shared_side_reproduces(monkeypatch, capsys,
+                                                                                         failing):
+    ss = _sitting_sequential(monkeypatch)
+    rows = [{"file": f"{p}_{s:g}_{o}", "k": k, "error_model": p, "regret_noisy": 1.0, "ref_noisy": 1.5,
+             "ref_clean": 1.0, "regret_clean": 1.0, "gain": 0.5, "sigma": s, "onset": o, "seed": 12, "dataset": "a"}
+            for s, o in ((1.0, 0), (5.0, 20), (1.0, 20), (5.0, 0)) for k in (2, 16) for p in ss.PROCESSES]
+    frame = pd.DataFrame(rows)
+    # the rank-order replays hold drift and ar1 only
+    monkeypatch.setattr(ss, "load", lambda dirs, rho=1.0: (frame[frame["error_model"].isin(ss.MOVING)].copy()
+                                                           if "seqrank" in dirs[0] else frame.copy()))
+    reported = []
+    for name in ("print_cells", "largest_moves", "print_pooled_curve", "print_selection", "print_claims",
+                 "slip_sensitivity", "spike_corrected", "paper_values", "k_changes", "headline"):
+        monkeypatch.setattr(ss, name, lambda *a, _name=name, **kw: reported.append(_name))
+    monkeypatch.setattr(ss, "check_against_published", lambda m, mh: int(failing))
+    monkeypatch.setattr(ss, "claims_tables", lambda dirs: {})
+    monkeypatch.setattr(ss, "check_claims", lambda c: 0)
+    cells = {c: {"k_chosen_on_7_11": 2, "test_gain": 0.1, "test_lo": 0.0, "test_hi": 0.2} for c in ss.PAPER_CELLS}
+    monkeypatch.setattr(ss, "sbm_results", lambda: ({lab: {"cells": cells} for lab in ss.LABELS}, 0))
+    monkeypatch.setattr(ss, "kcurve_results", lambda: ({}, 0))
+    monkeypatch.setattr(ss, "selection", lambda f: cells)
+    if failing:
+        with pytest.raises(SystemExit, match="no sequential value"):
+            ss.main()
+        assert reported == []
+        assert "changed under the sequential process" not in capsys.readouterr().out
+    else:
+        ss.main()
+        assert reported[0] == "print_cells" and reported[-1] == "headline"
+        out = capsys.readouterr().out
+        assert out.index("All checks passed") < out.index("changed under the sequential process")

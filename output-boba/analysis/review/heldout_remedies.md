@@ -89,10 +89,10 @@ Selected on seeds 7-11 (gaussian, >= 0.25 sigma, ten acquisitions): `lcb2` (trai
 | shortlist_m5 | +34.1% [+28, +40] | +33.6% | +34.6% [+28, +41] | 1.9e-06 |
 | ordinal_lcb1 | -1.1% [-11, +7] | -1.5% | -0.8% [-9, +7] | 0.87 |
 | ordinal_pm | -8.2% [-18, +1] | -8.5% | -7.8% [-17, +0] | 0.16 |
-| lucb_k4_rho1 | +6.2% [+2, +10] | +6.1% | +6.3% [+1, +11] | 0.036 |
-| lucb_k8_rho1 | +9.0% [+4, +13] | +8.9% | +9.2% [+4, +14] | 0.0094 |
-| lucb_k4_rho0.5 | +10.8% [+6, +16] | +11.1% | +10.5% [+5, +16] | 0.0027 |
-| lucb_k8_rho0.5 | +16.1% [+11, +21] | +15.8% | +16.4% [+10, +21] | 2.1e-04 |
+| lucb_k4_rho1 | +0.9% [-4, +6] | +0.6% | +1.2% [-4, +6] | 0.93 |
+| lucb_k8_rho1 | +3.4% [-3, +9] | +1.8% | +5.1% [-1, +10] | 0.23 |
+| lucb_k4_rho0.5 | +5.1% [-0, +10] | +4.8% | +5.5% [+0, +11] | 0.11 |
+| lucb_k8_rho0.5 | +9.6% [+3, +15] | +8.8% | +10.3% [+4, +16] | 0.0073 |
 
 Main sweep: four error processes, four magnitudes, both onsets, LogEI and qNEI. The rank rule the paper tables is `ordinal_lcb1` ("ship 1, chosen on ranks"). The gross-fault (spike) and capped-scale arms' rank-rule numbers (51%, 36%) are full-data values on seeds 7-11 (analysis/hitl_remedies); their seeds 12-16 were replayed separately (analysis/hitl_remedies_heldout, paper/COMMANDS.md), and section 4b tests the rank rules there, in the scope of those numbers. Section 2 also holds them out by landscape.
 
@@ -149,48 +149,48 @@ Two-sided Wilcoxon signed-rank test of the 20 per-landscape gains over the stand
 |---|---|---|---|---|---|---|---|
 | sitting variant | confirm_k2 | +0.017 | 11/20 | 0.19 | 0.99 | 1 | 1 |
 | sitting variant | confirm_k4 | +0.012 | 13/20 | 0.33 | 1 | 1 | 1 |
-| sitting variant | T k3 lcb rho0.5 look | +0.049 | 15/20 | 0.001 | 0.021 | 0.034 | 0.029 |
-| sitting variant | T k3 lcb rho0.5 post | +0.036 | 14/20 | 0.03 | 0.33 | 0.56 | 0.65 |
-| sitting variant | T k3 lcb rho1 look | +0.037 | 15/20 | 0.0073 | 0.11 | 0.19 | 0.21 |
-| sitting variant | T k3 lcb rho1 post | +0.033 | 14/20 | 0.033 | 0.33 | 0.59 | 0.65 |
-| sitting variant | T k3 obs rho0.5 look | +0.031 | 17/20 | 3.2e-04 | 0.0071 | 0.011 | 0.0064 |
-| sitting variant | T k3 obs rho0.5 post | +0.030 | 15/20 | 0.0037 | 0.066 | 0.11 | 0.18 |
-| sitting variant | T k3 obs rho1 look | +0.015 | 15/20 | 0.048 | 0.34 | 0.68 | 1 |
-| sitting variant | T k3 obs rho1 post | +0.027 | 14/20 | 0.0064 | 0.1 | 0.17 | 0.26 |
-| sitting variant | T k5 lcb rho0.5 look | +0.053 | 16/20 | 2.1e-04 | 0.0048 | 0.0078 | 0.0076 |
-| sitting variant | T k5 lcb rho0.5 post | +0.034 | 14/20 | 0.021 | 0.26 | 0.43 | 0.66 |
-| sitting variant | T k5 lcb rho1 look | +0.040 | 15/20 | 0.0056 | 0.095 | 0.16 | 0.18 |
-| sitting variant | T k5 lcb rho1 post | +0.030 | 14/20 | 0.036 | 0.33 | 0.62 | 1 |
+| sitting variant | T k3 lcb rho0.5 look | +0.049 | 15/20 | 0.001 | 0.021 | 0.035 | 0.03 |
+| sitting variant | T k3 lcb rho0.5 post | +0.036 | 14/20 | 0.03 | 0.33 | 0.62 | 0.76 |
+| sitting variant | T k3 lcb rho1 look | +0.037 | 15/20 | 0.0073 | 0.11 | 0.2 | 0.23 |
+| sitting variant | T k3 lcb rho1 post | +0.033 | 14/20 | 0.033 | 0.33 | 0.66 | 0.76 |
+| sitting variant | T k3 obs rho0.5 look | +0.031 | 17/20 | 3.2e-04 | 0.0071 | 0.012 | 0.0064 |
+| sitting variant | T k3 obs rho0.5 post | +0.030 | 15/20 | 0.0037 | 0.066 | 0.11 | 0.2 |
+| sitting variant | T k3 obs rho1 look | +0.015 | 15/20 | 0.048 | 0.34 | 0.82 | 1 |
+| sitting variant | T k3 obs rho1 post | +0.027 | 14/20 | 0.0064 | 0.1 | 0.19 | 0.29 |
+| sitting variant | T k5 lcb rho0.5 look | +0.053 | 16/20 | 2.1e-04 | 0.0048 | 0.0078 | 0.0078 |
+| sitting variant | T k5 lcb rho0.5 post | +0.034 | 14/20 | 0.021 | 0.26 | 0.47 | 0.79 |
+| sitting variant | T k5 lcb rho1 look | +0.040 | 15/20 | 0.0056 | 0.095 | 0.17 | 0.2 |
+| sitting variant | T k5 lcb rho1 post | +0.030 | 14/20 | 0.036 | 0.33 | 0.69 | 1 |
 | sitting variant | T k5 obs rho0.5 look | +0.041 | 18/20 | 3.6e-05 | 9.1e-04 | 0.0014 | 0.0014 |
-| sitting variant | T k5 obs rho0.5 post | +0.034 | 15/20 | 0.0017 | 0.034 | 0.054 | 0.31 |
-| sitting variant | T k5 obs rho1 look | +0.012 | 15/20 | 0.036 | 0.33 | 0.62 | 1 |
-| sitting variant | T k5 obs rho1 post | +0.024 | 14/20 | 0.0094 | 0.13 | 0.24 | 0.68 |
+| sitting variant | T k5 obs rho0.5 post | +0.034 | 15/20 | 0.0017 | 0.034 | 0.056 | 0.34 |
+| sitting variant | T k5 obs rho1 look | +0.012 | 15/20 | 0.036 | 0.33 | 0.69 | 1 |
+| sitting variant | T k5 obs rho1 post | +0.024 | 14/20 | 0.0094 | 0.13 | 0.25 | 0.82 |
 | ship rule | best_mean | -0.004 | 11/20 | 0.94 | 1 | 1 | 1 |
 | ship rule | pm | +0.006 | 12/20 | 0.29 | 1 | 1 | 1 |
-| ship rule | lcb1 | +0.024 | 15/20 | 0.015 | 0.2 | 0.32 | 0.4 |
-| ship rule | lcb2 | +0.031 | 16/20 | 0.0032 | 0.06 | 0.095 | 0.098 |
-| shortlist size | shortlist_m2 | +0.035 | 18/20 | 1.7e-04 | 0.004 | 0.0064 | 0.011 |
+| ship rule | lcb1 | +0.024 | 15/20 | 0.015 | 0.2 | 0.35 | 0.44 |
+| ship rule | lcb2 | +0.031 | 16/20 | 0.0032 | 0.06 | 0.1 | 0.1 |
+| shortlist size | shortlist_m2 | +0.035 | 18/20 | 1.7e-04 | 0.004 | 0.0064 | 0.012 |
 | shortlist size | shortlist_m3 | +0.054 | 20/20 | 1.9e-06 | 5.1e-05 | 7.8e-05 | 7.8e-05 |
 | shortlist size | shortlist_m5 | +0.078 | 20/20 | 1.9e-06 | 5.1e-05 | 7.8e-05 | 7.8e-05 |
 | rank rule | ordinal_lcb1 | -0.002 | 12/20 | 0.87 | 1 | 1 | 1 |
 | rank rule | ordinal_pm | -0.018 | 8/20 | 0.16 | 0.99 | 1 | 1 |
 | fixed k | fixed_k2 | +0.011 | 13/20 | 0.14 |  | 1 | 1 |
-| fixed k | fixed_k3 | +0.016 | 14/20 | 0.048 |  | 0.68 | 0.62 |
-| fixed k | fixed_k5 | +0.022 | 13/20 | 0.011 |  | 0.25 | 0.18 |
-| fixed k | fixed_k8 | +0.023 | 13/20 | 0.012 |  | 0.27 | 0.16 |
-| fixed k | fixed_k12 | +0.017 | 14/20 | 0.048 |  | 0.68 | 0.34 |
-| fixed k | fixed_k16 | +0.022 | 13/20 | 0.11 |  | 1 | 0.65 |
+| fixed k | fixed_k3 | +0.016 | 14/20 | 0.048 |  | 0.82 | 0.72 |
+| fixed k | fixed_k5 | +0.022 | 13/20 | 0.011 |  | 0.27 | 0.2 |
+| fixed k | fixed_k8 | +0.023 | 13/20 | 0.012 |  | 0.29 | 0.18 |
+| fixed k | fixed_k12 | +0.017 | 14/20 | 0.048 |  | 0.82 | 0.37 |
+| fixed k | fixed_k16 | +0.022 | 13/20 | 0.11 |  | 1 | 0.76 |
 | fixed k | fixed_k20 | +0.008 | 10/20 | 0.47 |  | 1 | 1 |
 | fixed k | fixed_k25 | -0.024 | 7/20 | 0.11 |  | 1 | 1 |
-| fixed k | fixed_k30 | -0.059 | 4/20 | 8.5e-04 |  | 0.029 | 0.029 |
+| fixed k | fixed_k30 | -0.059 | 4/20 | 8.5e-04 |  | 0.03 | 0.03 |
 | derived budget rule | derived | -0.007 | 10/20 | 0.93 |  | 1 | 1 |
-| LUCB sitting | lucb_k4_rho1 | +0.014 | 13/20 | 0.036 |  | 0.62 | 0.43 |
-| LUCB sitting | lucb_k8_rho1 | +0.021 | 13/20 | 0.0094 |  | 0.24 | 0.15 |
-| LUCB sitting | lucb_k4_rho0.5 | +0.024 | 14/20 | 0.0027 |  | 0.084 | 0.029 |
-| LUCB sitting | lucb_k8_rho0.5 | +0.037 | 17/20 | 2.1e-04 |  | 0.0078 | 0.0064 |
+| LUCB sitting | lucb_k4_rho1 | +0.003 | 12/20 | 0.93 |  | 1 | 1 |
+| LUCB sitting | lucb_k8_rho1 | +0.011 | 14/20 | 0.23 |  | 1 | 1 |
+| LUCB sitting | lucb_k4_rho0.5 | +0.012 | 14/20 | 0.11 |  | 1 | 1 |
+| LUCB sitting | lucb_k8_rho0.5 | +0.023 | 14/20 | 0.0073 |  | 0.2 | 0.29 |
 
 Survive Holm at 0.05 on the test seeds, core family (8): `tournament_k3_lcb_rho0.5_look`, `tournament_k3_obs_rho0.5_look`, `tournament_k5_lcb_rho0.5_look`, `tournament_k5_obs_rho0.5_look`, `tournament_k5_obs_rho0.5_post`, `shortlist_m2`, `shortlist_m3`, `shortlist_m5`.
-Survive Holm at 0.05 on the test seeds, all replayed arms (9): `tournament_k3_lcb_rho0.5_look`, `tournament_k3_obs_rho0.5_look`, `tournament_k5_lcb_rho0.5_look`, `tournament_k5_obs_rho0.5_look`, `shortlist_m2`, `shortlist_m3`, `shortlist_m5`, `fixed_k30` (a significant LOSS), `lucb_k8_rho0.5`.
+Survive Holm at 0.05 on the test seeds, all replayed arms (8): `tournament_k3_lcb_rho0.5_look`, `tournament_k3_obs_rho0.5_look`, `tournament_k5_lcb_rho0.5_look`, `tournament_k5_obs_rho0.5_look`, `shortlist_m2`, `shortlist_m3`, `shortlist_m5`, `fixed_k30` (a significant LOSS).
 With 20 landscapes the smallest two-sided Wilcoxon p is 1.9e-06, and Holm's first threshold is 0.05/27 = 0.0019 (core) or 0.05/41 = 0.0012 (all), so a procedure must gain on nearly every landscape to survive.
 
 ## 4b. The rank rules in the scope of their headline recoveries, test seeds only
@@ -210,13 +210,28 @@ Each LUCB sitting of section 4 competes with a fixed-allocation sitting that giv
 
 | comparator | mean gain, test | landscapes gaining | p, test | Holm, all family + 4 (45 tests) |
 |---|---|---|---|---|
-| T k4 lcb rho1 look | +0.016 | 13/20 | 0.033 | 0.62 |
-| T k8 lcb rho1 look | +0.023 | 13/20 | 0.012 | 0.29 |
-| T k4 lcb rho0.5 look | +0.029 | 16/20 | 0.001 | 0.037 |
+| T k4 lcb rho1 look | +0.016 | 13/20 | 0.033 | 0.69 |
+| T k8 lcb rho1 look | +0.023 | 13/20 | 0.012 | 0.31 |
+| T k4 lcb rho0.5 look | +0.029 | 16/20 | 0.001 | 0.038 |
 | T k8 lcb rho0.5 look | +0.042 | 18/20 | 2.1e-04 | 0.0086 |
 
-Of the 9 all-family survivors of section 4, 9 still survive in the larger family.
-Their adjusted p, all family -> larger family: `tournament_k3_lcb_rho0.5_look` 0.034 -> 0.037, `tournament_k3_obs_rho0.5_look` 0.011 -> 0.012, `tournament_k5_lcb_rho0.5_look` 0.0078 -> 0.0086, `tournament_k5_obs_rho0.5_look` 0.0014 -> 0.0016, `shortlist_m2` 0.0064 -> 0.007, `shortlist_m3` 7.8e-05 -> 8.6e-05, `shortlist_m5` 7.8e-05 -> 8.6e-05, `fixed_k30` 0.029 -> 0.031, `lucb_k8_rho0.5` 0.0078 -> 0.0086.
+Of the 8 all-family survivors of section 4, 8 still survive in the larger family.
+Their adjusted p, all family -> larger family: `tournament_k3_lcb_rho0.5_look` 0.035 -> 0.038, `tournament_k3_obs_rho0.5_look` 0.012 -> 0.013, `tournament_k5_lcb_rho0.5_look` 0.0078 -> 0.0086, `tournament_k5_obs_rho0.5_look` 0.0014 -> 0.0016, `shortlist_m2` 0.0064 -> 0.007, `shortlist_m3` 7.8e-05 -> 8.6e-05, `shortlist_m5` 7.8e-05 -> 8.6e-05, `fixed_k30` 0.03 -> 0.032.
+
+## 4d. Does it matter where the looks go? Each best-arm sitting against one look each
+
+The best-arm sitting (replay_hitl_remedies.lucb_sitting: the first look to the top candidate, each later look to the empirical leader or its strongest challenger by an upper bound of one SD, whichever bound is wider; unseen candidates bounded by the prefix GP anchored to the looks) against one look to each of the top k at the same k and look noise, on the same runs and, for the looks both make, the same noise draws. Difference = one look each's deployed regret less the best-arm sitting's at the final trial, in units of the achievable improvement (positive favours the best-arm sitting), landscape bootstrap; two-sided Wilcoxon over the 20 landscapes, Holm over the four pairs on the test seeds. Recovered shares and prices are each procedure's own (four processes, LogEI/qNEI, all magnitudes and onsets). Allocation: means over the noisy runs of seeds 7-16.
+
+| best-arm sitting | seeds | difference [95% CI] | landscapes ahead | p | Holm (4 pairs) | recovered: best-arm vs one each | price: best-arm vs one each | distinct designs / re-looks / outside top k / same as one each |
+|---|---|---|---|---|---|---|---|---|
+| lucb_k4_rho1 | test seeds 12-16 | -0.013 [-0.020, -0.007] | 3/20 | 0.0017 | 0.0034 | +1.2% [-4, +6] vs +7.1% [+1, +13] | 0.015 vs 0.011 | 2.21 / 1.79 / 0.17 / 0.4% |
+| lucb_k4_rho1 | all seeds 7-16 | -0.015 [-0.021, -0.009] | 3/20 | 2.6e-04 |  | +0.9% [-4, +6] vs +7.4% [+2, +13] | 0.015 vs 0.010 | 2.21 / 1.79 / 0.17 / 0.4% |
+| lucb_k8_rho1 | test seeds 12-16 | -0.011 [-0.019, -0.004] | 5/20 | 0.011 | 0.011 | +5.1% [-1, +10] vs +10.1% [+3, +16] | 0.025 vs 0.016 | 2.73 / 5.27 / 0.14 / 0.0% |
+| lucb_k8_rho1 | all seeds 7-16 | -0.014 [-0.020, -0.008] | 3/20 | 3.9e-04 |  | +3.4% [-3, +9] vs +9.7% [+5, +14] | 0.024 vs 0.015 | 2.73 / 5.27 / 0.14 / 0.0% |
+| lucb_k4_rho0.5 | test seeds 12-16 | -0.017 [-0.024, -0.010] | 3/20 | 3.9e-04 | 0.0016 | +5.5% [+0, +11] vs +13.0% [+7, +19] | 0.015 vs 0.011 | 2.17 / 1.83 / 0.16 / 0.2% |
+| lucb_k4_rho0.5 | all seeds 7-16 | -0.017 [-0.024, -0.011] | 3/20 | 1.7e-04 |  | +5.1% [-0, +10] vs +12.9% [+8, +18] | 0.015 vs 0.010 | 2.17 / 1.83 / 0.16 / 0.2% |
+| lucb_k8_rho0.5 | test seeds 12-16 | -0.019 [-0.027, -0.011] | 3/20 | 7.1e-04 | 0.0021 | +10.3% [+4, +16] vs +18.6% [+12, +24] | 0.025 vs 0.016 | 2.59 / 5.41 / 0.12 / 0.0% |
+| lucb_k8_rho0.5 | all seeds 7-16 | -0.020 [-0.027, -0.013] | 2/20 | 4.8e-05 |  | +9.6% [+3, +15] vs +18.7% [+13, +24] | 0.024 vs 0.015 | 2.59 / 5.41 / 0.12 / 0.0% |
 
 ## 5. The derived budget rule against a fixed k
 

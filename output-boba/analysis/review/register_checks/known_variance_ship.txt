@@ -1,0 +1,1039 @@
+The noise-aware ship rules with the rater's noise variance given to the final refit
+Gains over the standard process (the best single rating) on the deployed design at T = 50, in units of opt_z;
+price = regret added to the clean twin; recovered = gain / cost, a ratio of landscape means with a landscape
+bootstrap; 'no share' where the cost is below 0.01 of opt_z or negative on a landscape (the gain is then the
+result). 'vs learned' is the paired advantage over the same rule after the learned-noise refit. p is a
+two-sided Wilcoxon over the per-landscape values. Post hoc, outside the paper's Holm families; Holm values
+below are over the eight cells of one level only. LogEI and qNEI unless the scope says ten acquisitions.
+
+== 0. The control, the fits and what each level passes
+   output-boba: the learned refit reproduces output-boba/analysis/ship_rules_per_run.csv in 27,600 of 27,600 runs (best_observed, PM, LCB1, LCB2; max |difference| 0, bit-identical in 27,600)
+   output-boba-confirmatory: the learned refit reproduces output-boba-confirmatory/analysis/ship_rules_fresh/ship_rules_per_run.csv in 18,000 of 18,000 runs (best_observed, PM, LCB1, LCB2; max |difference| 0, bit-identical in 18,000)
+   output-boba-knownnoise: its logged known_noise_var equals the mag_onset vector exactly in 1,800 of 1,800 runs (max |difference| 0)
+   GP fits 381,193; failed fits 0; runs with a fit warning 52 of 47,400
+   learned        learned noise (the loop's refit; the control)
+   mag            magnitude known: sigma_e^2 on every trial
+   mag_onset      magnitude and onset known: 1e-6 up to the onset, sigma_e^2 after
+   mag_half       SD understated twofold: (sigma_e/2)^2 on every trial
+   mag_double     SD overstated twofold: (2 sigma_e)^2 on every trial
+   retest3        three test-retest pairs after the study (six ratings outside the budget)
+   cusum          magnitude known, onset from the freeze rule's CUSUM alarm
+   retest3_cusum  three test-retest pairs, onset from the CUSUM alarm
+   inside_random  inside the budget: trials 48-50 re-rate three random visited designs
+   inside_top     inside the budget: trials 48-50 re-rate the top three by LCB1 at trial 47
+   the variance estimates, median (10th, 90th percentile) of sigma_hat^2 / sigma_e^2, LogEI and qNEI, seeds 7-16:
+      gaussian retest3 0.80 (0.19, 2.04)   inside_random 0.65 (0.15, 1.89)   inside_top 0.79 (0.18, 2.18)
+      bias     retest3 0.77 (0.20, 2.04)   inside_random 0.74 (0.18, 1.91)   inside_top 0.85 (0.18, 2.26)
+      drift    retest3 0.78 (0.19, 2.09)   inside_random 0.90 (0.24, 2.26)   inside_top 0.82 (0.21, 2.04)
+      ar1      retest3 0.28 (0.07, 0.73)   inside_random 0.54 (0.11, 1.68)   inside_top 0.61 (0.11, 2.12)
+   the CUSUM alarmed in 3,022 of 12,800 noisy runs (all seeds, four processes)
+
+== 1. Price without error (clean twin), by level and rule
+   LogEI and qNEI, seeds 7-16: 26% of 400 clean twins have a learned noise SD above 0.2 landscape SDs and carry this share of the learned rule's summed price: LCB1 90%, LCB2 90%; the floor refit's choice has exactly the standard choice's regret in 367/369/368 (PM/LCB1/LCB2) of them
+   ten acquisitions, seeds 7-16: 19% of 2,000 clean twins have a learned noise SD above 0.2 landscape SDs and carry this share of the learned rule's summed price: LCB1 89%, LCB2 89%; the floor refit's choice has exactly the standard choice's regret in 1,778/1,749/1,715 (PM/LCB1/LCB2) of them
+   ten acquisitions, seeds 27-36: 18% of 2,000 clean twins have a learned noise SD above 0.2 landscape SDs and carry this share of the learned rule's summed price: LCB1 91%, LCB2 91%; the floor refit's choice has exactly the standard choice's regret in 1,831/1,799/1,769 (PM/LCB1/LCB2) of them
+   four processes, seeds 7-16:
+      learned        PM 0.0271 [0.0091, 0.0497]   LCB1 0.0222 [0.0073, 0.0418]   LCB2 0.0216 [0.0070, 0.0416]
+      mag            PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_onset      PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_half       PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_double     PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3        PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      cusum          PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3_cusum  PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      inside_random  PM 0.0022 [0.0010, 0.0037]   LCB1 0.0022 [0.0010, 0.0037]   LCB2 0.0022 [0.0010, 0.0037]
+      inside_top     PM 0.0022 [0.0010, 0.0037]   LCB1 0.0022 [0.0010, 0.0037]   LCB2 0.0022 [0.0010, 0.0037]
+   four processes, seeds 12-16:
+      learned        PM 0.0269 [0.0083, 0.0514]   LCB1 0.0211 [0.0063, 0.0424]   LCB2 0.0231 [0.0071, 0.0450]
+      mag            PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_onset      PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_half       PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_double     PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3        PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      cusum          PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3_cusum  PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      inside_random  PM 0.0022 [0.0007, 0.0042]   LCB1 0.0022 [0.0007, 0.0042]   LCB2 0.0022 [0.0007, 0.0042]
+      inside_top     PM 0.0022 [0.0007, 0.0042]   LCB1 0.0022 [0.0007, 0.0042]   LCB2 0.0022 [0.0007, 0.0042]
+   ten acquisitions, gaussian, seeds 7-16:
+      learned        PM 0.0162 [0.0057, 0.0291]   LCB1 0.0145 [0.0051, 0.0266]   LCB2 0.0147 [0.0048, 0.0275]
+      mag            PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_onset      PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_half       PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_double     PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3        PM 0.0000 [0.0000, 0.0001]   LCB1 0.0000 [0.0000, 0.0001]   LCB2 0.0000 [0.0000, 0.0001]
+      inside_random  PM 0.0037 [0.0018, 0.0059]   LCB1 0.0037 [0.0018, 0.0059]   LCB2 0.0037 [0.0018, 0.0059]
+      inside_top     PM 0.0037 [0.0018, 0.0059]   LCB1 0.0037 [0.0018, 0.0059]   LCB2 0.0037 [0.0018, 0.0059]
+   ten acquisitions, gaussian untouched, seeds 27-36:
+      learned        PM 0.0172 [0.0057, 0.0314]   LCB1 0.0163 [0.0052, 0.0303]   LCB2 0.0158 [0.0051, 0.0291]
+      mag            PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_onset      PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_half       PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0001]
+      mag_double     PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0001]
+      retest3        PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0001]
+      inside_random  PM 0.0055 [0.0027, 0.0089]   LCB1 0.0055 [0.0027, 0.0089]   LCB2 0.0055 [0.0027, 0.0089]
+      inside_top     PM 0.0055 [0.0027, 0.0089]   LCB1 0.0055 [0.0027, 0.0089]   LCB2 0.0055 [0.0027, 0.0089]
+   gaussian untouched, seeds 27-36:
+      learned        PM 0.0220 [0.0079, 0.0394]   LCB1 0.0210 [0.0073, 0.0382]   LCB2 0.0225 [0.0080, 0.0394]
+      mag            PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0000]
+      mag_onset      PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0000]
+      mag_half       PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0000]
+      mag_double     PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0000]
+      retest3        PM 0.0000 [0.0000, 0.0000]   LCB1 0.0000 [0.0000, 0.0000]   LCB2 0.0000 [0.0000, 0.0000]
+      inside_random  PM 0.0072 [0.0024, 0.0137]   LCB1 0.0072 [0.0024, 0.0137]   LCB2 0.0072 [0.0024, 0.0137]
+      inside_top     PM 0.0072 [0.0024, 0.0137]   LCB1 0.0072 [0.0024, 0.0137]   LCB2 0.0072 [0.0024, 0.0137]
+
+== 2. Four processes, seeds 12-16 (held out), the rule chosen per cell on seeds 7-11
+-- learned: learned noise (the loop's refit; the control)
+   0.05sigma_from_trial_1 LCB1 gain -0.0216 [-0.0434, -0.0042]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.469 (Holm over cells 1)  gaining 11/20  price 0.0211
+   0.05sigma_from_trial_21 LCB2 gain -0.0181 [-0.0347, -0.0049]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.231 (Holm over cells 1)  gaining 9/20  price 0.0231
+   0.25sigma_from_trial_1 LCB2 gain -0.0093 [-0.0267, +0.0050]  no share (reference negative on 2 of 20 landscapes)  p 0.701 (Holm over cells 1)  gaining 13/20  price 0.0231
+   0.25sigma_from_trial_21 LCB2 gain -0.0090 [-0.0255, +0.0043]  no share (reference negative on 1 of 20 landscapes)  p 0.968 (Holm over cells 1)  gaining 11/20  price 0.0231
+   1sigma_from_trial_1    LCB2 gain +0.0260 [+0.0053, +0.0456]  +10.0% [+2, +18]  p 0.0637 (Holm over cells 0.446)  gaining 14/20  price 0.0231
+   1sigma_from_trial_21   LCB2 gain +0.0141 [-0.0035, +0.0278]  +9.5% [-1, +20]  p 0.0637 (Holm over cells 0.446)  gaining 15/20  price 0.0231
+   5sigma_from_trial_1    LCB2 gain +0.0631 [+0.0309, +0.1005]  +8.4% [+4, +13]  p 0.00121 (Holm over cells 0.00967)  gaining 15/20  price 0.0231
+   5sigma_from_trial_21   LCB2 gain +0.0091 [-0.0176, +0.0375]  +1.6% [-3, +6]  p 0.648 (Holm over cells 1)  gaining 12/20  price 0.0231
+-- mag: magnitude known: sigma_e^2 on every trial
+   0.05sigma_from_trial_1 LCB1 gain +0.0016 [+0.0007, +0.0025]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00254 (Holm over cells 0.0178)  gaining 15/20  price 0.0000  vs learned LCB1 +0.0232 [+0.0054, +0.0449] p 0.00331 ahead 16/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0010 [+0.0003, +0.0019]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0766 (Holm over cells 0.153)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0192 [+0.0055, +0.0360] p 0.00185 ahead 15/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0070 [+0.0020, +0.0121]  no share (reference negative on 2 of 20 landscapes)  p 0.0172 (Holm over cells 0.0687)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0163 [+0.0049, +0.0301] p 0.00422 ahead 15/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0076 [+0.0040, +0.0114]  no share (reference negative on 1 of 20 landscapes)  p 0.00639 (Holm over cells 0.0319)  gaining 13/20  price 0.0000  vs learned LCB2 +0.0166 [+0.0043, +0.0329] p 0.0141 ahead 13/20
+   1sigma_from_trial_1    LCB2 gain +0.0285 [+0.0052, +0.0492]  +10.9% [+2, +19]  p 0.0266 (Holm over cells 0.0799)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0025 [-0.0055, +0.0101] p 0.231 ahead 12/20
+   1sigma_from_trial_21   LCB2 gain +0.0160 [-0.0041, +0.0333]  +10.8% [-2, +23]  p 0.114 (Holm over cells 0.153)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0019 [-0.0049, +0.0078] p 0.216 ahead 12/20
+   5sigma_from_trial_1    LCB2 gain +0.0816 [+0.0443, +0.1244]  +10.8% [+6, +16]  p 0.000168 (Holm over cells 0.00134)  gaining 17/20  price 0.0000  vs learned LCB2 +0.0185 [+0.0068, +0.0301] p 0.00944 ahead 15/20
+   5sigma_from_trial_21   LCB2 gain +0.0747 [+0.0285, +0.1304]  +13.4% [+6, +21]  p 0.00315 (Holm over cells 0.0189)  gaining 17/20  price 0.0000  vs learned LCB2 +0.0656 [+0.0361, +0.1009] p 0.000168 ahead 18/20
+-- mag_onset: magnitude and onset known: 1e-6 up to the onset, sigma_e^2 after
+   0.05sigma_from_trial_1 LCB1 gain +0.0016 [+0.0007, +0.0025]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00254 (Holm over cells 0.0127)  gaining 15/20  price 0.0000  vs learned LCB1 +0.0232 [+0.0054, +0.0449] p 0.00331 ahead 16/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0021 [+0.0009, +0.0035]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0112 (Holm over cells 0.0449)  gaining 13/20  price 0.0000  vs learned LCB2 +0.0203 [+0.0068, +0.0369] p 0.000155 ahead 18/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0070 [+0.0020, +0.0121]  no share (reference negative on 2 of 20 landscapes)  p 0.0172 (Holm over cells 0.0515)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0163 [+0.0049, +0.0301] p 0.00422 ahead 15/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0122 [+0.0046, +0.0198]  no share (reference negative on 1 of 20 landscapes)  p 0.0328 (Holm over cells 0.0533)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0212 [+0.0112, +0.0331] p 0.000105 ahead 17/20
+   1sigma_from_trial_1    LCB2 gain +0.0285 [+0.0052, +0.0492]  +10.9% [+2, +19]  p 0.0266 (Holm over cells 0.0533)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0025 [-0.0055, +0.0101] p 0.231 ahead 12/20
+   1sigma_from_trial_21   LCB2 gain +0.0757 [+0.0478, +0.1041]  +51.0% [+35, +67]  p 4.77e-05 (Holm over cells 0.000334)  gaining 18/20  price 0.0000  vs learned LCB2 +0.0616 [+0.0425, +0.0814] p 5.72e-06 ahead 19/20
+   5sigma_from_trial_1    LCB2 gain +0.0816 [+0.0443, +0.1244]  +10.8% [+6, +16]  p 0.000168 (Holm over cells 0.00101)  gaining 17/20  price 0.0000  vs learned LCB2 +0.0185 [+0.0068, +0.0301] p 0.00944 ahead 15/20
+   5sigma_from_trial_21   LCB2 gain +0.3790 [+0.2877, +0.4756]  +68.1% [+57, +79]  p 1.91e-06 (Holm over cells 1.53e-05)  gaining 20/20  price 0.0000  vs learned LCB2 +0.3699 [+0.2943, +0.4508] p 1.91e-06 ahead 20/20
+-- mag_half: SD understated twofold: (sigma_e/2)^2 on every trial
+   0.05sigma_from_trial_1 LCB2 gain +0.0012 [+0.0007, +0.0018]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00101 (Holm over cells 0.00706)  gaining 15/20  price 0.0000  vs learned LCB1 +0.0228 [+0.0049, +0.0449] p 0.0766 ahead 11/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0010 [+0.0005, +0.0015]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00649 (Holm over cells 0.0195)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0191 [+0.0054, +0.0362] p 0.0242 ahead 12/20
+   0.25sigma_from_trial_1 LCB2 gain +0.0051 [+0.0028, +0.0079]  no share (reference negative on 2 of 20 landscapes)  p 0.000105 (Holm over cells 0.000839)  gaining 17/20  price 0.0000  vs learned LCB2 +0.0144 [+0.0003, +0.0312] p 0.601 ahead 7/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0052 [+0.0029, +0.0074]  no share (reference negative on 1 of 20 landscapes)  p 0.00102 (Holm over cells 0.00706)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0142 [+0.0012, +0.0306] p 0.452 ahead 9/20
+   1sigma_from_trial_1    LCB2 gain +0.0191 [+0.0092, +0.0300]  +7.3% [+3, +11]  p 0.00422 (Holm over cells 0.0169)  gaining 14/20  price 0.0000  vs learned LCB2 -0.0069 [-0.0256, +0.0118] p 0.409 ahead 7/20
+   1sigma_from_trial_21   LCB2 gain +0.0156 [+0.0074, +0.0247]  +10.5% [+5, +16]  p 0.00121 (Holm over cells 0.00706)  gaining 17/20  price 0.0000  vs learned LCB2 +0.0015 [-0.0098, +0.0138] p 0.43 ahead 8/20
+   5sigma_from_trial_1    LCB2 gain +0.0201 [+0.0054, +0.0330]  +2.7% [+1, +4]  p 0.0121 (Holm over cells 0.0242)  gaining 15/20  price 0.0000  vs learned LCB2 -0.0430 [-0.0774, -0.0137] p 0.0153 ahead 6/20
+   5sigma_from_trial_21   LCB2 gain -0.0001 [-0.0215, +0.0228]  -0.0% [-4, +4]  p 0.985 (Holm over cells 0.985)  gaining 11/20  price 0.0000  vs learned LCB2 -0.0092 [-0.0286, +0.0094] p 0.312 ahead 8/20
+-- mag_double: SD overstated twofold: (2 sigma_e)^2 on every trial
+   0.05sigma_from_trial_1 LCB1 gain +0.0010 [-0.0002, +0.0023]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.0641 (Holm over cells 0.385)  gaining 12/20  price 0.0000  vs learned LCB1 +0.0226 [+0.0046, +0.0446] p 0.0347 ahead 13/20
+   0.05sigma_from_trial_21 LCB2 gain -0.0007 [-0.0026, +0.0009]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.658 (Holm over cells 1)  gaining 8/20  price 0.0000  vs learned LCB2 +0.0174 [+0.0039, +0.0339] p 0.0586 ahead 11/20
+   0.25sigma_from_trial_1 LCB2 gain -0.0040 [-0.0185, +0.0079]  no share (reference negative on 2 of 20 landscapes)  p 1 (Holm over cells 1)  gaining 8/20  price 0.0000  vs learned LCB2 +0.0053 [-0.0013, +0.0128] p 0.143 ahead 14/20
+   0.25sigma_from_trial_21 LCB2 gain -0.0045 [-0.0206, +0.0094]  no share (reference negative on 1 of 20 landscapes)  p 0.809 (Holm over cells 1)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0045 [-0.0000, +0.0090] p 0.0364 ahead 15/20
+   1sigma_from_trial_1    LCB1 gain +0.0130 [-0.0285, +0.0464]  +5.0% [-11, +18]  p 0.189 (Holm over cells 0.947)  gaining 14/20  price 0.0000  vs learned LCB2 -0.0130 [-0.0356, +0.0050] p 0.571 ahead 9/20
+   1sigma_from_trial_21   LCB2 gain +0.0013 [-0.0350, +0.0311]  +0.9% [-22, +22]  p 0.409 (Holm over cells 1)  gaining 13/20  price 0.0000  vs learned LCB2 -0.0128 [-0.0419, +0.0086] p 0.701 ahead 12/20
+   5sigma_from_trial_1    LCB2 gain +0.0912 [+0.0415, +0.1485]  +12.1% [+6, +19]  p 0.00315 (Holm over cells 0.0221)  gaining 16/20  price 0.0000  vs learned LCB2 +0.0281 [-0.0009, +0.0580] p 0.165 ahead 12/20
+   5sigma_from_trial_21   LCB2 gain +0.1277 [+0.0645, +0.2005]  +23.0% [+13, +32]  p 0.000395 (Holm over cells 0.00316)  gaining 17/20  price 0.0000  vs learned LCB2 +0.1186 [+0.0754, +0.1676] p 6.29e-05 ahead 17/20
+-- retest3: three test-retest pairs after the study (six ratings outside the budget)
+   0.05sigma_from_trial_1 LCB2 gain +0.0016 [+0.0007, +0.0029]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00748 (Holm over cells 0.0374)  gaining 13/20  price 0.0000  vs learned LCB1 +0.0232 [+0.0056, +0.0453] p 0.0534 ahead 12/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0009 [+0.0002, +0.0017]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0312 (Holm over cells 0.0937)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0190 [+0.0052, +0.0360] p 0.0176 ahead 13/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0052 [+0.0001, +0.0099]  no share (reference negative on 2 of 20 landscapes)  p 0.00422 (Holm over cells 0.0253)  gaining 16/20  price 0.0000  vs learned LCB2 +0.0145 [+0.0027, +0.0280] p 0.245 ahead 10/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0047 [+0.0007, +0.0087]  no share (reference negative on 1 of 20 landscapes)  p 0.0532 (Holm over cells 0.106)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0137 [+0.0023, +0.0282] p 0.294 ahead 10/20
+   1sigma_from_trial_1    LCB2 gain +0.0229 [+0.0067, +0.0384]  +8.8% [+2, +15]  p 0.0215 (Holm over cells 0.0859)  gaining 15/20  price 0.0000  vs learned LCB2 -0.0031 [-0.0135, +0.0064] p 0.841 ahead 10/20
+   1sigma_from_trial_21   LCB2 gain +0.0136 [-0.0035, +0.0281]  +9.1% [-1, +19]  p 0.0973 (Holm over cells 0.106)  gaining 14/20  price 0.0000  vs learned LCB2 -0.0005 [-0.0071, +0.0061] p 0.674 ahead 6/20
+   5sigma_from_trial_1    LCB2 gain +0.0619 [+0.0310, +0.0965]  +8.2% [+4, +12]  p 0.00102 (Holm over cells 0.00813)  gaining 16/20  price 0.0000  vs learned LCB2 -0.0012 [-0.0141, +0.0120] p 0.784 ahead 10/20
+   5sigma_from_trial_21   LCB2 gain +0.0505 [+0.0154, +0.0880]  +9.1% [+3, +14]  p 0.00199 (Holm over cells 0.0139)  gaining 18/20  price 0.0000  vs learned LCB2 +0.0414 [+0.0248, +0.0587] p 1.91e-05 ahead 18/20
+-- cusum: magnitude known, onset from the freeze rule's CUSUM alarm
+   0.05sigma_from_trial_1 LCB1 gain +0.0016 [+0.0007, +0.0025]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00254 (Holm over cells 0.0153)  gaining 15/20  price 0.0000  vs learned LCB1 +0.0232 [+0.0054, +0.0449] p 0.00331 ahead 16/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0010 [+0.0002, +0.0018]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.091 (Holm over cells 0.182)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0191 [+0.0055, +0.0359] p 0.00185 ahead 15/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0069 [+0.0019, +0.0121]  no share (reference negative on 2 of 20 landscapes)  p 0.0172 (Holm over cells 0.0687)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0162 [+0.0048, +0.0301] p 0.00365 ahead 15/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0076 [+0.0039, +0.0115]  no share (reference negative on 1 of 20 landscapes)  p 0.00422 (Holm over cells 0.0211)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0165 [+0.0043, +0.0327] p 0.0296 ahead 12/20
+   1sigma_from_trial_1    LCB2 gain +0.0260 [+0.0037, +0.0462]  +9.9% [+1, +18]  p 0.0441 (Holm over cells 0.132)  gaining 15/20  price 0.0000  vs learned LCB2 -0.0000 [-0.0080, +0.0079] p 0.869 ahead 9/20
+   1sigma_from_trial_21   LCB2 gain -0.0011 [-0.0145, +0.0106]  -0.8% [-9, +8]  p 0.701 (Holm over cells 0.701)  gaining 9/20  price 0.0000  vs learned LCB2 -0.0152 [-0.0266, -0.0046] p 0.0192 ahead 6/20
+   5sigma_from_trial_1    LCB2 gain +0.0771 [+0.0407, +0.1189]  +10.2% [+6, +15]  p 0.00102 (Holm over cells 0.00712)  gaining 16/20  price 0.0000  vs learned LCB2 +0.0140 [+0.0008, +0.0263] p 0.0484 ahead 13/20
+   5sigma_from_trial_21   LCB2 gain +0.2610 [+0.1726, +0.3617]  +46.9% [+34, +59]  p 9.54e-06 (Holm over cells 7.63e-05)  gaining 19/20  price 0.0000  vs learned LCB2 +0.2519 [+0.1796, +0.3321] p 5.72e-06 ahead 19/20
+-- retest3_cusum: three test-retest pairs, onset from the CUSUM alarm
+   0.05sigma_from_trial_1 LCB2 gain +0.0017 [+0.0007, +0.0029]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00748 (Holm over cells 0.0449)  gaining 13/20  price 0.0000  vs learned LCB1 +0.0232 [+0.0056, +0.0453] p 0.0534 ahead 12/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0010 [+0.0002, +0.0018]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0312 (Holm over cells 0.125)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0191 [+0.0054, +0.0360] p 0.0156 ahead 13/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0052 [+0.0000, +0.0098]  no share (reference negative on 2 of 20 landscapes)  p 0.00944 (Holm over cells 0.0472)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0144 [+0.0027, +0.0279] p 0.245 ahead 10/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0048 [+0.0006, +0.0092]  no share (reference negative on 1 of 20 landscapes)  p 0.0696 (Holm over cells 0.139)  gaining 12/20  price 0.0000  vs learned LCB2 +0.0138 [+0.0025, +0.0284] p 0.154 ahead 11/20
+   1sigma_from_trial_1    LCB2 gain +0.0202 [+0.0043, +0.0357]  +7.7% [+1, +14]  p 0.0362 (Holm over cells 0.125)  gaining 15/20  price 0.0000  vs learned LCB2 -0.0058 [-0.0166, +0.0042] p 0.546 ahead 10/20
+   1sigma_from_trial_21   LCB2 gain -0.0026 [-0.0142, +0.0075]  -1.8% [-9, +6]  p 0.648 (Holm over cells 0.648)  gaining 9/20  price 0.0000  vs learned LCB2 -0.0167 [-0.0302, -0.0031] p 0.0266 ahead 5/20
+   5sigma_from_trial_1    LCB2 gain +0.0590 [+0.0284, +0.0911]  +7.8% [+4, +12]  p 0.00271 (Holm over cells 0.019)  gaining 15/20  price 0.0000  vs learned LCB2 -0.0041 [-0.0200, +0.0119] p 0.812 ahead 11/20
+   5sigma_from_trial_21   LCB2 gain +0.1965 [+0.1279, +0.2745]  +35.3% [+25, +45]  p 3.81e-06 (Holm over cells 3.05e-05)  gaining 19/20  price 0.0000  vs learned LCB2 +0.1874 [+0.1320, +0.2498] p 5.72e-06 ahead 19/20
+-- inside_random: inside the budget: trials 48-50 re-rate three random visited designs
+   0.05sigma_from_trial_1 LCB2 gain -0.0019 [-0.0048, +0.0007]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.452 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB1 +0.0196 [+0.0024, +0.0410] p 0.421 ahead 10/20
+   0.05sigma_from_trial_21 LCB1 gain -0.0034 [-0.0083, +0.0002]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.314 (Holm over cells 1)  gaining 9/20  price 0.0022  vs learned LCB2 +0.0148 [+0.0005, +0.0311] p 0.26 ahead 9/20
+   0.25sigma_from_trial_1 LCB1 gain -0.0002 [-0.0055, +0.0050]  no share (reference negative on 2 of 20 landscapes)  p 0.985 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB2 +0.0091 [-0.0034, +0.0240] p 0.596 ahead 7/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0022 [-0.0047, +0.0090]  no share (reference negative on 1 of 20 landscapes)  p 0.388 (Holm over cells 1)  gaining 11/20  price 0.0022  vs learned LCB2 +0.0112 [-0.0004, +0.0254] p 0.261 ahead 10/20
+   1sigma_from_trial_1    LCB2 gain +0.0163 [-0.0043, +0.0351]  +6.2% [-2, +14]  p 0.189 (Holm over cells 0.947)  gaining 14/20  price 0.0022  vs learned LCB2 -0.0097 [-0.0169, -0.0024] p 0.0192 ahead 6/20
+   1sigma_from_trial_21   LCB1 gain +0.0134 [-0.0044, +0.0300]  +9.0% [-2, +20]  p 0.143 (Holm over cells 0.857)  gaining 14/20  price 0.0022  vs learned LCB2 -0.0007 [-0.0092, +0.0068] p 0.784 ahead 10/20
+   5sigma_from_trial_1    LCB2 gain +0.0607 [+0.0288, +0.0949]  +8.1% [+4, +12]  p 0.00365 (Holm over cells 0.0256)  gaining 14/20  price 0.0022  vs learned LCB2 -0.0025 [-0.0194, +0.0132] p 0.841 ahead 10/20
+   5sigma_from_trial_21   LCB2 gain +0.0834 [+0.0414, +0.1326]  +15.0% [+9, +21]  p 0.000586 (Holm over cells 0.00468)  gaining 17/20  price 0.0022  vs learned LCB2 +0.0742 [+0.0462, +0.1046] p 8.2e-05 ahead 18/20
+-- inside_top: inside the budget: trials 48-50 re-rate the top three by LCB1 at trial 47
+   0.05sigma_from_trial_1 LCB2 gain -0.0021 [-0.0049, +0.0004]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.376 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB1 +0.0195 [+0.0022, +0.0409] p 0.396 ahead 10/20
+   0.05sigma_from_trial_21 LCB2 gain -0.0027 [-0.0077, +0.0009]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.717 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB2 +0.0154 [+0.0014, +0.0315] p 0.099 ahead 10/20
+   0.25sigma_from_trial_1 LCB2 gain +0.0029 [-0.0031, +0.0095]  no share (reference negative on 2 of 20 landscapes)  p 0.475 (Holm over cells 1)  gaining 11/20  price 0.0022  vs learned LCB2 +0.0121 [-0.0003, +0.0270] p 0.648 ahead 9/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0025 [-0.0048, +0.0092]  no share (reference negative on 1 of 20 landscapes)  p 0.349 (Holm over cells 1)  gaining 11/20  price 0.0022  vs learned LCB2 +0.0114 [+0.0005, +0.0252] p 0.0484 ahead 14/20
+   1sigma_from_trial_1    LCB2 gain +0.0217 [+0.0024, +0.0414]  +8.3% [+0, +16]  p 0.0826 (Holm over cells 0.413)  gaining 12/20  price 0.0022  vs learned LCB2 -0.0044 [-0.0139, +0.0059] p 0.294 ahead 7/20
+   1sigma_from_trial_21   LCB2 gain +0.0177 [+0.0038, +0.0305]  +11.9% [+3, +21]  p 0.0266 (Holm over cells 0.16)  gaining 14/20  price 0.0022  vs learned LCB2 +0.0036 [-0.0037, +0.0110] p 0.522 ahead 10/20
+   5sigma_from_trial_1    LCB2 gain +0.0714 [+0.0372, +0.1128]  +9.5% [+5, +15]  p 0.000395 (Holm over cells 0.00276)  gaining 18/20  price 0.0022  vs learned LCB2 +0.0083 [-0.0112, +0.0285] p 0.312 ahead 13/20
+   5sigma_from_trial_21   LCB2 gain +0.0908 [+0.0511, +0.1366]  +16.3% [+10, +22]  p 0.000105 (Holm over cells 0.000839)  gaining 19/20  price 0.0022  vs learned LCB2 +0.0817 [+0.0559, +0.1071] p 1.91e-05 ahead 18/20
+
+== 2b. Gaussian error, the rule chosen per cell on seeds 7-11 of the main sweep; scored on seeds 12-16 and
+       on the untouched seeds 27-36 of the replication arm (second line of each cell)
+-- learned: learned noise (the loop's refit; the control)
+   0.05sigma_from_trial_1 LCB2 gain -0.0243 [-0.0523, -0.0023]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.811 (Holm over cells 0.988)  gaining 11/20  price 0.0231
+     seeds 27-36          LCB2 gain -0.0202 [-0.0408, -0.0043]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.227  gaining 9/20  price 0.0225
+   0.05sigma_from_trial_21 LCB2 gain -0.0196 [-0.0377, -0.0054]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0936 (Holm over cells 0.495)  gaining 7/20  price 0.0231
+     seeds 27-36          LCB2 gain -0.0141 [-0.0261, -0.0042]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.099  gaining 7/20  price 0.0225
+   0.25sigma_from_trial_1 LCB2 gain -0.0006 [-0.0190, +0.0139]  no share (reference negative on 2 of 20 landscapes)  p 0.0826 (Holm over cells 0.495)  gaining 15/20  price 0.0231
+     seeds 27-36          LCB2 gain -0.0060 [-0.0219, +0.0069]  no share (reference negative on 2 of 20 landscapes)  p 0.956  gaining 11/20  price 0.0225
+   0.25sigma_from_trial_21 LCB1 gain -0.0011 [-0.0135, +0.0098]  no share (reference negative on 1 of 20 landscapes)  p 0.494 (Holm over cells 0.988)  gaining 14/20  price 0.0211
+     seeds 27-36          LCB1 gain -0.0098 [-0.0260, +0.0032]  no share (reference negative on 1 of 20 landscapes)  p 0.956  gaining 12/20  price 0.0210
+   1sigma_from_trial_1    LCB2 gain +0.0287 [-0.0025, +0.0582]  +10.3% [-1, +20]  p 0.0637 (Holm over cells 0.446)  gaining 12/20  price 0.0231
+     seeds 27-36          LCB2 gain +0.0298 [+0.0054, +0.0507]  +11.4% [+2, +19]  p 0.0192  gaining 15/20  price 0.0225
+   1sigma_from_trial_21   LCB1 gain +0.0244 [-0.0055, +0.0538]  +19.6% [-4, +39]  p 0.165 (Holm over cells 0.66)  gaining 15/20  price 0.0211
+     seeds 27-36          LCB1 gain +0.0219 [-0.0021, +0.0422]  +16.2% [-1, +34]  p 0.0637  gaining 14/20  price 0.0210
+   5sigma_from_trial_1    LCB1 gain +0.0449 [-0.0199, +0.1128]  +6.1% [-3, +14]  p 0.216 (Holm over cells 0.66)  gaining 11/20  price 0.0211
+     seeds 27-36          LCB1 gain +0.0418 [-0.0162, +0.1045]  +5.6% [-2, +14]  p 0.409  gaining 9/20  price 0.0210
+   5sigma_from_trial_21   LCB2 gain +0.1449 [+0.0501, +0.2600]  +28.2% [+11, +45]  p 0.00558 (Holm over cells 0.0446)  gaining 16/20  price 0.0231
+     seeds 27-36          LCB2 gain +0.0827 [+0.0246, +0.1380]  +18.2% [+7, +29]  p 0.00486  gaining 16/20  price 0.0225
+-- mag: magnitude known: sigma_e^2 on every trial
+   0.05sigma_from_trial_1 LCB2 gain +0.0029 [+0.0013, +0.0050]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00121 (Holm over cells 0.00724)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0272 [+0.0052, +0.0556] p 0.0192 ahead 10/20
+     seeds 27-36          LCB2 gain +0.0013 [+0.0005, +0.0020]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.00836  gaining 12/20  price 0.0000  vs learned LCB2 +0.0215 [+0.0055, +0.0423] p 0.00112 ahead 14/20
+   0.05sigma_from_trial_21 LCB1 gain +0.0014 [+0.0006, +0.0024]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0076 (Holm over cells 0.0304)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0210 [+0.0061, +0.0387] p 0.00898 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0012 [-0.0000, +0.0024]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.0747  gaining 9/20  price 0.0000  vs learned LCB2 +0.0153 [+0.0054, +0.0271] p 0.000455 ahead 16/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0100 [+0.0037, +0.0159]  no share (reference negative on 2 of 20 landscapes)  p 0.0126 (Holm over cells 0.0304)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0106 [-0.0013, +0.0276] p 0.349 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0082 [+0.0033, +0.0134]  no share (reference negative on 2 of 20 landscapes)  p 0.0141  gaining 14/20  price 0.0000  vs learned LCB2 +0.0142 [+0.0045, +0.0271] p 0.00365 ahead 15/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0106 [+0.0066, +0.0151]  no share (reference negative on 1 of 20 landscapes)  p 1.91e-05 (Holm over cells 0.000153)  gaining 18/20  price 0.0000  vs learned LCB1 +0.0117 [+0.0025, +0.0223] p 0.0854 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0061 [+0.0017, +0.0109]  no share (reference negative on 1 of 20 landscapes)  p 0.0266  gaining 14/20  price 0.0000  vs learned LCB1 +0.0159 [+0.0044, +0.0304] p 0.171 ahead 10/20
+   1sigma_from_trial_1    LCB2 gain +0.0374 [+0.0105, +0.0612]  +13.5% [+5, +22]  p 0.00944 (Holm over cells 0.0304)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0087 [-0.0077, +0.0285] p 0.314 ahead 12/20
+     seeds 27-36          LCB2 gain +0.0387 [+0.0156, +0.0569]  +14.8% [+6, +21]  p 0.00199  gaining 17/20  price 0.0000  vs learned LCB2 +0.0089 [+0.0006, +0.0185] p 0.0532 ahead 15/20
+   1sigma_from_trial_21   LCB1 gain +0.0232 [-0.0104, +0.0576]  +18.6% [-7, +41]  p 0.277 (Holm over cells 0.277)  gaining 13/20  price 0.0000  vs learned LCB1 -0.0012 [-0.0209, +0.0153] p 0.809 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0294 [+0.0097, +0.0488]  +21.8% [+6, +36]  p 0.00558  gaining 15/20  price 0.0000  vs learned LCB1 +0.0076 [-0.0067, +0.0243] p 0.571 ahead 11/20
+   5sigma_from_trial_1    LCB2 gain +0.0984 [+0.0406, +0.1624]  +13.2% [+6, +21]  p 0.00233 (Holm over cells 0.0116)  gaining 17/20  price 0.0000  vs learned LCB1 +0.0534 [+0.0047, +0.1030] p 0.0759 ahead 14/20
+     seeds 27-36          LCB2 gain +0.0786 [+0.0193, +0.1436]  +10.6% [+3, +19]  p 0.04  gaining 14/20  price 0.0000  vs learned LCB1 +0.0369 [+0.0025, +0.0765] p 0.202 ahead 13/20
+   5sigma_from_trial_21   LCB2 gain +0.2470 [+0.1429, +0.3734]  +48.0% [+32, +62]  p 4.77e-05 (Holm over cells 0.000334)  gaining 18/20  price 0.0000  vs learned LCB2 +0.1022 [+0.0604, +0.1515] p 4.77e-05 ahead 19/20
+     seeds 27-36          LCB2 gain +0.1465 [+0.0769, +0.2103]  +32.2% [+18, +44]  p 0.000586  gaining 17/20  price 0.0000  vs learned LCB2 +0.0638 [+0.0246, +0.1107] p 0.00486 ahead 15/20
+-- mag_onset: magnitude and onset known: 1e-6 up to the onset, sigma_e^2 after
+   0.05sigma_from_trial_1 LCB2 gain +0.0029 [+0.0013, +0.0050]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00121 (Holm over cells 0.00724)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0272 [+0.0052, +0.0556] p 0.0192 ahead 10/20
+     seeds 27-36          LCB2 gain +0.0013 [+0.0005, +0.0020]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.00836  gaining 12/20  price 0.0000  vs learned LCB2 +0.0215 [+0.0055, +0.0423] p 0.00112 ahead 14/20
+   0.05sigma_from_trial_21 LCB2 gain +0.0022 [+0.0007, +0.0039]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0229 (Holm over cells 0.0283)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0218 [+0.0071, +0.0395] p 0.000536 ahead 16/20
+     seeds 27-36          LCB2 gain +0.0021 [+0.0007, +0.0037]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.0171  gaining 11/20  price 0.0000  vs learned LCB2 +0.0162 [+0.0067, +0.0280] p 0.000132 ahead 19/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0100 [+0.0037, +0.0159]  no share (reference negative on 2 of 20 landscapes)  p 0.0126 (Holm over cells 0.0283)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0106 [-0.0013, +0.0276] p 0.349 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0082 [+0.0033, +0.0134]  no share (reference negative on 2 of 20 landscapes)  p 0.0141  gaining 14/20  price 0.0000  vs learned LCB2 +0.0142 [+0.0045, +0.0271] p 0.00365 ahead 15/20
+   0.25sigma_from_trial_21 PM   gain +0.0116 [+0.0048, +0.0190]  no share (reference negative on 1 of 20 landscapes)  p 0.00427 (Holm over cells 0.0171)  gaining 16/20  price 0.0000  vs learned LCB1 +0.0128 [+0.0021, +0.0240] p 0.0442 ahead 14/20
+     seeds 27-36          PM   gain +0.0115 [+0.0056, +0.0180]  no share (reference negative on 1 of 20 landscapes)  p 0.000851  gaining 17/20  price 0.0000  vs learned LCB1 +0.0213 [+0.0084, +0.0363] p 0.00169 ahead 17/20
+   1sigma_from_trial_1    LCB2 gain +0.0374 [+0.0105, +0.0612]  +13.5% [+5, +22]  p 0.00944 (Holm over cells 0.0283)  gaining 15/20  price 0.0000  vs learned LCB2 +0.0087 [-0.0077, +0.0285] p 0.314 ahead 12/20
+     seeds 27-36          LCB2 gain +0.0387 [+0.0156, +0.0569]  +14.8% [+6, +21]  p 0.00199  gaining 17/20  price 0.0000  vs learned LCB2 +0.0089 [+0.0006, +0.0185] p 0.0532 ahead 15/20
+   1sigma_from_trial_21   LCB2 gain +0.0628 [+0.0313, +0.0995]  +50.4% [+28, +71]  p 0.000851 (Holm over cells 0.00595)  gaining 16/20  price 0.0000  vs learned LCB1 +0.0384 [+0.0200, +0.0596] p 0.000395 ahead 18/20
+     seeds 27-36          LCB2 gain +0.0790 [+0.0555, +0.1044]  +58.6% [+42, +75]  p 1.91e-05  gaining 19/20  price 0.0000  vs learned LCB1 +0.0572 [+0.0357, +0.0822] p 9.54e-06 ahead 19/20
+   5sigma_from_trial_1    LCB2 gain +0.0984 [+0.0406, +0.1624]  +13.2% [+6, +21]  p 0.00233 (Holm over cells 0.0116)  gaining 17/20  price 0.0000  vs learned LCB1 +0.0534 [+0.0047, +0.1030] p 0.0759 ahead 14/20
+     seeds 27-36          LCB2 gain +0.0786 [+0.0193, +0.1436]  +10.6% [+3, +19]  p 0.04  gaining 14/20  price 0.0000  vs learned LCB1 +0.0369 [+0.0025, +0.0765] p 0.202 ahead 13/20
+   5sigma_from_trial_21   LCB2 gain +0.4108 [+0.3107, +0.5265]  +79.9% [+68, +90]  p 3.81e-06 (Holm over cells 3.05e-05)  gaining 19/20  price 0.0000  vs learned LCB2 +0.2660 [+0.2027, +0.3273] p 5.72e-06 ahead 19/20
+     seeds 27-36          LCB2 gain +0.3600 [+0.2886, +0.4319]  +79.2% [+68, +89]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned LCB2 +0.2773 [+0.2068, +0.3475] p 3.81e-06 ahead 19/20
+-- retest3: three test-retest pairs after the study (six ratings outside the budget)
+   0.05sigma_from_trial_1 LCB2 gain +0.0025 [+0.0010, +0.0047]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00539 (Holm over cells 0.0269)  gaining 13/20  price 0.0000  vs learned LCB2 +0.0268 [+0.0048, +0.0553] p 0.163 ahead 10/20
+     seeds 27-36          LCB2 gain +0.0012 [+0.0005, +0.0019]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.00539  gaining 13/20  price 0.0000  vs learned LCB2 +0.0214 [+0.0052, +0.0423] p 0.01 ahead 14/20
+   0.05sigma_from_trial_21 PM   gain +0.0012 [+0.0003, +0.0022]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0262 (Holm over cells 0.0524)  gaining 11/20  price 0.0000  vs learned LCB2 +0.0208 [+0.0061, +0.0385] p 0.0141 ahead 14/20
+     seeds 27-36          PM   gain +0.0007 [-0.0005, +0.0018]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.133  gaining 10/20  price 0.0000  vs learned LCB2 +0.0148 [+0.0048, +0.0267] p 0.0089 ahead 15/20
+   0.25sigma_from_trial_1 LCB1 gain +0.0101 [+0.0051, +0.0153]  no share (reference negative on 2 of 20 landscapes)  p 0.00842 (Holm over cells 0.0337)  gaining 13/20  price 0.0000  vs learned LCB2 +0.0108 [-0.0010, +0.0273] p 0.376 ahead 12/20
+     seeds 27-36          LCB1 gain +0.0052 [-0.0004, +0.0108]  no share (reference negative on 2 of 20 landscapes)  p 0.0759  gaining 14/20  price 0.0000  vs learned LCB2 +0.0112 [+0.0019, +0.0234] p 0.0401 ahead 14/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0084 [+0.0051, +0.0121]  no share (reference negative on 1 of 20 landscapes)  p 0.000342 (Holm over cells 0.00239)  gaining 17/20  price 0.0000  vs learned LCB1 +0.0096 [-0.0003, +0.0206] p 0.586 ahead 8/20
+     seeds 27-36          LCB2 gain +0.0044 [+0.0006, +0.0084]  no share (reference negative on 1 of 20 landscapes)  p 0.0442  gaining 14/20  price 0.0000  vs learned LCB1 +0.0141 [+0.0018, +0.0298] p 0.546 ahead 9/20
+   1sigma_from_trial_1    LCB1 gain +0.0343 [+0.0106, +0.0570]  +12.4% [+4, +21]  p 0.0136 (Holm over cells 0.0408)  gaining 14/20  price 0.0000  vs learned LCB2 +0.0056 [-0.0135, +0.0273] p 0.729 ahead 11/20
+     seeds 27-36          LCB1 gain +0.0257 [+0.0073, +0.0436]  +9.8% [+3, +16]  p 0.024  gaining 13/20  price 0.0000  vs learned LCB2 -0.0041 [-0.0228, +0.0129] p 0.784 ahead 11/20
+   1sigma_from_trial_21   LCB1 gain +0.0229 [-0.0073, +0.0535]  +18.4% [-4, +37]  p 0.133 (Holm over cells 0.133)  gaining 14/20  price 0.0000  vs learned LCB1 -0.0014 [-0.0163, +0.0125] p 0.546 ahead 6/20
+     seeds 27-36          LCB1 gain +0.0261 [+0.0094, +0.0423]  +19.3% [+7, +33]  p 0.00558  gaining 16/20  price 0.0000  vs learned LCB1 +0.0042 [-0.0063, +0.0156] p 0.546 ahead 10/20
+   5sigma_from_trial_1    LCB2 gain +0.0803 [+0.0341, +0.1281]  +10.8% [+5, +16]  p 0.00233 (Holm over cells 0.014)  gaining 15/20  price 0.0000  vs learned LCB1 +0.0354 [+0.0058, +0.0644] p 0.00831 ahead 16/20
+     seeds 27-36          LCB2 gain +0.0546 [+0.0154, +0.0959]  +7.3% [+3, +12]  p 0.0215  gaining 14/20  price 0.0000  vs learned LCB1 +0.0129 [-0.0304, +0.0555] p 0.452 ahead 12/20
+   5sigma_from_trial_21   LCB2 gain +0.2094 [+0.1133, +0.3291]  +40.7% [+25, +56]  p 3.62e-05 (Holm over cells 0.00029)  gaining 19/20  price 0.0000  vs learned LCB2 +0.0645 [+0.0410, +0.0889] p 3.62e-05 ahead 19/20
+     seeds 27-36          LCB2 gain +0.0951 [+0.0286, +0.1530]  +20.9% [+7, +32]  p 0.00422  gaining 18/20  price 0.0000  vs learned LCB2 +0.0123 [-0.0278, +0.0615] p 1 ahead 9/20
+-- inside_random: inside the budget: trials 48-50 re-rate three random visited designs
+   0.05sigma_from_trial_1 LCB2 gain -0.0024 [-0.0072, +0.0022]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.557 (Holm over cells 1)  gaining 9/20  price 0.0022  vs learned LCB2 +0.0219 [+0.0002, +0.0501] p 0.215 ahead 11/20
+     seeds 27-36          LCB2 gain -0.0027 [-0.0066, +0.0004]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.494  gaining 10/20  price 0.0072  vs learned LCB2 +0.0175 [+0.0013, +0.0389] p 0.133 ahead 11/20
+   0.05sigma_from_trial_21 PM   gain -0.0083 [-0.0193, -0.0008]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.184 (Holm over cells 1)  gaining 8/20  price 0.0022  vs learned LCB2 +0.0113 [-0.0065, +0.0289] p 0.396 ahead 10/20
+     seeds 27-36          PM   gain -0.0047 [-0.0095, -0.0007]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.314  gaining 9/20  price 0.0072  vs learned LCB2 +0.0094 [+0.0002, +0.0199] p 0.00791 ahead 15/20
+   0.25sigma_from_trial_1 PM   gain +0.0033 [-0.0033, +0.0098]  no share (reference negative on 2 of 20 landscapes)  p 0.355 (Holm over cells 1)  gaining 11/20  price 0.0022  vs learned LCB2 +0.0040 [-0.0092, +0.0210] p 0.43 ahead 10/20
+     seeds 27-36          PM   gain +0.0010 [-0.0073, +0.0080]  no share (reference negative on 2 of 20 landscapes)  p 0.475  gaining 12/20  price 0.0072  vs learned LCB2 +0.0069 [-0.0045, +0.0221] p 0.936 ahead 7/20
+   0.25sigma_from_trial_21 LCB1 gain +0.0029 [-0.0055, +0.0108]  no share (reference negative on 1 of 20 landscapes)  p 0.202 (Holm over cells 1)  gaining 14/20  price 0.0022  vs learned LCB1 +0.0040 [-0.0056, +0.0143] p 0.968 ahead 8/20
+     seeds 27-36          LCB1 gain +0.0000 [-0.0083, +0.0094]  no share (reference negative on 1 of 20 landscapes)  p 0.968  gaining 10/20  price 0.0072  vs learned LCB1 +0.0098 [-0.0007, +0.0242] p 0.469 ahead 10/20
+   1sigma_from_trial_1    LCB1 gain +0.0131 [-0.0172, +0.0414]  +4.7% [-7, +15]  p 0.294 (Holm over cells 1)  gaining 13/20  price 0.0022  vs learned LCB2 -0.0157 [-0.0362, +0.0066] p 0.123 ahead 6/20
+     seeds 27-36          LCB1 gain +0.0167 [-0.0047, +0.0363]  +6.4% [-2, +14]  p 0.189  gaining 13/20  price 0.0072  vs learned LCB2 -0.0131 [-0.0236, -0.0022] p 0.0153 ahead 6/20
+   1sigma_from_trial_21   LCB2 gain +0.0283 [+0.0040, +0.0544]  +22.7% [+3, +39]  p 0.0484 (Holm over cells 0.339)  gaining 14/20  price 0.0022  vs learned LCB1 +0.0039 [-0.0076, +0.0175] p 0.869 ahead 8/20
+     seeds 27-36          LCB2 gain +0.0253 [+0.0046, +0.0447]  +18.8% [+3, +32]  p 0.00944  gaining 16/20  price 0.0072  vs learned LCB1 +0.0035 [-0.0140, +0.0232] p 0.784 ahead 10/20
+   5sigma_from_trial_1    LCB1 gain +0.0631 [-0.0029, +0.1378]  +8.5% [-0, +18]  p 0.177 (Holm over cells 1)  gaining 13/20  price 0.0022  vs learned LCB1 +0.0182 [-0.0288, +0.0654] p 0.409 ahead 12/20
+     seeds 27-36          LCB1 gain +0.0734 [+0.0299, +0.1264]  +9.9% [+4, +17]  p 0.00365  gaining 15/20  price 0.0072  vs learned LCB1 +0.0316 [-0.0120, +0.0783] p 0.33 ahead 10/20
+   5sigma_from_trial_21   LCB2 gain +0.1553 [+0.0626, +0.2729]  +30.2% [+14, +46]  p 0.00102 (Holm over cells 0.00813)  gaining 17/20  price 0.0022  vs learned LCB2 +0.0104 [-0.0245, +0.0430] p 0.701 ahead 9/20
+     seeds 27-36          LCB2 gain +0.0932 [+0.0344, +0.1491]  +20.5% [+9, +30]  p 0.00422  gaining 17/20  price 0.0072  vs learned LCB2 +0.0104 [-0.0337, +0.0596] p 0.841 ahead 10/20
+-- inside_top: inside the budget: trials 48-50 re-rate the top three by LCB1 at trial 47
+   0.05sigma_from_trial_1 LCB2 gain -0.0027 [-0.0079, +0.0018]  no share (reference 0.0069 below 0.01; reference negative on 6 of 20 landscapes)  p 0.557 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB2 +0.0216 [-0.0001, +0.0500] p 0.309 ahead 10/20
+     seeds 27-36          LCB2 gain -0.0026 [-0.0065, +0.0004]  no share (reference -0.0108 below 0.01; reference negative on 8 of 20 landscapes)  p 0.546  gaining 10/20  price 0.0072  vs learned LCB2 +0.0175 [+0.0013, +0.0389] p 0.26 ahead 11/20
+   0.05sigma_from_trial_21 LCB2 gain -0.0073 [-0.0186, +0.0004]  no share (reference -0.0001 below 0.01; reference negative on 4 of 20 landscapes)  p 0.616 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB2 +0.0123 [-0.0053, +0.0298] p 0.0854 ahead 12/20
+     seeds 27-36          LCB2 gain -0.0046 [-0.0095, -0.0005]  no share (reference 0.0039 below 0.01; reference negative on 5 of 20 landscapes)  p 0.227  gaining 8/20  price 0.0072  vs learned LCB2 +0.0095 [+0.0003, +0.0200] p 0.0148 ahead 13/20
+   0.25sigma_from_trial_1 LCB2 gain +0.0098 [+0.0034, +0.0162]  no share (reference negative on 2 of 20 landscapes)  p 0.00558 (Holm over cells 0.0335)  gaining 16/20  price 0.0022  vs learned LCB2 +0.0104 [-0.0003, +0.0254] p 0.177 ahead 11/20
+     seeds 27-36          LCB2 gain +0.0030 [-0.0040, +0.0090]  no share (reference negative on 2 of 20 landscapes)  p 0.388  gaining 13/20  price 0.0072  vs learned LCB2 +0.0090 [-0.0017, +0.0238] p 0.674 ahead 9/20
+   0.25sigma_from_trial_21 LCB2 gain +0.0040 [-0.0046, +0.0128]  no share (reference negative on 1 of 20 landscapes)  p 0.349 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB1 +0.0052 [-0.0050, +0.0153] p 0.277 ahead 11/20
+     seeds 27-36          LCB2 gain +0.0007 [-0.0075, +0.0087]  no share (reference negative on 1 of 20 landscapes)  p 0.701  gaining 12/20  price 0.0072  vs learned LCB1 +0.0105 [+0.0007, +0.0235] p 0.231 ahead 12/20
+   1sigma_from_trial_1    LCB1 gain +0.0190 [-0.0067, +0.0426]  +6.8% [-3, +15]  p 0.277 (Holm over cells 1)  gaining 10/20  price 0.0022  vs learned LCB2 -0.0097 [-0.0349, +0.0180] p 0.261 ahead 6/20
+     seeds 27-36          LCB1 gain +0.0259 [+0.0090, +0.0422]  +9.9% [+3, +16]  p 0.0121  gaining 15/20  price 0.0072  vs learned LCB2 -0.0039 [-0.0156, +0.0087] p 0.231 ahead 7/20
+   1sigma_from_trial_21   LCB1 gain +0.0236 [-0.0042, +0.0519]  +19.0% [-2, +38]  p 0.0973 (Holm over cells 0.487)  gaining 15/20  price 0.0022  vs learned LCB1 -0.0007 [-0.0096, +0.0082] p 0.756 ahead 10/20
+     seeds 27-36          LCB1 gain +0.0245 [+0.0086, +0.0405]  +18.1% [+5, +30]  p 0.0121  gaining 14/20  price 0.0072  vs learned LCB1 +0.0026 [-0.0123, +0.0203] p 0.756 ahead 8/20
+   5sigma_from_trial_1    LCB2 gain +0.1001 [+0.0457, +0.1620]  +13.5% [+6, +21]  p 0.00199 (Holm over cells 0.0139)  gaining 15/20  price 0.0022  vs learned LCB1 +0.0551 [+0.0102, +0.0987] p 0.04 ahead 14/20
+     seeds 27-36          LCB2 gain +0.0699 [+0.0238, +0.1200]  +9.4% [+3, +15]  p 0.0296  gaining 12/20  price 0.0072  vs learned LCB1 +0.0281 [-0.0296, +0.0846] p 0.368 ahead 12/20
+   5sigma_from_trial_21   LCB2 gain +0.2032 [+0.1109, +0.3203]  +39.5% [+25, +54]  p 2.67e-05 (Holm over cells 0.000214)  gaining 19/20  price 0.0022  vs learned LCB2 +0.0583 [+0.0221, +0.0990] p 0.0136 ahead 14/20
+     seeds 27-36          LCB2 gain +0.1391 [+0.0773, +0.2003]  +30.6% [+19, +42]  p 0.000322  gaining 18/20  price 0.0072  vs learned LCB2 +0.0564 [+0.0159, +0.1010] p 0.00944 ahead 16/20
+
+== 3. Four processes, one rule per level for all cells, chosen on seeds 7-11 by the gain over all eight cells
+-- learned: LCB2 (seeds 7-11 pooled gains: PM -0.0131, LCB1 +0.0016, LCB2 +0.0084)
+   0.05sigma_from_trial_1 gain -0.0207 [-0.0421, -0.0037]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.398  price 0.0231
+   0.05sigma_from_trial_21 gain -0.0181 [-0.0347, -0.0049]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.231  price 0.0231
+   0.25sigma_from_trial_1 gain -0.0093 [-0.0267, +0.0050]  no share (reference negative on 2 of 20 landscapes)  p 0.701  price 0.0231
+   0.25sigma_from_trial_21 gain -0.0090 [-0.0255, +0.0043]  no share (reference negative on 1 of 20 landscapes)  p 0.968  price 0.0231
+   1sigma_from_trial_1    gain +0.0260 [+0.0053, +0.0456]  +10.0% [+2, +18]  p 0.0637  price 0.0231
+   1sigma_from_trial_21   gain +0.0141 [-0.0035, +0.0278]  +9.5% [-1, +20]  p 0.0637  price 0.0231
+   5sigma_from_trial_1    gain +0.0631 [+0.0309, +0.1005]  +8.4% [+4, +13]  p 0.00121  price 0.0231
+   5sigma_from_trial_21   gain +0.0091 [-0.0176, +0.0375]  +1.6% [-3, +6]  p 0.648  price 0.0231
+   pooled_ge_0.25sigma    gain +0.0157 [-0.0014, +0.0324]  +5.2% [-1, +11]  p 0.133  price 0.0231
+   pooled_all_cells       gain +0.0069 [-0.0096, +0.0224]  +3.1% [-5, +10]  p 0.261  price 0.0231
+-- mag: LCB2 (seeds 7-11 pooled gains: PM -0.0014, LCB1 +0.0198, LCB2 +0.0268)
+   0.05sigma_from_trial_1 gain +0.0017 [+0.0008, +0.0027]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00485  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0010 [+0.0003, +0.0019]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0766  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0063 [+0.0009, +0.0114]  no share (reference negative on 2 of 20 landscapes)  p 0.024  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0079 [+0.0033, +0.0125]  no share (reference negative on 1 of 20 landscapes)  p 0.00831  price 0.0000
+   1sigma_from_trial_1    gain +0.0285 [+0.0052, +0.0492]  +10.9% [+2, +19]  p 0.0266  price 0.0000
+   1sigma_from_trial_21   gain +0.0160 [-0.0041, +0.0333]  +10.8% [-2, +23]  p 0.114  price 0.0000
+   5sigma_from_trial_1    gain +0.0816 [+0.0443, +0.1244]  +10.8% [+6, +16]  p 0.000168  price 0.0000
+   5sigma_from_trial_21   gain +0.0747 [+0.0285, +0.1304]  +13.4% [+6, +21]  p 0.00315  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0358 [+0.0170, +0.0559]  +12.0% [+6, +18]  p 0.00121  price 0.0000
+   pooled_all_cells       gain +0.0272 [+0.0130, +0.0424]  +12.1% [+6, +18]  p 0.00121  price 0.0000
+-- mag_onset: LCB2 (seeds 7-11 pooled gains: PM +0.0348, LCB1 +0.0601, LCB2 +0.0729)
+   0.05sigma_from_trial_1 gain +0.0017 [+0.0008, +0.0027]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00485  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0021 [+0.0009, +0.0035]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0112  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0063 [+0.0009, +0.0114]  no share (reference negative on 2 of 20 landscapes)  p 0.024  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0122 [+0.0046, +0.0198]  no share (reference negative on 1 of 20 landscapes)  p 0.0328  price 0.0000
+   1sigma_from_trial_1    gain +0.0285 [+0.0052, +0.0492]  +10.9% [+2, +19]  p 0.0266  price 0.0000
+   1sigma_from_trial_21   gain +0.0757 [+0.0478, +0.1041]  +51.0% [+35, +67]  p 4.77e-05  price 0.0000
+   5sigma_from_trial_1    gain +0.0816 [+0.0443, +0.1244]  +10.8% [+6, +16]  p 0.000168  price 0.0000
+   5sigma_from_trial_21   gain +0.3790 [+0.2877, +0.4756]  +68.1% [+57, +79]  p 1.91e-06  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0972 [+0.0696, +0.1254]  +32.5% [+25, +40]  p 1.91e-06  price 0.0000
+   pooled_all_cells       gain +0.0734 [+0.0525, +0.0947]  +32.6% [+25, +40]  p 1.91e-06  price 0.0000
+-- mag_half: LCB2 (seeds 7-11 pooled gains: PM -0.0050, LCB1 +0.0010, LCB2 +0.0067)
+   0.05sigma_from_trial_1 gain +0.0012 [+0.0007, +0.0018]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00101  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0010 [+0.0005, +0.0015]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00649  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0051 [+0.0028, +0.0079]  no share (reference negative on 2 of 20 landscapes)  p 0.000105  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0052 [+0.0029, +0.0074]  no share (reference negative on 1 of 20 landscapes)  p 0.00102  price 0.0000
+   1sigma_from_trial_1    gain +0.0191 [+0.0092, +0.0300]  +7.3% [+3, +11]  p 0.00422  price 0.0000
+   1sigma_from_trial_21   gain +0.0156 [+0.0074, +0.0247]  +10.5% [+5, +16]  p 0.00121  price 0.0000
+   5sigma_from_trial_1    gain +0.0201 [+0.0054, +0.0330]  +2.7% [+1, +4]  p 0.0121  price 0.0000
+   5sigma_from_trial_21   gain -0.0001 [-0.0215, +0.0228]  -0.0% [-4, +4]  p 0.985  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0108 [+0.0061, +0.0161]  +3.6% [+2, +5]  p 4.77e-05  price 0.0000
+   pooled_all_cells       gain +0.0084 [+0.0048, +0.0124]  +3.7% [+2, +5]  p 4.77e-05  price 0.0000
+-- mag_double: LCB2 (seeds 7-11 pooled gains: PM -0.0152, LCB1 +0.0200, LCB2 +0.0277)
+   0.05sigma_from_trial_1 gain +0.0008 [-0.0007, +0.0021]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.147  price 0.0000
+   0.05sigma_from_trial_21 gain -0.0007 [-0.0026, +0.0009]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.658  price 0.0000
+   0.25sigma_from_trial_1 gain -0.0040 [-0.0185, +0.0079]  no share (reference negative on 2 of 20 landscapes)  p 1  price 0.0000
+   0.25sigma_from_trial_21 gain -0.0045 [-0.0206, +0.0094]  no share (reference negative on 1 of 20 landscapes)  p 0.809  price 0.0000
+   1sigma_from_trial_1    gain +0.0089 [-0.0330, +0.0440]  +3.4% [-13, +17]  p 0.33  price 0.0000
+   1sigma_from_trial_21   gain +0.0013 [-0.0350, +0.0311]  +0.9% [-22, +22]  p 0.409  price 0.0000
+   5sigma_from_trial_1    gain +0.0912 [+0.0415, +0.1485]  +12.1% [+6, +19]  p 0.00315  price 0.0000
+   5sigma_from_trial_21   gain +0.1277 [+0.0645, +0.2005]  +23.0% [+13, +32]  p 0.000395  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0368 [+0.0070, +0.0683]  +12.3% [+2, +22]  p 0.0215  price 0.0000
+   pooled_all_cells       gain +0.0276 [+0.0051, +0.0513]  +12.2% [+2, +21]  p 0.0215  price 0.0000
+-- retest3: LCB2 (seeds 7-11 pooled gains: PM -0.0030, LCB1 +0.0122, LCB2 +0.0190)
+   0.05sigma_from_trial_1 gain +0.0016 [+0.0007, +0.0029]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00748  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0009 [+0.0002, +0.0017]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0312  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0062 [+0.0013, +0.0111]  no share (reference negative on 2 of 20 landscapes)  p 0.00315  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0057 [+0.0015, +0.0100]  no share (reference negative on 1 of 20 landscapes)  p 0.04  price 0.0000
+   1sigma_from_trial_1    gain +0.0229 [+0.0067, +0.0384]  +8.8% [+2, +15]  p 0.0215  price 0.0000
+   1sigma_from_trial_21   gain +0.0136 [-0.0035, +0.0281]  +9.1% [-1, +19]  p 0.0973  price 0.0000
+   5sigma_from_trial_1    gain +0.0619 [+0.0310, +0.0965]  +8.2% [+4, +12]  p 0.00102  price 0.0000
+   5sigma_from_trial_21   gain +0.0505 [+0.0154, +0.0880]  +9.1% [+3, +14]  p 0.00199  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0268 [+0.0131, +0.0413]  +9.0% [+5, +13]  p 0.00233  price 0.0000
+   pooled_all_cells       gain +0.0204 [+0.0100, +0.0314]  +9.1% [+5, +13]  p 0.00199  price 0.0000
+-- cusum: LCB2 (seeds 7-11 pooled gains: PM +0.0206, LCB1 +0.0384, LCB2 +0.0440)
+   0.05sigma_from_trial_1 gain +0.0017 [+0.0008, +0.0027]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00485  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0010 [+0.0002, +0.0018]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.091  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0061 [+0.0007, +0.0112]  no share (reference negative on 2 of 20 landscapes)  p 0.0328  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0078 [+0.0032, +0.0127]  no share (reference negative on 1 of 20 landscapes)  p 0.00639  price 0.0000
+   1sigma_from_trial_1    gain +0.0260 [+0.0037, +0.0462]  +9.9% [+1, +18]  p 0.0441  price 0.0000
+   1sigma_from_trial_21   gain -0.0011 [-0.0145, +0.0106]  -0.8% [-9, +8]  p 0.701  price 0.0000
+   5sigma_from_trial_1    gain +0.0771 [+0.0407, +0.1189]  +10.2% [+6, +15]  p 0.00102  price 0.0000
+   5sigma_from_trial_21   gain +0.2610 [+0.1726, +0.3617]  +46.9% [+34, +59]  p 9.54e-06  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0628 [+0.0383, +0.0888]  +21.0% [+14, +28]  p 0.000168  price 0.0000
+   pooled_all_cells       gain +0.0474 [+0.0289, +0.0670]  +21.1% [+14, +28]  p 0.000168  price 0.0000
+-- retest3_cusum: LCB2 (seeds 7-11 pooled gains: PM +0.0113, LCB1 +0.0268, LCB2 +0.0340)
+   0.05sigma_from_trial_1 gain +0.0017 [+0.0007, +0.0029]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.00748  price 0.0000
+   0.05sigma_from_trial_21 gain +0.0010 [+0.0002, +0.0018]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0312  price 0.0000
+   0.25sigma_from_trial_1 gain +0.0062 [+0.0012, +0.0111]  no share (reference negative on 2 of 20 landscapes)  p 0.00558  price 0.0000
+   0.25sigma_from_trial_21 gain +0.0056 [+0.0013, +0.0101]  no share (reference negative on 1 of 20 landscapes)  p 0.0441  price 0.0000
+   1sigma_from_trial_1    gain +0.0202 [+0.0043, +0.0357]  +7.7% [+1, +14]  p 0.0362  price 0.0000
+   1sigma_from_trial_21   gain -0.0026 [-0.0142, +0.0075]  -1.8% [-9, +6]  p 0.648  price 0.0000
+   5sigma_from_trial_1    gain +0.0590 [+0.0284, +0.0911]  +7.8% [+4, +12]  p 0.00271  price 0.0000
+   5sigma_from_trial_21   gain +0.1965 [+0.1279, +0.2745]  +35.3% [+25, +45]  p 3.81e-06  price 0.0000
+   pooled_ge_0.25sigma    gain +0.0475 [+0.0288, +0.0678]  +15.9% [+10, +21]  p 0.000105  price 0.0000
+   pooled_all_cells       gain +0.0359 [+0.0219, +0.0512]  +16.0% [+10, +22]  p 0.000105  price 0.0000
+-- inside_random: LCB2 (seeds 7-11 pooled gains: PM -0.0060, LCB1 +0.0121, LCB2 +0.0188)
+   0.05sigma_from_trial_1 gain -0.0019 [-0.0048, +0.0007]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.452  price 0.0022
+   0.05sigma_from_trial_21 gain -0.0032 [-0.0082, +0.0004]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.314  price 0.0022
+   0.25sigma_from_trial_1 gain -0.0010 [-0.0067, +0.0046]  no share (reference negative on 2 of 20 landscapes)  p 0.869  price 0.0022
+   0.25sigma_from_trial_21 gain +0.0022 [-0.0047, +0.0090]  no share (reference negative on 1 of 20 landscapes)  p 0.388  price 0.0022
+   1sigma_from_trial_1    gain +0.0163 [-0.0043, +0.0351]  +6.2% [-2, +14]  p 0.189  price 0.0022
+   1sigma_from_trial_21   gain +0.0169 [-0.0002, +0.0327]  +11.4% [+0, +22]  p 0.0759  price 0.0022
+   5sigma_from_trial_1    gain +0.0607 [+0.0288, +0.0949]  +8.1% [+4, +12]  p 0.00365  price 0.0022
+   5sigma_from_trial_21   gain +0.0834 [+0.0414, +0.1326]  +15.0% [+9, +21]  p 0.000586  price 0.0022
+   pooled_ge_0.25sigma    gain +0.0297 [+0.0126, +0.0477]  +9.9% [+5, +15]  p 0.00422  price 0.0022
+   pooled_all_cells       gain +0.0217 [+0.0083, +0.0358]  +9.6% [+4, +15]  p 0.00639  price 0.0022
+-- inside_top: LCB2 (seeds 7-11 pooled gains: PM -0.0032, LCB1 +0.0172, LCB2 +0.0230)
+   0.05sigma_from_trial_1 gain -0.0021 [-0.0049, +0.0004]  no share (reference 0.0049 below 0.01; reference negative on 6 of 20 landscapes)  p 0.376  price 0.0022
+   0.05sigma_from_trial_21 gain -0.0027 [-0.0077, +0.0009]  no share (reference 0.0034 below 0.01; reference negative on 4 of 20 landscapes)  p 0.717  price 0.0022
+   0.25sigma_from_trial_1 gain +0.0029 [-0.0031, +0.0095]  no share (reference negative on 2 of 20 landscapes)  p 0.475  price 0.0022
+   0.25sigma_from_trial_21 gain +0.0025 [-0.0048, +0.0092]  no share (reference negative on 1 of 20 landscapes)  p 0.349  price 0.0022
+   1sigma_from_trial_1    gain +0.0217 [+0.0024, +0.0414]  +8.3% [+0, +16]  p 0.0826  price 0.0022
+   1sigma_from_trial_21   gain +0.0177 [+0.0038, +0.0305]  +11.9% [+3, +21]  p 0.0266  price 0.0022
+   5sigma_from_trial_1    gain +0.0714 [+0.0372, +0.1128]  +9.5% [+5, +15]  p 0.000395  price 0.0022
+   5sigma_from_trial_21   gain +0.0908 [+0.0511, +0.1366]  +16.3% [+10, +22]  p 0.000105  price 0.0022
+   pooled_ge_0.25sigma    gain +0.0345 [+0.0187, +0.0518]  +11.5% [+6, +16]  p 0.00121  price 0.0022
+   pooled_all_cells       gain +0.0253 [+0.0130, +0.0386]  +11.2% [+6, +16]  p 0.00143  price 0.0022
+   inside the budget, seeds 7-11 choose inside_top with LCB2 (pooled gains over the eight cells at each one's rule: inside_random +0.0188, inside_top +0.0230)
+   outside the budget, seeds 7-11 choose retest3_cusum with LCB2 (pooled gains over the eight cells at each one's rule: retest3 +0.0190, retest3_cusum +0.0340)
+
+== 4. Small error: the 0.05 and 0.25 sigma cells, four processes, every rule (seeds 12-16 and 7-16)
+   seeds 12-16 0.05sigma_from_trial_1   (PM/LCB1/LCB2) learned -0.0218/-0.0216/-0.0207  mag +0.0013/+0.0016/+0.0017  mag_onset +0.0013/+0.0016/+0.0017  retest3 +0.0012/+0.0014/+0.0016  retest3_cusum +0.0012/+0.0015/+0.0017  inside_random -0.0024/-0.0022/-0.0019  inside_top -0.0023/-0.0021/-0.0021
+   seeds 12-16 0.05sigma_from_trial_21  (PM/LCB1/LCB2) learned -0.0182/-0.0169/-0.0181  mag +0.0012/+0.0012/+0.0010  mag_onset +0.0014/+0.0020/+0.0021  retest3 +0.0009/+0.0010/+0.0009  retest3_cusum +0.0009/+0.0010/+0.0010  inside_random -0.0037/-0.0034/-0.0032  inside_top -0.0029/-0.0028/-0.0027
+   seeds 12-16 0.25sigma_from_trial_1   (PM/LCB1/LCB2) learned -0.0148/-0.0127/-0.0093  mag +0.0059/+0.0070/+0.0063  mag_onset +0.0059/+0.0070/+0.0063  retest3 +0.0033/+0.0052/+0.0062  retest3_cusum +0.0033/+0.0052/+0.0062  inside_random -0.0011/-0.0002/-0.0010  inside_top +0.0009/+0.0023/+0.0029
+   seeds 12-16 0.25sigma_from_trial_21  (PM/LCB1/LCB2) learned -0.0140/-0.0102/-0.0090  mag +0.0058/+0.0076/+0.0079  mag_onset +0.0087/+0.0112/+0.0122  retest3 +0.0024/+0.0047/+0.0057  retest3_cusum +0.0024/+0.0048/+0.0056  inside_random -0.0006/+0.0015/+0.0022  inside_top +0.0012/+0.0029/+0.0025
+   seeds 7-16 0.05sigma_from_trial_1   (PM/LCB1/LCB2) learned -0.0249/-0.0245/-0.0244  mag +0.0012/+0.0014/+0.0013  mag_onset +0.0012/+0.0014/+0.0013  retest3 +0.0009/+0.0012/+0.0014  retest3_cusum +0.0009/+0.0012/+0.0014  inside_random -0.0028/-0.0026/-0.0023  inside_top -0.0024/-0.0022/-0.0022
+   seeds 7-16 0.05sigma_from_trial_21  (PM/LCB1/LCB2) learned -0.0218/-0.0211/-0.0204  mag +0.0011/+0.0011/+0.0011  mag_onset +0.0015/+0.0021/+0.0024  retest3 +0.0008/+0.0009/+0.0010  retest3_cusum +0.0008/+0.0009/+0.0010  inside_random -0.0029/-0.0027/-0.0026  inside_top -0.0023/-0.0021/-0.0020
+   seeds 7-16 0.25sigma_from_trial_1   (PM/LCB1/LCB2) learned -0.0123/-0.0105/-0.0087  mag +0.0052/+0.0071/+0.0064  mag_onset +0.0052/+0.0071/+0.0064  retest3 +0.0025/+0.0044/+0.0046  retest3_cusum +0.0025/+0.0042/+0.0043  inside_random -0.0008/+0.0000/-0.0005  inside_top +0.0004/+0.0015/+0.0024
+   seeds 7-16 0.25sigma_from_trial_21  (PM/LCB1/LCB2) learned -0.0158/-0.0118/-0.0105  mag +0.0048/+0.0062/+0.0063  mag_onset +0.0088/+0.0114/+0.0129  retest3 +0.0022/+0.0046/+0.0049  retest3_cusum +0.0018/+0.0042/+0.0044  inside_random +0.0017/+0.0033/+0.0040  inside_top +0.0024/+0.0041/+0.0040
+
+== 5. Gaussian error, LogEI and qNEI: held out and untouched
+-- 1sigma_from_trial_1
+   seeds 7-11  learned       LCB1 gain +0.0119 [-0.0100, +0.0344]  +4.7% [-4, +13]  p 0.368  gaining 13/20  price 0.0233
+   seeds 7-11  learned       LCB2 gain +0.0133 [-0.0063, +0.0346]  +5.3% [-2, +14]  p 0.368  gaining 11/20  price 0.0200
+   seeds 7-11  mag           LCB1 gain +0.0254 [-0.0032, +0.0553]  +10.1% [-1, +22]  p 0.114  gaining 14/20  price 0.0000  vs learned +0.0135 [-0.0020, +0.0284] p 0.0583
+   seeds 7-11  mag           LCB2 gain +0.0269 [+0.0032, +0.0538]  +10.7% [+1, +22]  p 0.0759  gaining 14/20  price 0.0000  vs learned +0.0136 [+0.0038, +0.0242] p 0.0107
+   seeds 7-11  mag_onset     LCB1 gain +0.0254 [-0.0032, +0.0553]  +10.1% [-1, +22]  p 0.114  gaining 14/20  price 0.0000  vs learned +0.0135 [-0.0020, +0.0284] p 0.0583
+   seeds 7-11  mag_onset     LCB2 gain +0.0269 [+0.0032, +0.0538]  +10.7% [+1, +22]  p 0.0759  gaining 14/20  price 0.0000  vs learned +0.0136 [+0.0038, +0.0242] p 0.0107
+   seeds 7-11  retest3       LCB1 gain +0.0199 [+0.0010, +0.0366]  +7.9% [+1, +15]  p 0.0484  gaining 15/20  price 0.0000  vs learned +0.0080 [-0.0047, +0.0213] p 0.522
+   seeds 7-11  retest3       LCB2 gain +0.0186 [+0.0029, +0.0344]  +7.4% [+1, +14]  p 0.0362  gaining 14/20  price 0.0000  vs learned +0.0053 [-0.0086, +0.0195] p 0.294
+   seeds 7-11  inside_random LCB1 gain +0.0251 [+0.0038, +0.0473]  +10.0% [+1, +19]  p 0.024  gaining 14/20  price 0.0023  vs learned +0.0132 [+0.0014, +0.0261] p 0.04
+   seeds 7-11  inside_random LCB2 gain +0.0191 [-0.0015, +0.0388]  +7.6% [-1, +16]  p 0.0826  gaining 14/20  price 0.0023  vs learned +0.0058 [-0.0067, +0.0181] p 0.546
+   seeds 7-11  inside_top    LCB1 gain +0.0186 [-0.0056, +0.0442]  +7.4% [-2, +18]  p 0.216  gaining 12/20  price 0.0023  vs learned +0.0067 [-0.0048, +0.0183] p 0.368
+   seeds 7-11  inside_top    LCB2 gain +0.0138 [-0.0076, +0.0363]  +5.5% [-3, +15]  p 0.312  gaining 12/20  price 0.0023  vs learned +0.0005 [-0.0098, +0.0123] p 0.784
+   seeds 12-16 learned       LCB1 gain +0.0344 [+0.0031, +0.0639]  +12.4% [+2, +22]  p 0.0328  gaining 13/20  price 0.0211
+   seeds 12-16 learned       LCB2 gain +0.0287 [-0.0025, +0.0582]  +10.3% [-1, +20]  p 0.0637  gaining 12/20  price 0.0231
+   seeds 12-16 mag           LCB1 gain +0.0369 [+0.0086, +0.0615]  +13.3% [+4, +22]  p 0.0192  gaining 15/20  price 0.0000  vs learned +0.0025 [-0.0141, +0.0183] p 0.355
+   seeds 12-16 mag           LCB2 gain +0.0374 [+0.0105, +0.0612]  +13.5% [+5, +22]  p 0.00944  gaining 15/20  price 0.0000  vs learned +0.0087 [-0.0077, +0.0285] p 0.314
+   seeds 12-16 mag_onset     LCB1 gain +0.0369 [+0.0086, +0.0615]  +13.3% [+4, +22]  p 0.0192  gaining 15/20  price 0.0000  vs learned +0.0025 [-0.0141, +0.0183] p 0.355
+   seeds 12-16 mag_onset     LCB2 gain +0.0374 [+0.0105, +0.0612]  +13.5% [+5, +22]  p 0.00944  gaining 15/20  price 0.0000  vs learned +0.0087 [-0.0077, +0.0285] p 0.314
+   seeds 12-16 retest3       LCB1 gain +0.0343 [+0.0106, +0.0570]  +12.4% [+4, +21]  p 0.0136  gaining 14/20  price 0.0000  vs learned -0.0001 [-0.0194, +0.0213] p 0.841
+   seeds 12-16 retest3       LCB2 gain +0.0332 [+0.0111, +0.0545]  +12.0% [+4, +20]  p 0.0136  gaining 14/20  price 0.0000  vs learned +0.0045 [-0.0135, +0.0263] p 0.841
+   seeds 12-16 inside_random LCB1 gain +0.0131 [-0.0172, +0.0414]  +4.7% [-7, +15]  p 0.294  gaining 13/20  price 0.0022  vs learned -0.0214 [-0.0406, -0.0007] p 0.04
+   seeds 12-16 inside_random LCB2 gain +0.0064 [-0.0254, +0.0354]  +2.3% [-10, +13]  p 0.368  gaining 12/20  price 0.0022  vs learned -0.0223 [-0.0443, +0.0002] p 0.0296
+   seeds 12-16 inside_top    LCB1 gain +0.0190 [-0.0067, +0.0426]  +6.8% [-3, +15]  p 0.277  gaining 10/20  price 0.0022  vs learned -0.0154 [-0.0409, +0.0124] p 0.216
+   seeds 12-16 inside_top    LCB2 gain +0.0235 [-0.0016, +0.0490]  +8.5% [-1, +17]  p 0.123  gaining 11/20  price 0.0022  vs learned -0.0052 [-0.0271, +0.0194] p 0.312
+   seeds 27-36 learned       LCB1 gain +0.0357 [+0.0114, +0.0565]  +13.7% [+5, +21]  p 0.0153  gaining 14/20  price 0.0210
+   seeds 27-36 learned       LCB2 gain +0.0298 [+0.0054, +0.0507]  +11.4% [+2, +19]  p 0.0192  gaining 15/20  price 0.0225
+   seeds 27-36 mag           LCB1 gain +0.0455 [+0.0245, +0.0631]  +17.4% [+10, +23]  p 0.000851  gaining 17/20  price 0.0000  vs learned +0.0098 [-0.0011, +0.0229] p 0.154
+   seeds 27-36 mag           LCB2 gain +0.0387 [+0.0156, +0.0569]  +14.8% [+6, +21]  p 0.00199  gaining 17/20  price 0.0000  vs learned +0.0089 [+0.0006, +0.0185] p 0.0532
+   seeds 27-36 mag_onset     LCB1 gain +0.0455 [+0.0245, +0.0631]  +17.4% [+10, +23]  p 0.000851  gaining 17/20  price 0.0000  vs learned +0.0098 [-0.0011, +0.0229] p 0.154
+   seeds 27-36 mag_onset     LCB2 gain +0.0387 [+0.0156, +0.0569]  +14.8% [+6, +21]  p 0.00199  gaining 17/20  price 0.0000  vs learned +0.0089 [+0.0006, +0.0185] p 0.0532
+   seeds 27-36 retest3       LCB1 gain +0.0257 [+0.0073, +0.0436]  +9.8% [+3, +16]  p 0.024  gaining 13/20  price 0.0000  vs learned -0.0100 [-0.0289, +0.0065] p 0.43
+   seeds 27-36 retest3       LCB2 gain +0.0271 [+0.0089, +0.0448]  +10.4% [+3, +17]  p 0.0107  gaining 15/20  price 0.0000  vs learned -0.0027 [-0.0156, +0.0103] p 0.571
+   seeds 27-36 inside_random LCB1 gain +0.0167 [-0.0047, +0.0363]  +6.4% [-2, +14]  p 0.189  gaining 13/20  price 0.0072  vs learned -0.0190 [-0.0296, -0.0089] p 0.00143
+   seeds 27-36 inside_random LCB2 gain +0.0182 [+0.0015, +0.0343]  +7.0% [+0, +13]  p 0.0484  gaining 13/20  price 0.0072  vs learned -0.0116 [-0.0225, +0.0006] p 0.0172
+   seeds 27-36 inside_top    LCB1 gain +0.0259 [+0.0090, +0.0422]  +9.9% [+3, +16]  p 0.0121  gaining 15/20  price 0.0072  vs learned -0.0098 [-0.0204, +0.0006] p 0.105
+   seeds 27-36 inside_top    LCB2 gain +0.0288 [+0.0104, +0.0461]  +11.0% [+4, +18]  p 0.00944  gaining 15/20  price 0.0072  vs learned -0.0010 [-0.0107, +0.0104] p 0.388
+-- 1sigma_from_trial_21
+   seeds 7-11  learned       LCB1 gain +0.0155 [-0.0111, +0.0379]  +11.8% [-7, +30]  p 0.133  gaining 13/20  price 0.0233
+   seeds 7-11  learned       LCB2 gain +0.0149 [-0.0090, +0.0341]  +11.4% [-6, +28]  p 0.0696  gaining 16/20  price 0.0200
+   seeds 7-11  mag           LCB1 gain +0.0229 [+0.0026, +0.0412]  +17.5% [+2, +33]  p 0.024  gaining 16/20  price 0.0000  vs learned +0.0074 [-0.0067, +0.0262] p 0.398
+   seeds 7-11  mag           LCB2 gain +0.0164 [-0.0044, +0.0332]  +12.5% [-3, +28]  p 0.0637  gaining 16/20  price 0.0000  vs learned +0.0015 [-0.0169, +0.0217] p 0.968
+   seeds 7-11  mag_onset     LCB1 gain +0.0719 [+0.0473, +0.0972]  +55.0% [+38, +73]  p 1.91e-05  gaining 19/20  price 0.0000  vs learned +0.0564 [+0.0392, +0.0746] p 0.000132
+   seeds 7-11  mag_onset     LCB2 gain +0.0803 [+0.0570, +0.1053]  +61.4% [+46, +78]  p 1.34e-05  gaining 18/20  price 0.0000  vs learned +0.0654 [+0.0419, +0.0913] p 0.000214
+   seeds 7-11  retest3       LCB1 gain +0.0212 [+0.0056, +0.0364]  +16.2% [+5, +28]  p 0.0242  gaining 13/20  price 0.0000  vs learned +0.0057 [-0.0084, +0.0208] p 0.756
+   seeds 7-11  retest3       LCB2 gain +0.0200 [+0.0043, +0.0352]  +15.3% [+4, +28]  p 0.0218  gaining 13/20  price 0.0000  vs learned +0.0051 [-0.0076, +0.0191] p 0.596
+   seeds 7-11  inside_random LCB1 gain +0.0115 [-0.0098, +0.0288]  +8.8% [-7, +22]  p 0.105  gaining 13/20  price 0.0023  vs learned -0.0040 [-0.0276, +0.0197] p 0.421
+   seeds 7-11  inside_random LCB2 gain +0.0120 [-0.0068, +0.0276]  +9.2% [-5, +21]  p 0.0583  gaining 13/20  price 0.0023  vs learned -0.0029 [-0.0230, +0.0176] p 0.43
+   seeds 7-11  inside_top    LCB1 gain +0.0088 [-0.0047, +0.0212]  +6.7% [-5, +17]  p 0.0826  gaining 15/20  price 0.0023  vs learned -0.0067 [-0.0292, +0.0185] p 0.231
+   seeds 7-11  inside_top    LCB2 gain +0.0085 [-0.0074, +0.0227]  +6.5% [-7, +17]  p 0.165  gaining 15/20  price 0.0023  vs learned -0.0064 [-0.0294, +0.0171] p 0.546
+   seeds 12-16 learned       LCB1 gain +0.0244 [-0.0055, +0.0538]  +19.6% [-4, +39]  p 0.165  gaining 15/20  price 0.0211
+   seeds 12-16 learned       LCB2 gain +0.0302 [+0.0018, +0.0574]  +24.2% [+2, +42]  p 0.0637  gaining 15/20  price 0.0231
+   seeds 12-16 mag           LCB1 gain +0.0232 [-0.0104, +0.0576]  +18.6% [-7, +41]  p 0.277  gaining 13/20  price 0.0000  vs learned -0.0012 [-0.0209, +0.0153] p 0.809
+   seeds 12-16 mag           LCB2 gain +0.0256 [-0.0072, +0.0581]  +20.5% [-5, +42]  p 0.154  gaining 14/20  price 0.0000  vs learned -0.0046 [-0.0194, +0.0065] p 0.629
+   seeds 12-16 mag_onset     LCB1 gain +0.0687 [+0.0386, +0.1049]  +55.1% [+35, +74]  p 0.000105  gaining 17/20  price 0.0000  vs learned +0.0443 [+0.0269, +0.0647] p 0.000105
+   seeds 12-16 mag_onset     LCB2 gain +0.0628 [+0.0313, +0.0995]  +50.4% [+28, +71]  p 0.000851  gaining 16/20  price 0.0000  vs learned +0.0326 [+0.0158, +0.0504] p 0.000395
+   seeds 12-16 retest3       LCB1 gain +0.0229 [-0.0073, +0.0535]  +18.4% [-4, +37]  p 0.133  gaining 14/20  price 0.0000  vs learned -0.0014 [-0.0163, +0.0125] p 0.546
+   seeds 12-16 retest3       LCB2 gain +0.0241 [-0.0063, +0.0538]  +19.3% [-4, +38]  p 0.0826  gaining 14/20  price 0.0000  vs learned -0.0061 [-0.0173, +0.0043] p 0.171
+   seeds 12-16 inside_random LCB1 gain +0.0288 [+0.0046, +0.0569]  +23.1% [+4, +41]  p 0.024  gaining 16/20  price 0.0022  vs learned +0.0044 [-0.0092, +0.0208] p 0.898
+   seeds 12-16 inside_random LCB2 gain +0.0283 [+0.0040, +0.0544]  +22.7% [+3, +39]  p 0.0484  gaining 14/20  price 0.0022  vs learned -0.0020 [-0.0118, +0.0079] p 0.498
+   seeds 12-16 inside_top    LCB1 gain +0.0236 [-0.0042, +0.0519]  +19.0% [-2, +38]  p 0.0973  gaining 15/20  price 0.0022  vs learned -0.0007 [-0.0096, +0.0082] p 0.756
+   seeds 12-16 inside_top    LCB2 gain +0.0294 [+0.0034, +0.0561]  +23.6% [+4, +41]  p 0.0362  gaining 16/20  price 0.0022  vs learned -0.0008 [-0.0122, +0.0123] p 0.277
+   seeds 27-36 learned       LCB1 gain +0.0219 [-0.0021, +0.0422]  +16.2% [-1, +34]  p 0.0637  gaining 14/20  price 0.0210
+   seeds 27-36 learned       LCB2 gain +0.0222 [+0.0004, +0.0414]  +16.4% [+1, +34]  p 0.0637  gaining 14/20  price 0.0225
+   seeds 27-36 mag           LCB1 gain +0.0294 [+0.0097, +0.0488]  +21.8% [+6, +36]  p 0.00558  gaining 15/20  price 0.0000  vs learned +0.0076 [-0.0067, +0.0243] p 0.571
+   seeds 27-36 mag           LCB2 gain +0.0295 [+0.0072, +0.0506]  +21.9% [+5, +38]  p 0.0121  gaining 15/20  price 0.0000  vs learned +0.0073 [-0.0057, +0.0218] p 0.0759
+   seeds 27-36 mag_onset     LCB1 gain +0.0796 [+0.0583, +0.1020]  +59.0% [+45, +74]  p 3.81e-06  gaining 19/20  price 0.0000  vs learned +0.0578 [+0.0366, +0.0841] p 1.91e-05
+   seeds 27-36 mag_onset     LCB2 gain +0.0790 [+0.0555, +0.1044]  +58.6% [+42, +75]  p 1.91e-05  gaining 19/20  price 0.0000  vs learned +0.0568 [+0.0357, +0.0805] p 9.54e-06
+   seeds 27-36 retest3       LCB1 gain +0.0261 [+0.0094, +0.0423]  +19.3% [+7, +33]  p 0.00558  gaining 16/20  price 0.0000  vs learned +0.0042 [-0.0063, +0.0156] p 0.546
+   seeds 27-36 retest3       LCB2 gain +0.0272 [+0.0068, +0.0477]  +20.2% [+4, +36]  p 0.0328  gaining 13/20  price 0.0000  vs learned +0.0050 [-0.0078, +0.0175] p 0.409
+   seeds 27-36 inside_random LCB1 gain +0.0248 [+0.0095, +0.0406]  +18.3% [+7, +30]  p 0.00486  gaining 16/20  price 0.0072  vs learned +0.0029 [-0.0113, +0.0192] p 0.956
+   seeds 27-36 inside_random LCB2 gain +0.0253 [+0.0046, +0.0447]  +18.8% [+3, +32]  p 0.00944  gaining 16/20  price 0.0072  vs learned +0.0031 [-0.0136, +0.0217] p 0.841
+   seeds 27-36 inside_top    LCB1 gain +0.0245 [+0.0086, +0.0405]  +18.1% [+5, +30]  p 0.0121  gaining 14/20  price 0.0072  vs learned +0.0026 [-0.0123, +0.0203] p 0.756
+   seeds 27-36 inside_top    LCB2 gain +0.0236 [+0.0063, +0.0410]  +17.5% [+4, +30]  p 0.00831  gaining 16/20  price 0.0072  vs learned +0.0014 [-0.0121, +0.0170] p 0.596
+-- 5sigma_from_trial_1
+   seeds 7-11  learned       LCB1 gain +0.1078 [+0.0314, +0.2053]  +15.0% [+5, +28]  p 0.0266  gaining 12/20  price 0.0233
+   seeds 7-11  learned       LCB2 gain +0.0994 [+0.0294, +0.1929]  +13.9% [+5, +26]  p 0.00944  gaining 15/20  price 0.0200
+   seeds 7-11  mag           LCB1 gain +0.0973 [+0.0191, +0.1984]  +13.6% [+3, +26]  p 0.0266  gaining 12/20  price 0.0000  vs learned -0.0105 [-0.0338, +0.0123] p 0.409
+   seeds 7-11  mag           LCB2 gain +0.1059 [+0.0215, +0.2076]  +14.8% [+4, +27]  p 0.0362  gaining 15/20  price 0.0000  vs learned +0.0065 [-0.0265, +0.0372] p 0.596
+   seeds 7-11  mag_onset     LCB1 gain +0.0973 [+0.0191, +0.1984]  +13.6% [+3, +26]  p 0.0266  gaining 12/20  price 0.0000  vs learned -0.0105 [-0.0338, +0.0123] p 0.409
+   seeds 7-11  mag_onset     LCB2 gain +0.1059 [+0.0215, +0.2076]  +14.8% [+4, +27]  p 0.0362  gaining 15/20  price 0.0000  vs learned +0.0065 [-0.0265, +0.0372] p 0.596
+   seeds 7-11  retest3       LCB1 gain +0.0870 [+0.0105, +0.1890]  +12.2% [+1, +25]  p 0.143  gaining 10/20  price 0.0000  vs learned -0.0208 [-0.0395, -0.0015] p 0.0484
+   seeds 7-11  retest3       LCB2 gain +0.0908 [-0.0004, +0.1984]  +12.7% [+1, +26]  p 0.133  gaining 12/20  price 0.0000  vs learned -0.0086 [-0.0397, +0.0251] p 0.571
+   seeds 7-11  inside_random LCB1 gain +0.0888 [+0.0112, +0.1880]  +12.4% [+2, +25]  p 0.0484  gaining 14/20  price 0.0023  vs learned -0.0191 [-0.0583, +0.0168] p 0.43
+   seeds 7-11  inside_random LCB2 gain +0.0740 [-0.0033, +0.1671]  +10.3% [-0, +22]  p 0.0973  gaining 14/20  price 0.0023  vs learned -0.0254 [-0.0669, +0.0065] p 0.452
+   seeds 7-11  inside_top    LCB1 gain +0.0339 [-0.0399, +0.1087]  +4.7% [-6, +15]  p 0.277  gaining 13/20  price 0.0023  vs learned -0.0739 [-0.1407, -0.0123] p 0.04
+   seeds 7-11  inside_top    LCB2 gain +0.0371 [-0.0281, +0.1135]  +5.2% [-4, +15]  p 0.312  gaining 12/20  price 0.0023  vs learned -0.0623 [-0.1174, -0.0079] p 0.0362
+   seeds 12-16 learned       LCB1 gain +0.0449 [-0.0199, +0.1128]  +6.1% [-3, +14]  p 0.216  gaining 11/20  price 0.0211
+   seeds 12-16 learned       LCB2 gain +0.0600 [+0.0094, +0.1153]  +8.1% [+2, +15]  p 0.105  gaining 12/20  price 0.0231
+   seeds 12-16 mag           LCB1 gain +0.0818 [+0.0207, +0.1462]  +11.0% [+3, +19]  p 0.0637  gaining 12/20  price 0.0000  vs learned +0.0368 [-0.0078, +0.0798] p 0.123
+   seeds 12-16 mag           LCB2 gain +0.0984 [+0.0406, +0.1624]  +13.2% [+6, +21]  p 0.00233  gaining 17/20  price 0.0000  vs learned +0.0384 [+0.0084, +0.0713] p 0.0532
+   seeds 12-16 mag_onset     LCB1 gain +0.0818 [+0.0207, +0.1462]  +11.0% [+3, +19]  p 0.0637  gaining 12/20  price 0.0000  vs learned +0.0368 [-0.0078, +0.0798] p 0.123
+   seeds 12-16 mag_onset     LCB2 gain +0.0984 [+0.0406, +0.1624]  +13.2% [+6, +21]  p 0.00233  gaining 17/20  price 0.0000  vs learned +0.0384 [+0.0084, +0.0713] p 0.0532
+   seeds 12-16 retest3       LCB1 gain +0.0745 [+0.0188, +0.1350]  +10.0% [+3, +18]  p 0.0136  gaining 14/20  price 0.0000  vs learned +0.0296 [-0.0012, +0.0586] p 0.0153
+   seeds 12-16 retest3       LCB2 gain +0.0803 [+0.0341, +0.1281]  +10.8% [+5, +16]  p 0.00233  gaining 15/20  price 0.0000  vs learned +0.0204 [-0.0066, +0.0458] p 0.0897
+   seeds 12-16 inside_random LCB1 gain +0.0631 [-0.0029, +0.1378]  +8.5% [-0, +18]  p 0.177  gaining 13/20  price 0.0022  vs learned +0.0182 [-0.0288, +0.0654] p 0.409
+   seeds 12-16 inside_random LCB2 gain +0.0784 [+0.0030, +0.1569]  +10.6% [+1, +20]  p 0.0696  gaining 14/20  price 0.0022  vs learned +0.0184 [-0.0146, +0.0528] p 0.177
+   seeds 12-16 inside_top    LCB1 gain +0.1011 [+0.0379, +0.1759]  +13.6% [+6, +23]  p 0.00944  gaining 14/20  price 0.0022  vs learned +0.0561 [+0.0067, +0.1079] p 0.0532
+   seeds 12-16 inside_top    LCB2 gain +0.1001 [+0.0457, +0.1620]  +13.5% [+6, +21]  p 0.00199  gaining 15/20  price 0.0022  vs learned +0.0401 [+0.0085, +0.0745] p 0.0121
+   seeds 27-36 learned       LCB1 gain +0.0418 [-0.0162, +0.1045]  +5.6% [-2, +14]  p 0.409  gaining 9/20  price 0.0210
+   seeds 27-36 learned       LCB2 gain +0.0562 [+0.0010, +0.1110]  +7.5% [+1, +14]  p 0.0759  gaining 13/20  price 0.0225
+   seeds 27-36 mag           LCB1 gain +0.0522 [-0.0102, +0.1172]  +7.0% [-1, +15]  p 0.189  gaining 12/20  price 0.0000  vs learned +0.0104 [-0.0071, +0.0291] p 0.498
+   seeds 27-36 mag           LCB2 gain +0.0786 [+0.0193, +0.1436]  +10.6% [+3, +19]  p 0.04  gaining 14/20  price 0.0000  vs learned +0.0225 [-0.0015, +0.0541] p 0.368
+   seeds 27-36 mag_onset     LCB1 gain +0.0522 [-0.0102, +0.1172]  +7.0% [-1, +15]  p 0.189  gaining 12/20  price 0.0000  vs learned +0.0104 [-0.0071, +0.0291] p 0.498
+   seeds 27-36 mag_onset     LCB2 gain +0.0786 [+0.0193, +0.1436]  +10.6% [+3, +19]  p 0.04  gaining 14/20  price 0.0000  vs learned +0.0225 [-0.0015, +0.0541] p 0.368
+   seeds 27-36 retest3       LCB1 gain +0.0339 [-0.0116, +0.0801]  +4.5% [-1, +11]  p 0.154  gaining 13/20  price 0.0000  vs learned -0.0079 [-0.0450, +0.0280] p 0.571
+   seeds 27-36 retest3       LCB2 gain +0.0546 [+0.0154, +0.0959]  +7.3% [+3, +12]  p 0.0215  gaining 14/20  price 0.0000  vs learned -0.0015 [-0.0390, +0.0336] p 0.869
+   seeds 27-36 inside_random LCB1 gain +0.0734 [+0.0299, +0.1264]  +9.9% [+4, +17]  p 0.00365  gaining 15/20  price 0.0072  vs learned +0.0316 [-0.0120, +0.0783] p 0.33
+   seeds 27-36 inside_random LCB2 gain +0.0588 [+0.0196, +0.1030]  +7.9% [+3, +14]  p 0.0192  gaining 13/20  price 0.0072  vs learned +0.0027 [-0.0375, +0.0433] p 0.898
+   seeds 27-36 inside_top    LCB1 gain +0.0646 [+0.0155, +0.1154]  +8.7% [+2, +15]  p 0.0362  gaining 13/20  price 0.0072  vs learned +0.0228 [-0.0300, +0.0776] p 0.729
+   seeds 27-36 inside_top    LCB2 gain +0.0699 [+0.0238, +0.1200]  +9.4% [+3, +15]  p 0.0296  gaining 12/20  price 0.0072  vs learned +0.0137 [-0.0316, +0.0577] p 0.368
+-- 5sigma_from_trial_21
+   seeds 7-11  learned       LCB1 gain +0.1213 [+0.0468, +0.2256]  +22.7% [+10, +35]  p 0.00169  gaining 16/20  price 0.0233
+   seeds 7-11  learned       LCB2 gain +0.1694 [+0.0838, +0.2789]  +31.7% [+18, +43]  p 0.00021  gaining 17/20  price 0.0200
+   seeds 7-11  mag           LCB1 gain +0.1767 [+0.0799, +0.3040]  +33.1% [+17, +47]  p 0.00121  gaining 16/20  price 0.0000  vs learned +0.0554 [+0.0087, +0.1108] p 0.165
+   seeds 7-11  mag           LCB2 gain +0.2151 [+0.0966, +0.3698]  +40.3% [+21, +57]  p 0.000708  gaining 16/20  price 0.0000  vs learned +0.0457 [+0.0008, +0.1014] p 0.261
+   seeds 7-11  mag_onset     LCB1 gain +0.4234 [+0.3056, +0.5649]  +79.3% [+69, +89]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.3021 [+0.2297, +0.3728] p 1.91e-06
+   seeds 7-11  mag_onset     LCB2 gain +0.4354 [+0.3158, +0.5778]  +81.5% [+72, +91]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.2659 [+0.2071, +0.3283] p 1.91e-06
+   seeds 7-11  retest3       LCB1 gain +0.1368 [+0.0357, +0.2725]  +25.6% [+7, +43]  p 0.00944  gaining 15/20  price 0.0000  vs learned +0.0155 [-0.0352, +0.0724] p 0.622
+   seeds 7-11  retest3       LCB2 gain +0.1696 [+0.0730, +0.3080]  +31.8% [+15, +48]  p 0.000483  gaining 16/20  price 0.0000  vs learned +0.0002 [-0.0388, +0.0458] p 0.622
+   seeds 7-11  inside_random LCB1 gain +0.0487 [-0.0003, +0.0987]  +9.1% [+0, +18]  p 0.0897  gaining 14/20  price 0.0023  vs learned -0.0726 [-0.1508, -0.0106] p 0.0583
+   seeds 7-11  inside_random LCB2 gain +0.1060 [+0.0447, +0.1872]  +19.9% [+10, +29]  p 0.00233  gaining 17/20  price 0.0023  vs learned -0.0634 [-0.1089, -0.0211] p 0.0136
+   seeds 7-11  inside_top    LCB1 gain +0.1042 [+0.0391, +0.2014]  +19.5% [+8, +31]  p 0.000851  gaining 17/20  price 0.0023  vs learned -0.0171 [-0.0829, +0.0372] p 0.546
+   seeds 7-11  inside_top    LCB2 gain +0.1261 [+0.0601, +0.2208]  +23.6% [+14, +34]  p 8.2e-05  gaining 19/20  price 0.0023  vs learned -0.0433 [-0.0968, -0.0004] p 0.0897
+   seeds 12-16 learned       LCB1 gain +0.1131 [+0.0168, +0.2313]  +22.0% [+4, +40]  p 0.0441  gaining 14/20  price 0.0211
+   seeds 12-16 learned       LCB2 gain +0.1449 [+0.0501, +0.2600]  +28.2% [+11, +45]  p 0.00558  gaining 16/20  price 0.0231
+   seeds 12-16 mag           LCB1 gain +0.1818 [+0.0822, +0.3089]  +35.4% [+18, +52]  p 0.000395  gaining 18/20  price 0.0000  vs learned +0.0688 [+0.0273, +0.1129] p 0.00271
+   seeds 12-16 mag           LCB2 gain +0.2470 [+0.1429, +0.3734]  +48.0% [+32, +62]  p 4.77e-05  gaining 18/20  price 0.0000  vs learned +0.1022 [+0.0604, +0.1515] p 4.77e-05
+   seeds 12-16 mag_onset     LCB1 gain +0.4068 [+0.3079, +0.5178]  +79.1% [+68, +89]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.2937 [+0.2229, +0.3642] p 3.81e-06
+   seeds 12-16 mag_onset     LCB2 gain +0.4108 [+0.3107, +0.5265]  +79.9% [+68, +90]  p 3.81e-06  gaining 19/20  price 0.0000  vs learned +0.2660 [+0.2027, +0.3273] p 5.72e-06
+   seeds 12-16 retest3       LCB1 gain +0.1610 [+0.0782, +0.2531]  +31.3% [+16, +45]  p 0.00199  gaining 16/20  price 0.0000  vs learned +0.0479 [-0.0059, +0.0920] p 0.0172
+   seeds 12-16 retest3       LCB2 gain +0.2094 [+0.1133, +0.3291]  +40.7% [+25, +56]  p 3.62e-05  gaining 19/20  price 0.0000  vs learned +0.0645 [+0.0410, +0.0889] p 3.62e-05
+   seeds 12-16 inside_random LCB1 gain +0.1187 [+0.0281, +0.2360]  +23.1% [+7, +41]  p 0.00486  gaining 17/20  price 0.0022  vs learned +0.0057 [-0.0328, +0.0437] p 0.622
+   seeds 12-16 inside_random LCB2 gain +0.1553 [+0.0626, +0.2729]  +30.2% [+14, +46]  p 0.00102  gaining 17/20  price 0.0022  vs learned +0.0104 [-0.0245, +0.0430] p 0.701
+   seeds 12-16 inside_top    LCB1 gain +0.1847 [+0.1002, +0.2973]  +35.9% [+21, +50]  p 8.2e-05  gaining 19/20  price 0.0022  vs learned +0.0716 [+0.0246, +0.1253] p 0.00831
+   seeds 12-16 inside_top    LCB2 gain +0.2032 [+0.1109, +0.3203]  +39.5% [+25, +54]  p 2.67e-05  gaining 19/20  price 0.0022  vs learned +0.0583 [+0.0221, +0.0990] p 0.0136
+   seeds 27-36 learned       LCB1 gain +0.0257 [-0.0317, +0.0751]  +5.7% [-7, +16]  p 0.165  gaining 12/20  price 0.0210
+   seeds 27-36 learned       LCB2 gain +0.0827 [+0.0246, +0.1380]  +18.2% [+7, +29]  p 0.00486  gaining 16/20  price 0.0225
+   seeds 27-36 mag           LCB1 gain +0.0991 [+0.0195, +0.1674]  +21.8% [+4, +36]  p 0.00365  gaining 18/20  price 0.0000  vs learned +0.0733 [+0.0205, +0.1258] p 0.00315
+   seeds 27-36 mag           LCB2 gain +0.1465 [+0.0769, +0.2103]  +32.2% [+18, +44]  p 0.000586  gaining 17/20  price 0.0000  vs learned +0.0638 [+0.0246, +0.1107] p 0.00486
+   seeds 27-36 mag_onset     LCB1 gain +0.3324 [+0.2630, +0.4021]  +73.1% [+61, +85]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.3066 [+0.2356, +0.3725] p 3.81e-06
+   seeds 27-36 mag_onset     LCB2 gain +0.3600 [+0.2886, +0.4319]  +79.2% [+68, +89]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.2773 [+0.2068, +0.3475] p 3.81e-06
+   seeds 27-36 retest3       LCB1 gain +0.0727 [-0.0077, +0.1386]  +16.0% [-2, +29]  p 0.00831  gaining 18/20  price 0.0000  vs learned +0.0469 [-0.0010, +0.0982] p 0.0532
+   seeds 27-36 retest3       LCB2 gain +0.0951 [+0.0286, +0.1530]  +20.9% [+7, +32]  p 0.00422  gaining 18/20  price 0.0000  vs learned +0.0123 [-0.0278, +0.0615] p 1
+   seeds 27-36 inside_random LCB1 gain +0.0696 [+0.0163, +0.1200]  +15.3% [+5, +24]  p 0.00486  gaining 17/20  price 0.0072  vs learned +0.0439 [+0.0054, +0.0888] p 0.0484
+   seeds 27-36 inside_random LCB2 gain +0.0932 [+0.0344, +0.1491]  +20.5% [+9, +30]  p 0.00422  gaining 17/20  price 0.0072  vs learned +0.0104 [-0.0337, +0.0596] p 0.841
+   seeds 27-36 inside_top    LCB1 gain +0.1131 [+0.0493, +0.1736]  +24.9% [+12, +36]  p 0.00233  gaining 18/20  price 0.0072  vs learned +0.0874 [+0.0350, +0.1448] p 0.00422
+   seeds 27-36 inside_top    LCB2 gain +0.1391 [+0.0773, +0.2003]  +30.6% [+19, +42]  p 0.000322  gaining 18/20  price 0.0072  vs learned +0.0564 [+0.0159, +0.1010] p 0.00944
+-- 0.25sigma_from_trial_1
+   seeds 7-11  learned       LCB1 gain -0.0063 [-0.0254, +0.0085]  no share (reference negative on 2 of 20 landscapes)  p 0.601  gaining 12/20  price 0.0233
+   seeds 7-11  learned       LCB2 gain -0.0009 [-0.0153, +0.0111]  no share (reference negative on 2 of 20 landscapes)  p 0.546  gaining 11/20  price 0.0200
+   seeds 7-11  mag           LCB1 gain +0.0101 [+0.0066, +0.0139]  no share (reference negative on 2 of 20 landscapes)  p 0.000463  gaining 16/20  price 0.0000  vs learned +0.0164 [+0.0029, +0.0320] p 0.0174
+   seeds 7-11  mag           LCB2 gain +0.0095 [+0.0043, +0.0161]  no share (reference negative on 2 of 20 landscapes)  p 0.00621  gaining 14/20  price 0.0000  vs learned +0.0104 [+0.0013, +0.0208] p 0.0555
+   seeds 7-11  mag_onset     LCB1 gain +0.0101 [+0.0066, +0.0139]  no share (reference negative on 2 of 20 landscapes)  p 0.000463  gaining 16/20  price 0.0000  vs learned +0.0164 [+0.0029, +0.0320] p 0.0174
+   seeds 7-11  mag_onset     LCB2 gain +0.0095 [+0.0043, +0.0161]  no share (reference negative on 2 of 20 landscapes)  p 0.00621  gaining 14/20  price 0.0000  vs learned +0.0104 [+0.0013, +0.0208] p 0.0555
+   seeds 7-11  retest3       LCB1 gain +0.0072 [+0.0034, +0.0116]  no share (reference negative on 2 of 20 landscapes)  p 0.00558  gaining 13/20  price 0.0000  vs learned +0.0135 [+0.0000, +0.0291] p 0.872
+   seeds 7-11  retest3       LCB2 gain +0.0052 [+0.0010, +0.0102]  no share (reference negative on 2 of 20 landscapes)  p 0.117  gaining 11/20  price 0.0000  vs learned +0.0060 [-0.0034, +0.0172] p 0.872
+   seeds 7-11  inside_random LCB1 gain +0.0004 [-0.0059, +0.0062]  no share (reference negative on 2 of 20 landscapes)  p 0.898  gaining 10/20  price 0.0023  vs learned +0.0067 [-0.0069, +0.0226] p 0.841
+   seeds 7-11  inside_random LCB2 gain +0.0001 [-0.0063, +0.0059]  no share (reference negative on 2 of 20 landscapes)  p 0.898  gaining 10/20  price 0.0023  vs learned +0.0010 [-0.0095, +0.0124] p 0.622
+   seeds 7-11  inside_top    LCB1 gain +0.0040 [-0.0018, +0.0100]  no share (reference negative on 2 of 20 landscapes)  p 0.261  gaining 12/20  price 0.0023  vs learned +0.0102 [-0.0040, +0.0253] p 0.596
+   seeds 7-11  inside_top    LCB2 gain +0.0057 [+0.0006, +0.0113]  no share (reference negative on 2 of 20 landscapes)  p 0.0532  gaining 13/20  price 0.0023  vs learned +0.0066 [-0.0058, +0.0193] p 0.571
+   seeds 12-16 learned       LCB1 gain -0.0030 [-0.0207, +0.0114]  no share (reference negative on 2 of 20 landscapes)  p 0.522  gaining 11/20  price 0.0211
+   seeds 12-16 learned       LCB2 gain -0.0006 [-0.0190, +0.0139]  no share (reference negative on 2 of 20 landscapes)  p 0.0826  gaining 15/20  price 0.0231
+   seeds 12-16 mag           LCB1 gain +0.0100 [+0.0037, +0.0159]  no share (reference negative on 2 of 20 landscapes)  p 0.0126  gaining 14/20  price 0.0000  vs learned +0.0129 [+0.0016, +0.0286] p 0.0759
+   seeds 12-16 mag           LCB2 gain +0.0092 [+0.0035, +0.0142]  no share (reference negative on 2 of 20 landscapes)  p 0.00427  gaining 16/20  price 0.0000  vs learned +0.0098 [-0.0022, +0.0272] p 0.845
+   seeds 12-16 mag_onset     LCB1 gain +0.0100 [+0.0037, +0.0159]  no share (reference negative on 2 of 20 landscapes)  p 0.0126  gaining 14/20  price 0.0000  vs learned +0.0129 [+0.0016, +0.0286] p 0.0759
+   seeds 12-16 mag_onset     LCB2 gain +0.0092 [+0.0035, +0.0142]  no share (reference negative on 2 of 20 landscapes)  p 0.00427  gaining 16/20  price 0.0000  vs learned +0.0098 [-0.0022, +0.0272] p 0.845
+   seeds 12-16 retest3       LCB1 gain +0.0101 [+0.0051, +0.0153]  no share (reference negative on 2 of 20 landscapes)  p 0.00842  gaining 13/20  price 0.0000  vs learned +0.0131 [+0.0014, +0.0286] p 0.231
+   seeds 12-16 retest3       LCB2 gain +0.0099 [+0.0051, +0.0147]  no share (reference negative on 2 of 20 landscapes)  p 0.00329  gaining 14/20  price 0.0000  vs learned +0.0105 [-0.0010, +0.0270] p 0.445
+   seeds 12-16 inside_random LCB1 gain +0.0034 [-0.0034, +0.0097]  no share (reference negative on 2 of 20 landscapes)  p 0.294  gaining 12/20  price 0.0022  vs learned +0.0063 [-0.0066, +0.0222] p 1
+   seeds 12-16 inside_random LCB2 gain +0.0048 [-0.0008, +0.0100]  no share (reference negative on 2 of 20 landscapes)  p 0.143  gaining 12/20  price 0.0022  vs learned +0.0055 [-0.0056, +0.0217] p 0.212
+   seeds 12-16 inside_top    LCB1 gain +0.0093 [+0.0042, +0.0145]  no share (reference negative on 2 of 20 landscapes)  p 0.00486  gaining 15/20  price 0.0022  vs learned +0.0122 [+0.0002, +0.0279] p 0.165
+   seeds 12-16 inside_top    LCB2 gain +0.0098 [+0.0034, +0.0162]  no share (reference negative on 2 of 20 landscapes)  p 0.00558  gaining 16/20  price 0.0022  vs learned +0.0104 [-0.0003, +0.0254] p 0.177
+   seeds 27-36 learned       LCB1 gain -0.0070 [-0.0243, +0.0068]  no share (reference negative on 2 of 20 landscapes)  p 0.985  gaining 11/20  price 0.0210
+   seeds 27-36 learned       LCB2 gain -0.0060 [-0.0219, +0.0069]  no share (reference negative on 2 of 20 landscapes)  p 0.956  gaining 11/20  price 0.0225
+   seeds 27-36 mag           LCB1 gain +0.0082 [+0.0033, +0.0134]  no share (reference negative on 2 of 20 landscapes)  p 0.0141  gaining 14/20  price 0.0000  vs learned +0.0152 [+0.0044, +0.0304] p 0.00331
+   seeds 27-36 mag           LCB2 gain +0.0081 [+0.0032, +0.0131]  no share (reference negative on 2 of 20 landscapes)  p 0.0126  gaining 14/20  price 0.0000  vs learned +0.0141 [+0.0044, +0.0275] p 0.0176
+   seeds 27-36 mag_onset     LCB1 gain +0.0082 [+0.0033, +0.0134]  no share (reference negative on 2 of 20 landscapes)  p 0.0141  gaining 14/20  price 0.0000  vs learned +0.0152 [+0.0044, +0.0304] p 0.00331
+   seeds 27-36 mag_onset     LCB2 gain +0.0081 [+0.0032, +0.0131]  no share (reference negative on 2 of 20 landscapes)  p 0.0126  gaining 14/20  price 0.0000  vs learned +0.0141 [+0.0044, +0.0275] p 0.0176
+   seeds 27-36 retest3       LCB1 gain +0.0052 [-0.0004, +0.0108]  no share (reference negative on 2 of 20 landscapes)  p 0.0759  gaining 14/20  price 0.0000  vs learned +0.0122 [+0.0019, +0.0267] p 0.0586
+   seeds 27-36 retest3       LCB2 gain +0.0050 [-0.0006, +0.0105]  no share (reference negative on 2 of 20 landscapes)  p 0.0696  gaining 14/20  price 0.0000  vs learned +0.0109 [+0.0017, +0.0233] p 0.0641
+   seeds 27-36 inside_random LCB1 gain +0.0009 [-0.0075, +0.0079]  no share (reference negative on 2 of 20 landscapes)  p 0.622  gaining 11/20  price 0.0072  vs learned +0.0079 [-0.0045, +0.0248] p 0.729
+   seeds 27-36 inside_random LCB2 gain +0.0005 [-0.0070, +0.0068]  no share (reference negative on 2 of 20 landscapes)  p 0.812  gaining 10/20  price 0.0072  vs learned +0.0065 [-0.0044, +0.0206] p 0.498
+   seeds 27-36 inside_top    LCB1 gain +0.0028 [-0.0040, +0.0089]  no share (reference negative on 2 of 20 landscapes)  p 0.546  gaining 12/20  price 0.0072  vs learned +0.0098 [-0.0016, +0.0256] p 0.596
+   seeds 27-36 inside_top    LCB2 gain +0.0030 [-0.0040, +0.0090]  no share (reference negative on 2 of 20 landscapes)  p 0.388  gaining 13/20  price 0.0072  vs learned +0.0090 [-0.0017, +0.0238] p 0.674
+
+== 6. The cautious rule's scope: ten acquisitions, gaussian error
+-- pooled_ge_0.25sigma
+   seeds 7-16  learned       LCB1 gain +0.0215 [+0.0071, +0.0359]  +7.7% [+2, +13]  p 0.0192  gaining 15/20  price 0.0145
+   seeds 7-16  learned       LCB2 gain +0.0283 [+0.0129, +0.0444]  +10.1% [+5, +16]  p 0.00315  gaining 15/20  price 0.0147
+   seeds 7-16  mag           LCB1 gain +0.0337 [+0.0198, +0.0482]  +12.1% [+7, +17]  p 0.000322  gaining 17/20  price 0.0000  vs learned +0.0122 [+0.0075, +0.0172] p 6.29e-05
+   seeds 7-16  mag           LCB2 gain +0.0420 [+0.0268, +0.0583]  +15.0% [+10, +21]  p 0.000168  gaining 17/20  price 0.0000  vs learned +0.0137 [+0.0087, +0.0189] p 6.29e-05
+   seeds 7-16  mag_onset     LCB1 gain +0.0751 [+0.0577, +0.0929]  +26.9% [+21, +33]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0535 [+0.0420, +0.0651] p 1.91e-06
+   seeds 7-16  mag_onset     LCB2 gain +0.0783 [+0.0602, +0.0970]  +28.0% [+22, +34]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0500 [+0.0386, +0.0612] p 1.91e-06
+   seeds 7-16  mag_half      LCB1 gain +0.0047 [+0.0012, +0.0086]  +1.7% [+0, +3]  p 0.0362  gaining 14/20  price 0.0000  vs learned -0.0168 [-0.0303, -0.0032] p 0.0484
+   seeds 7-16  mag_half      LCB2 gain +0.0118 [+0.0075, +0.0169]  +4.2% [+3, +6]  p 9.54e-06  gaining 19/20  price 0.0000  vs learned -0.0165 [-0.0301, -0.0032] p 0.0296
+   seeds 7-16  mag_double    LCB1 gain +0.0350 [+0.0149, +0.0553]  +12.5% [+5, +20]  p 0.00558  gaining 14/20  price 0.0000  vs learned +0.0135 [+0.0055, +0.0222] p 0.00558
+   seeds 7-16  mag_double    LCB2 gain +0.0377 [+0.0167, +0.0600]  +13.5% [+6, +21]  p 0.00271  gaining 16/20  price 0.0000  vs learned +0.0094 [+0.0009, +0.0180] p 0.0583
+   seeds 7-16  retest3       LCB1 gain +0.0261 [+0.0146, +0.0376]  +9.3% [+5, +14]  p 0.000395  gaining 16/20  price 0.0000  vs learned +0.0046 [-0.0001, +0.0095] p 0.202
+   seeds 7-16  retest3       LCB2 gain +0.0326 [+0.0201, +0.0456]  +11.7% [+7, +16]  p 0.00021  gaining 17/20  price 0.0000  vs learned +0.0043 [-0.0004, +0.0090] p 0.123
+   seeds 7-16  inside_random LCB1 gain +0.0194 [+0.0095, +0.0295]  +6.9% [+3, +11]  p 0.00233  gaining 14/20  price 0.0037  vs learned -0.0022 [-0.0080, +0.0033] p 0.349
+   seeds 7-16  inside_random LCB2 gain +0.0278 [+0.0153, +0.0413]  +9.9% [+6, +15]  p 0.00102  gaining 15/20  price 0.0037  vs learned -0.0006 [-0.0050, +0.0042] p 0.452
+   seeds 7-16  inside_top    LCB1 gain +0.0248 [+0.0136, +0.0365]  +8.9% [+5, +13]  p 0.00121  gaining 15/20  price 0.0037  vs learned +0.0033 [-0.0024, +0.0093] p 0.701
+   seeds 7-16  inside_top    LCB2 gain +0.0319 [+0.0195, +0.0457]  +11.4% [+7, +16]  p 0.000261  gaining 15/20  price 0.0037  vs learned +0.0036 [-0.0024, +0.0099] p 0.622
+   seeds 7-11  learned       LCB1 gain +0.0194 [+0.0056, +0.0335]  +7.2% [+2, +13]  p 0.0215  gaining 14/20  price 0.0144
+   seeds 7-11  learned       LCB2 gain +0.0257 [+0.0113, +0.0410]  +9.6% [+4, +16]  p 0.0073  gaining 15/20  price 0.0144
+   seeds 7-11  mag           LCB1 gain +0.0307 [+0.0179, +0.0447]  +11.4% [+6, +17]  p 0.000483  gaining 16/20  price 0.0000  vs learned +0.0113 [+0.0069, +0.0160] p 2.67e-05
+   seeds 7-11  mag           LCB2 gain +0.0381 [+0.0239, +0.0539]  +14.2% [+9, +20]  p 0.000134  gaining 17/20  price 0.0000  vs learned +0.0124 [+0.0078, +0.0172] p 0.000105
+   seeds 7-11  mag_onset     LCB1 gain +0.0702 [+0.0543, +0.0862]  +26.1% [+20, +32]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0507 [+0.0393, +0.0624] p 1.91e-06
+   seeds 7-11  mag_onset     LCB2 gain +0.0748 [+0.0579, +0.0921]  +27.8% [+22, +34]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0491 [+0.0381, +0.0609] p 1.91e-06
+   seeds 7-11  mag_half      LCB1 gain +0.0027 [-0.0030, +0.0102]  +1.0% [-1, +4]  p 0.701  gaining 10/20  price 0.0000  vs learned -0.0168 [-0.0308, -0.0044] p 0.0266
+   seeds 7-11  mag_half      LCB2 gain +0.0099 [+0.0044, +0.0170]  +3.7% [+2, +6]  p 0.00121  gaining 17/20  price 0.0000  vs learned -0.0158 [-0.0301, -0.0032] p 0.0484
+   seeds 7-11  mag_double    LCB1 gain +0.0301 [+0.0106, +0.0496]  +11.2% [+4, +19]  p 0.0136  gaining 14/20  price 0.0000  vs learned +0.0106 [+0.0014, +0.0200] p 0.0215
+   seeds 7-11  mag_double    LCB2 gain +0.0326 [+0.0118, +0.0540]  +12.1% [+5, +20]  p 0.00944  gaining 15/20  price 0.0000  vs learned +0.0069 [-0.0021, +0.0159] p 0.143
+   seeds 7-11  retest3       LCB1 gain +0.0226 [+0.0113, +0.0347]  +8.4% [+4, +13]  p 0.000851  gaining 17/20  price 0.0000  vs learned +0.0032 [-0.0026, +0.0091] p 0.475
+   seeds 7-11  retest3       LCB2 gain +0.0280 [+0.0158, +0.0412]  +10.4% [+6, +15]  p 0.000395  gaining 16/20  price 0.0000  vs learned +0.0023 [-0.0028, +0.0071] p 0.294
+   seeds 7-11  inside_random LCB1 gain +0.0165 [+0.0075, +0.0254]  +6.1% [+3, +10]  p 0.00233  gaining 15/20  price 0.0030  vs learned -0.0030 [-0.0110, +0.0047] p 0.622
+   seeds 7-11  inside_random LCB2 gain +0.0247 [+0.0135, +0.0366]  +9.2% [+5, +14]  p 0.000483  gaining 15/20  price 0.0030  vs learned -0.0010 [-0.0066, +0.0050] p 0.571
+   seeds 7-11  inside_top    LCB1 gain +0.0197 [+0.0099, +0.0296]  +7.3% [+4, +11]  p 0.000851  gaining 15/20  price 0.0030  vs learned +0.0003 [-0.0076, +0.0087] p 0.729
+   seeds 7-11  inside_top    LCB2 gain +0.0264 [+0.0157, +0.0381]  +9.8% [+6, +14]  p 0.00021  gaining 16/20  price 0.0030  vs learned +0.0007 [-0.0072, +0.0091] p 0.784
+   seeds 12-16 learned       LCB1 gain +0.0236 [+0.0072, +0.0389]  +8.2% [+2, +13]  p 0.0153  gaining 15/20  price 0.0147
+   seeds 12-16 learned       LCB2 gain +0.0310 [+0.0144, +0.0482]  +10.7% [+5, +16]  p 0.00315  gaining 16/20  price 0.0150
+   seeds 12-16 mag           LCB1 gain +0.0367 [+0.0203, +0.0543]  +12.7% [+7, +18]  p 0.000586  gaining 17/20  price 0.0000  vs learned +0.0131 [+0.0074, +0.0192] p 0.000322
+   seeds 12-16 mag           LCB2 gain +0.0459 [+0.0294, +0.0647]  +15.9% [+10, +21]  p 6.29e-05  gaining 18/20  price 0.0000  vs learned +0.0150 [+0.0092, +0.0211] p 6.29e-05
+   seeds 12-16 mag_onset     LCB1 gain +0.0800 [+0.0611, +0.0997]  +27.6% [+22, +33]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0564 [+0.0442, +0.0683] p 1.91e-06
+   seeds 12-16 mag_onset     LCB2 gain +0.0818 [+0.0620, +0.1022]  +28.2% [+22, +34]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0508 [+0.0394, +0.0619] p 1.91e-06
+   seeds 12-16 mag_half      LCB1 gain +0.0068 [+0.0026, +0.0108]  +2.4% [+1, +4]  p 0.00422  gaining 15/20  price 0.0000  vs learned -0.0168 [-0.0326, -0.0012] p 0.0826
+   seeds 12-16 mag_half      LCB2 gain +0.0137 [+0.0088, +0.0182]  +4.7% [+3, +6]  p 2.67e-05  gaining 19/20  price 0.0000  vs learned -0.0172 [-0.0318, -0.0026] p 0.0583
+   seeds 12-16 mag_double    LCB1 gain +0.0400 [+0.0192, +0.0621]  +13.8% [+6, +21]  p 0.00365  gaining 14/20  price 0.0000  vs learned +0.0164 [+0.0079, +0.0254] p 0.00121
+   seeds 12-16 mag_double    LCB2 gain +0.0428 [+0.0209, +0.0669]  +14.8% [+8, +22]  p 0.00169  gaining 15/20  price 0.0000  vs learned +0.0119 [+0.0034, +0.0205] p 0.0215
+   seeds 12-16 retest3       LCB1 gain +0.0296 [+0.0172, +0.0415]  +10.2% [+6, +14]  p 0.000483  gaining 17/20  price 0.0000  vs learned +0.0060 [+0.0007, +0.0110] p 0.0583
+   seeds 12-16 retest3       LCB2 gain +0.0372 [+0.0241, +0.0512]  +12.8% [+9, +17]  p 0.000134  gaining 17/20  price 0.0000  vs learned +0.0063 [+0.0008, +0.0115] p 0.0441
+   seeds 12-16 inside_random LCB1 gain +0.0222 [+0.0100, +0.0360]  +7.7% [+3, +12]  p 0.00365  gaining 14/20  price 0.0045  vs learned -0.0014 [-0.0071, +0.0042] p 0.596
+   seeds 12-16 inside_random LCB2 gain +0.0308 [+0.0160, +0.0469]  +10.6% [+6, +16]  p 0.00233  gaining 14/20  price 0.0045  vs learned -0.0001 [-0.0040, +0.0042] p 0.43
+   seeds 12-16 inside_top    LCB1 gain +0.0300 [+0.0162, +0.0436]  +10.3% [+6, +15]  p 0.00169  gaining 14/20  price 0.0045  vs learned +0.0063 [+0.0016, +0.0110] p 0.0484
+   seeds 12-16 inside_top    LCB2 gain +0.0373 [+0.0227, +0.0535]  +12.9% [+8, +18]  p 0.000586  gaining 15/20  price 0.0045  vs learned +0.0064 [+0.0011, +0.0120] p 0.0637
+   seeds 27-36 learned       LCB1 gain +0.0184 [+0.0078, +0.0280]  +6.6% [+3, +10]  p 0.00558  gaining 15/20  price 0.0163
+   seeds 27-36 learned       LCB2 gain +0.0268 [+0.0151, +0.0378]  +9.6% [+5, +14]  p 0.00102  gaining 15/20  price 0.0158
+   seeds 27-36 mag           LCB1 gain +0.0309 [+0.0200, +0.0412]  +11.0% [+7, +14]  p 0.000261  gaining 16/20  price 0.0000  vs learned +0.0124 [+0.0080, +0.0170] p 1.91e-05
+   seeds 27-36 mag           LCB2 gain +0.0380 [+0.0255, +0.0505]  +13.6% [+9, +18]  p 8.2e-05  gaining 17/20  price 0.0000  vs learned +0.0112 [+0.0072, +0.0155] p 1.91e-05
+   seeds 27-36 mag_onset     LCB1 gain +0.0715 [+0.0574, +0.0853]  +25.5% [+21, +30]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0530 [+0.0424, +0.0635] p 1.91e-06
+   seeds 27-36 mag_onset     LCB2 gain +0.0755 [+0.0601, +0.0909]  +26.9% [+22, +32]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.0487 [+0.0381, +0.0594] p 1.91e-06
+   seeds 27-36 mag_half      LCB1 gain +0.0057 [+0.0022, +0.0092]  +2.0% [+1, +3]  p 0.00271  gaining 17/20  price 0.0000  vs learned -0.0128 [-0.0231, -0.0024] p 0.04
+   seeds 27-36 mag_half      LCB2 gain +0.0117 [+0.0076, +0.0156]  +4.2% [+3, +6]  p 0.000105  gaining 18/20  price 0.0000  vs learned -0.0151 [-0.0267, -0.0031] p 0.0532
+   seeds 27-36 mag_double    LCB1 gain +0.0321 [+0.0147, +0.0489]  +11.4% [+5, +17]  p 0.00558  gaining 15/20  price 0.0000  vs learned +0.0136 [+0.0039, +0.0238] p 0.0192
+   seeds 27-36 mag_double    LCB2 gain +0.0354 [+0.0174, +0.0538]  +12.6% [+6, +19]  p 0.00199  gaining 16/20  price 0.0000  vs learned +0.0086 [-0.0001, +0.0177] p 0.0696
+   seeds 27-36 retest3       LCB1 gain +0.0220 [+0.0129, +0.0310]  +7.9% [+5, +11]  p 0.000395  gaining 16/20  price 0.0000  vs learned +0.0036 [-0.0002, +0.0077] p 0.143
+   seeds 27-36 retest3       LCB2 gain +0.0291 [+0.0195, +0.0390]  +10.4% [+7, +14]  p 4.77e-05  gaining 17/20  price 0.0000  vs learned +0.0023 [-0.0021, +0.0068] p 0.452
+   seeds 27-36 inside_random LCB1 gain +0.0205 [+0.0118, +0.0290]  +7.3% [+4, +10]  p 0.00102  gaining 15/20  price 0.0055  vs learned +0.0020 [-0.0030, +0.0074] p 0.596
+   seeds 27-36 inside_random LCB2 gain +0.0249 [+0.0156, +0.0344]  +8.9% [+6, +12]  p 0.000322  gaining 16/20  price 0.0055  vs learned -0.0019 [-0.0067, +0.0035] p 0.312
+   seeds 27-36 inside_top    LCB1 gain +0.0272 [+0.0172, +0.0376]  +9.7% [+6, +13]  p 0.000483  gaining 15/20  price 0.0055  vs learned +0.0088 [+0.0027, +0.0152] p 0.0362
+   seeds 27-36 inside_top    LCB2 gain +0.0322 [+0.0213, +0.0436]  +11.5% [+8, +15]  p 8.2e-05  gaining 17/20  price 0.0055  vs learned +0.0054 [+0.0005, +0.0105] p 0.123
+-- 1sigma_both_onsets
+   seeds 7-16  learned       LCB1 gain +0.0151 [+0.0048, +0.0241]  +7.1% [+2, +12]  p 0.0153  gaining 14/20  price 0.0145
+   seeds 7-16  learned       LCB2 gain +0.0164 [+0.0063, +0.0259]  +7.7% [+3, +13]  p 0.00831  gaining 14/20  price 0.0147
+   seeds 7-16  mag           LCB1 gain +0.0184 [+0.0076, +0.0286]  +8.7% [+4, +14]  p 0.00365  gaining 15/20  price 0.0000  vs learned +0.0033 [-0.0003, +0.0069] p 0.0637
+   seeds 7-16  mag           LCB2 gain +0.0188 [+0.0090, +0.0287]  +8.9% [+4, +14]  p 0.00365  gaining 15/20  price 0.0000  vs learned +0.0024 [-0.0015, +0.0053] p 0.00315
+   seeds 7-16  mag_onset     LCB1 gain +0.0381 [+0.0266, +0.0501]  +17.9% [+12, +24]  p 1.91e-05  gaining 18/20  price 0.0000  vs learned +0.0230 [+0.0162, +0.0299] p 1.91e-06
+   seeds 7-16  mag_onset     LCB2 gain +0.0379 [+0.0264, +0.0502]  +17.8% [+12, +24]  p 1.91e-05  gaining 18/20  price 0.0000  vs learned +0.0214 [+0.0149, +0.0282] p 1.91e-06
+   seeds 7-16  mag_half      LCB1 gain +0.0048 [+0.0016, +0.0077]  +2.3% [+1, +4]  p 0.0136  gaining 14/20  price 0.0000  vs learned -0.0103 [-0.0214, +0.0008] p 0.114
+   seeds 7-16  mag_half      LCB2 gain +0.0105 [+0.0077, +0.0132]  +4.9% [+4, +6]  p 3.81e-06  gaining 19/20  price 0.0000  vs learned -0.0060 [-0.0158, +0.0045] p 0.216
+   seeds 7-16  mag_double    LCB1 gain +0.0090 [-0.0098, +0.0264]  +4.2% [-4, +12]  p 0.261  gaining 13/20  price 0.0000  vs learned -0.0061 [-0.0163, +0.0035] p 0.522
+   seeds 7-16  mag_double    LCB2 gain +0.0066 [-0.0126, +0.0238]  +3.1% [-6, +11]  p 0.368  gaining 13/20  price 0.0000  vs learned -0.0098 [-0.0220, +0.0005] p 0.0532
+   seeds 7-16  retest3       LCB1 gain +0.0146 [+0.0071, +0.0217]  +6.9% [+3, +10]  p 0.00199  gaining 15/20  price 0.0000  vs learned -0.0005 [-0.0048, +0.0037] p 0.596
+   seeds 7-16  retest3       LCB2 gain +0.0156 [+0.0079, +0.0231]  +7.4% [+4, +11]  p 0.00121  gaining 15/20  price 0.0000  vs learned -0.0008 [-0.0046, +0.0027] p 0.546
+   seeds 7-16  inside_random LCB1 gain +0.0077 [-0.0018, +0.0164]  +3.6% [-1, +8]  p 0.123  gaining 14/20  price 0.0037  vs learned -0.0074 [-0.0106, -0.0037] p 0.000851
+   seeds 7-16  inside_random LCB2 gain +0.0097 [+0.0010, +0.0178]  +4.6% [+0, +9]  p 0.0441  gaining 14/20  price 0.0037  vs learned -0.0067 [-0.0101, -0.0035] p 0.00102
+   seeds 7-16  inside_top    LCB1 gain +0.0105 [+0.0026, +0.0183]  +4.9% [+1, +9]  p 0.024  gaining 14/20  price 0.0037  vs learned -0.0046 [-0.0095, +0.0003] p 0.0826
+   seeds 7-16  inside_top    LCB2 gain +0.0131 [+0.0049, +0.0216]  +6.2% [+2, +10]  p 0.0136  gaining 14/20  price 0.0037  vs learned -0.0033 [-0.0085, +0.0017] p 0.216
+   seeds 7-11  learned       LCB1 gain +0.0128 [+0.0056, +0.0193]  +6.2% [+3, +10]  p 0.00315  gaining 15/20  price 0.0144
+   seeds 7-11  learned       LCB2 gain +0.0139 [+0.0064, +0.0212]  +6.8% [+3, +11]  p 0.00315  gaining 15/20  price 0.0144
+   seeds 7-11  mag           LCB1 gain +0.0169 [+0.0085, +0.0252]  +8.3% [+4, +13]  p 0.00199  gaining 15/20  price 0.0000  vs learned +0.0041 [+0.0004, +0.0082] p 0.0362
+   seeds 7-11  mag           LCB2 gain +0.0167 [+0.0090, +0.0248]  +8.2% [+4, +13]  p 0.000851  gaining 16/20  price 0.0000  vs learned +0.0028 [-0.0011, +0.0061] p 0.0266
+   seeds 7-11  mag_onset     LCB1 gain +0.0374 [+0.0266, +0.0488]  +18.3% [+13, +25]  p 9.54e-06  gaining 18/20  price 0.0000  vs learned +0.0247 [+0.0167, +0.0332] p 1.91e-06
+   seeds 7-11  mag_onset     LCB2 gain +0.0377 [+0.0270, +0.0499]  +18.4% [+13, +25]  p 1.34e-05  gaining 18/20  price 0.0000  vs learned +0.0238 [+0.0163, +0.0320] p 3.81e-06
+   seeds 7-11  mag_half      LCB1 gain +0.0034 [-0.0015, +0.0075]  +1.7% [-1, +4]  p 0.0973  gaining 14/20  price 0.0000  vs learned -0.0093 [-0.0182, -0.0008] p 0.0826
+   seeds 7-11  mag_half      LCB2 gain +0.0089 [+0.0056, +0.0120]  +4.3% [+3, +6]  p 1.91e-05  gaining 18/20  price 0.0000  vs learned -0.0050 [-0.0127, +0.0025] p 0.202
+   seeds 7-11  mag_double    LCB1 gain +0.0059 [-0.0150, +0.0231]  +2.9% [-6, +11]  p 0.189  gaining 13/20  price 0.0000  vs learned -0.0069 [-0.0216, +0.0055] p 0.784
+   seeds 7-11  mag_double    LCB2 gain +0.0033 [-0.0169, +0.0210]  +1.6% [-7, +10]  p 0.452  gaining 12/20  price 0.0000  vs learned -0.0106 [-0.0250, +0.0015] p 0.245
+   seeds 7-11  retest3       LCB1 gain +0.0134 [+0.0062, +0.0193]  +6.5% [+3, +10]  p 0.000851  gaining 17/20  price 0.0000  vs learned +0.0006 [-0.0030, +0.0043] p 0.869
+   seeds 7-11  retest3       LCB2 gain +0.0135 [+0.0068, +0.0198]  +6.6% [+3, +10]  p 0.00102  gaining 17/20  price 0.0000  vs learned -0.0004 [-0.0040, +0.0031] p 0.596
+   seeds 7-11  inside_random LCB1 gain +0.0084 [+0.0014, +0.0148]  +4.1% [+1, +8]  p 0.024  gaining 14/20  price 0.0030  vs learned -0.0044 [-0.0076, -0.0011] p 0.0136
+   seeds 7-11  inside_random LCB2 gain +0.0093 [+0.0029, +0.0155]  +4.5% [+1, +8]  p 0.0136  gaining 15/20  price 0.0030  vs learned -0.0047 [-0.0089, -0.0001] p 0.0107
+   seeds 7-11  inside_top    LCB1 gain +0.0082 [+0.0013, +0.0151]  +4.0% [+1, +8]  p 0.0441  gaining 13/20  price 0.0030  vs learned -0.0046 [-0.0105, +0.0009] p 0.123
+   seeds 7-11  inside_top    LCB2 gain +0.0105 [+0.0025, +0.0187]  +5.1% [+1, +9]  p 0.024  gaining 14/20  price 0.0030  vs learned -0.0035 [-0.0105, +0.0032] p 0.114
+   seeds 12-16 learned       LCB1 gain +0.0174 [+0.0037, +0.0297]  +7.9% [+2, +14]  p 0.0296  gaining 14/20  price 0.0147
+   seeds 12-16 learned       LCB2 gain +0.0189 [+0.0058, +0.0309]  +8.6% [+2, +14]  p 0.0172  gaining 14/20  price 0.0150
+   seeds 12-16 mag           LCB1 gain +0.0199 [+0.0067, +0.0328]  +9.0% [+3, +15]  p 0.0136  gaining 14/20  price 0.0000  vs learned +0.0024 [-0.0029, +0.0066] p 0.04
+   seeds 12-16 mag           LCB2 gain +0.0210 [+0.0083, +0.0334]  +9.5% [+4, +15]  p 0.00831  gaining 15/20  price 0.0000  vs learned +0.0020 [-0.0023, +0.0055] p 0.04
+   seeds 12-16 mag_onset     LCB1 gain +0.0387 [+0.0249, +0.0526]  +17.6% [+12, +24]  p 0.000134  gaining 16/20  price 0.0000  vs learned +0.0213 [+0.0149, +0.0282] p 3.81e-06
+   seeds 12-16 mag_onset     LCB2 gain +0.0380 [+0.0245, +0.0523]  +17.3% [+11, +24]  p 0.000168  gaining 16/20  price 0.0000  vs learned +0.0191 [+0.0130, +0.0253] p 1.91e-06
+   seeds 12-16 mag_half      LCB1 gain +0.0062 [+0.0032, +0.0090]  +2.8% [+2, +4]  p 0.000586  gaining 16/20  price 0.0000  vs learned -0.0113 [-0.0252, +0.0032] p 0.154
+   seeds 12-16 mag_half      LCB2 gain +0.0121 [+0.0083, +0.0161]  +5.5% [+4, +7]  p 5.72e-06  gaining 19/20  price 0.0000  vs learned -0.0069 [-0.0192, +0.0065] p 0.231
+   seeds 12-16 mag_double    LCB1 gain +0.0121 [-0.0074, +0.0303]  +5.5% [-4, +14]  p 0.216  gaining 13/20  price 0.0000  vs learned -0.0053 [-0.0142, +0.0028] p 0.33
+   seeds 12-16 mag_double    LCB2 gain +0.0100 [-0.0086, +0.0277]  +4.5% [-4, +13]  p 0.261  gaining 13/20  price 0.0000  vs learned -0.0090 [-0.0196, -0.0001] p 0.133
+   seeds 12-16 retest3       LCB1 gain +0.0158 [+0.0062, +0.0254]  +7.2% [+3, +11]  p 0.0073  gaining 15/20  price 0.0000  vs learned -0.0016 [-0.0085, +0.0049] p 0.261
+   seeds 12-16 retest3       LCB2 gain +0.0177 [+0.0073, +0.0282]  +8.0% [+3, +13]  p 0.00639  gaining 15/20  price 0.0000  vs learned -0.0012 [-0.0064, +0.0034] p 0.452
+   seeds 12-16 inside_random LCB1 gain +0.0071 [-0.0057, +0.0187]  +3.2% [-3, +9]  p 0.123  gaining 14/20  price 0.0045  vs learned -0.0104 [-0.0149, -0.0052] p 0.00102
+   seeds 12-16 inside_random LCB2 gain +0.0102 [-0.0025, +0.0223]  +4.6% [-2, +10]  p 0.0826  gaining 14/20  price 0.0045  vs learned -0.0088 [-0.0131, -0.0043] p 0.00143
+   seeds 12-16 inside_top    LCB1 gain +0.0127 [+0.0020, +0.0233]  +5.8% [+1, +11]  p 0.04  gaining 14/20  price 0.0045  vs learned -0.0047 [-0.0098, +0.0012] p 0.0637
+   seeds 12-16 inside_top    LCB2 gain +0.0158 [+0.0045, +0.0270]  +7.2% [+2, +12]  p 0.0215  gaining 14/20  price 0.0045  vs learned -0.0032 [-0.0074, +0.0012] p 0.165
+   seeds 27-36 learned       LCB1 gain +0.0224 [+0.0109, +0.0335]  +10.4% [+5, +16]  p 0.00315  gaining 14/20  price 0.0163
+   seeds 27-36 learned       LCB2 gain +0.0229 [+0.0120, +0.0338]  +10.6% [+5, +16]  p 0.00169  gaining 15/20  price 0.0158
+   seeds 27-36 mag           LCB1 gain +0.0258 [+0.0140, +0.0377]  +11.9% [+6, +17]  p 0.00102  gaining 17/20  price 0.0000  vs learned +0.0034 [-0.0001, +0.0073] p 0.0759
+   seeds 27-36 mag           LCB2 gain +0.0265 [+0.0155, +0.0382]  +12.3% [+7, +18]  p 0.000586  gaining 17/20  price 0.0000  vs learned +0.0036 [+0.0005, +0.0069] p 0.04
+   seeds 27-36 mag_onset     LCB1 gain +0.0444 [+0.0322, +0.0570]  +20.6% [+15, +26]  p 9.54e-06  gaining 19/20  price 0.0000  vs learned +0.0220 [+0.0153, +0.0290] p 1.91e-06
+   seeds 27-36 mag_onset     LCB2 gain +0.0419 [+0.0293, +0.0548]  +19.4% [+13, +26]  p 1.34e-05  gaining 19/20  price 0.0000  vs learned +0.0190 [+0.0123, +0.0255] p 9.54e-06
+   seeds 27-36 mag_half      LCB1 gain +0.0104 [+0.0063, +0.0151]  +4.8% [+3, +7]  p 0.000105  gaining 18/20  price 0.0000  vs learned -0.0120 [-0.0220, -0.0020] p 0.0484
+   seeds 27-36 mag_half      LCB2 gain +0.0140 [+0.0099, +0.0184]  +6.5% [+5, +9]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned -0.0089 [-0.0180, +0.0004] p 0.105
+   seeds 27-36 mag_double    LCB1 gain +0.0136 [-0.0061, +0.0323]  +6.3% [-3, +15]  p 0.202  gaining 13/20  price 0.0000  vs learned -0.0088 [-0.0188, +0.0001] p 0.143
+   seeds 27-36 mag_double    LCB2 gain +0.0142 [-0.0028, +0.0318]  +6.6% [-1, +15]  p 0.165  gaining 13/20  price 0.0000  vs learned -0.0086 [-0.0181, -0.0005] p 0.0696
+   seeds 27-36 retest3       LCB1 gain +0.0196 [+0.0095, +0.0298]  +9.1% [+4, +14]  p 0.00271  gaining 16/20  price 0.0000  vs learned -0.0028 [-0.0058, +0.0002] p 0.0583
+   seeds 27-36 retest3       LCB2 gain +0.0211 [+0.0109, +0.0319]  +9.8% [+5, +15]  p 0.00271  gaining 16/20  price 0.0000  vs learned -0.0018 [-0.0049, +0.0014] p 0.245
+   seeds 27-36 inside_random LCB1 gain +0.0144 [+0.0051, +0.0236]  +6.7% [+2, +11]  p 0.0121  gaining 15/20  price 0.0055  vs learned -0.0080 [-0.0127, -0.0030] p 0.00422
+   seeds 27-36 inside_random LCB2 gain +0.0152 [+0.0069, +0.0239]  +7.0% [+3, +11]  p 0.00315  gaining 15/20  price 0.0055  vs learned -0.0077 [-0.0120, -0.0031] p 0.00639
+   seeds 27-36 inside_top    LCB1 gain +0.0179 [+0.0088, +0.0272]  +8.3% [+4, +13]  p 0.00233  gaining 16/20  price 0.0055  vs learned -0.0045 [-0.0092, +0.0003] p 0.114
+   seeds 27-36 inside_top    LCB2 gain +0.0189 [+0.0096, +0.0289]  +8.8% [+4, +14]  p 0.00169  gaining 16/20  price 0.0055  vs learned -0.0040 [-0.0078, +0.0003] p 0.0759
+-- 0.25sigma_both_onsets
+   seeds 7-16  learned       LCB1 gain -0.0043 [-0.0154, +0.0045]  -6.2% [-25, +7]  p 0.674  gaining 13/20  price 0.0145
+   seeds 7-16  learned       LCB2 gain -0.0035 [-0.0144, +0.0054]  -5.1% [-23, +8]  p 0.622  gaining 13/20  price 0.0147
+   seeds 7-16  mag           LCB1 gain +0.0070 [+0.0043, +0.0099]  +10.3% [+7, +14]  p 0.000261  gaining 17/20  price 0.0000  vs learned +0.0113 [+0.0035, +0.0211] p 0.00315
+   seeds 7-16  mag           LCB2 gain +0.0068 [+0.0039, +0.0100]  +10.0% [+6, +14]  p 0.000483  gaining 16/20  price 0.0000  vs learned +0.0103 [+0.0028, +0.0198] p 0.105
+   seeds 7-16  mag_onset     LCB1 gain +0.0103 [+0.0065, +0.0145]  +15.1% [+10, +20]  p 0.000168  gaining 17/20  price 0.0000  vs learned +0.0146 [+0.0072, +0.0240] p 1.91e-06
+   seeds 7-16  mag_onset     LCB2 gain +0.0098 [+0.0057, +0.0146]  +14.4% [+9, +21]  p 0.000483  gaining 16/20  price 0.0000  vs learned +0.0133 [+0.0063, +0.0221] p 9.54e-06
+   seeds 7-16  mag_half      LCB1 gain +0.0031 [+0.0018, +0.0044]  +4.5% [+3, +6]  p 0.000261  gaining 17/20  price 0.0000  vs learned +0.0073 [-0.0023, +0.0191] p 0.841
+   seeds 7-16  mag_half      LCB2 gain +0.0046 [+0.0033, +0.0059]  +6.7% [+5, +8]  p 1.34e-05  gaining 18/20  price 0.0000  vs learned +0.0081 [-0.0012, +0.0193] p 0.841
+   seeds 7-16  mag_double    LCB1 gain -0.0027 [-0.0137, +0.0066]  -4.0% [-22, +10]  p 0.596  gaining 12/20  price 0.0000  vs learned +0.0015 [-0.0012, +0.0044] p 0.475
+   seeds 7-16  mag_double    LCB2 gain -0.0022 [-0.0128, +0.0069]  -3.2% [-20, +10]  p 0.522  gaining 13/20  price 0.0000  vs learned +0.0013 [-0.0015, +0.0042] p 0.756
+   seeds 7-16  retest3       LCB1 gain +0.0047 [+0.0023, +0.0072]  +6.9% [+3, +10]  p 0.00422  gaining 16/20  price 0.0000  vs learned +0.0090 [+0.0013, +0.0184] p 0.546
+   seeds 7-16  retest3       LCB2 gain +0.0052 [+0.0025, +0.0081]  +7.7% [+4, +12]  p 0.00365  gaining 16/20  price 0.0000  vs learned +0.0087 [+0.0013, +0.0178] p 0.596
+   seeds 7-16  inside_random LCB1 gain +0.0002 [-0.0037, +0.0040]  +0.3% [-6, +6]  p 0.596  gaining 13/20  price 0.0037  vs learned +0.0045 [-0.0024, +0.0132] p 0.596
+   seeds 7-16  inside_random LCB2 gain +0.0008 [-0.0033, +0.0049]  +1.2% [-5, +7]  p 0.498  gaining 12/20  price 0.0037  vs learned +0.0043 [-0.0025, +0.0129] p 0.571
+   seeds 7-16  inside_top    LCB1 gain +0.0015 [-0.0029, +0.0059]  +2.2% [-5, +9]  p 0.368  gaining 13/20  price 0.0037  vs learned +0.0057 [-0.0014, +0.0145] p 0.956
+   seeds 7-16  inside_top    LCB2 gain +0.0018 [-0.0026, +0.0064]  +2.6% [-4, +9]  p 0.388  gaining 13/20  price 0.0037  vs learned +0.0053 [-0.0017, +0.0140] p 0.812
+   seeds 7-11  learned       LCB1 gain -0.0052 [-0.0169, +0.0042]  -7.8% [-27, +7]  p 0.985  gaining 13/20  price 0.0144
+   seeds 7-11  learned       LCB2 gain -0.0043 [-0.0158, +0.0053]  -6.4% [-26, +9]  p 0.784  gaining 13/20  price 0.0144
+   seeds 7-11  mag           LCB1 gain +0.0076 [+0.0049, +0.0106]  +11.5% [+8, +16]  p 0.000134  gaining 17/20  price 0.0000  vs learned +0.0128 [+0.0040, +0.0236] p 0.00831
+   seeds 7-11  mag           LCB2 gain +0.0075 [+0.0043, +0.0112]  +11.3% [+6, +17]  p 0.000483  gaining 16/20  price 0.0000  vs learned +0.0118 [+0.0036, +0.0224] p 0.0826
+   seeds 7-11  mag_onset     LCB1 gain +0.0110 [+0.0070, +0.0153]  +16.5% [+11, +23]  p 0.000134  gaining 17/20  price 0.0000  vs learned +0.0162 [+0.0078, +0.0265] p 1.91e-05
+   seeds 7-11  mag_onset     LCB2 gain +0.0104 [+0.0058, +0.0156]  +15.6% [+9, +23]  p 0.000586  gaining 16/20  price 0.0000  vs learned +0.0147 [+0.0070, +0.0244] p 2.67e-05
+   seeds 7-11  mag_half      LCB1 gain +0.0036 [+0.0021, +0.0049]  +5.4% [+3, +7]  p 0.000134  gaining 18/20  price 0.0000  vs learned +0.0088 [-0.0014, +0.0211] p 0.756
+   seeds 7-11  mag_half      LCB2 gain +0.0052 [+0.0036, +0.0069]  +7.9% [+6, +10]  p 1.34e-05  gaining 19/20  price 0.0000  vs learned +0.0095 [-0.0004, +0.0218] p 0.622
+   seeds 7-11  mag_double    LCB1 gain -0.0032 [-0.0144, +0.0065]  -4.8% [-23, +10]  p 0.648  gaining 12/20  price 0.0000  vs learned +0.0020 [-0.0013, +0.0056] p 0.368
+   seeds 7-11  mag_double    LCB2 gain -0.0024 [-0.0130, +0.0070]  -3.6% [-21, +11]  p 0.546  gaining 13/20  price 0.0000  vs learned +0.0019 [-0.0015, +0.0056] p 0.729
+   seeds 7-11  retest3       LCB1 gain +0.0044 [+0.0020, +0.0068]  +6.6% [+3, +10]  p 0.00271  gaining 16/20  price 0.0000  vs learned +0.0096 [+0.0011, +0.0202] p 0.596
+   seeds 7-11  retest3       LCB2 gain +0.0051 [+0.0021, +0.0082]  +7.7% [+3, +12]  p 0.00422  gaining 15/20  price 0.0000  vs learned +0.0094 [+0.0012, +0.0195] p 0.596
+   seeds 7-11  inside_random LCB1 gain -0.0002 [-0.0045, +0.0040]  -0.3% [-7, +6]  p 0.927  gaining 10/20  price 0.0030  vs learned +0.0050 [-0.0026, +0.0147] p 0.869
+   seeds 7-11  inside_random LCB2 gain +0.0009 [-0.0038, +0.0055]  +1.3% [-6, +9]  p 0.756  gaining 10/20  price 0.0030  vs learned +0.0052 [-0.0020, +0.0146] p 0.841
+   seeds 7-11  inside_top    LCB1 gain +0.0018 [-0.0032, +0.0071]  +2.7% [-5, +11]  p 0.546  gaining 11/20  price 0.0030  vs learned +0.0070 [-0.0008, +0.0165] p 0.812
+   seeds 7-11  inside_top    LCB2 gain +0.0020 [-0.0029, +0.0072]  +3.0% [-5, +11]  p 0.43  gaining 12/20  price 0.0030  vs learned +0.0063 [-0.0016, +0.0163] p 0.927
+   seeds 12-16 learned       LCB1 gain -0.0033 [-0.0137, +0.0052]  -4.7% [-22, +7]  p 0.368  gaining 13/20  price 0.0147
+   seeds 12-16 learned       LCB2 gain -0.0027 [-0.0130, +0.0055]  -3.8% [-21, +8]  p 0.368  gaining 14/20  price 0.0150
+   seeds 12-16 mag           LCB1 gain +0.0064 [+0.0035, +0.0095]  +9.2% [+6, +13]  p 0.000708  gaining 16/20  price 0.0000  vs learned +0.0097 [+0.0026, +0.0188] p 0.00558
+   seeds 12-16 mag           LCB2 gain +0.0061 [+0.0034, +0.0090]  +8.7% [+5, +12]  p 0.000708  gaining 15/20  price 0.0000  vs learned +0.0088 [+0.0017, +0.0177] p 0.0759
+   seeds 12-16 mag_onset     LCB1 gain +0.0097 [+0.0059, +0.0138]  +13.8% [+9, +19]  p 0.000261  gaining 17/20  price 0.0000  vs learned +0.0130 [+0.0061, +0.0215] p 1.91e-06
+   seeds 12-16 mag_onset     LCB2 gain +0.0093 [+0.0053, +0.0136]  +13.2% [+8, +19]  p 0.000586  gaining 15/20  price 0.0000  vs learned +0.0120 [+0.0056, +0.0200] p 1.91e-06
+   seeds 12-16 mag_half      LCB1 gain +0.0026 [+0.0008, +0.0044]  +3.7% [+1, +6]  p 0.00944  gaining 15/20  price 0.0000  vs learned +0.0059 [-0.0034, +0.0172] p 0.898
+   seeds 12-16 mag_half      LCB2 gain +0.0040 [+0.0024, +0.0058]  +5.6% [+4, +8]  p 0.000322  gaining 16/20  price 0.0000  vs learned +0.0066 [-0.0024, +0.0177] p 0.956
+   seeds 12-16 mag_double    LCB1 gain -0.0023 [-0.0132, +0.0066]  -3.3% [-22, +10]  p 0.475  gaining 12/20  price 0.0000  vs learned +0.0010 [-0.0019, +0.0040] p 0.409
+   seeds 12-16 mag_double    LCB2 gain -0.0020 [-0.0125, +0.0068]  -2.8% [-20, +10]  p 0.452  gaining 13/20  price 0.0000  vs learned +0.0007 [-0.0021, +0.0035] p 0.841
+   seeds 12-16 retest3       LCB1 gain +0.0050 [+0.0022, +0.0078]  +7.1% [+3, +11]  p 0.00486  gaining 16/20  price 0.0000  vs learned +0.0083 [+0.0014, +0.0168] p 0.202
+   seeds 12-16 retest3       LCB2 gain +0.0054 [+0.0027, +0.0082]  +7.7% [+4, +11]  p 0.00315  gaining 15/20  price 0.0000  vs learned +0.0081 [+0.0013, +0.0165] p 0.368
+   seeds 12-16 inside_random LCB1 gain +0.0007 [-0.0037, +0.0050]  +0.9% [-6, +6]  p 0.452  gaining 13/20  price 0.0045  vs learned +0.0040 [-0.0031, +0.0125] p 0.701
+   seeds 12-16 inside_random LCB2 gain +0.0008 [-0.0035, +0.0050]  +1.1% [-6, +6]  p 0.498  gaining 14/20  price 0.0045  vs learned +0.0035 [-0.0034, +0.0116] p 0.498
+   seeds 12-16 inside_top    LCB1 gain +0.0011 [-0.0033, +0.0052]  +1.6% [-5, +7]  p 0.33  gaining 14/20  price 0.0045  vs learned +0.0044 [-0.0023, +0.0126] p 0.648
+   seeds 12-16 inside_top    LCB2 gain +0.0016 [-0.0030, +0.0060]  +2.3% [-5, +8]  p 0.349  gaining 13/20  price 0.0045  vs learned +0.0043 [-0.0021, +0.0121] p 0.648
+   seeds 27-36 learned       LCB1 gain -0.0038 [-0.0138, +0.0046]  -5.7% [-23, +7]  p 1  gaining 13/20  price 0.0163
+   seeds 27-36 learned       LCB2 gain -0.0042 [-0.0147, +0.0046]  -6.3% [-25, +7]  p 0.985  gaining 12/20  price 0.0158
+   seeds 27-36 mag           LCB1 gain +0.0060 [+0.0030, +0.0091]  +9.0% [+5, +14]  p 0.00199  gaining 16/20  price 0.0000  vs learned +0.0098 [+0.0032, +0.0181] p 0.00271
+   seeds 27-36 mag           LCB2 gain +0.0054 [+0.0023, +0.0087]  +8.0% [+4, +13]  p 0.00639  gaining 16/20  price 0.0000  vs learned +0.0096 [+0.0029, +0.0185] p 0.024
+   seeds 27-36 mag_onset     LCB1 gain +0.0091 [+0.0052, +0.0131]  +13.6% [+8, +19]  p 0.000586  gaining 15/20  price 0.0000  vs learned +0.0129 [+0.0067, +0.0207] p 1.91e-06
+   seeds 27-36 mag_onset     LCB2 gain +0.0085 [+0.0042, +0.0132]  +12.7% [+7, +20]  p 0.00143  gaining 15/20  price 0.0000  vs learned +0.0127 [+0.0065, +0.0208] p 1.91e-06
+   seeds 27-36 mag_half      LCB1 gain +0.0030 [+0.0019, +0.0042]  +4.5% [+3, +6]  p 0.00021  gaining 16/20  price 0.0000  vs learned +0.0068 [-0.0020, +0.0171] p 0.701
+   seeds 27-36 mag_half      LCB2 gain +0.0039 [+0.0027, +0.0051]  +5.8% [+4, +7]  p 1.34e-05  gaining 18/20  price 0.0000  vs learned +0.0081 [-0.0006, +0.0186] p 0.522
+   seeds 27-36 mag_double    LCB1 gain -0.0033 [-0.0139, +0.0061]  -4.9% [-24, +9]  p 0.756  gaining 12/20  price 0.0000  vs learned +0.0005 [-0.0022, +0.0034] p 0.956
+   seeds 27-36 mag_double    LCB2 gain -0.0040 [-0.0145, +0.0051]  -6.0% [-25, +8]  p 0.898  gaining 11/20  price 0.0000  vs learned +0.0002 [-0.0022, +0.0027] p 0.869
+   seeds 27-36 retest3       LCB1 gain +0.0044 [+0.0016, +0.0071]  +6.6% [+2, +11]  p 0.0107  gaining 15/20  price 0.0000  vs learned +0.0082 [+0.0015, +0.0165] p 0.622
+   seeds 27-36 retest3       LCB2 gain +0.0043 [+0.0014, +0.0071]  +6.4% [+2, +11]  p 0.0121  gaining 16/20  price 0.0000  vs learned +0.0085 [+0.0017, +0.0170] p 0.43
+   seeds 27-36 inside_random LCB1 gain -0.0011 [-0.0053, +0.0029]  -1.7% [-9, +4]  p 0.729  gaining 10/20  price 0.0055  vs learned +0.0027 [-0.0033, +0.0106] p 0.475
+   seeds 27-36 inside_random LCB2 gain -0.0009 [-0.0053, +0.0035]  -1.4% [-9, +5]  p 0.841  gaining 10/20  price 0.0055  vs learned +0.0033 [-0.0027, +0.0115] p 0.498
+   seeds 27-36 inside_top    LCB1 gain +0.0001 [-0.0039, +0.0038]  +0.1% [-7, +6]  p 0.841  gaining 10/20  price 0.0055  vs learned +0.0039 [-0.0025, +0.0124] p 0.546
+   seeds 27-36 inside_top    LCB2 gain +0.0002 [-0.0039, +0.0041]  +0.3% [-7, +6]  p 0.841  gaining 10/20  price 0.0055  vs learned +0.0044 [-0.0020, +0.0132] p 0.648
+-- 5sigma_both_onsets
+   seeds 7-16  learned       LCB1 gain +0.0537 [+0.0273, +0.0833]  +9.6% [+5, +15]  p 0.00143  gaining 17/20  price 0.0145
+   seeds 7-16  learned       LCB2 gain +0.0720 [+0.0430, +0.1055]  +12.9% [+8, +19]  p 0.00021  gaining 17/20  price 0.0147
+   seeds 7-16  mag           LCB1 gain +0.0757 [+0.0431, +0.1092]  +13.6% [+8, +19]  p 0.000322  gaining 17/20  price 0.0000  vs learned +0.0220 [+0.0105, +0.0353] p 0.00233
+   seeds 7-16  mag           LCB2 gain +0.1004 [+0.0659, +0.1394]  +18.0% [+12, +24]  p 6.29e-05  gaining 17/20  price 0.0000  vs learned +0.0284 [+0.0170, +0.0413] p 0.000322
+   seeds 7-16  mag_onset     LCB1 gain +0.1768 [+0.1374, +0.2161]  +31.7% [+26, +38]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1231 [+0.0960, +0.1487] p 3.81e-06
+   seeds 7-16  mag_onset     LCB2 gain +0.1871 [+0.1468, +0.2292]  +33.6% [+28, +40]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1151 [+0.0903, +0.1383] p 3.81e-06
+   seeds 7-16  mag_half      LCB1 gain +0.0063 [-0.0032, +0.0176]  +1.1% [-1, +3]  p 0.498  gaining 11/20  price 0.0000  vs learned -0.0474 [-0.0722, -0.0255] p 0.00143
+   seeds 7-16  mag_half      LCB2 gain +0.0203 [+0.0088, +0.0351]  +3.7% [+2, +6]  p 0.00143  gaining 16/20  price 0.0000  vs learned -0.0517 [-0.0790, -0.0276] p 0.000322
+   seeds 7-16  mag_double    LCB1 gain +0.0988 [+0.0614, +0.1406]  +17.7% [+11, +24]  p 0.000105  gaining 17/20  price 0.0000  vs learned +0.0451 [+0.0279, +0.0646] p 3.62e-05
+   seeds 7-16  mag_double    LCB2 gain +0.1087 [+0.0680, +0.1538]  +19.5% [+13, +26]  p 0.000105  gaining 17/20  price 0.0000  vs learned +0.0366 [+0.0194, +0.0556] p 0.00102
+   seeds 7-16  retest3       LCB1 gain +0.0590 [+0.0327, +0.0864]  +10.6% [+6, +15]  p 0.000708  gaining 17/20  price 0.0000  vs learned +0.0052 [-0.0025, +0.0138] p 0.596
+   seeds 7-16  retest3       LCB2 gain +0.0770 [+0.0494, +0.1073]  +13.8% [+9, +19]  p 6.29e-05  gaining 18/20  price 0.0000  vs learned +0.0050 [-0.0025, +0.0123] p 0.202
+   seeds 7-16  inside_random LCB1 gain +0.0501 [+0.0303, +0.0712]  +9.0% [+6, +13]  p 0.00021  gaining 17/20  price 0.0037  vs learned -0.0036 [-0.0166, +0.0072] p 0.756
+   seeds 7-16  inside_random LCB2 gain +0.0727 [+0.0458, +0.1038]  +13.0% [+8, +18]  p 8.2e-05  gaining 18/20  price 0.0037  vs learned +0.0007 [-0.0069, +0.0075] p 0.596
+   seeds 7-16  inside_top    LCB1 gain +0.0626 [+0.0385, +0.0871]  +11.2% [+7, +15]  p 0.000168  gaining 17/20  price 0.0037  vs learned +0.0088 [-0.0041, +0.0216] p 0.202
+   seeds 7-16  inside_top    LCB2 gain +0.0808 [+0.0550, +0.1100]  +14.5% [+10, +19]  p 3.62e-05  gaining 18/20  price 0.0037  vs learned +0.0087 [-0.0032, +0.0204] p 0.189
+   seeds 7-11  learned       LCB1 gain +0.0508 [+0.0232, +0.0822]  +9.5% [+4, +16]  p 0.00271  gaining 15/20  price 0.0144
+   seeds 7-11  learned       LCB2 gain +0.0675 [+0.0390, +0.1007]  +12.6% [+7, +19]  p 0.000168  gaining 17/20  price 0.0144
+   seeds 7-11  mag           LCB1 gain +0.0676 [+0.0370, +0.1009]  +12.6% [+7, +19]  p 0.000483  gaining 17/20  price 0.0000  vs learned +0.0168 [+0.0042, +0.0316] p 0.0296
+   seeds 7-11  mag           LCB2 gain +0.0901 [+0.0554, +0.1287]  +16.8% [+11, +24]  p 0.000105  gaining 17/20  price 0.0000  vs learned +0.0226 [+0.0123, +0.0337] p 0.000851
+   seeds 7-11  mag_onset     LCB1 gain +0.1621 [+0.1268, +0.1983]  +30.3% [+24, +37]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1113 [+0.0843, +0.1376] p 1.91e-06
+   seeds 7-11  mag_onset     LCB2 gain +0.1763 [+0.1391, +0.2148]  +32.9% [+27, +39]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1089 [+0.0843, +0.1330] p 1.91e-06
+   seeds 7-11  mag_half      LCB1 gain +0.0010 [-0.0164, +0.0236]  +0.2% [-3, +5]  p 0.622  gaining 11/20  price 0.0000  vs learned -0.0498 [-0.0779, -0.0257] p 0.000851
+   seeds 7-11  mag_half      LCB2 gain +0.0155 [-0.0005, +0.0360]  +2.9% [-0, +7]  p 0.0973  gaining 15/20  price 0.0000  vs learned -0.0520 [-0.0849, -0.0246] p 0.000586
+   seeds 7-11  mag_double    LCB1 gain +0.0875 [+0.0521, +0.1256]  +16.3% [+10, +23]  p 0.00021  gaining 17/20  price 0.0000  vs learned +0.0367 [+0.0194, +0.0567] p 0.000322
+   seeds 7-11  mag_double    LCB2 gain +0.0968 [+0.0571, +0.1397]  +18.1% [+11, +25]  p 0.000261  gaining 17/20  price 0.0000  vs learned +0.0294 [+0.0124, +0.0480] p 0.0107
+   seeds 7-11  retest3       LCB1 gain +0.0500 [+0.0220, +0.0801]  +9.3% [+4, +15]  p 0.00233  gaining 16/20  price 0.0000  vs learned -0.0008 [-0.0121, +0.0112] p 0.674
+   seeds 7-11  retest3       LCB2 gain +0.0653 [+0.0370, +0.0974]  +12.2% [+7, +18]  p 0.000322  gaining 17/20  price 0.0000  vs learned -0.0021 [-0.0114, +0.0067] p 0.812
+   seeds 7-11  inside_random LCB1 gain +0.0412 [+0.0228, +0.0619]  +7.7% [+4, +12]  p 0.000134  gaining 18/20  price 0.0030  vs learned -0.0095 [-0.0298, +0.0082] p 0.409
+   seeds 7-11  inside_random LCB2 gain +0.0639 [+0.0393, +0.0912]  +11.9% [+7, +17]  p 4.77e-05  gaining 18/20  price 0.0030  vs learned -0.0036 [-0.0143, +0.0059] p 0.956
+   seeds 7-11  inside_top    LCB1 gain +0.0492 [+0.0291, +0.0706]  +9.2% [+6, +13]  p 0.00021  gaining 17/20  price 0.0030  vs learned -0.0016 [-0.0210, +0.0184] p 0.674
+   seeds 7-11  inside_top    LCB2 gain +0.0669 [+0.0443, +0.0912]  +12.5% [+8, +17]  p 3.62e-05  gaining 19/20  price 0.0030  vs learned -0.0006 [-0.0174, +0.0158] p 0.729
+   seeds 12-16 learned       LCB1 gain +0.0567 [+0.0262, +0.0883]  +9.8% [+5, +15]  p 0.00315  gaining 17/20  price 0.0147
+   seeds 12-16 learned       LCB2 gain +0.0766 [+0.0443, +0.1135]  +13.2% [+8, +19]  p 0.000168  gaining 18/20  price 0.0150
+   seeds 12-16 mag           LCB1 gain +0.0839 [+0.0475, +0.1245]  +14.5% [+8, +21]  p 0.000483  gaining 17/20  price 0.0000  vs learned +0.0271 [+0.0129, +0.0424] p 0.00169
+   seeds 12-16 mag           LCB2 gain +0.1107 [+0.0729, +0.1554]  +19.1% [+13, +25]  p 1.91e-05  gaining 19/20  price 0.0000  vs learned +0.0341 [+0.0205, +0.0499] p 4.77e-05
+   seeds 12-16 mag_onset     LCB1 gain +0.1916 [+0.1472, +0.2370]  +33.1% [+27, +39]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1348 [+0.1049, +0.1619] p 5.72e-06
+   seeds 12-16 mag_onset     LCB2 gain +0.1980 [+0.1531, +0.2452]  +34.2% [+28, +40]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1213 [+0.0941, +0.1462] p 5.72e-06
+   seeds 12-16 mag_half      LCB1 gain +0.0117 [+0.0009, +0.0219]  +2.0% [+0, +4]  p 0.0637  gaining 13/20  price 0.0000  vs learned -0.0450 [-0.0746, -0.0182] p 0.00422
+   seeds 12-16 mag_half      LCB2 gain +0.0252 [+0.0123, +0.0373]  +4.4% [+2, +6]  p 0.00121  gaining 17/20  price 0.0000  vs learned -0.0514 [-0.0790, -0.0261] p 0.000708
+   seeds 12-16 mag_double    LCB1 gain +0.1101 [+0.0690, +0.1579]  +19.0% [+12, +26]  p 6.29e-05  gaining 18/20  price 0.0000  vs learned +0.0534 [+0.0340, +0.0747] p 3.81e-06
+   seeds 12-16 mag_double    LCB2 gain +0.1205 [+0.0766, +0.1705]  +20.8% [+14, +28]  p 6.29e-05  gaining 18/20  price 0.0000  vs learned +0.0439 [+0.0247, +0.0646] p 0.00021
+   seeds 12-16 retest3       LCB1 gain +0.0680 [+0.0403, +0.0952]  +11.7% [+7, +16]  p 0.000261  gaining 18/20  price 0.0000  vs learned +0.0112 [+0.0000, +0.0217] p 0.0696
+   seeds 12-16 retest3       LCB2 gain +0.0886 [+0.0597, +0.1200]  +15.3% [+11, +20]  p 4.77e-05  gaining 18/20  price 0.0000  vs learned +0.0120 [+0.0015, +0.0217] p 0.0266
+   seeds 12-16 inside_random LCB1 gain +0.0590 [+0.0310, +0.0903]  +10.2% [+6, +15]  p 0.000708  gaining 15/20  price 0.0045  vs learned +0.0022 [-0.0107, +0.0137] p 0.869
+   seeds 12-16 inside_random LCB2 gain +0.0816 [+0.0477, +0.1195]  +14.1% [+9, +20]  p 0.000168  gaining 18/20  price 0.0045  vs learned +0.0049 [-0.0030, +0.0126] p 0.245
+   seeds 12-16 inside_top    LCB1 gain +0.0760 [+0.0458, +0.1066]  +13.1% [+8, +18]  p 0.00021  gaining 17/20  price 0.0045  vs learned +0.0193 [+0.0078, +0.0302] p 0.00831
+   seeds 12-16 inside_top    LCB2 gain +0.0947 [+0.0626, +0.1293]  +16.3% [+11, +21]  p 8.2e-05  gaining 17/20  price 0.0045  vs learned +0.0180 [+0.0065, +0.0295] p 0.0121
+   seeds 27-36 learned       LCB1 gain +0.0367 [+0.0229, +0.0510]  +6.6% [+4, +9]  p 8.2e-05  gaining 18/20  price 0.0163
+   seeds 27-36 learned       LCB2 gain +0.0617 [+0.0436, +0.0793]  +11.1% [+8, +14]  p 9.54e-06  gaining 19/20  price 0.0158
+   seeds 27-36 mag           LCB1 gain +0.0609 [+0.0404, +0.0804]  +10.9% [+7, +14]  p 8.2e-05  gaining 18/20  price 0.0000  vs learned +0.0242 [+0.0113, +0.0376] p 0.000708
+   seeds 27-36 mag           LCB2 gain +0.0822 [+0.0564, +0.1072]  +14.7% [+10, +19]  p 1.91e-05  gaining 19/20  price 0.0000  vs learned +0.0205 [+0.0096, +0.0323] p 0.00169
+   seeds 27-36 mag_onset     LCB1 gain +0.1609 [+0.1326, +0.1877]  +28.8% [+25, +33]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1242 [+0.0989, +0.1482] p 1.91e-06
+   seeds 27-36 mag_onset     LCB2 gain +0.1760 [+0.1429, +0.2083]  +31.5% [+27, +36]  p 1.91e-06  gaining 20/20  price 0.0000  vs learned +0.1143 [+0.0898, +0.1375] p 1.91e-06
+   seeds 27-36 mag_half      LCB1 gain +0.0036 [-0.0087, +0.0140]  +0.6% [-2, +2]  p 0.202  gaining 14/20  price 0.0000  vs learned -0.0331 [-0.0479, -0.0191] p 0.000708
+   seeds 27-36 mag_half      LCB2 gain +0.0172 [+0.0037, +0.0290]  +3.1% [+1, +5]  p 0.00199  gaining 18/20  price 0.0000  vs learned -0.0445 [-0.0649, -0.0238] p 0.000708
+   seeds 27-36 mag_double    LCB1 gain +0.0859 [+0.0576, +0.1139]  +15.4% [+10, +20]  p 6.29e-05  gaining 18/20  price 0.0000  vs learned +0.0492 [+0.0257, +0.0739] p 0.00169
+   seeds 27-36 mag_double    LCB2 gain +0.0960 [+0.0625, +0.1291]  +17.2% [+12, +22]  p 4.77e-05  gaining 19/20  price 0.0000  vs learned +0.0343 [+0.0135, +0.0556] p 0.00486
+   seeds 27-36 retest3       LCB1 gain +0.0421 [+0.0250, +0.0596]  +7.5% [+5, +11]  p 0.00021  gaining 17/20  price 0.0000  vs learned +0.0053 [-0.0042, +0.0160] p 0.409
+   seeds 27-36 retest3       LCB2 gain +0.0619 [+0.0425, +0.0814]  +11.1% [+8, +14]  p 9.54e-06  gaining 19/20  price 0.0000  vs learned +0.0002 [-0.0080, +0.0086] p 0.927
+   seeds 27-36 inside_random LCB1 gain +0.0481 [+0.0341, +0.0629]  +8.6% [+6, +11]  p 2.67e-05  gaining 17/20  price 0.0055  vs learned +0.0114 [-0.0001, +0.0246] p 0.202
+   seeds 27-36 inside_random LCB2 gain +0.0604 [+0.0420, +0.0791]  +10.8% [+8, +14]  p 1.91e-05  gaining 19/20  price 0.0055  vs learned -0.0013 [-0.0095, +0.0074] p 0.729
+   seeds 27-36 inside_top    LCB1 gain +0.0637 [+0.0440, +0.0842]  +11.4% [+8, +15]  p 9.54e-06  gaining 19/20  price 0.0055  vs learned +0.0269 [+0.0114, +0.0438] p 0.00143
+   seeds 27-36 inside_top    LCB2 gain +0.0775 [+0.0556, +0.1006]  +13.9% [+10, +17]  p 1.91e-06  gaining 20/20  price 0.0055  vs learned +0.0157 [+0.0053, +0.0268] p 0.0136
+-- 0.05sigma_both_onsets
+   seeds 7-16  learned       LCB1 gain -0.0126 [-0.0257, -0.0026]  no share (reference negative on 3 of 20 landscapes)  p 0.376  gaining 10/20  price 0.0145
+   seeds 7-16  learned       LCB2 gain -0.0129 [-0.0256, -0.0029]  no share (reference negative on 3 of 20 landscapes)  p 0.334  gaining 10/20  price 0.0147
+   seeds 7-16  mag           LCB1 gain +0.0011 [+0.0006, +0.0016]  no share (reference negative on 3 of 20 landscapes)  p 0.00112  gaining 16/20  price 0.0000  vs learned +0.0137 [+0.0036, +0.0272] p 0.00376
+   seeds 7-16  mag           LCB2 gain +0.0011 [+0.0006, +0.0016]  no share (reference negative on 3 of 20 landscapes)  p 0.000967  gaining 16/20  price 0.0000  vs learned +0.0140 [+0.0040, +0.0274] p 0.00112
+   seeds 7-16  mag_onset     LCB1 gain +0.0015 [+0.0007, +0.0023]  no share (reference negative on 3 of 20 landscapes)  p 0.00112  gaining 17/20  price 0.0000  vs learned +0.0141 [+0.0041, +0.0275] p 0.000182
+   seeds 7-16  mag_onset     LCB2 gain +0.0015 [+0.0007, +0.0025]  no share (reference negative on 3 of 20 landscapes)  p 0.00112  gaining 17/20  price 0.0000  vs learned +0.0144 [+0.0044, +0.0277] p 0.000182
+   seeds 7-16  mag_half      LCB1 gain +0.0008 [+0.0005, +0.0012]  no share (reference negative on 3 of 20 landscapes)  p 0.000322  gaining 17/20  price 0.0000  vs learned +0.0135 [+0.0032, +0.0271] p 0.105
+   seeds 7-16  mag_half      LCB2 gain +0.0009 [+0.0005, +0.0013]  no share (reference negative on 3 of 20 landscapes)  p 0.000322  gaining 17/20  price 0.0000  vs learned +0.0137 [+0.0037, +0.0271] p 0.0637
+   seeds 7-16  mag_double    LCB1 gain +0.0002 [-0.0007, +0.0011]  no share (reference negative on 3 of 20 landscapes)  p 0.717  gaining 9/20  price 0.0000  vs learned +0.0128 [+0.0028, +0.0262] p 0.0702
+   seeds 7-16  mag_double    LCB2 gain +0.0002 [-0.0007, +0.0011]  no share (reference negative on 3 of 20 landscapes)  p 0.717  gaining 9/20  price 0.0000  vs learned +0.0131 [+0.0032, +0.0264] p 0.0242
+   seeds 7-16  retest3       LCB1 gain +0.0009 [+0.0005, +0.0014]  no share (reference negative on 3 of 20 landscapes)  p 0.00112  gaining 16/20  price 0.0000  vs learned +0.0136 [+0.0035, +0.0271] p 0.0836
+   seeds 7-16  retest3       LCB2 gain +0.0010 [+0.0005, +0.0015]  no share (reference negative on 3 of 20 landscapes)  p 0.00128  gaining 16/20  price 0.0000  vs learned +0.0139 [+0.0039, +0.0272] p 0.0176
+   seeds 7-16  inside_random LCB1 gain -0.0042 [-0.0071, -0.0017]  no share (reference negative on 3 of 20 landscapes)  p 0.0192  gaining 7/20  price 0.0037  vs learned +0.0084 [-0.0011, +0.0212] p 0.841
+   seeds 7-16  inside_random LCB2 gain -0.0042 [-0.0070, -0.0016]  no share (reference negative on 3 of 20 landscapes)  p 0.0192  gaining 7/20  price 0.0037  vs learned +0.0087 [-0.0008, +0.0214] p 0.904
+   seeds 7-16  inside_top    LCB1 gain -0.0040 [-0.0068, -0.0014]  no share (reference negative on 3 of 20 landscapes)  p 0.0215  gaining 7/20  price 0.0037  vs learned +0.0087 [-0.0008, +0.0215] p 0.927
+   seeds 7-16  inside_top    LCB2 gain -0.0040 [-0.0068, -0.0014]  no share (reference negative on 3 of 20 landscapes)  p 0.0296  gaining 7/20  price 0.0037  vs learned +0.0089 [-0.0006, +0.0216] p 0.809
+   seeds 7-11  learned       LCB1 gain -0.0136 [-0.0273, -0.0031]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.277  gaining 10/20  price 0.0144
+   seeds 7-11  learned       LCB2 gain -0.0136 [-0.0271, -0.0030]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.26  gaining 10/20  price 0.0144
+   seeds 7-11  mag           LCB1 gain +0.0009 [+0.0004, +0.0014]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00376  gaining 15/20  price 0.0000  vs learned +0.0145 [+0.0038, +0.0290] p 0.00568
+   seeds 7-11  mag           LCB2 gain +0.0009 [+0.0004, +0.0014]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00331  gaining 16/20  price 0.0000  vs learned +0.0145 [+0.0038, +0.0287] p 0.00791
+   seeds 7-11  mag_onset     LCB1 gain +0.0015 [+0.0007, +0.0024]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00331  gaining 15/20  price 0.0000  vs learned +0.0151 [+0.0045, +0.0293] p 0.000276
+   seeds 7-11  mag_onset     LCB2 gain +0.0016 [+0.0006, +0.0027]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00485  gaining 14/20  price 0.0000  vs learned +0.0151 [+0.0047, +0.0290] p 0.000276
+   seeds 7-11  mag_half      LCB1 gain +0.0010 [+0.0005, +0.0015]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00169  gaining 16/20  price 0.0000  vs learned +0.0146 [+0.0038, +0.0290] p 0.0215
+   seeds 7-11  mag_half      LCB2 gain +0.0010 [+0.0006, +0.0015]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.000851  gaining 16/20  price 0.0000  vs learned +0.0146 [+0.0038, +0.0288] p 0.0107
+   seeds 7-11  mag_double    LCB1 gain +0.0000 [-0.0011, +0.0011]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.841  gaining 9/20  price 0.0000  vs learned +0.0137 [+0.0032, +0.0279] p 0.126
+   seeds 7-11  mag_double    LCB2 gain +0.0001 [-0.0010, +0.0012]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 1  gaining 9/20  price 0.0000  vs learned +0.0137 [+0.0034, +0.0277] p 0.0123
+   seeds 7-11  retest3       LCB1 gain +0.0008 [+0.0004, +0.0013]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00549  gaining 14/20  price 0.0000  vs learned +0.0145 [+0.0037, +0.0289] p 0.0249
+   seeds 7-11  retest3       LCB2 gain +0.0009 [+0.0004, +0.0015]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.00621  gaining 14/20  price 0.0000  vs learned +0.0145 [+0.0038, +0.0288] p 0.0176
+   seeds 7-11  inside_random LCB1 gain -0.0039 [-0.0066, -0.0017]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.0441  gaining 8/20  price 0.0030  vs learned +0.0098 [-0.0002, +0.0233] p 0.898
+   seeds 7-11  inside_random LCB2 gain -0.0037 [-0.0064, -0.0015]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.04  gaining 7/20  price 0.0030  vs learned +0.0099 [+0.0001, +0.0232] p 0.841
+   seeds 7-11  inside_top    LCB1 gain -0.0034 [-0.0062, -0.0011]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.0696  gaining 8/20  price 0.0030  vs learned +0.0102 [+0.0002, +0.0239] p 0.475
+   seeds 7-11  inside_top    LCB2 gain -0.0034 [-0.0062, -0.0011]  no share (reference 0.0097 below 0.01; reference negative on 3 of 20 landscapes)  p 0.0696  gaining 8/20  price 0.0030  vs learned +0.0102 [+0.0003, +0.0236] p 0.674
+   seeds 12-16 learned       LCB1 gain -0.0116 [-0.0240, -0.0021]  no share (reference negative on 4 of 20 landscapes)  p 0.398  gaining 10/20  price 0.0147
+   seeds 12-16 learned       LCB2 gain -0.0122 [-0.0243, -0.0027]  no share (reference negative on 4 of 20 landscapes)  p 0.243  gaining 8/20  price 0.0150
+   seeds 12-16 mag           LCB1 gain +0.0012 [+0.0007, +0.0018]  no share (reference negative on 4 of 20 landscapes)  p 0.000539  gaining 17/20  price 0.0000  vs learned +0.0129 [+0.0033, +0.0258] p 0.0222
+   seeds 12-16 mag           LCB2 gain +0.0013 [+0.0008, +0.0018]  no share (reference negative on 4 of 20 landscapes)  p 0.000625  gaining 16/20  price 0.0000  vs learned +0.0134 [+0.0038, +0.0260] p 0.0029
+   seeds 12-16 mag_onset     LCB1 gain +0.0015 [+0.0007, +0.0023]  no share (reference negative on 4 of 20 landscapes)  p 0.0017  gaining 17/20  price 0.0000  vs learned +0.0131 [+0.0036, +0.0259] p 0.000342
+   seeds 12-16 mag_onset     LCB2 gain +0.0015 [+0.0006, +0.0023]  no share (reference negative on 4 of 20 landscapes)  p 0.00112  gaining 17/20  price 0.0000  vs learned +0.0136 [+0.0040, +0.0261] p 0.000233
+   seeds 12-16 mag_half      LCB1 gain +0.0007 [+0.0004, +0.0011]  no share (reference negative on 4 of 20 landscapes)  p 0.000586  gaining 16/20  price 0.0000  vs learned +0.0124 [+0.0027, +0.0254] p 0.261
+   seeds 12-16 mag_half      LCB2 gain +0.0007 [+0.0003, +0.0011]  no share (reference negative on 4 of 20 landscapes)  p 0.00365  gaining 15/20  price 0.0000  vs learned +0.0129 [+0.0032, +0.0257] p 0.143
+   seeds 12-16 mag_double    LCB1 gain +0.0003 [-0.0005, +0.0011]  no share (reference negative on 4 of 20 landscapes)  p 0.469  gaining 10/20  price 0.0000  vs learned +0.0120 [+0.0025, +0.0248] p 0.0836
+   seeds 12-16 mag_double    LCB2 gain +0.0003 [-0.0005, +0.0011]  no share (reference negative on 4 of 20 landscapes)  p 0.494  gaining 10/20  price 0.0000  vs learned +0.0125 [+0.0029, +0.0250] p 0.0534
+   seeds 12-16 retest3       LCB1 gain +0.0011 [+0.0006, +0.0015]  no share (reference negative on 4 of 20 landscapes)  p 0.000837  gaining 17/20  price 0.0000  vs learned +0.0127 [+0.0032, +0.0257] p 0.0586
+   seeds 12-16 retest3       LCB2 gain +0.0011 [+0.0006, +0.0016]  no share (reference negative on 4 of 20 landscapes)  p 0.00137  gaining 16/20  price 0.0000  vs learned +0.0132 [+0.0036, +0.0259] p 0.0364
+   seeds 12-16 inside_random LCB1 gain -0.0046 [-0.0084, -0.0015]  no share (reference negative on 4 of 20 landscapes)  p 0.0442  gaining 7/20  price 0.0045  vs learned +0.0070 [-0.0025, +0.0190] p 0.841
+   seeds 12-16 inside_random LCB2 gain -0.0046 [-0.0084, -0.0014]  no share (reference negative on 4 of 20 landscapes)  p 0.0442  gaining 7/20  price 0.0045  vs learned +0.0076 [-0.0020, +0.0193] p 0.936
+   seeds 12-16 inside_top    LCB1 gain -0.0045 [-0.0083, -0.0014]  no share (reference negative on 4 of 20 landscapes)  p 0.0486  gaining 7/20  price 0.0045  vs learned +0.0071 [-0.0024, +0.0192] p 0.778
+   seeds 12-16 inside_top    LCB2 gain -0.0045 [-0.0082, -0.0014]  no share (reference negative on 4 of 20 landscapes)  p 0.0442  gaining 7/20  price 0.0045  vs learned +0.0077 [-0.0019, +0.0195] p 0.936
+   seeds 27-36 learned       LCB1 gain -0.0126 [-0.0240, -0.0034]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.198  gaining 9/20  price 0.0163
+   seeds 27-36 learned       LCB2 gain -0.0130 [-0.0256, -0.0035]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.227  gaining 10/20  price 0.0158
+   seeds 27-36 mag           LCB1 gain +0.0010 [+0.0005, +0.0015]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00223  gaining 15/20  price 0.0000  vs learned +0.0136 [+0.0044, +0.0255] p 0.000837
+   seeds 27-36 mag           LCB2 gain +0.0010 [+0.0005, +0.0015]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.0017  gaining 15/20  price 0.0000  vs learned +0.0140 [+0.0043, +0.0266] p 0.00485
+   seeds 27-36 mag_onset     LCB1 gain +0.0015 [+0.0008, +0.0021]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.000837  gaining 17/20  price 0.0000  vs learned +0.0140 [+0.0049, +0.0258] p 0.000132
+   seeds 27-36 mag_onset     LCB2 gain +0.0014 [+0.0008, +0.0021]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.000724  gaining 17/20  price 0.0000  vs learned +0.0144 [+0.0048, +0.0269] p 0.000132
+   seeds 27-36 mag_half      LCB1 gain +0.0007 [+0.0003, +0.0011]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00102  gaining 17/20  price 0.0000  vs learned +0.0133 [+0.0038, +0.0252] p 0.0759
+   seeds 27-36 mag_half      LCB2 gain +0.0008 [+0.0005, +0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.000134  gaining 18/20  price 0.0000  vs learned +0.0138 [+0.0040, +0.0265] p 0.0296
+   seeds 27-36 mag_double    LCB1 gain -0.0001 [-0.0009, +0.0005]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.809  gaining 8/20  price 0.0000  vs learned +0.0125 [+0.0031, +0.0244] p 0.147
+   seeds 27-36 mag_double    LCB2 gain -0.0001 [-0.0008, +0.0005]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.968  gaining 8/20  price 0.0000  vs learned +0.0129 [+0.0032, +0.0255] p 0.126
+   seeds 27-36 retest3       LCB1 gain +0.0008 [+0.0004, +0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00621  gaining 14/20  price 0.0000  vs learned +0.0134 [+0.0041, +0.0252] p 0.0196
+   seeds 27-36 retest3       LCB2 gain +0.0008 [+0.0004, +0.0013]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.00791  gaining 13/20  price 0.0000  vs learned +0.0138 [+0.0041, +0.0264] p 0.0218
+   seeds 27-36 inside_random LCB1 gain -0.0041 [-0.0077, -0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.099  gaining 8/20  price 0.0055  vs learned +0.0084 [-0.0008, +0.0203] p 0.872
+   seeds 27-36 inside_random LCB2 gain -0.0042 [-0.0077, -0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.117  gaining 9/20  price 0.0055  vs learned +0.0088 [-0.0007, +0.0216] p 0.872
+   seeds 27-36 inside_top    LCB1 gain -0.0041 [-0.0076, -0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.143  gaining 9/20  price 0.0055  vs learned +0.0085 [-0.0007, +0.0204] p 0.898
+   seeds 27-36 inside_top    LCB2 gain -0.0040 [-0.0076, -0.0012]  no share (reference 0.0094 below 0.01; reference negative on 4 of 20 landscapes)  p 0.143  gaining 9/20  price 0.0055  vs learned +0.0089 [-0.0006, +0.0217] p 0.927
+
+== 7. Against the final sitting at the k seeds 7-11 chose, on the same runs (seeds 12-16)
+   rule_over_sitting = (regret of the sitting - regret of the rule) / opt_z, landscape means; the rule is the
+   level's choice on seeds 7-11 in the cell (section 2).
+   four processes  1sigma_from_trial_1    k =  2  learned       LCB2 -0.0043 [-0.0109, +0.0021] p 0.312 ahead 9/20  price rule 0.0231, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  mag           LCB2 -0.0018 [-0.0123, +0.0072] p 0.33 ahead 14/20  price rule 0.0000, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  mag_onset     LCB2 -0.0018 [-0.0123, +0.0072] p 0.33 ahead 14/20  price rule 0.0000, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  retest3       LCB2 -0.0074 [-0.0183, +0.0026] p 0.349 ahead 8/20  price rule 0.0000, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  cusum         LCB2 -0.0043 [-0.0148, +0.0045] p 1 ahead 11/20  price rule 0.0000, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  retest3_cusum LCB2 -0.0101 [-0.0213, +0.0003] p 0.114 ahead 8/20  price rule 0.0000, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  inside_random LCB2 -0.0140 [-0.0217, -0.0060] p 0.00558 ahead 4/20  price rule 0.0022, sitting 0.0176
+   four processes  1sigma_from_trial_1    k =  2  inside_top    LCB2 -0.0087 [-0.0171, +0.0002] p 0.0897 ahead 6/20  price rule 0.0022, sitting 0.0176
+   four processes  5sigma_from_trial_21   k = 16  learned       LCB2 -0.2180 [-0.2936, -0.1429] p 2.67e-05 ahead 3/20  price rule 0.0231, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  mag           LCB2 -0.1525 [-0.2097, -0.0984] p 8.2e-05 ahead 3/20  price rule 0.0000, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  mag_onset     LCB2 +0.1519 [+0.1154, +0.1918] p 1.91e-06 ahead 20/20  price rule 0.0000, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  retest3       LCB2 -0.1766 [-0.2432, -0.1112] p 8.2e-05 ahead 3/20  price rule 0.0000, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  cusum         LCB2 +0.0338 [-0.0095, +0.0770] p 0.165 ahead 14/20  price rule 0.0000, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  retest3_cusum LCB2 -0.0306 [-0.0737, +0.0089] p 0.368 ahead 10/20  price rule 0.0000, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  inside_random LCB2 -0.1438 [-0.2033, -0.0875] p 0.00021 ahead 4/20  price rule 0.0022, sitting 0.0325
+   four processes  5sigma_from_trial_21   k = 16  inside_top    LCB2 -0.1363 [-0.1968, -0.0804] p 0.000261 ahead 4/20  price rule 0.0022, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  learned       LCB2 +0.0031 [-0.0184, +0.0254] p 0.956 ahead 10/20  price rule 0.0231, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  mag           LCB2 +0.0050 [-0.0194, +0.0292] p 0.729 ahead 11/20  price rule 0.0000, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  mag_onset     LCB2 +0.0647 [+0.0469, +0.0836] p 9.54e-06 ahead 18/20  price rule 0.0000, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  retest3       LCB2 +0.0026 [-0.0212, +0.0261] p 1 ahead 9/20  price rule 0.0000, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  cusum         LCB2 -0.0121 [-0.0372, +0.0141] p 0.261 ahead 6/20  price rule 0.0000, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  retest3_cusum LCB2 -0.0136 [-0.0387, +0.0131] p 0.245 ahead 7/20  price rule 0.0000, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  inside_random LCB1 +0.0024 [-0.0202, +0.0230] p 0.812 ahead 10/20  price rule 0.0022, sitting 0.0325
+   four processes  1sigma_from_trial_21   k = 16  inside_top    LCB2 +0.0067 [-0.0132, +0.0276] p 0.729 ahead 10/20  price rule 0.0022, sitting 0.0325
+   four processes  5sigma_from_trial_1    k =  8  learned       LCB2 +0.0056 [-0.0197, +0.0348] p 0.812 ahead 9/20  price rule 0.0231, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  mag           LCB2 +0.0241 [-0.0003, +0.0521] p 0.189 ahead 11/20  price rule 0.0000, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  mag_onset     LCB2 +0.0241 [-0.0003, +0.0521] p 0.189 ahead 11/20  price rule 0.0000, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  retest3       LCB2 +0.0044 [-0.0215, +0.0318] p 0.841 ahead 9/20  price rule 0.0000, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  cusum         LCB2 +0.0196 [-0.0024, +0.0449] p 0.33 ahead 10/20  price rule 0.0000, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  retest3_cusum LCB2 +0.0015 [-0.0244, +0.0282] p 0.985 ahead 8/20  price rule 0.0000, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  inside_random LCB2 +0.0031 [-0.0217, +0.0333] p 0.756 ahead 8/20  price rule 0.0022, sitting 0.0156
+   four processes  5sigma_from_trial_1    k =  8  inside_top    LCB2 +0.0139 [-0.0128, +0.0446] p 0.546 ahead 10/20  price rule 0.0022, sitting 0.0156
+   gaussian        1sigma_from_trial_1    k =  2  learned       LCB2 -0.0132 [-0.0281, +0.0001] p 0.0696 ahead 7/20  price rule 0.0231, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  mag           LCB2 -0.0045 [-0.0202, +0.0120] p 0.869 ahead 9/20  price rule 0.0000, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  mag_onset     LCB2 -0.0045 [-0.0202, +0.0120] p 0.869 ahead 9/20  price rule 0.0000, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  retest3       LCB1 -0.0077 [-0.0219, +0.0068] p 0.388 ahead 8/20  price rule 0.0000, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  cusum         LCB2 -0.0078 [-0.0234, +0.0087] p 0.498 ahead 9/20  price rule 0.0000, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  retest3_cusum LCB1 -0.0112 [-0.0250, +0.0028] p 0.216 ahead 8/20  price rule 0.0000, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  inside_random LCB1 -0.0289 [-0.0448, -0.0134] p 0.00486 ahead 5/20  price rule 0.0022, sitting 0.0176
+   gaussian        1sigma_from_trial_1    k =  2  inside_top    LCB1 -0.0230 [-0.0447, -0.0030] p 0.0637 ahead 7/20  price rule 0.0022, sitting 0.0176
+   gaussian        5sigma_from_trial_21   k = 16  learned       LCB2 -0.0653 [-0.1234, -0.0108] p 0.0328 ahead 6/20  price rule 0.0231, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  mag           LCB2 +0.0369 [-0.0085, +0.0824] p 0.154 ahead 15/20  price rule 0.0000, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  mag_onset     LCB2 +0.2007 [+0.1518, +0.2564] p 3.81e-06 ahead 19/20  price rule 0.0000, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  retest3       LCB2 -0.0008 [-0.0499, +0.0462] p 0.898 ahead 12/20  price rule 0.0000, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  cusum         LCB2 +0.0535 [-0.0129, +0.1232] p 0.165 ahead 13/20  price rule 0.0000, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  retest3_cusum LCB2 +0.0475 [-0.0199, +0.1195] p 0.349 ahead 12/20  price rule 0.0000, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  inside_random LCB2 -0.0549 [-0.1138, +0.0009] p 0.0759 ahead 7/20  price rule 0.0022, sitting 0.0325
+   gaussian        5sigma_from_trial_21   k = 16  inside_top    LCB2 -0.0070 [-0.0542, +0.0418] p 0.784 ahead 9/20  price rule 0.0022, sitting 0.0325
+   gaussian        1sigma_from_trial_21   k =  8  learned       LCB1 +0.0120 [-0.0157, +0.0418] p 0.231 ahead 13/20  price rule 0.0211, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  mag           LCB1 +0.0108 [-0.0168, +0.0408] p 0.349 ahead 12/20  price rule 0.0000, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  mag_onset     LCB2 +0.0504 [+0.0285, +0.0743] p 0.000395 ahead 18/20  price rule 0.0000, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  retest3       LCB1 +0.0105 [-0.0180, +0.0420] p 0.43 ahead 12/20  price rule 0.0000, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  cusum         LCB1 -0.0132 [-0.0435, +0.0199] p 0.475 ahead 10/20  price rule 0.0000, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  retest3_cusum LCB2 -0.0174 [-0.0486, +0.0177] p 0.245 ahead 8/20  price rule 0.0000, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  inside_random LCB2 +0.0159 [-0.0050, +0.0400] p 0.216 ahead 11/20  price rule 0.0022, sitting 0.0156
+   gaussian        1sigma_from_trial_21   k =  8  inside_top    LCB1 +0.0113 [-0.0140, +0.0386] p 0.312 ahead 12/20  price rule 0.0022, sitting 0.0156
+   gaussian        5sigma_from_trial_1    k =  3  learned       LCB1 -0.0240 [-0.0659, +0.0160] p 0.409 ahead 9/20  price rule 0.0211, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  mag           LCB2 +0.0295 [-0.0052, +0.0694] p 0.388 ahead 12/20  price rule 0.0000, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  mag_onset     LCB2 +0.0295 [-0.0052, +0.0694] p 0.388 ahead 12/20  price rule 0.0000, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  retest3       LCB2 +0.0114 [-0.0163, +0.0397] p 0.622 ahead 11/20  price rule 0.0000, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  cusum         LCB2 +0.0247 [-0.0093, +0.0649] p 0.546 ahead 12/20  price rule 0.0000, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  retest3_cusum LCB2 +0.0079 [-0.0223, +0.0371] p 0.701 ahead 11/20  price rule 0.0000, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  inside_random LCB1 -0.0058 [-0.0436, +0.0361] p 0.498 ahead 9/20  price rule 0.0022, sitting 0.0119
+   gaussian        5sigma_from_trial_1    k =  3  inside_top    LCB2 +0.0312 [-0.0086, +0.0721] p 0.154 ahead 14/20  price rule 0.0022, sitting 0.0119
+
+== 8. The known-noise arm (GP told the variance during the whole run) against the final refit alone
+   gaussian, seeds 7-11; both against the MAIN sweep's standard process; 'arm - final' is the paired advantage
+   of the arm's rule over the same rule after a final refit told the same variance (mag_onset).
+   PM   0.05sigma_from_trial_1 arm gain -0.0002 [-0.0198, +0.0209] price -0.0010  final refit gain +0.0010 price +0.0000  arm - final -0.0012 [-0.0211, +0.0195] p 0.267
+   PM   0.05sigma_from_trial_21 arm gain -0.0047 [-0.0320, +0.0141] price -0.0010  final refit gain +0.0021 price +0.0000  arm - final -0.0067 [-0.0340, +0.0126] p 0.647
+   PM   0.25sigma_from_trial_1 arm gain +0.0126 [-0.0032, +0.0288] price -0.0010  final refit gain +0.0068 price +0.0000  arm - final +0.0059 [-0.0114, +0.0235] p 0.729
+   PM   0.25sigma_from_trial_21 arm gain +0.0159 [-0.0059, +0.0331] price -0.0010  final refit gain +0.0171 price +0.0000  arm - final -0.0012 [-0.0203, +0.0161] p 0.717
+   PM   1sigma_from_trial_1    arm gain +0.0170 [-0.0289, +0.0630] price -0.0010  final refit gain +0.0175 price +0.0000  arm - final -0.0005 [-0.0413, +0.0372] p 1
+   PM   1sigma_from_trial_21   arm gain +0.0477 [+0.0095, +0.0810] price -0.0010  final refit gain +0.0564 price +0.0000  arm - final -0.0087 [-0.0364, +0.0141] p 0.845
+   PM   5sigma_from_trial_1    arm gain -0.0659 [-0.2045, +0.0611] price -0.0010  final refit gain +0.0652 price +0.0000  arm - final -0.1311 [-0.2859, +0.0031] p 0.277
+   PM   5sigma_from_trial_21   arm gain +0.3013 [+0.1727, +0.4448] price -0.0010  final refit gain +0.3527 price +0.0000  arm - final -0.0515 [-0.1090, -0.0059] p 0.133
+   PM   pooled_ge_0.25sigma    arm gain +0.0548 [+0.0168, +0.0898] price -0.0010  final refit gain +0.0859 price +0.0000  arm - final -0.0312 [-0.0641, -0.0026] p 0.231
+   LCB1 0.05sigma_from_trial_1 arm gain -0.0000 [-0.0197, +0.0210] price -0.0010  final refit gain +0.0011 price +0.0000  arm - final -0.0011 [-0.0208, +0.0196] p 0.248
+   LCB1 0.05sigma_from_trial_21 arm gain -0.0034 [-0.0306, +0.0157] price -0.0010  final refit gain +0.0028 price +0.0000  arm - final -0.0062 [-0.0334, +0.0128] p 0.42
+   LCB1 0.25sigma_from_trial_1 arm gain +0.0146 [-0.0013, +0.0305] price -0.0010  final refit gain +0.0101 price +0.0000  arm - final +0.0045 [-0.0118, +0.0215] p 0.812
+   LCB1 0.25sigma_from_trial_21 arm gain +0.0177 [-0.0047, +0.0349] price -0.0010  final refit gain +0.0163 price +0.0000  arm - final +0.0014 [-0.0187, +0.0192] p 0.286
+   LCB1 1sigma_from_trial_1    arm gain +0.0281 [-0.0190, +0.0754] price -0.0010  final refit gain +0.0254 price +0.0000  arm - final +0.0027 [-0.0420, +0.0428] p 0.812
+   LCB1 1sigma_from_trial_21   arm gain +0.0620 [+0.0240, +0.0961] price -0.0010  final refit gain +0.0719 price +0.0000  arm - final -0.0099 [-0.0348, +0.0102] p 0.586
+   LCB1 5sigma_from_trial_1    arm gain -0.0166 [-0.1157, +0.0812] price -0.0010  final refit gain +0.0973 price +0.0000  arm - final -0.1140 [-0.2102, -0.0267] p 0.024
+   LCB1 5sigma_from_trial_21   arm gain +0.4018 [+0.2822, +0.5390] price -0.0010  final refit gain +0.4234 price +0.0000  arm - final -0.0216 [-0.0415, -0.0031] p 0.122
+   LCB1 pooled_ge_0.25sigma    arm gain +0.0846 [+0.0492, +0.1188] price -0.0010  final refit gain +0.1074 price +0.0000  arm - final -0.0228 [-0.0440, -0.0038] p 0.0532
+   LCB2 0.05sigma_from_trial_1 arm gain -0.0003 [-0.0197, +0.0204] price -0.0010  final refit gain +0.0013 price +0.0000  arm - final -0.0016 [-0.0214, +0.0192] p 0.267
+   LCB2 0.05sigma_from_trial_21 arm gain -0.0039 [-0.0316, +0.0154] price -0.0010  final refit gain +0.0033 price +0.0000  arm - final -0.0072 [-0.0347, +0.0118] p 0.586
+   LCB2 0.25sigma_from_trial_1 arm gain +0.0143 [-0.0017, +0.0302] price -0.0010  final refit gain +0.0095 price +0.0000  arm - final +0.0048 [-0.0123, +0.0225] p 0.674
+   LCB2 0.25sigma_from_trial_21 arm gain +0.0184 [-0.0043, +0.0367] price -0.0010  final refit gain +0.0158 price +0.0000  arm - final +0.0025 [-0.0179, +0.0219] p 0.248
+   LCB2 1sigma_from_trial_1    arm gain +0.0267 [-0.0214, +0.0739] price -0.0010  final refit gain +0.0269 price +0.0000  arm - final -0.0002 [-0.0462, +0.0425] p 0.927
+   LCB2 1sigma_from_trial_21   arm gain +0.0609 [+0.0200, +0.0986] price -0.0010  final refit gain +0.0803 price +0.0000  arm - final -0.0194 [-0.0423, -0.0012] p 0.21
+   LCB2 5sigma_from_trial_1    arm gain -0.0092 [-0.1129, +0.0967] price -0.0010  final refit gain +0.1059 price +0.0000  arm - final -0.1151 [-0.1891, -0.0439] p 0.00639
+   LCB2 5sigma_from_trial_21   arm gain +0.4313 [+0.3032, +0.5819] price -0.0010  final refit gain +0.4354 price +0.0000  arm - final -0.0040 [-0.0260, +0.0162] p 0.679
+   LCB2 pooled_ge_0.25sigma    arm gain +0.0904 [+0.0525, +0.1282] price -0.0010  final refit gain +0.1123 price +0.0000  arm - final -0.0219 [-0.0399, -0.0049] p 0.0296
+
+== 9. By error process, seeds 12-16, the cells where the levels differ
+-- 1sigma_from_trial_1
+   gaussian (LCB1/LCB2) learned +0.034/+0.029  mag +0.037/+0.037  mag_onset +0.037/+0.037  retest3 +0.034/+0.033  cusum +0.033/+0.034  retest3_cusum +0.031/+0.030  inside_random +0.013/+0.006  inside_top +0.019/+0.024
+   bias     (LCB1/LCB2) learned +0.047/+0.047  mag +0.046/+0.037  mag_onset +0.046/+0.037  retest3 +0.040/+0.043  cusum +0.047/+0.038  retest3_cusum +0.042/+0.044  inside_random +0.039/+0.050  inside_top +0.032/+0.044
+   drift    (LCB1/LCB2) learned +0.014/+0.015  mag +0.019/+0.020  mag_onset +0.019/+0.020  retest3 +0.010/+0.008  cusum +0.015/+0.013  retest3_cusum +0.003/+0.000  inside_random +0.003/+0.006  inside_top +0.008/+0.011
+   ar1      (LCB1/LCB2) learned +0.013/+0.013  mag +0.017/+0.020  mag_onset +0.017/+0.020  retest3 +0.007/+0.008  cusum +0.017/+0.019  retest3_cusum +0.006/+0.007  inside_random -0.003/+0.002  inside_top +0.012/+0.009
+-- 1sigma_from_trial_21
+   gaussian (LCB1/LCB2) learned +0.024/+0.030  mag +0.023/+0.026  mag_onset +0.069/+0.063  retest3 +0.023/+0.024  cusum -0.001/-0.004  retest3_cusum -0.002/-0.005  inside_random +0.029/+0.028  inside_top +0.024/+0.029
+   bias     (LCB1/LCB2) learned +0.013/+0.011  mag +0.006/+0.004  mag_onset +0.057/+0.081  retest3 +0.000/+0.002  cusum -0.021/-0.021  retest3_cusum -0.025/-0.020  inside_random +0.010/+0.010  inside_top +0.012/+0.012
+   drift    (LCB1/LCB2) learned -0.005/-0.000  mag +0.020/+0.018  mag_onset +0.063/+0.082  retest3 +0.002/+0.004  cusum +0.006/+0.009  retest3_cusum -0.005/-0.001  inside_random +0.019/+0.027  inside_top +0.009/+0.011
+   ar1      (LCB1/LCB2) learned +0.010/+0.015  mag +0.004/+0.016  mag_onset +0.074/+0.077  retest3 +0.025/+0.024  cusum -0.001/+0.011  retest3_cusum +0.016/+0.015  inside_random -0.005/+0.002  inside_top +0.004/+0.019
+-- 5sigma_from_trial_1
+   gaussian (LCB1/LCB2) learned +0.045/+0.060  mag +0.082/+0.098  mag_onset +0.082/+0.098  retest3 +0.075/+0.080  cusum +0.079/+0.094  retest3_cusum +0.074/+0.077  inside_random +0.063/+0.078  inside_top +0.101/+0.100
+   bias     (LCB1/LCB2) learned +0.024/+0.066  mag +0.041/+0.060  mag_onset +0.041/+0.060  retest3 +0.057/+0.069  cusum +0.037/+0.056  retest3_cusum +0.050/+0.061  inside_random +0.013/+0.033  inside_top +0.019/+0.027
+   drift    (LCB1/LCB2) learned +0.063/+0.076  mag +0.081/+0.107  mag_onset +0.081/+0.107  retest3 +0.091/+0.100  cusum +0.090/+0.116  retest3_cusum +0.098/+0.106  inside_random +0.104/+0.116  inside_top +0.112/+0.133
+   ar1      (LCB1/LCB2) learned +0.050/+0.051  mag +0.055/+0.061  mag_onset +0.055/+0.061  retest3 -0.008/-0.002  cusum +0.040/+0.043  retest3_cusum -0.011/-0.007  inside_random +0.012/+0.015  inside_top +0.018/+0.027
+-- 5sigma_from_trial_21
+   gaussian (LCB1/LCB2) learned +0.113/+0.145  mag +0.182/+0.247  mag_onset +0.407/+0.411  retest3 +0.161/+0.209  cusum +0.269/+0.264  retest3_cusum +0.259/+0.258  inside_random +0.119/+0.155  inside_top +0.185/+0.203
+   bias     (LCB1/LCB2) learned -0.115/-0.110  mag -0.119/-0.080  mag_onset +0.204/+0.280  retest3 -0.101/-0.081  cusum +0.127/+0.190  retest3_cusum +0.089/+0.116  inside_random -0.105/-0.075  inside_top -0.086/-0.055
+   drift    (LCB1/LCB2) learned -0.080/-0.019  mag -0.016/+0.044  mag_onset +0.378/+0.485  retest3 +0.009/+0.043  cusum +0.341/+0.392  retest3_cusum +0.256/+0.297  inside_random +0.081/+0.164  inside_top +0.031/+0.079
+   ar1      (LCB1/LCB2) learned -0.007/+0.021  mag +0.045/+0.087  mag_onset +0.294/+0.340  retest3 +0.009/+0.031  cusum +0.162/+0.198  retest3_cusum +0.084/+0.116  inside_random +0.064/+0.089  inside_top +0.105/+0.135

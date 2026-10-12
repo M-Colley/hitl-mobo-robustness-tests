@@ -13,7 +13,7 @@ Onsets             : [np.int64(0), np.int64(20)]
 ------------------------------------------------------------------------
   PASSED: largest |excess AUC regret| = 0.000e+00 (tolerance 1e-09)
 
-1b. HEADROOM (could this benchmark have shown an effect at all?)
+1b. HEADROOM (does BO beat the model-free floor without error?)
 ------------------------------------------------------------------------
   benchmark             headroom   (noise-free advantage of the best
                                     learner over the model-free floor)
@@ -37,6 +37,42 @@ Onsets             : [np.int64(0), np.int64(20)]
   power_law_practice       0.775
   stevens                  0.804
   hicks_law                0.836
+  Headroom compares BO with random search; it does not say whether the clean
+  run is at the optimum. 1b' does.
+
+1b'. CEILING (is the clean run already at the optimum when a late onset arrives?)
+------------------------------------------------------------------------
+  Share of the model-based learners' clean runs at the optimum (search loss <= 1e-09)
+  at trial 21, the last design a late-onset pair shares, and at the final trial;
+  share of late-onset runs whose clean twin gains nothing after trial 21 (their
+  post-onset search excess is then at most zero); and the late-onset search and deployed
+  excess at 1 SD, fractions of opt_z.
+  benchmark            at opt t21  at opt T  no gain  search 1SD  deployed 1SD
+  stevens                    0.97      0.97     1.00     -0.0002        0.0458  <- ceiling-limited
+  power_law_practice         0.94      0.99     0.95      0.0004        0.1508  <- ceiling-limited
+  hicks_law                  0.87      0.92     0.93     -0.0015        0.0250  <- ceiling-limited
+  weber_fechner              0.71      0.97     0.71      0.0167        0.1131  <- ceiling-limited
+  ackley                     0.00      0.00     0.05      0.0464        0.1027
+  branin                     0.00      0.00     0.22      0.0037        0.1294
+  eggholder                  0.00      0.00     0.11      0.0364        0.1573
+  griewank                   0.00      0.00     0.14      0.0426        0.1553
+  hartmann_3                 0.00      0.00     0.05      0.0119        0.0904
+  hartmann_6                 0.00      0.00     0.00      0.0934        0.1680
+  levy_10                    0.00      0.00     0.00      0.0481        0.2307
+  michalewicz                0.00      0.00     0.11      0.0423        0.1541
+  moving_peaks               0.00      0.00     0.08      0.0538        0.2328
+  powell                     0.00      0.00     0.25      0.0042        0.1854
+  rastrigin                  0.00      0.00     0.14      0.0449        0.2188
+  rosenbrock                 0.00      0.00     0.35      0.0022        0.0961
+  schwefel                   0.00      0.00     0.14      0.0249        0.1577
+  shekel                     0.00      0.00     0.03      0.0400        0.0719
+  steering_law               0.00      0.00     0.31      0.0055        0.0881
+  yerkes_dodson              0.00      0.00     0.08      0.0468        0.1476
+
+  4 benchmark(s) are ceiling-limited for the late onset: most clean runs
+  are at the optimum by trial 21, so their post-onset search excess from
+  that onset is exactly zero in those runs by construction. The deployed design is
+  not bounded this way.
 
 1c. CONTROL: a constant bias from iteration 1 should cost nothing
 ------------------------------------------------------------------------

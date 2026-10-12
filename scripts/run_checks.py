@@ -58,15 +58,25 @@ CHECKS = [
     # The final sitting and the budget rule (Sec. 7, App. E): sitting_vs_shiprule
     # collates the sitting outputs and the untouched-seed test.
     "fresh_seed_replication", "sitting_sequential", "sitting_vs_shiprule", "budget_split_by_onset",
-    # Sec. 6 and the appendices.
-    "floor_deployed", "friedman_multiplicity", "instrument_scale", "mo_onset_bound", "extra_reach",
+    # The known-variance ship rules (score stage; reads the git-ignored refit cache under
+    # review/known_variance_ship/per_run), the gated sittings, and the decision map, which reads both.
+    "known_variance_ship", "gated_sitting", "decision_map",
+    # Sec. 6 and the appendices; winners_curse reports from its git-ignored scan parquet.
+    "floor_deployed", "ceiling_clean_runs", "friedman_multiplicity", "instrument_scale", "mo_onset_bound",
+    "extra_reach", "winners_curse",
     # App. C.2's residuals and out-of-sample fit; the comparison loop's rerun in
     # another worker schedule (reproducibility statement, about two minutes).
     "frag_residuals", "elicitation_determinism",
+    # The library-version rerun (reproducibility statement): compares the logged
+    # runs with reruns under newer releases; needs output-version-check/, which
+    # `version_sensitivity.py run` writes from a separate environment.
+    "version_sensitivity",
     # Last: it re-scores deployed numbers from every arm with ties.
     "tie_break",
 ]
-ARGS = {"ehmi_sigmaf": ["datasets.json"], "nugget_threshold": ["datasets.json"], "tie_break": ["rescore"]}
+ARGS = {"ehmi_sigmaf": ["datasets.json"], "nugget_threshold": ["datasets.json"], "tie_break": ["rescore"],
+        "version_sensitivity": ["compare", "--out-dir", "output-version-check"],
+        "known_variance_ship": ["--stage", "score"], "gated_sitting": ["score"], "winners_curse": ["report"]}
 
 
 def main(argv=None) -> None:

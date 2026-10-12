@@ -3,10 +3,23 @@
 # Floors. The exact environment the simulations ran in is pinned in
 # requirements-eval.txt (BoTorch 0.18.2.dev23 at commit eea35f51a, numpy 2.5.3,
 # scipy 1.18.1, Python 3.12.9).
+#
+# Two floors are tighter than "the oldest version that runs", because a looser
+# one installs a stack that takes a different numerical path (checked 2026-10-09):
+#  * BoTorch is the commit the runs used. The PyPI release 0.18.1 predates
+#    BoTorch PR #3328, which raised SCIPY_UNTESTED_VERSION to 19, so with scipy
+#    1.18 it optimises the acquisition restarts jointly instead of one by one
+#    and every logged run differs from trial 8 on.
+#  * scipy stays below 1.19 on this BoTorch build: at 1.19 the same gate
+#    switches the optimiser path back.
+# torch 2.14 changed the gradient of clamp at its bound (PR #191142), which
+# gpytorch's squared distances hit, so runs under torch >= 2.14 are not bit for
+# bit the logged ones; scripts/checks/version_sensitivity.py shows the reported
+# quantities do not move.
 numpy>=2.5.3
 pandas>=3.0.5
 scikit-learn>=1.9.0
-scipy>=1.18.1
+scipy>=1.18.1,<1.19
 matplotlib>=3.11.1
 seaborn>=0.13.2
 tqdm>=4.70.0
@@ -15,5 +28,5 @@ lightgbm>=4.7.0
 catboost>=1.2.10
 tabpfn>=8.5.0
 statsmodels>=0.14.6
-botorch>=0.18.1
+botorch @ git+https://github.com/meta-pytorch/botorch.git@eea35f51a9d948ae0949144f4ae7814acbec1001
 torch>=2.13.0

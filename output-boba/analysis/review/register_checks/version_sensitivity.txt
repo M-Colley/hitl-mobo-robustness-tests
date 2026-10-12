@@ -1,0 +1,18 @@
+Version sensitivity of the main sweep (scripts/checks/version_sensitivity.py)
+rerun environment: python 3.12.9, torch 2.14.1+cpu, botorch 0.18.2.dev23+geea35f51a, gpytorch 1.15.2, linear_operator 0.6.1, numpy 2.5.3, scipy 1.18.1, pandas 3.0.6, scikit-learn 1.9.1, statsmodels None, matplotlib 3.11.2, pyarrow 26.0.0
+logged environment: requirements-eval.txt (torch 2.13.0, pandas 3.0.5, scikit-learn 1.9.0, BoTorch 0.18.2.dev23, numpy 2.5.3, scipy 1.18.1)
+LogEI and qNEI, the seeds rerun (see the run counts), twenty landscapes; fractions of opt_z at the final trial;
+differences rerun minus logged with 2000 landscape-bootstrap resamples
+
+headline: gaussian, 1 sigma from the first rating: 400 paired runs, 14 identical to 1e-12
+  deployed excess  logged 0.2648  rerun 0.2644  difference -0.0005 [-0.0185, +0.0166]
+  search excess    logged 0.1098  rerun 0.1150  difference +0.0052 [-0.0048, +0.0150]
+  selection share  logged 0.5855  rerun 0.5650  difference -0.0205 [-0.0571, +0.0144]
+  Spearman of the deployed excess, per landscape 0.823, per run 0.546
+
+stress: gaussian, 5 sigma from trial 21: 400 paired runs, 22 identical to 1e-12
+  deployed excess  logged 0.5241  rerun 0.5487  difference +0.0246 [-0.0128, +0.0616]
+  search excess    logged 0.0653  rerun 0.0745  difference +0.0092 [+0.0028, +0.0163]
+  selection share  logged 0.8754  rerun 0.8643  difference -0.0111 [-0.0260, -0.0001]
+  Spearman of the deployed excess, per landscape 0.940, per run 0.661
+

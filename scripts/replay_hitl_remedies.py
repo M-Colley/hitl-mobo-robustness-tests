@@ -27,7 +27,14 @@ evaluate, because each is a different reading of runs that already exist.
                  each to the top k. Blind replication of the first ten trials
                  fails because it spends trials where the ranking is not in
                  doubt; this spends the same trials where it is. Scored against
-                 the fixed-allocation tournament at the same k, on the same runs.
+                 the fixed-allocation tournament at the same k, on the same runs
+                 and, for every look the two share, the same noise draw. The rule
+                 is set out in lucb_sitting's docstring. (Before 2026-10-09 an
+                 unseen candidate's upper bound was -inf + inf = NaN, which
+                 np.argmax picks first, so the rule never used its bound: odd looks
+                 went to the next unseen candidate in rank order, even looks to the
+                 leader, and every run looked at exactly 3 designs at k = 4 and 5
+                 at k = 8.)
 
 Every procedure is also replayed on the identically seeded CLEAN twin, so the
 output feeds the standard-process estimand of analyse_boba_adaptations.py
@@ -49,6 +56,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+from scipy.linalg import cho_factor, cho_solve
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
@@ -60,6 +68,11 @@ OUTPUT_NAME = "hitl_remedies"
 SHORTLIST_SIZES = (1, 2, 3, 5)
 PROC_LUCB = 91          # a stream of its own, disjoint from the tournament's
 PROC_ORDINAL = 92
+# The best-arm sitting's confidence bounds are a point estimate plus LUCB_WIDTH
+# SDs: one SD, the convention of the ship rule (posterior mean less one latent
+# SD) that ranks its pool. Fixed before any LUCB outcome was seen.
+LUCB_WIDTH = 1.0
+LUCB_POOL_FACTOR = 3    # the pool is the top 3k designs by that ship rule
 
 
 # ---------------------------------------------------------------------------
@@ -131,43 +144,177 @@ def ordinal_rule(run: eos.RunLog, state: eos.SearchState, bounds: torch.Tensor, 
     return out
 
 
-def lucb_sitting(run: eos.RunLog, state: eos.SearchState, k: int, rho: float,
-                 sd_of_trial, T: int, pool_factor: int = 3) -> dict:
-    """Spend k looks on identification, allocated where the ranking is in doubt.
+def _psd_solve(C: np.ndarray, B: np.ndarray) -> np.ndarray:
+    """C^-1 B for a symmetric positive (semi)definite C, with the escalating jitter conditioned_mean uses."""
+    C = 0.5 * (C + C.T)
+    eye = np.eye(len(C))
+    scale = max(float(np.mean(np.abs(np.diag(C)))), np.finfo(float).tiny)
+    jitter = 0.0
+    while True:
+        try:
+            factor = cho_factor(C + jitter * scale * eye, lower=True)
+            return cho_solve(factor, B)
+        except np.linalg.LinAlgError:
+            jitter = 1e-10 if jitter == 0.0 else 10.0 * jitter
+            if jitter > 1e-3:
+                raise
 
-    The fixed tournament gives one look to each of the top k. This keeps a wider
-    pool and gives each successive look to the empirical leader or to the
-    challenger with the highest upper bound, alternating -- the single-look form
-    of LUCB. With the same k it can look at one pair four times instead of four
-    designs once, which is what "replicate only where it matters" means.
+
+def anchored_posterior(mu: np.ndarray, cov: np.ndarray, noise_var: float, counts: np.ndarray,
+                       sums: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Each candidate's look value given the looks so far, with the sitting's shared offset unknown.
+
+    A look at candidate i is y = f_i + d + e. f ~ N(mu, cov) is the prefix GP's
+    latent posterior over the pool, in rating units. d is an offset shared by every
+    look of the sitting, with a flat prior: the error a sitting shares (a bias, the
+    drift ramp, the AR(1) state), which the shared sitting model cancels between
+    looks, and with it the gap between the frame of the prefix's ratings and that
+    of the looks. e ~ N(0, noise_var) is the GP's learned rating noise. Returns the
+    posterior mean and SD of f_j + d for every candidate j given each seen
+    candidate's mean look (universal kriging with an unknown constant). With one
+    seen candidate a this is y_a + (mu_j - mu_a) with variance noise_var / n_a +
+    Var(f_j - f_a). Adding a constant to every look adds it to every mean and leaves
+    every SD unchanged. Needs at least one look.
     """
-    pool = max(2, min(pool_factor * k, len(state.first)))
-    rows = state.first[np.argsort(-state.lcb, kind="stable")[:pool]]
-    truth = run.deployed[rows]
-    m = len(rows)
-    sds = np.array([sd_of_trial(t) for t in range(T - k + 1, T + 1)], dtype=float)
-    rng = np.random.default_rng(eos.noise_seed(run.name, PROC_LUCB, k, int(rho * 1000)))
-    sums = np.zeros(m)
-    counts = np.zeros(m, dtype=int)
+    counts = np.asarray(counts, dtype=float)
+    seen = np.flatnonzero(counts > 0)
+    if not len(seen):
+        raise ValueError("the anchored posterior needs at least one look")
+    ybar = np.asarray(sums, dtype=float)[seen] / counts[seen]
+    C = cov[np.ix_(seen, seen)] + np.diag(noise_var / counts[seen])
+    ones = np.ones(len(seen))
+    solved = _psd_solve(C, np.column_stack([ybar - mu[seen], ones, cov[seen, :]]))
+    c_r, c_1, c_k = solved[:, 0], solved[:, 1], solved[:, 2:]
+    precision = float(ones @ c_1)               # 1' C^-1 1: the offset's posterior precision
+    offset = float(ones @ c_r) / precision      # its GLS estimate
+    k_js = cov[:, seen]
+    mean = mu + k_js @ (c_r - offset * c_1) + offset
+    w = 1.0 - k_js @ c_1
+    var = np.diag(cov) - np.einsum("jp,pj->j", k_js, c_k) + w ** 2 / precision
+    return mean, np.sqrt(np.clip(var, 0.0, None))
+
+
+def lucb_allocation(truth: np.ndarray, mu: np.ndarray, cov: np.ndarray, noise_var: float, look_sd: np.ndarray,
+                    z_first: np.ndarray, extra: np.ndarray, width: float = LUCB_WIDTH) -> dict:
+    """The k = len(look_sd) looks of the best-arm sitting over a pool ranked best first.
+
+    Look 1 goes to the top-ranked candidate. Before each later look the leader h is
+    the seen candidate with the highest mean look, the design the sitting would ship
+    if it stopped. Every other candidate has a finite upper bound: a seen one its
+    mean look + width * s / sqrt(n), s = sqrt(noise_var) the assumed look SD; an
+    unseen one its anchored_posterior mean + width * SD. The challenger l is the
+    candidate other than h with the highest upper bound, and the look goes to
+    whichever of h and l has the wider bound (l on a tie): the single-look form of
+    LUCB, which spends each look where the leader's lower bound and the
+    challenger's upper bound overlap most. A seen challenger is looked at again
+    whenever it is the challenger and its bound is the wider one. The sitting ships
+    the seen candidate with the highest mean look.
+
+    ``truth`` is f at each candidate, ``look_sd`` the actual SD of each look (rho
+    included). The i-th look at candidate j has the standard normal draw
+    ``z_first[j]`` when i = 0 and j < len(z_first), else ``extra[j, i]``: draws
+    belong to (candidate, look number), not to the step, so a look the
+    one-look-each sitting also makes gets its draw, and the two allocations differ
+    only in where the looks go.
+    """
+    truth = np.asarray(truth, dtype=float)
+    m, k = len(truth), len(look_sd)
+    if m < 1 or k < 1:
+        raise ValueError("a sitting needs a candidate and a look")
+    counts, sums = np.zeros(m, dtype=int), np.zeros(m)
+    s = float(np.sqrt(max(noise_var, 0.0)))
+    order: list[int] = []
     for step in range(k):
-        if step < 2 and m >= 2:
-            j = step                      # one look each to the top two, to start
+        if step == 0 or m == 1:
+            j = 0
         else:
             seen = counts > 0
             means = np.where(seen, sums / np.maximum(counts, 1), -np.inf)
-            leader = int(np.argmax(means))
-            # The challenger is the most plausible alternative: highest upper
-            # bound among the rest, with anything unseen ranked first.
-            width = np.where(seen, 1.0 / np.sqrt(np.maximum(counts, 1)), np.inf)
-            upper = means + width
-            upper[leader] = -np.inf
-            challenger = int(np.argmax(upper))
-            j = leader if step % 2 == 0 else challenger
-        sums[j] += truth[j] + rho * sds[step] * rng.standard_normal()
+            h = int(np.argmax(means))
+            a_mean, a_sd = anchored_posterior(mu, cov, noise_var, counts, sums)
+            half = np.where(seen, width * s / np.sqrt(np.maximum(counts, 1)), width * a_sd)
+            upper = np.where(seen, means, a_mean) + half
+            rest = np.flatnonzero(np.arange(m) != h)
+            if not np.all(np.isfinite(upper[rest])) or not np.isfinite(half[h]):
+                raise FloatingPointError("a best-arm bound is not finite")
+            l = int(rest[np.argmax(upper[rest])])
+            j = l if half[l] >= half[h] else h
+        i = counts[j]
+        z = z_first[j] if (i == 0 and j < len(z_first)) else extra[j, i]
+        sums[j] += truth[j] + float(look_sd[step]) * float(z)
         counts[j] += 1
+        order.append(j)
     seen = counts > 0
-    means = np.where(seen, sums / np.maximum(counts, 1), -np.inf)
-    pick = int(np.argmax(means))
+    pick = int(np.argmax(np.where(seen, sums / np.maximum(counts, 1), -np.inf)))
+    return {"pick": pick, "counts": counts, "sums": sums, "order": order}
+
+
+def lucb_prior(run: eos.RunLog, state: eos.SearchState, idx: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
+    """The prefix GP's latent mean and covariance over the pool and its learned rating-noise variance.
+
+    All in rating units: BoTorch's posterior undoes Standardize, and the noise of
+    the standardised targets is multiplied by stdvs ** 2 (AGENTS.md). ``idx`` holds
+    the pool's indices into state.first. Without a GP (a failed fit, recorded in
+    gp_failed) the prior is the mean rating of each design, independent, with the
+    prefix ratings' SD as both its SD and the assumed look SD.
+    """
+    rows = state.first[idx]
+    if state.gp is not None:
+        with torch.no_grad():
+            post = state.gp.posterior(torch.tensor(run.X[rows], dtype=torch.double))
+            mu = post.mean.reshape(-1).numpy().astype(float)
+            cov = post.distribution.covariance_matrix.numpy().astype(float)
+            noise_var = (float(state.gp.likelihood.noise.reshape(-1)[0])
+                         * float(state.gp.outcome_transform.stdvs.reshape(-1)[0]) ** 2)
+    else:
+        ratings = run.observed[:state.n]
+        sd = float(np.std(ratings, ddof=1)) if len(ratings) > 1 else 1.0
+        sd = sd if sd > 0 else 1.0
+        mu, cov, noise_var = state.obs_mean[idx].astype(float), np.eye(len(idx)) * sd ** 2, sd ** 2
+    if not (np.all(np.isfinite(mu)) and np.all(np.isfinite(cov)) and np.isfinite(noise_var)):
+        raise FloatingPointError(f"{run.name}: non-finite prior for the best-arm sitting")
+    return mu, 0.5 * (cov + cov.T), noise_var
+
+
+def lucb_sitting(run: eos.RunLog, state: eos.SearchState, k: int, rho: float,
+                 sd_of_trial, T: int, pool_factor: int = LUCB_POOL_FACTOR, width: float = LUCB_WIDTH) -> dict:
+    """Spend k looks on identification, allocated where the ranking is in doubt (LUCB).
+
+    The fixed tournament gives one look to each of the top k by the posterior mean
+    less one latent SD. This keeps the top ``pool_factor`` * k by that rule and
+    allocates the k looks by lucb_allocation: the first to the top candidate, each
+    later one to the empirical leader or to its strongest challenger, whichever has
+    the wider confidence bound. Bounds are a point estimate +/- ``width`` SDs: for
+    a seen candidate its mean look and the assumed look SD over sqrt(n), the prefix
+    GP's learned noise in rating units (the experimenter does not know rho, as in
+    the tournament's posterior winner); for an unseen one the prefix GP's
+    prediction anchored to the looks already made (anchored_posterior), so a bound
+    is never infinite or NaN and a GP that is sure the rest of the pool is worse
+    sends the looks back to the leader and challenger. The anchoring makes the
+    allocation invariant to error shared by the sitting, which the shared model
+    cancels. The sitting ships the seen candidate with the highest mean look.
+
+    Looks are truth + rho * SD(t) * z under the shared sitting model; sd_of_trial
+    gives only an SD, so spike runs get Gaussian looks at the run's marginal SD (the
+    tournament draws their spikes explicitly). The first look at the j-th ranked
+    candidate, j < k, reuses the tournament's draw for that candidate
+    (noise_seed(name, PROC_TOURNAMENT, k)); every other look draws from this
+    procedure's own stream (noise_seed(name, PROC_LUCB, k)), indexed by candidate
+    and look number. Draws are shared across rho, as in the tournament.
+    """
+    order = np.argsort(-state.lcb, kind="stable")
+    pool = max(2, min(pool_factor * k, len(state.first)))
+    idx = order[:pool]
+    rows = state.first[idx]
+    truth = run.deployed[rows]
+    m = len(rows)
+    mu, cov, noise_var = lucb_prior(run, state, idx)
+    sds = np.array([sd_of_trial(t) for t in range(T - k + 1, T + 1)], dtype=float)
+    z_first = np.random.default_rng(eos.noise_seed(run.name, eos.PROC_TOURNAMENT, k)).standard_normal(k)
+    extra = np.random.default_rng(eos.noise_seed(run.name, PROC_LUCB, k)).standard_normal((m, k))
+    res = lucb_allocation(truth, mu, cov, noise_var, rho * sds, z_first, extra, width)
+    pick, counts = res["pick"], res["counts"]
+    seen = counts > 0
     return {
         f"lucb_k{k}_rho{rho:g}": {
             "family": "lucb", "k": int(k), "m": int(m),
@@ -180,6 +327,11 @@ def lucb_sitting(run: eos.RunLog, state: eos.SearchState, k: int, rho: float,
             # what the same k looks buy with one each, for a like-for-like read
             "top_candidate_regret": run.y_opt - float(truth[0]),
             "best_candidate_regret": run.y_opt - float(truth.max()),
+            # where the looks went, against one look each to the top k
+            "n_relooks": int(k - seen.sum()),
+            "n_looked_outside_top_k": int(seen[k:].sum()),
+            "same_as_one_each": bool(m >= k and np.all(counts[:k] == 1)),
+            "look_sd_assumed": float(np.sqrt(noise_var)),
         }
     }
 
@@ -280,7 +432,12 @@ def recovery_table(frame: pd.DataFrame, opt_z: dict[str, float], reps: int = 200
     positive rather than conditioned away.
     """
     rng = np.random.default_rng(seed)
-    z = frame["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    z = frame["dataset"].map(opt_z).astype(float)
+    if z.isna().any():
+        # A landscape without a scale is an error, never a silent opt_z of 1.
+        raise KeyError(f"no opt_z for {sorted(frame.loc[z.isna(), 'dataset'].unique())}")
+    if (z <= 0).any():
+        raise ValueError(f"non-positive opt_z for {sorted(frame.loc[z <= 0, 'dataset'].unique())}")
     f = frame.assign(**{c: frame[c] / z for c in ("regret_noisy", "regret_clean", "ref_noisy", "ref_clean")})
     rows = []
     keys = ["procedure", "error_model", "jitter_std", "jitter_iteration"]

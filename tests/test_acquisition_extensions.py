@@ -326,7 +326,7 @@ def test_aei_under_known_noise_uses_the_injected_variance(monkeypatch):
     assert seen and all(value is None for value in seen)
 
 
-@pytest.mark.parametrize("acq", ["ts", "aei"])
+@pytest.mark.parametrize("acq", ["ts", "aei", "shiplcb"])
 def test_ts_and_aei_runs_are_deterministic(acq):
     first = _run(acq, apply_error=True)
     second = _run(acq, apply_error=True)

@@ -1,0 +1,7 @@
+arm,k,n_runs,n_clean_twins,share_short_noisy,mean_looks_noisy,min_looks_noisy,mean_unused_noisy,share_short_clean,mean_looks_clean,min_looks_clean,mean_unused_clean
+output-boba,3,19200,600,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba,5,19200,600,0.0,5.0,5,0.0,0.0,5.0,5,0.0
+output-boba-misclick,3,2400,300,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba-misclick,5,2400,300,0.0,5.0,5,0.0,0.0,5.0,5,0.0
+output-boba-slip,3,2400,300,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba-slip,5,2400,300,0.0,5.0,5,0.0,0.0,5.0,5,0.0

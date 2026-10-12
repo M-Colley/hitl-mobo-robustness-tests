@@ -1,0 +1,435 @@
+Gated final sittings, LogEI and qNEI, deployed regret in units of the achievable improvement opt_z.
+Post hoc: built after the per-cell results of Section 7 and a prototype on every seed set; outside
+every Holm family of the paper. Gate statistic: the noise SD of the GP that ranks the sitting's
+candidates (fitted on trials 1..T-k), in landscape SDs; a study needs its objective's spread to
+set the threshold on its own scale.
+runs: main 12800 noisy (seeds 7-16, gaussian, bias, drift, ar1), untouched 3200 noisy (seeds 27-36, gaussian); every refit reproduced the replay's top LCB1 candidate to 1e-09
+GP fallbacks in the refits (no noise estimate, the gate does not fire): {'output-boba': 0, 'output-boba-confirmatory': 0}
+   clean twins (seeds 7-16), noise SD on trials 1..34: median 0.061, 90th percentile 0.444, 99th 0.948 landscape SDs
+   clean twins (seeds 7-16), noise SD on trials 1..48: median 0.051, 90th percentile 0.518, 99th 1.015 landscape SDs
+
+== thresholds chosen on seeds 7-11 by the rule fixed in advance (V over the eight cells and no error)
+   G16 on noise_sd: tau = 1 landscape SDs; V by tau: 0: +0.0162, 0.1: +0.0187, 0.2: +0.0196, 0.3: +0.0193, 0.4: +0.0205, 0.5: +0.0209, 0.6: +0.0220, 0.75: +0.0243, 1: +0.0247, 1.25: +0.0242, 1.5: +0.0229, 2: +0.0172, 2.5: +0.0114, 3: +0.0079, inf: +0.0000
+   G2 on noise_sd: tau = 0.6 landscape SDs; V by tau: 0: +0.0064, 0.1: +0.0064, 0.2: +0.0061, 0.3: +0.0057, 0.4: +0.0062, 0.5: +0.0076, 0.6: +0.0083, 0.75: +0.0078, 1: +0.0065, 1.25: +0.0075, 1.5: +0.0078, 2: +0.0080, 2.5: +0.0079, 3: +0.0076, inf: +0.0000
+   G16 on noise_frac: tau = 0.3 of the ratings' SD (scale-free); V by tau: 0: +0.0162, 0.05: +0.0167, 0.1: +0.0167, 0.15: +0.0179, 0.2: +0.0192, 0.25: +0.0204, 0.3: +0.0210, 0.4: +0.0209, 0.5: +0.0204, 0.6: +0.0145, 0.7: +0.0120, 0.8: +0.0057, 0.9: +0.0000, 1: +0.0000, inf: +0.0000
+   G2 on noise_frac: tau = 0.6 of the ratings' SD (scale-free); V by tau: 0: +0.0064, 0.05: +0.0064, 0.1: +0.0059, 0.15: +0.0059, 0.2: +0.0059, 0.25: +0.0059, 0.3: +0.0063, 0.4: +0.0065, 0.5: +0.0070, 0.6: +0.0078, 0.7: +0.0069, 0.8: +0.0045, 0.9: -0.0001, 1: +0.0000, inf: +0.0000
+
+== seeds 7-11 (selection): gain over the standard process, share of its cost of error, increments over the
+   zero-trial rules after all 50 trials (same runs), price without error; Holm over the eight cells
+   of the procedure and over the 24 (procedure, cell) of the three gated procedures in this scope
+  G16: price 0.0007 [0.0000, 0.0020]; gate fires on 1.5% of clean twins; V (8 cells and no error) +0.0247
+    0.05sigma_from_trial_1   gain -0.0005 [-0.0014, +0.0000] share n/a          gaining  0/20 p 0.18 (Holm cells 0.65, 24 0.76) | over LCB1 +0.0270 [+0.0044, +0.0544] p 0.23 | over LCB2 +0.0276 [+0.0064, +0.0552] p 0.25 | over always sitting +0.0259 [+0.0138, +0.0402] | fires 1%
+    0.05sigma_from_trial_21  gain -0.0014 [-0.0033, +0.0000] share n/a          gaining  0/20 p 0.11 (Holm cells 0.65, 24 0.76) | over LCB1 +0.0238 [+0.0036, +0.0498] p 0.49 | over LCB2 +0.0213 [+0.0027, +0.0427] p 0.52 | over always sitting +0.0246 [+0.0120, +0.0386] | fires 2%
+    0.25sigma_from_trial_1   gain -0.0006 [-0.0016, +0.0000] -1% [-3, 0]        gaining  0/20 p 0.18 (Holm cells 0.65, 24 0.76) | over LCB1 +0.0078 [-0.0051, +0.0237] p 0.84 | over LCB2 +0.0076 [-0.0058, +0.0229] p 0.84 | over always sitting +0.0295 [+0.0164, +0.0454] | fires 0%
+    0.25sigma_from_trial_21  gain -0.0008 [-0.0021, +0.0000] -2% [-6, 0]        gaining  0/20 p 0.11 (Holm cells 0.65, 24 0.76) | over LCB1 +0.0127 [-0.0041, +0.0334] p 0.9 | over LCB2 +0.0113 [-0.0053, +0.0308] p 0.73 | over always sitting +0.0096 [-0.0021, +0.0217] | fires 2%
+    1sigma_from_trial_1      gain +0.0007 [-0.0016, +0.0034] 0% [-1, 1]         gaining  6/20 p 0.69 (Holm cells 0.69, 24 0.76) | over LCB1 -0.0099 [-0.0255, +0.0066] p 0.28 | over LCB2 -0.0140 [-0.0296, +0.0037] p 0.076 | over always sitting +0.0346 [+0.0166, +0.0540] | fires 6%
+    1sigma_from_trial_21     gain -0.0008 [-0.0020, -0.0000] -1% [-1, -0]       gaining  0/20 p 0.068 (Holm cells 0.48, 24 0.61) | over LCB1 -0.0034 [-0.0219, +0.0174] p 0.35 | over LCB2 -0.0089 [-0.0236, +0.0079] p 0.19 | over always sitting -0.0244 [-0.0428, -0.0054] | fires 3%
+    5sigma_from_trial_1      gain +0.0434 [-0.0023, +0.0927] 6% [-0, 12]        gaining 12/20 p 0.11 (Holm cells 0.65, 24 0.76) | over LCB1 -0.0114 [-0.0800, +0.0480] p 1 | over LCB2 -0.0171 [-0.0846, +0.0412] p 0.84 | over always sitting -0.0061 [-0.0156, +0.0024] | fires 95%
+    5sigma_from_trial_21     gain +0.1833 [+0.1322, +0.2335] 34% [28, 40]       gaining 20/20 p 1.9e-06 (Holm cells 1.5e-05, 24 4.6e-05) | over LCB1 +0.1638 [+0.1179, +0.2144] p 5.7e-06 | over LCB2 +0.1280 [+0.0878, +0.1726] p 9.5e-06 | over always sitting -0.0409 [-0.0588, -0.0244] | fires 83%
+    pooled                   gain +0.0279 [+0.0176, +0.0381] 13% [9, 16]        gaining 17/20 p 3.6e-05 | over LCB1 +0.0263 [+0.0054, +0.0482] p 0.04 | over LCB2 +0.0195 [+0.0004, +0.0392] p 0.13 | over always sitting +0.0066 [-0.0035, +0.0183] | fires 24%
+  G2: price 0.0017 [0.0004, 0.0034]; gate fires on 6.0% of clean twins; V (8 cells and no error) +0.0083
+    0.05sigma_from_trial_1   gain -0.0046 [-0.0092, -0.0010] share n/a          gaining  0/20 p 0.028 (Holm cells 0.19, 24 0.55) | over LCB1 +0.0229 [+0.0042, +0.0448] p 0.22 | over LCB2 +0.0235 [+0.0049, +0.0461] p 0.26 | over always sitting +0.0100 [+0.0017, +0.0199] | fires 6%
+    0.05sigma_from_trial_21  gain -0.0079 [-0.0213, -0.0002] share n/a          gaining  1/20 p 0.046 (Holm cells 0.2, 24 0.6) | over LCB1 +0.0173 [+0.0038, +0.0347] p 0.3 | over LCB2 +0.0147 [+0.0020, +0.0312] p 0.47 | over always sitting +0.0087 [+0.0015, +0.0179] | fires 8%
+    0.25sigma_from_trial_1   gain -0.0038 [-0.0077, -0.0008] -7% [-18, -1]      gaining  0/20 p 0.028 (Holm cells 0.19, 24 0.55) | over LCB1 +0.0046 [-0.0068, +0.0184] p 0.5 | over LCB2 +0.0044 [-0.0073, +0.0184] p 0.62 | over always sitting +0.0025 [-0.0050, +0.0110] | fires 7%
+    0.25sigma_from_trial_21  gain -0.0053 [-0.0132, -0.0003] -14% [-42, -1]     gaining  1/20 p 0.046 (Holm cells 0.2, 24 0.6) | over LCB1 +0.0081 [-0.0055, +0.0259] p 0.76 | over LCB2 +0.0068 [-0.0066, +0.0235] p 0.57 | over always sitting -0.0011 [-0.0076, +0.0058] | fires 8%
+    1sigma_from_trial_1      gain +0.0204 [+0.0105, +0.0307] 8% [4, 13]         gaining 14/20 p 0.0037 (Holm cells 0.029, 24 0.077) | over LCB1 +0.0097 [-0.0001, +0.0211] p 0.26 | over LCB2 +0.0057 [-0.0024, +0.0142] p 0.47 | over always sitting -0.0008 [-0.0044, +0.0025] | fires 85%
+    1sigma_from_trial_21     gain +0.0071 [-0.0046, +0.0173] 5% [-3, 12]        gaining 15/20 p 0.048 (Holm cells 0.2, 24 0.6) | over LCB1 +0.0045 [-0.0087, +0.0197] p 0.96 | over LCB2 -0.0010 [-0.0125, +0.0128] p 0.39 | over always sitting -0.0090 [-0.0136, -0.0043] | fires 66%
+    5sigma_from_trial_1      gain +0.0452 [+0.0089, +0.0806] 6% [1, 11]         gaining 15/20 p 0.04 (Holm cells 0.2, 24 0.56) | over LCB1 -0.0096 [-0.0249, +0.0049] p 0.47 | over LCB2 -0.0152 [-0.0336, +0.0019] p 0.19 | over always sitting -0.0019 [-0.0054, +0.0001] | fires 98%
+    5sigma_from_trial_21     gain +0.0255 [-0.0050, +0.0555] 5% [-1, 11]        gaining 13/20 p 0.16 (Holm cells 0.2, 24 0.76) | over LCB1 +0.0059 [-0.0309, +0.0386] p 0.29 | over LCB2 -0.0298 [-0.0677, +0.0048] p 0.19 | over always sitting -0.0025 [-0.0050, -0.0006] | fires 97%
+    pooled                   gain +0.0096 [-0.0002, +0.0190] 4% [-0, 9]         gaining 13/20 p 0.053 | over LCB1 +0.0079 [-0.0028, +0.0203] p 0.5 | over LCB2 +0.0011 [-0.0101, +0.0134] p 0.43 | over always sitting +0.0007 [-0.0032, +0.0055] | fires 47%
+  G16+G2: price 0.0019 [0.0003, 0.0040]; V (8 cells and no error) +0.0260
+    0.05sigma_from_trial_1   gain -0.0042 [-0.0078, -0.0013] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.55) | over LCB1 +0.0233 [+0.0045, +0.0458] p 0.23 | over LCB2 +0.0240 [+0.0044, +0.0485] p 0.29
+    0.05sigma_from_trial_21  gain -0.0067 [-0.0164, -0.0007] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.55) | over LCB1 +0.0185 [+0.0033, +0.0370] p 0.49 | over LCB2 +0.0160 [+0.0021, +0.0332] p 0.69
+    0.25sigma_from_trial_1   gain -0.0042 [-0.0082, -0.0013] -8% [-18, -2]      gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.55) | over LCB1 +0.0042 [-0.0074, +0.0173] p 0.43 | over LCB2 +0.0040 [-0.0078, +0.0176] p 0.57
+    0.25sigma_from_trial_21  gain -0.0046 [-0.0104, -0.0004] -12% [-34, -1]     gaining  1/20 p 0.046 (Holm cells 0.17, 24 0.6) | over LCB1 +0.0088 [-0.0052, +0.0266] p 0.81 | over LCB2 +0.0075 [-0.0053, +0.0236] p 0.62
+    1sigma_from_trial_1      gain +0.0189 [+0.0086, +0.0291] 8% [4, 12]         gaining 14/20 p 0.0027 (Holm cells 0.019, 24 0.06) | over LCB1 +0.0082 [-0.0023, +0.0205] p 0.5 | over LCB2 +0.0042 [-0.0045, +0.0143] p 0.76
+    1sigma_from_trial_21     gain +0.0102 [+0.0027, +0.0182] 7% [2, 12]         gaining 14/20 p 0.03 (Holm cells 0.17, 24 0.55) | over LCB1 +0.0076 [-0.0078, +0.0255] p 0.93 | over LCB2 +0.0021 [-0.0117, +0.0163] p 0.65
+    5sigma_from_trial_1      gain +0.0477 [+0.0031, +0.0954] 6% [1, 12]         gaining 12/20 p 0.076 (Holm cells 0.17, 24 0.61) | over LCB1 -0.0072 [-0.0714, +0.0480] p 0.87 | over LCB2 -0.0128 [-0.0778, +0.0446] p 0.81
+    5sigma_from_trial_21     gain +0.1790 [+0.1345, +0.2244] 33% [28, 39]       gaining 19/20 p 3.8e-06 (Holm cells 3.1e-05, 24 8.8e-05) | over LCB1 +0.1594 [+0.1075, +0.2113] p 1.3e-05 | over LCB2 +0.1237 [+0.0824, +0.1683] p 4.8e-05
+    pooled                   gain +0.0295 [+0.0176, +0.0413] 13% [9, 18]        gaining 17/20 p 0.00026 | over LCB1 +0.0279 [+0.0103, +0.0466] p 0.015 | over LCB2 +0.0211 [+0.0044, +0.0391] p 0.07
+  -- for reference, on the same runs:
+  always sit 16: price 0.0245 [0.0108, 0.0387]; V (8 cells and no error) +0.0162
+    0.05sigma_from_trial_1   gain -0.0264 [-0.0410, -0.0138] share n/a          gaining  2/20 p 0.00034 | over LCB1 +0.0011 [-0.0202, +0.0249] p 0.22 | over LCB2 +0.0017 [-0.0201, +0.0273] p 0.22
+    0.05sigma_from_trial_21  gain -0.0260 [-0.0403, -0.0139] share n/a          gaining  2/20 p 0.00048 | over LCB1 -0.0008 [-0.0165, +0.0192] p 0.099 | over LCB2 -0.0034 [-0.0182, +0.0150] p 0.044
+    0.25sigma_from_trial_1   gain -0.0301 [-0.0456, -0.0161] -59% [-106, -31]   gaining  3/20 p 6.3e-05 | over LCB1 -0.0217 [-0.0376, -0.0066] p 0.0073 | over LCB2 -0.0219 [-0.0385, -0.0074] p 0.0073
+    0.25sigma_from_trial_21  gain -0.0104 [-0.0232, +0.0014] -28% [-72, 3]      gaining  7/20 p 0.16 | over LCB1 +0.0030 [-0.0111, +0.0196] p 0.99 | over LCB2 +0.0017 [-0.0125, +0.0164] p 0.93
+    1sigma_from_trial_1      gain -0.0338 [-0.0533, -0.0139] -14% [-24, -6]     gaining  5/20 p 0.0037 | over LCB1 -0.0445 [-0.0686, -0.0205] p 0.0056 | over LCB2 -0.0485 [-0.0715, -0.0257] p 0.00085
+    1sigma_from_trial_21     gain +0.0236 [+0.0028, +0.0430] 16% [3, 27]        gaining 15/20 p 0.033 | over LCB1 +0.0210 [-0.0020, +0.0450] p 0.097 | over LCB2 +0.0155 [-0.0052, +0.0357] p 0.18
+    5sigma_from_trial_1      gain +0.0495 [+0.0049, +0.0978] 7% [0, 13]         gaining 12/20 p 0.097 | over LCB1 -0.0053 [-0.0706, +0.0535] p 0.81 | over LCB2 -0.0110 [-0.0752, +0.0477] p 0.93
+    5sigma_from_trial_21     gain +0.2242 [+0.1650, +0.2885] 42% [34, 49]       gaining 19/20 p 3.8e-06 | over LCB1 +0.2047 [+0.1515, +0.2596] p 3.8e-06 | over LCB2 +0.1689 [+0.1223, +0.2133] p 9.5e-06
+    pooled                   gain +0.0213 [+0.0024, +0.0395] 10% [2, 16]        gaining 14/20 p 0.036 | over LCB1 +0.0197 [+0.0008, +0.0390] p 0.083 | over LCB2 +0.0129 [-0.0049, +0.0321] p 0.25
+  always sit 2: price 0.0131 [0.0043, 0.0254]; V (8 cells and no error) +0.0064
+    0.05sigma_from_trial_1   gain -0.0146 [-0.0279, -0.0041] share n/a          gaining  8/20 p 0.04 | over LCB1 +0.0129 [+0.0010, +0.0280] p 0.28 | over LCB2 +0.0135 [+0.0023, +0.0282] p 0.35
+    0.05sigma_from_trial_21  gain -0.0167 [-0.0325, -0.0043] share n/a          gaining  8/20 p 0.18 | over LCB1 +0.0085 [+0.0007, +0.0180] p 0.38 | over LCB2 +0.0060 [-0.0005, +0.0137] p 1
+    0.25sigma_from_trial_1   gain -0.0062 [-0.0174, +0.0039] -12% [-36, 6]      gaining 12/20 p 0.81 | over LCB1 +0.0021 [-0.0034, +0.0087] p 0.65 | over LCB2 +0.0019 [-0.0025, +0.0077] p 0.96
+    0.25sigma_from_trial_21  gain -0.0042 [-0.0155, +0.0052] -11% [-50, 12]     gaining 11/20 p 1 | over LCB1 +0.0092 [-0.0001, +0.0216] p 0.33 | over LCB2 +0.0079 [-0.0004, +0.0193] p 0.67
+    1sigma_from_trial_1      gain +0.0212 [+0.0105, +0.0319] 9% [4, 14]         gaining 13/20 p 0.0042 | over LCB1 +0.0105 [+0.0007, +0.0216] p 0.16 | over LCB2 +0.0065 [-0.0016, +0.0152] p 0.28
+    1sigma_from_trial_21     gain +0.0161 [+0.0039, +0.0272] 11% [2, 18]        gaining 15/20 p 0.0094 | over LCB1 +0.0135 [+0.0026, +0.0267] p 0.048 | over LCB2 +0.0080 [-0.0008, +0.0183] p 0.28
+    5sigma_from_trial_1      gain +0.0472 [+0.0127, +0.0844] 6% [1, 11]         gaining 15/20 p 0.033 | over LCB1 -0.0076 [-0.0238, +0.0062] p 0.67 | over LCB2 -0.0133 [-0.0310, +0.0048] p 0.28
+    5sigma_from_trial_21     gain +0.0280 [-0.0023, +0.0589] 5% [-0, 11]        gaining 14/20 p 0.09 | over LCB1 +0.0085 [-0.0309, +0.0411] p 0.2 | over LCB2 -0.0273 [-0.0663, +0.0067] p 0.26
+    pooled                   gain +0.0088 [-0.0057, +0.0213] 4% [-2, 9]         gaining 13/20 p 0.18 | over LCB1 +0.0072 [-0.0013, +0.0165] p 0.16 | over LCB2 +0.0004 [-0.0082, +0.0096] p 0.7
+  LCB1: price 0.0233 [0.0083, 0.0427]; V (8 cells and no error) -0.0011
+    0.05sigma_from_trial_1   gain -0.0275 [-0.0547, -0.0064] share n/a          gaining  8/20 p 0.14 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0006 [-0.0028, +0.0039] p 0.8
+    0.05sigma_from_trial_21  gain -0.0252 [-0.0508, -0.0051] share n/a          gaining 10/20 p 0.3 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0025 [-0.0057, -0.0003] p 0.058
+    0.25sigma_from_trial_1   gain -0.0084 [-0.0236, +0.0045] -16% [-48, 8]      gaining 12/20 p 0.9 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0002 [-0.0024, +0.0025] p 0.44
+    0.25sigma_from_trial_21  gain -0.0134 [-0.0349, +0.0036] -36% [-101, 10]    gaining 12/20 p 0.96 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0013 [-0.0031, +0.0001] p 0.14
+    1sigma_from_trial_1      gain +0.0107 [-0.0040, +0.0252] 4% [-2, 11]        gaining 14/20 p 0.19 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0040 [-0.0103, +0.0013] p 0.29
+    1sigma_from_trial_21     gain +0.0026 [-0.0196, +0.0213] 2% [-13, 14]       gaining 13/20 p 0.39 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0055 [-0.0112, -0.0011] p 0.044
+    5sigma_from_trial_1      gain +0.0548 [+0.0146, +0.0981] 7% [2, 13]         gaining 15/20 p 0.024 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0056 [-0.0166, +0.0048] p 0.39
+    5sigma_from_trial_21     gain +0.0195 [-0.0214, +0.0687] 4% [-5, 12]        gaining 10/20 p 0.78 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0358 [-0.0565, -0.0183] p 0.0001
+    pooled                   gain +0.0016 [-0.0188, +0.0206] 1% [-8, 9]         gaining 11/20 p 0.52 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0068 [-0.0098, -0.0039] p 0.00032
+  LCB2: price 0.0200 [0.0070, 0.0386]; V (8 cells and no error) +0.0053
+    0.05sigma_from_trial_1   gain -0.0281 [-0.0546, -0.0065] share n/a          gaining  8/20 p 0.16 | over LCB1 -0.0006 [-0.0042, +0.0029] p 0.8 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.05sigma_from_trial_21  gain -0.0227 [-0.0470, -0.0036] share n/a          gaining 10/20 p 0.44 | over LCB1 +0.0025 [+0.0004, +0.0057] p 0.058 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_1   gain -0.0082 [-0.0232, +0.0055] -16% [-48, 11]     gaining 13/20 p 0.9 | over LCB1 +0.0002 [-0.0025, +0.0023] p 0.44 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_21  gain -0.0121 [-0.0313, +0.0039] -33% [-96, 11]     gaining 13/20 p 0.76 | over LCB1 +0.0013 [-0.0001, +0.0030] p 0.14 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_1      gain +0.0147 [+0.0006, +0.0290] 6% [-0, 13]        gaining 15/20 p 0.064 | over LCB1 +0.0040 [-0.0010, +0.0104] p 0.29 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_21     gain +0.0081 [-0.0090, +0.0231] 5% [-5, 16]        gaining 14/20 p 0.26 | over LCB1 +0.0055 [+0.0010, +0.0116] p 0.044 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_1      gain +0.0604 [+0.0251, +0.0988] 8% [3, 13]         gaining 16/20 p 0.0027 | over LCB1 +0.0056 [-0.0049, +0.0165] p 0.39 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_21     gain +0.0553 [+0.0154, +0.1023] 10% [3, 18]        gaining 16/20 p 0.011 | over LCB1 +0.0358 [+0.0186, +0.0551] p 0.0001 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    pooled                   gain +0.0084 [-0.0111, +0.0269] 4% [-6, 12]        gaining 15/20 p 0.23 | over LCB1 +0.0068 [+0.0038, +0.0101] p 0.00032 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+
+== seeds 12-16 (held out): gain over the standard process, share of its cost of error, increments over the
+   zero-trial rules after all 50 trials (same runs), price without error; Holm over the eight cells
+   of the procedure and over the 24 (procedure, cell) of the three gated procedures in this scope
+  G16: price 0.0000 [0.0000, 0.0000]; gate fires on 0.0% of clean twins; V (8 cells and no error) +0.0272
+    0.05sigma_from_trial_1   gain +0.0000 [-0.0000, +0.0001] share n/a          gaining  1/20 p 1 (Holm cells 1, 24 1) | over LCB1 +0.0216 [+0.0034, +0.0444] p 0.49 | over LCB2 +0.0207 [+0.0034, +0.0442] p 0.42 | over always sitting +0.0242 [+0.0132, +0.0362] | fires 1%
+    0.05sigma_from_trial_21  gain -0.0006 [-0.0017, +0.0000] share n/a          gaining  0/20 p 0.11 (Holm cells 0.65, 24 0.98) | over LCB1 +0.0163 [+0.0026, +0.0340] p 0.37 | over LCB2 +0.0175 [+0.0037, +0.0348] p 0.37 | over always sitting +0.0300 [+0.0121, +0.0496] | fires 1%
+    0.25sigma_from_trial_1   gain -0.0003 [-0.0010, +0.0000] share n/a          gaining  0/20 p 0.32 (Holm cells 0.95, 24 1) | over LCB1 +0.0124 [-0.0040, +0.0327] p 0.73 | over LCB2 +0.0089 [-0.0068, +0.0274] p 0.5 | over always sitting +0.0258 [+0.0110, +0.0430] | fires 0%
+    0.25sigma_from_trial_21  gain -0.0003 [-0.0007, +0.0000] share n/a          gaining  0/20 p 0.18 (Holm cells 0.81, 24 1) | over LCB1 +0.0100 [-0.0043, +0.0269] p 1 | over LCB2 +0.0087 [-0.0051, +0.0254] p 0.94 | over always sitting +0.0252 [+0.0091, +0.0431] | fires 0%
+    1sigma_from_trial_1      gain -0.0049 [-0.0128, +0.0027] -2% [-5, 1]        gaining  5/20 p 0.16 (Holm cells 0.81, 24 1) | over LCB1 -0.0318 [-0.0489, -0.0153] p 0.002 | over LCB2 -0.0309 [-0.0485, -0.0136] p 0.0032 | over always sitting +0.0112 [-0.0094, +0.0319] | fires 8%
+    1sigma_from_trial_21     gain -0.0012 [-0.0032, +0.0004] -1% [-2, 0]        gaining  4/20 p 0.5 (Holm cells 1, 24 1) | over LCB1 -0.0118 [-0.0261, +0.0043] p 0.12 | over LCB2 -0.0153 [-0.0300, +0.0002] p 0.044 | over always sitting -0.0122 [-0.0342, +0.0116] | fires 3%
+    5sigma_from_trial_1      gain +0.0620 [+0.0225, +0.1058] 8% [3, 14]         gaining 14/20 p 0.021 (Holm cells 0.15, 24 0.43) | over LCB1 +0.0165 [-0.0254, +0.0611] p 0.43 | over LCB2 -0.0011 [-0.0410, +0.0376] p 0.93 | over always sitting +0.0015 [-0.0053, +0.0103] | fires 96%
+    5sigma_from_trial_21     gain +0.1897 [+0.1192, +0.2662] 34% [25, 42]       gaining 18/20 p 1.9e-05 (Holm cells 0.00015, 24 0.00044) | over LCB1 +0.2118 [+0.1403, +0.2843] p 1.9e-05 | over LCB2 +0.1806 [+0.1225, +0.2397] p 3.6e-05 | over always sitting -0.0374 [-0.0631, -0.0158] | fires 85%
+    pooled                   gain +0.0306 [+0.0173, +0.0451] 14% [8, 19]        gaining 17/20 p 0.00013 | over LCB1 +0.0306 [+0.0141, +0.0484] p 0.002 | over LCB2 +0.0237 [+0.0092, +0.0402] p 0.021 | over always sitting +0.0085 [-0.0033, +0.0216] | fires 24%
+  G2: price 0.0037 [0.0010, 0.0068]; gate fires on 7.5% of clean twins; V (8 cells and no error) +0.0111
+    0.05sigma_from_trial_1   gain -0.0040 [-0.0086, -0.0008] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0176 [+0.0016, +0.0364] p 0.57 | over LCB2 +0.0167 [+0.0015, +0.0376] p 0.55 | over always sitting +0.0097 [+0.0017, +0.0193] | fires 6%
+    0.05sigma_from_trial_21  gain -0.0029 [-0.0059, -0.0007] share n/a          gaining  0/20 p 0.043 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0140 [+0.0017, +0.0307] p 0.4 | over LCB2 +0.0152 [+0.0025, +0.0316] p 0.4 | over always sitting +0.0114 [+0.0026, +0.0230] | fires 7%
+    0.25sigma_from_trial_1   gain -0.0063 [-0.0133, -0.0012] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0064 [-0.0064, +0.0237] p 0.52 | over LCB2 +0.0029 [-0.0085, +0.0165] p 0.43 | over always sitting +0.0019 [-0.0071, +0.0134] | fires 10%
+    0.25sigma_from_trial_21  gain -0.0027 [-0.0048, -0.0009] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0075 [-0.0053, +0.0237] p 0.75 | over LCB2 +0.0063 [-0.0063, +0.0226] p 0.72 | over always sitting +0.0015 [-0.0073, +0.0110] | fires 8%
+    1sigma_from_trial_1      gain +0.0298 [+0.0126, +0.0481] 11% [5, 18]        gaining 14/20 p 0.0042 (Holm cells 0.03, 24 0.089) | over LCB1 +0.0029 [-0.0044, +0.0095] p 0.45 | over LCB2 +0.0038 [-0.0031, +0.0114] p 0.57 | over always sitting -0.0005 [-0.0028, +0.0018] | fires 86%
+    1sigma_from_trial_21     gain +0.0074 [-0.0039, +0.0188] 5% [-3, 13]        gaining 11/20 p 0.28 (Holm cells 0.33, 24 1) | over LCB1 -0.0032 [-0.0136, +0.0060] p 0.6 | over LCB2 -0.0067 [-0.0174, +0.0029] p 0.2 | over always sitting -0.0038 [-0.0102, +0.0017] | fires 75%
+    5sigma_from_trial_1      gain +0.0623 [+0.0278, +0.1030] 8% [4, 14]         gaining 16/20 p 0.0017 (Holm cells 0.014, 24 0.037) | over LCB1 +0.0168 [-0.0025, +0.0379] p 0.076 | over LCB2 -0.0008 [-0.0210, +0.0205] p 0.76 | over always sitting -0.0019 [-0.0044, +0.0002] | fires 99%
+    5sigma_from_trial_21     gain +0.0198 [-0.0065, +0.0455] 4% [-1, 8]         gaining 12/20 p 0.16 (Holm cells 0.33, 24 1) | over LCB1 +0.0419 [+0.0217, +0.0625] p 0.0014 | over LCB2 +0.0107 [-0.0105, +0.0308] p 0.26 | over always sitting -0.0038 [-0.0089, -0.0003] | fires 98%
+    pooled                   gain +0.0129 [+0.0032, +0.0229] 6% [2, 10]         gaining 13/20 p 0.027 | over LCB1 +0.0130 [+0.0044, +0.0237] p 0.0083 | over LCB2 +0.0060 [-0.0027, +0.0165] p 0.7 | over always sitting +0.0018 [-0.0023, +0.0075] | fires 49%
+  G16+G2: price 0.0037 [0.0010, 0.0069]; V (8 cells and no error) +0.0303
+    0.05sigma_from_trial_1   gain -0.0038 [-0.0083, -0.0008] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0177 [+0.0023, +0.0376] p 0.57 | over LCB2 +0.0169 [+0.0014, +0.0389] p 0.49
+    0.05sigma_from_trial_21  gain -0.0034 [-0.0069, -0.0004] share n/a          gaining  0/20 p 0.043 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0135 [+0.0009, +0.0303] p 0.42 | over LCB2 +0.0148 [+0.0013, +0.0308] p 0.42
+    0.25sigma_from_trial_1   gain -0.0067 [-0.0130, -0.0016] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0060 [-0.0065, +0.0228] p 0.39 | over LCB2 +0.0026 [-0.0086, +0.0172] p 0.29
+    0.25sigma_from_trial_21  gain -0.0029 [-0.0051, -0.0010] share n/a          gaining  0/20 p 0.028 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0073 [-0.0054, +0.0248] p 0.69 | over LCB2 +0.0060 [-0.0071, +0.0221] p 0.66
+    1sigma_from_trial_1      gain +0.0251 [+0.0069, +0.0451] 10% [3, 16]        gaining 14/20 p 0.024 (Holm cells 0.17, 24 0.46) | over LCB1 -0.0018 [-0.0089, +0.0054] p 0.67 | over LCB2 -0.0009 [-0.0085, +0.0069] p 0.67
+    1sigma_from_trial_21     gain +0.0099 [-0.0005, +0.0204] 7% [-0, 14]        gaining 12/20 p 0.12 (Holm cells 0.17, 24 0.98) | over LCB1 -0.0007 [-0.0118, +0.0114] p 0.7 | over LCB2 -0.0042 [-0.0155, +0.0081] p 0.33
+    5sigma_from_trial_1      gain +0.0597 [+0.0195, +0.1041] 8% [3, 13]         gaining 13/20 p 0.036 (Holm cells 0.17, 24 0.5) | over LCB1 +0.0141 [-0.0307, +0.0588] p 0.55 | over LCB2 -0.0035 [-0.0448, +0.0374] p 0.78
+    5sigma_from_trial_21     gain +0.1984 [+0.1266, +0.2788] 36% [26, 44]       gaining 18/20 p 1.3e-05 (Holm cells 0.00011, 24 0.00032) | over LCB1 +0.2204 [+0.1474, +0.2980] p 1.9e-05 | over LCB2 +0.1892 [+0.1285, +0.2480] p 1.9e-05
+    pooled                   gain +0.0345 [+0.0189, +0.0516] 15% [10, 21]       gaining 15/20 p 0.00026 | over LCB1 +0.0346 [+0.0184, +0.0506] p 0.001 | over LCB2 +0.0276 [+0.0138, +0.0427] p 0.0042
+  -- for reference, on the same runs:
+  always sit 16: price 0.0325 [0.0141, 0.0531]; V (8 cells and no error) +0.0160
+    0.05sigma_from_trial_1   gain -0.0242 [-0.0365, -0.0124] share n/a          gaining  4/20 p 0.0029 | over LCB1 -0.0026 [-0.0192, +0.0148] p 0.24 | over LCB2 -0.0035 [-0.0194, +0.0134] p 0.18
+    0.05sigma_from_trial_21  gain -0.0306 [-0.0532, -0.0128] share n/a          gaining  5/20 p 0.0048 | over LCB1 -0.0137 [-0.0367, +0.0055] p 0.059 | over LCB2 -0.0124 [-0.0343, +0.0066] p 0.091
+    0.25sigma_from_trial_1   gain -0.0262 [-0.0435, -0.0117] share n/a          gaining  5/20 p 0.0033 | over LCB1 -0.0135 [-0.0290, +0.0016] p 0.048 | over LCB2 -0.0169 [-0.0317, -0.0036] p 0.017
+    0.25sigma_from_trial_21  gain -0.0255 [-0.0457, -0.0089] share n/a          gaining  7/20 p 0.027 | over LCB1 -0.0152 [-0.0336, +0.0027] p 0.11 | over LCB2 -0.0165 [-0.0362, +0.0004] p 0.077
+    1sigma_from_trial_1      gain -0.0160 [-0.0392, +0.0094] -6% [-17, 2]       gaining  6/20 p 0.23 | over LCB1 -0.0430 [-0.0632, -0.0214] p 0.0012 | over LCB2 -0.0421 [-0.0628, -0.0210] p 0.002
+    1sigma_from_trial_21     gain +0.0110 [-0.0128, +0.0320] 7% [-10, 21]       gaining 13/20 p 0.18 | over LCB1 +0.0004 [-0.0242, +0.0223] p 0.73 | over LCB2 -0.0031 [-0.0256, +0.0188] p 0.96
+    5sigma_from_trial_1      gain +0.0605 [+0.0155, +0.1072] 8% [2, 14]         gaining 14/20 p 0.036 | over LCB1 +0.0150 [-0.0358, +0.0612] p 0.43 | over LCB2 -0.0026 [-0.0465, +0.0401] p 1
+    5sigma_from_trial_21     gain +0.2271 [+0.1477, +0.3184] 41% [30, 51]       gaining 19/20 p 9.5e-06 | over LCB1 +0.2492 [+0.1625, +0.3401] p 1.9e-05 | over LCB2 +0.2180 [+0.1455, +0.2886] p 2.7e-05
+    pooled                   gain +0.0220 [-0.0017, +0.0463] 10% [-1, 19]       gaining 13/20 p 0.11 | over LCB1 +0.0221 [-0.0010, +0.0429] p 0.076 | over LCB2 +0.0151 [-0.0047, +0.0344] p 0.15
+  always sit 2: price 0.0176 [0.0059, 0.0337]; V (8 cells and no error) +0.0079
+    0.05sigma_from_trial_1   gain -0.0137 [-0.0258, -0.0036] share n/a          gaining  7/20 p 0.07 | over LCB1 +0.0079 [-0.0009, +0.0197] p 0.94 | over LCB2 +0.0070 [-0.0012, +0.0193] p 0.63
+    0.05sigma_from_trial_21  gain -0.0143 [-0.0268, -0.0040] share n/a          gaining  9/20 p 0.12 | over LCB1 +0.0026 [-0.0031, +0.0089] p 0.72 | over LCB2 +0.0038 [-0.0024, +0.0101] p 0.55
+    0.25sigma_from_trial_1   gain -0.0082 [-0.0227, +0.0037] share n/a          gaining 10/20 p 0.72 | over LCB1 +0.0045 [-0.0016, +0.0117] p 0.87 | over LCB2 +0.0011 [-0.0035, +0.0062] p 0.67
+    0.25sigma_from_trial_21  gain -0.0041 [-0.0152, +0.0061] share n/a          gaining 10/20 p 0.66 | over LCB1 +0.0061 [-0.0011, +0.0140] p 0.11 | over LCB2 +0.0048 [-0.0015, +0.0130] p 0.15
+    1sigma_from_trial_1      gain +0.0303 [+0.0134, +0.0484] 12% [5, 18]        gaining 14/20 p 0.0049 | over LCB1 +0.0034 [-0.0035, +0.0095] p 0.39 | over LCB2 +0.0043 [-0.0018, +0.0110] p 0.31
+    1sigma_from_trial_21     gain +0.0112 [-0.0015, +0.0246] 8% [-2, 16]        gaining 12/20 p 0.29 | over LCB1 +0.0006 [-0.0086, +0.0097] p 0.96 | over LCB2 -0.0029 [-0.0133, +0.0077] p 0.65
+    5sigma_from_trial_1      gain +0.0643 [+0.0291, +0.1048] 9% [4, 14]         gaining 16/20 p 0.0012 | over LCB1 +0.0187 [-0.0007, +0.0389] p 0.07 | over LCB2 +0.0011 [-0.0190, +0.0235] p 0.9
+    5sigma_from_trial_21     gain +0.0236 [-0.0021, +0.0480] 4% [-0, 8]         gaining 13/20 p 0.07 | over LCB1 +0.0457 [+0.0243, +0.0683] p 0.00085 | over LCB2 +0.0145 [-0.0052, +0.0338] p 0.097
+    pooled                   gain +0.0111 [-0.0018, +0.0232] 5% [-1, 10]        gaining 13/20 p 0.14 | over LCB1 +0.0112 [+0.0053, +0.0170] p 0.002 | over LCB2 +0.0042 [-0.0013, +0.0102] p 0.35
+  LCB1: price 0.0211 [0.0066, 0.0428]; V (8 cells and no error) -0.0024
+    0.05sigma_from_trial_1   gain -0.0216 [-0.0444, -0.0036] share n/a          gaining 11/20 p 0.47 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0009 [-0.0035, +0.0008] p 0.78
+    0.05sigma_from_trial_21  gain -0.0169 [-0.0338, -0.0039] share n/a          gaining  8/20 p 0.2 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0012 [-0.0022, +0.0056] p 0.47
+    0.25sigma_from_trial_1   gain -0.0127 [-0.0340, +0.0034] share n/a          gaining 12/20 p 0.9 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0035 [-0.0065, -0.0009] p 0.022
+    0.25sigma_from_trial_21  gain -0.0102 [-0.0275, +0.0042] share n/a          gaining 12/20 p 0.9 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0013 [-0.0029, +0.0003] p 0.17
+    1sigma_from_trial_1      gain +0.0270 [+0.0054, +0.0465] 10% [3, 18]        gaining 14/20 p 0.04 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0009 [-0.0014, +0.0033] p 0.5
+    1sigma_from_trial_21     gain +0.0106 [-0.0060, +0.0264] 7% [-4, 18]        gaining 14/20 p 0.14 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0035 [-0.0072, +0.0002] p 0.13
+    5sigma_from_trial_1      gain +0.0456 [+0.0110, +0.0841] 6% [2, 11]         gaining 12/20 p 0.064 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0176 [-0.0288, -0.0059] p 0.0083
+    5sigma_from_trial_21     gain -0.0221 [-0.0442, -0.0032] -4% [-8, -0]       gaining  7/20 p 0.11 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0312 [-0.0532, -0.0142] p 0.00017
+    pooled                   gain -0.0001 [-0.0162, +0.0144] -0% [-8, 6]        gaining 13/20 p 0.55 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0070 [-0.0107, -0.0036] p 0.00021
+  LCB2: price 0.0231 [0.0072, 0.0459]; V (8 cells and no error) +0.0036
+    0.05sigma_from_trial_1   gain -0.0207 [-0.0437, -0.0037] share n/a          gaining 10/20 p 0.4 | over LCB1 +0.0009 [-0.0008, +0.0035] p 0.78 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.05sigma_from_trial_21  gain -0.0181 [-0.0339, -0.0043] share n/a          gaining  9/20 p 0.23 | over LCB1 -0.0012 [-0.0053, +0.0022] p 0.47 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_1   gain -0.0093 [-0.0269, +0.0053] share n/a          gaining 13/20 p 0.7 | over LCB1 +0.0035 [+0.0009, +0.0066] p 0.022 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_21  gain -0.0090 [-0.0262, +0.0046] share n/a          gaining 11/20 p 0.97 | over LCB1 +0.0013 [-0.0003, +0.0029] p 0.17 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_1      gain +0.0260 [+0.0053, +0.0473] 10% [2, 18]        gaining 14/20 p 0.064 | over LCB1 -0.0009 [-0.0033, +0.0014] p 0.5 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_21     gain +0.0141 [-0.0027, +0.0297] 9% [-2, 20]        gaining 15/20 p 0.064 | over LCB1 +0.0035 [-0.0000, +0.0076] p 0.13 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_1      gain +0.0631 [+0.0306, +0.0983] 8% [4, 13]         gaining 15/20 p 0.0012 | over LCB1 +0.0176 [+0.0055, +0.0289] p 0.0083 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_21     gain +0.0091 [-0.0171, +0.0376] 2% [-3, 6]         gaining 12/20 p 0.65 | over LCB1 +0.0312 [+0.0140, +0.0529] p 0.00017 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    pooled                   gain +0.0069 [-0.0097, +0.0222] 3% [-4, 9]         gaining 14/20 p 0.26 | over LCB1 +0.0070 [+0.0036, +0.0108] p 0.00021 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+
+== seeds 27-36 (untouched, gaussian): gain over the standard process, share of its cost of error, increments over the
+   zero-trial rules after all 50 trials (same runs), price without error; Holm over the eight cells
+   of the procedure and over the 24 (procedure, cell) of the three gated procedures in this scope
+  G16: price 0.0016 [0.0000, 0.0048]; gate fires on 0.8% of clean twins; V (8 cells and no error) +0.0102
+    0.05sigma_from_trial_1   gain -0.0011 [-0.0031, +0.0000] share n/a          gaining  0/20 p 0.18 (Holm cells 0.82, 24 1) | over LCB1 +0.0192 [+0.0029, +0.0408] p 0.28 | over LCB2 +0.0191 [+0.0023, +0.0422] p 0.52 | over always sitting +0.0329 [+0.0150, +0.0547] | fires 2%
+    0.05sigma_from_trial_21  gain -0.0013 [-0.0038, +0.0000] share n/a          gaining  0/20 p 0.18 (Holm cells 0.82, 24 1) | over LCB1 +0.0125 [+0.0017, +0.0251] p 0.2 | over LCB2 +0.0129 [+0.0020, +0.0257] p 0.18 | over always sitting +0.0285 [+0.0143, +0.0445] | fires 1%
+    0.25sigma_from_trial_1   gain -0.0008 [-0.0022, +0.0000] share n/a          gaining  0/20 p 0.18 (Holm cells 0.82, 24 1) | over LCB1 +0.0062 [-0.0078, +0.0255] p 0.84 | over LCB2 +0.0051 [-0.0081, +0.0217] p 0.81 | over always sitting +0.0298 [+0.0154, +0.0470] | fires 2%
+    0.25sigma_from_trial_21  gain +0.0000 [+0.0000, +0.0000] share n/a          gaining  0/20 p n/a | over LCB1 +0.0098 [-0.0039, +0.0264] p 0.96 | over LCB2 +0.0126 [-0.0037, +0.0320] p 0.87 | over always sitting +0.0290 [+0.0129, +0.0452] | fires 0%
+    1sigma_from_trial_1      gain -0.0058 [-0.0128, +0.0012] -2% [-5, 0]        gaining  6/20 p 0.12 (Holm cells 0.74, 24 1) | over LCB1 -0.0415 [-0.0627, -0.0182] p 0.002 | over LCB2 -0.0356 [-0.0555, -0.0104] p 0.0027 | over always sitting +0.0295 [+0.0058, +0.0523] | fires 13%
+    1sigma_from_trial_21     gain +0.0007 [-0.0014, +0.0035] 1% [-1, 2]         gaining  2/20 p 0.72 (Holm cells 0.82, 24 1) | over LCB1 -0.0211 [-0.0429, +0.0026] p 0.076 | over LCB2 -0.0214 [-0.0425, +0.0000] p 0.07 | over always sitting +0.0095 [-0.0148, +0.0337] | fires 2%
+    5sigma_from_trial_1      gain -0.0347 [-0.0691, -0.0035] -5% [-10, -0]      gaining  9/20 p 0.16 (Holm cells 0.82, 24 1) | over LCB1 -0.0764 [-0.1531, -0.0060] p 0.097 | over LCB2 -0.0908 [-0.1605, -0.0256] p 0.044 | over always sitting -0.0018 [-0.0058, +0.0015] | fires 97%
+    5sigma_from_trial_21     gain +0.1365 [+0.0807, +0.1893] 30% [20, 38]       gaining 17/20 p 8.2e-05 (Holm cells 0.00057, 24 0.0018) | over LCB1 +0.1108 [+0.0543, +0.1722] p 0.0037 | over LCB2 +0.0538 [+0.0031, +0.1057] p 0.064 | over always sitting -0.0099 [-0.0189, -0.0026] | fires 90%
+    pooled                   gain +0.0117 [+0.0038, +0.0199] 6% [2, 9]          gaining 14/20 p 0.019 | over LCB1 +0.0024 [-0.0161, +0.0215] p 0.99 | over LCB2 -0.0056 [-0.0231, +0.0156] p 0.33 | over always sitting +0.0184 [+0.0080, +0.0297] | fires 26%
+  G2: price 0.0030 [0.0003, 0.0068]; gate fires on 6.2% of clean twins; V (8 cells and no error) +0.0131
+    0.05sigma_from_trial_1   gain -0.0039 [-0.0087, -0.0004] share n/a          gaining  1/20 p 0.08 (Holm cells 0.22, 24 0.96) | over LCB1 +0.0164 [+0.0027, +0.0387] p 0.4 | over LCB2 +0.0163 [+0.0015, +0.0369] p 0.52 | over always sitting +0.0117 [+0.0026, +0.0237] | fires 9%
+    0.05sigma_from_trial_21  gain -0.0041 [-0.0088, -0.0006] share n/a          gaining  0/20 p 0.043 (Holm cells 0.22, 24 0.73) | over LCB1 +0.0096 [+0.0012, +0.0205] p 0.24 | over LCB2 +0.0100 [+0.0012, +0.0210] p 0.23 | over always sitting +0.0088 [+0.0017, +0.0176] | fires 8%
+    0.25sigma_from_trial_1   gain -0.0022 [-0.0046, -0.0002] share n/a          gaining  1/20 p 0.046 (Holm cells 0.22, 24 0.73) | over LCB1 +0.0048 [-0.0086, +0.0210] p 0.78 | over LCB2 +0.0038 [-0.0080, +0.0190] p 0.78 | over always sitting +0.0045 [-0.0057, +0.0169] | fires 6%
+    0.25sigma_from_trial_21  gain -0.0055 [-0.0136, -0.0006] share n/a          gaining  0/20 p 0.043 (Holm cells 0.22, 24 0.73) | over LCB1 +0.0043 [-0.0094, +0.0217] p 0.5 | over LCB2 +0.0071 [-0.0079, +0.0275] p 0.57 | over always sitting +0.0029 [-0.0078, +0.0154] | fires 7%
+    1sigma_from_trial_1      gain +0.0251 [+0.0047, +0.0447] 10% [2, 17]        gaining 14/20 p 0.03 (Holm cells 0.18, 24 0.56) | over LCB1 -0.0106 [-0.0215, -0.0004] p 0.09 | over LCB2 -0.0047 [-0.0152, +0.0060] p 0.43 | over always sitting -0.0030 [-0.0068, +0.0005] | fires 93%
+    1sigma_from_trial_21     gain +0.0243 [+0.0089, +0.0401] 18% [6, 30]        gaining 13/20 p 0.021 (Holm cells 0.15, 24 0.43) | over LCB1 +0.0024 [-0.0101, +0.0156] p 1 | over LCB2 +0.0021 [-0.0099, +0.0153] p 0.81 | over always sitting -0.0030 [-0.0060, -0.0002] | fires 85%
+    5sigma_from_trial_1      gain +0.0272 [-0.0207, +0.0781] 4% [-3, 10]        gaining 11/20 p 0.35 (Holm cells 0.35, 24 1) | over LCB1 -0.0146 [-0.0544, +0.0256] p 0.52 | over LCB2 -0.0289 [-0.0653, +0.0053] p 0.13 | over always sitting +0.0003 [-0.0016, +0.0024] | fires 99%
+    5sigma_from_trial_21     gain +0.0598 [+0.0235, +0.0944] 13% [6, 20]        gaining 17/20 p 0.0027 (Holm cells 0.022, 24 0.057) | over LCB1 +0.0341 [-0.0071, +0.0777] p 0.2 | over LCB2 -0.0229 [-0.0621, +0.0192] p 0.14 | over always sitting -0.0020 [-0.0085, +0.0028] | fires 97%
+    pooled                   gain +0.0151 [+0.0018, +0.0258] 7% [1, 12]         gaining 14/20 p 0.014 | over LCB1 +0.0058 [-0.0041, +0.0158] p 0.62 | over LCB2 -0.0022 [-0.0107, +0.0083] p 0.29 | over always sitting +0.0025 [-0.0021, +0.0083] | fires 51%
+  G16+G2: price 0.0039 [0.0008, 0.0082]; V (8 cells and no error) +0.0154
+    0.05sigma_from_trial_1   gain -0.0050 [-0.0105, -0.0011] share n/a          gaining  1/20 p 0.08 (Holm cells 0.32, 24 0.96) | over LCB1 +0.0154 [+0.0009, +0.0367] p 0.49 | over LCB2 +0.0152 [+0.0001, +0.0382] p 0.57
+    0.05sigma_from_trial_21  gain -0.0035 [-0.0079, -0.0002] share n/a          gaining  0/20 p 0.043 (Holm cells 0.26, 24 0.73) | over LCB1 +0.0103 [+0.0002, +0.0214] p 0.21 | over LCB2 +0.0106 [+0.0001, +0.0231] p 0.2
+    0.25sigma_from_trial_1   gain -0.0020 [-0.0044, -0.0002] share n/a          gaining  2/20 p 0.12 (Holm cells 0.32, 24 1) | over LCB1 +0.0050 [-0.0090, +0.0221] p 0.84 | over LCB2 +0.0039 [-0.0082, +0.0186] p 0.78
+    0.25sigma_from_trial_21  gain -0.0036 [-0.0078, -0.0006] share n/a          gaining  0/20 p 0.043 (Holm cells 0.26, 24 0.73) | over LCB1 +0.0062 [-0.0072, +0.0231] p 0.65 | over LCB2 +0.0090 [-0.0059, +0.0281] p 0.96
+    1sigma_from_trial_1      gain +0.0205 [-0.0012, +0.0420] 8% [-0, 15]        gaining 13/20 p 0.11 (Holm cells 0.32, 24 1) | over LCB1 -0.0152 [-0.0269, -0.0033] p 0.024 | over LCB2 -0.0093 [-0.0207, +0.0031] p 0.14
+    1sigma_from_trial_21     gain +0.0229 [+0.0060, +0.0395] 17% [4, 29]        gaining 12/20 p 0.036 (Holm cells 0.25, 24 0.65) | over LCB1 +0.0010 [-0.0117, +0.0153] p 0.78 | over LCB2 +0.0007 [-0.0111, +0.0148] p 0.62
+    5sigma_from_trial_1      gain -0.0287 [-0.0648, +0.0058] -4% [-9, 0]        gaining 10/20 p 0.37 (Holm cells 0.37, 24 1) | over LCB1 -0.0705 [-0.1430, -0.0028] p 0.14 | over LCB2 -0.0849 [-0.1550, -0.0211] p 0.044
+    5sigma_from_trial_21     gain +0.1423 [+0.0935, +0.1919] 31% [22, 39]       gaining 18/20 p 3.6e-05 (Holm cells 0.00029, 24 0.00083) | over LCB1 +0.1165 [+0.0571, +0.1781] p 0.0017 | over LCB2 +0.0595 [+0.0122, +0.1184] p 0.064
+    pooled                   gain +0.0179 [+0.0075, +0.0298] 9% [4, 13]         gaining 13/20 p 0.014 | over LCB1 +0.0086 [-0.0072, +0.0251] p 0.39 | over LCB2 +0.0006 [-0.0152, +0.0153] p 0.81
+  -- for reference, on the same runs:
+  always sit 16: price 0.0297 [0.0154, 0.0454]; V (8 cells and no error) -0.0093
+    0.05sigma_from_trial_1   gain -0.0340 [-0.0561, -0.0155] share n/a          gaining  2/20 p 0.00026 | over LCB1 -0.0137 [-0.0381, +0.0087] p 0.064 | over LCB2 -0.0138 [-0.0386, +0.0089] p 0.11
+    0.05sigma_from_trial_21  gain -0.0297 [-0.0475, -0.0149] share n/a          gaining  3/20 p 0.00097 | over LCB1 -0.0160 [-0.0329, -0.0038] p 0.0037 | over LCB2 -0.0156 [-0.0323, -0.0027] p 0.0014
+    0.25sigma_from_trial_1   gain -0.0306 [-0.0487, -0.0163] share n/a          gaining  2/20 p 0.00013 | over LCB1 -0.0236 [-0.0421, -0.0055] p 0.0048 | over LCB2 -0.0247 [-0.0425, -0.0093] p 0.0043
+    0.25sigma_from_trial_21  gain -0.0290 [-0.0453, -0.0130] share n/a          gaining  5/20 p 0.0048 | over LCB1 -0.0193 [-0.0346, -0.0056] p 0.017 | over LCB2 -0.0165 [-0.0327, -0.0005] p 0.033
+    1sigma_from_trial_1      gain -0.0352 [-0.0610, -0.0095] -13% [-24, -3]     gaining  5/20 p 0.015 | over LCB1 -0.0710 [-0.0977, -0.0415] p 0.00032 | over LCB2 -0.0650 [-0.0934, -0.0340] p 0.00071
+    1sigma_from_trial_21     gain -0.0088 [-0.0336, +0.0173] -7% [-28, 11]      gaining  9/20 p 0.57 | over LCB1 -0.0307 [-0.0580, -0.0017] p 0.033 | over LCB2 -0.0310 [-0.0566, -0.0043] p 0.0064
+    5sigma_from_trial_1      gain -0.0328 [-0.0680, -0.0008] -4% [-9, -0]       gaining  9/20 p 0.23 | over LCB1 -0.0746 [-0.1535, -0.0063] p 0.11 | over LCB2 -0.0890 [-0.1596, -0.0241] p 0.048
+    5sigma_from_trial_21     gain +0.1464 [+0.0955, +0.1995] 32% [23, 40]       gaining 18/20 p 2.7e-05 | over LCB1 +0.1207 [+0.0642, +0.1842] p 0.001 | over LCB2 +0.0637 [+0.0135, +0.1220] p 0.027
+    pooled                   gain -0.0067 [-0.0224, +0.0104] -3% [-12, 4]       gaining  9/20 p 0.43 | over LCB1 -0.0160 [-0.0339, +0.0036] p 0.14 | over LCB2 -0.0240 [-0.0420, -0.0058] p 0.017
+  always sit 2: price 0.0184 [0.0068, 0.0312]; V (8 cells and no error) +0.0091
+    0.05sigma_from_trial_1   gain -0.0156 [-0.0276, -0.0058] share n/a          gaining  7/20 p 0.024 | over LCB1 +0.0047 [-0.0039, +0.0156] p 0.9 | over LCB2 +0.0045 [-0.0042, +0.0150] p 0.87
+    0.05sigma_from_trial_21  gain -0.0129 [-0.0238, -0.0040] share n/a          gaining  7/20 p 0.04 | over LCB1 +0.0009 [-0.0030, +0.0045] p 0.67 | over LCB2 +0.0012 [-0.0028, +0.0050] p 0.9
+    0.25sigma_from_trial_1   gain -0.0066 [-0.0202, +0.0051] share n/a          gaining 11/20 p 0.67 | over LCB1 +0.0004 [-0.0053, +0.0069] p 0.49 | over LCB2 -0.0007 [-0.0056, +0.0044] p 0.57
+    0.25sigma_from_trial_21  gain -0.0084 [-0.0233, +0.0048] share n/a          gaining  9/20 p 0.38 | over LCB1 +0.0014 [-0.0073, +0.0094] p 0.87 | over LCB2 +0.0042 [-0.0044, +0.0131] p 0.87
+    1sigma_from_trial_1      gain +0.0281 [+0.0061, +0.0483] 11% [3, 18]        gaining 14/20 p 0.021 | over LCB1 -0.0076 [-0.0175, +0.0012] p 0.11 | over LCB2 -0.0017 [-0.0118, +0.0082] p 0.78
+    1sigma_from_trial_21     gain +0.0273 [+0.0108, +0.0434] 20% [8, 33]        gaining 15/20 p 0.0049 | over LCB1 +0.0054 [-0.0067, +0.0187] p 0.81 | over LCB2 +0.0051 [-0.0061, +0.0183] p 1
+    5sigma_from_trial_1      gain +0.0269 [-0.0204, +0.0759] 4% [-3, 10]        gaining 11/20 p 0.39 | over LCB1 -0.0148 [-0.0558, +0.0261] p 0.47 | over LCB2 -0.0292 [-0.0657, +0.0029] p 0.14
+    5sigma_from_trial_21     gain +0.0618 [+0.0255, +0.0986] 14% [6, 20]        gaining 17/20 p 0.0023 | over LCB1 +0.0361 [-0.0043, +0.0837] p 0.23 | over LCB2 -0.0209 [-0.0589, +0.0253] p 0.19
+    pooled                   gain +0.0126 [-0.0034, +0.0265] 6% [-2, 13]        gaining 14/20 p 0.097 | over LCB1 +0.0033 [-0.0035, +0.0104] p 0.52 | over LCB2 -0.0047 [-0.0105, +0.0011] p 0.19
+  LCB1: price 0.0210 [0.0076, 0.0397]; V (8 cells and no error) +0.0059
+    0.05sigma_from_trial_1   gain -0.0203 [-0.0412, -0.0047] share n/a          gaining  8/20 p 0.13 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0002 [-0.0025, +0.0023] p 0.82
+    0.05sigma_from_trial_21  gain -0.0138 [-0.0258, -0.0039] share n/a          gaining  7/20 p 0.11 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0003 [-0.0007, +0.0015] p 1
+    0.25sigma_from_trial_1   gain -0.0070 [-0.0253, +0.0073] share n/a          gaining 11/20 p 0.99 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0011 [-0.0036, +0.0006] p 0.62
+    0.25sigma_from_trial_21  gain -0.0098 [-0.0265, +0.0040] share n/a          gaining 12/20 p 0.96 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0028 [-0.0002, +0.0063] p 0.17
+    1sigma_from_trial_1      gain +0.0357 [+0.0115, +0.0568] 14% [5, 21]        gaining 14/20 p 0.015 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 +0.0059 [-0.0017, +0.0135] p 0.23
+    1sigma_from_trial_21     gain +0.0219 [-0.0007, +0.0428] 16% [-1, 34]       gaining 14/20 p 0.064 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0003 [-0.0046, +0.0038] p 0.74
+    5sigma_from_trial_1      gain +0.0418 [-0.0120, +0.1037] 6% [-2, 12]        gaining  9/20 p 0.41 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0144 [-0.0376, +0.0042] p 0.41
+    5sigma_from_trial_21     gain +0.0257 [-0.0294, +0.0778] 6% [-6, 16]        gaining 12/20 p 0.16 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0570 [-0.0833, -0.0345] p 9.5e-06
+    pooled                   gain +0.0093 [-0.0088, +0.0271] 4% [-5, 13]        gaining 12/20 p 0.28 | over LCB1 +0.0000 [+0.0000, +0.0000] p n/a | over LCB2 -0.0080 [-0.0127, -0.0036] p 0.0049
+  LCB2: price 0.0225 [0.0087, 0.0396]; V (8 cells and no error) +0.0128
+    0.05sigma_from_trial_1   gain -0.0202 [-0.0420, -0.0043] share n/a          gaining  9/20 p 0.23 | over LCB1 +0.0002 [-0.0026, +0.0025] p 0.82 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.05sigma_from_trial_21  gain -0.0141 [-0.0264, -0.0040] share n/a          gaining  7/20 p 0.099 | over LCB1 -0.0003 [-0.0016, +0.0007] p 1 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_1   gain -0.0060 [-0.0227, +0.0074] share n/a          gaining 11/20 p 0.96 | over LCB1 +0.0011 [-0.0006, +0.0035] p 0.62 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    0.25sigma_from_trial_21  gain -0.0126 [-0.0331, +0.0031] share n/a          gaining 12/20 p 0.87 | over LCB1 -0.0028 [-0.0062, +0.0003] p 0.17 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_1      gain +0.0298 [+0.0075, +0.0508] 11% [2, 19]        gaining 15/20 p 0.019 | over LCB1 -0.0059 [-0.0132, +0.0015] p 0.23 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    1sigma_from_trial_21     gain +0.0222 [+0.0021, +0.0423] 16% [1, 33]        gaining 14/20 p 0.064 | over LCB1 +0.0003 [-0.0038, +0.0045] p 0.74 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_1      gain +0.0562 [+0.0063, +0.1081] 8% [1, 14]         gaining 13/20 p 0.076 | over LCB1 +0.0144 [-0.0044, +0.0371] p 0.41 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    5sigma_from_trial_21     gain +0.0827 [+0.0257, +0.1382] 18% [7, 29]        gaining 16/20 p 0.0049 | over LCB1 +0.0570 [+0.0342, +0.0825] p 9.5e-06 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+    pooled                   gain +0.0173 [-0.0035, +0.0349] 8% [-1, 17]        gaining 15/20 p 0.11 | over LCB1 +0.0080 [+0.0036, +0.0124] p 0.0049 | over LCB2 +0.0000 [+0.0000, +0.0000] p n/a
+
+== the scale-free gate (noise SD over the SD of the ratings in hand), chosen by the same rule
+  seeds 12-16 (held out)
+  G16 (scale-free): price 0.0086 [0.0007, 0.0200]; gate fires on 8.5% of clean twins; V (8 cells and no error) +0.0250
+    0.05sigma_from_trial_1   gain -0.0057 [-0.0119, -0.0011] share n/a          gaining  1/20 p 0.025 | over LCB1 +0.0159 [+0.0022, +0.0340] p 0.78 | over LCB2 +0.0151 [+0.0017, +0.0314] p 0.63 | over always sitting +0.0185 [+0.0095, +0.0283] | fires 10%
+    0.05sigma_from_trial_21  gain -0.0069 [-0.0132, -0.0018] share n/a          gaining  0/20 p 0.012 | over LCB1 +0.0100 [+0.0005, +0.0222] p 0.88 | over LCB2 +0.0112 [+0.0010, +0.0238] p 0.88 | over always sitting +0.0237 [+0.0075, +0.0454] | fires 11%
+    0.25sigma_from_trial_1   gain -0.0102 [-0.0192, -0.0028] share n/a          gaining  3/20 p 0.011 | over LCB1 +0.0026 [-0.0098, +0.0165] p 0.47 | over LCB2 -0.0009 [-0.0120, +0.0119] p 0.26 | over always sitting +0.0160 [+0.0064, +0.0276] | fires 19%
+    0.25sigma_from_trial_21  gain -0.0060 [-0.0115, -0.0017] share n/a          gaining  1/20 p 0.0093 | over LCB1 +0.0043 [-0.0068, +0.0176] p 0.69 | over LCB2 +0.0030 [-0.0087, +0.0167] p 0.63 | over always sitting +0.0195 [+0.0051, +0.0380] | fires 13%
+    1sigma_from_trial_1      gain -0.0061 [-0.0233, +0.0120] -2% [-10, 4]       gaining  7/20 p 0.39 | over LCB1 -0.0331 [-0.0477, -0.0166] p 0.0017 | over LCB2 -0.0322 [-0.0465, -0.0142] p 0.0023 | over always sitting +0.0099 [-0.0006, +0.0218] | fires 79%
+    1sigma_from_trial_21     gain +0.0093 [-0.0038, +0.0239] 6% [-3, 16]        gaining 13/20 p 0.25 | over LCB1 -0.0013 [-0.0208, +0.0167] p 0.9 | over LCB2 -0.0048 [-0.0228, +0.0123] p 0.73 | over always sitting -0.0017 [-0.0157, +0.0150] | fires 58%
+    5sigma_from_trial_1      gain +0.0627 [+0.0230, +0.1074] 8% [3, 14]         gaining 14/20 p 0.019 | over LCB1 +0.0172 [-0.0236, +0.0604] p 0.41 | over LCB2 -0.0004 [-0.0399, +0.0403] p 1 | over always sitting +0.0022 [-0.0052, +0.0118] | fires 94%
+    5sigma_from_trial_21     gain +0.1963 [+0.1252, +0.2732] 35% [26, 44]       gaining 18/20 p 1.3e-05 | over LCB1 +0.2184 [+0.1485, +0.2965] p 1.9e-05 | over LCB2 +0.1872 [+0.1243, +0.2490] p 1.9e-05 | over always sitting -0.0308 [-0.0549, -0.0114] | fires 85%
+    pooled                   gain +0.0292 [+0.0132, +0.0470] 13% [6, 19]        gaining 15/20 p 0.0037 | over LCB1 +0.0292 [+0.0126, +0.0450] p 0.0049 | over LCB2 +0.0223 [+0.0075, +0.0366] p 0.015 | over always sitting +0.0072 [-0.0025, +0.0176] | fires 46%
+  G2 (scale-free): price 0.0028 [0.0000, 0.0067]; gate fires on 2.0% of clean twins; V (8 cells and no error) +0.0096
+    0.05sigma_from_trial_1   gain -0.0032 [-0.0084, -0.0002] share n/a          gaining  0/20 p 0.068 | over LCB1 +0.0184 [+0.0026, +0.0397] p 0.47 | over LCB2 +0.0175 [+0.0023, +0.0402] p 0.4 | over always sitting +0.0105 [+0.0022, +0.0206] | fires 2%
+    0.05sigma_from_trial_21  gain -0.0009 [-0.0024, +0.0000] share n/a          gaining  0/20 p 0.18 | over LCB1 +0.0160 [+0.0032, +0.0342] p 0.2 | over LCB2 +0.0173 [+0.0036, +0.0326] p 0.23 | over always sitting +0.0134 [+0.0043, +0.0260] | fires 1%
+    0.25sigma_from_trial_1   gain -0.0040 [-0.0094, -0.0001] share n/a          gaining  1/20 p 0.08 | over LCB1 +0.0087 [-0.0052, +0.0272] p 0.78 | over LCB2 +0.0053 [-0.0076, +0.0209] p 0.57 | over always sitting +0.0042 [-0.0055, +0.0167] | fires 3%
+    0.25sigma_from_trial_21  gain -0.0010 [-0.0026, +0.0000] share n/a          gaining  0/20 p 0.18 | over LCB1 +0.0092 [-0.0048, +0.0265] p 0.94 | over LCB2 +0.0080 [-0.0051, +0.0247] p 0.87 | over always sitting +0.0032 [-0.0065, +0.0140] | fires 1%
+    1sigma_from_trial_1      gain +0.0103 [+0.0007, +0.0203] 4% [0, 7]          gaining 13/20 p 0.076 | over LCB1 -0.0166 [-0.0292, -0.0037] p 0.036 | over LCB2 -0.0157 [-0.0285, -0.0016] p 0.076 | over always sitting -0.0200 [-0.0308, -0.0088] | fires 40%
+    1sigma_from_trial_21     gain -0.0020 [-0.0086, +0.0041] -1% [-6, 3]        gaining  7/20 p 0.65 | over LCB1 -0.0125 [-0.0248, +0.0003] p 0.07 | over LCB2 -0.0161 [-0.0280, -0.0031] p 0.011 | over always sitting -0.0132 [-0.0238, -0.0029] | fires 21%
+    5sigma_from_trial_1      gain +0.0720 [+0.0384, +0.1141] 10% [5, 15]        gaining 16/20 p 0.00026 | over LCB1 +0.0265 [+0.0077, +0.0468] p 0.0094 | over LCB2 +0.0089 [-0.0086, +0.0288] p 0.6 | over always sitting +0.0077 [-0.0014, +0.0192] | fires 87%
+    5sigma_from_trial_21     gain +0.0179 [-0.0075, +0.0479] 3% [-1, 8]         gaining 12/20 p 0.52 | over LCB1 +0.0399 [+0.0152, +0.0651] p 0.0073 | over LCB2 +0.0088 [-0.0146, +0.0345] p 0.6 | over always sitting -0.0057 [-0.0171, +0.0059] | fires 75%
+    pooled                   gain +0.0112 [+0.0028, +0.0194] 5% [1, 8]          gaining 15/20 p 0.017 | over LCB1 +0.0112 [+0.0016, +0.0228] p 0.12 | over LCB2 +0.0042 [-0.0052, +0.0158] p 0.7 | over always sitting +0.0000 [-0.0057, +0.0067] | fires 29%
+  G16+G2 (scale-free): price 0.0101 [0.0015, 0.0207]; V (8 cells and no error) +0.0254
+    0.05sigma_from_trial_1   gain -0.0059 [-0.0118, -0.0012] share n/a          gaining  1/20 p 0.025 | over LCB1 +0.0157 [+0.0021, +0.0328] p 0.78 | over LCB2 +0.0149 [+0.0022, +0.0324] p 0.63
+    0.05sigma_from_trial_21  gain -0.0072 [-0.0136, -0.0022] share n/a          gaining  0/20 p 0.012 | over LCB1 +0.0097 [+0.0003, +0.0226] p 0.88 | over LCB2 +0.0109 [+0.0007, +0.0223] p 0.88
+    0.25sigma_from_trial_1   gain -0.0110 [-0.0195, -0.0038] share n/a          gaining  3/20 p 0.011 | over LCB1 +0.0017 [-0.0097, +0.0161] p 0.47 | over LCB2 -0.0017 [-0.0123, +0.0107] p 0.26
+    0.25sigma_from_trial_21  gain -0.0060 [-0.0116, -0.0017] share n/a          gaining  1/20 p 0.0093 | over LCB1 +0.0042 [-0.0070, +0.0171] p 0.63 | over LCB2 +0.0030 [-0.0082, +0.0160] p 0.63
+    1sigma_from_trial_1      gain -0.0050 [-0.0234, +0.0137] -2% [-9, 5]        gaining  7/20 p 0.43 | over LCB1 -0.0320 [-0.0464, -0.0161] p 0.0023 | over LCB2 -0.0310 [-0.0454, -0.0150] p 0.0027
+    1sigma_from_trial_21     gain +0.0103 [-0.0042, +0.0246] 7% [-3, 16]        gaining 12/20 p 0.28 | over LCB1 -0.0003 [-0.0177, +0.0177] p 0.99 | over LCB2 -0.0038 [-0.0205, +0.0126] p 0.67
+    5sigma_from_trial_1      gain +0.0604 [+0.0209, +0.1069] 8% [3, 13]         gaining 14/20 p 0.024 | over LCB1 +0.0149 [-0.0270, +0.0600] p 0.45 | over LCB2 -0.0027 [-0.0436, +0.0397] p 0.9
+    5sigma_from_trial_21     gain +0.2027 [+0.1316, +0.2835] 36% [27, 44]       gaining 18/20 p 9.5e-06 | over LCB1 +0.2247 [+0.1501, +0.3065] p 1.9e-05 | over LCB2 +0.1936 [+0.1370, +0.2563] p 1.9e-05
+    pooled                   gain +0.0298 [+0.0132, +0.0473] 13% [6, 20]        gaining 15/20 p 0.0049 | over LCB1 +0.0298 [+0.0138, +0.0460] p 0.0056 | over LCB2 +0.0229 [+0.0082, +0.0372] p 0.017
+  seeds 27-36 (untouched, gaussian)
+  G16 (scale-free): price 0.0067 [0.0024, 0.0118]; gate fires on 11.2% of clean twins; V (8 cells and no error) +0.0056
+    0.05sigma_from_trial_1   gain -0.0089 [-0.0170, -0.0027] share n/a          gaining  0/20 p 0.018 | over LCB1 +0.0115 [-0.0004, +0.0264] p 0.35 | over LCB2 +0.0113 [-0.0014, +0.0278] p 0.4 | over always sitting +0.0251 [+0.0099, +0.0435] | fires 10%
+    0.05sigma_from_trial_21  gain -0.0071 [-0.0137, -0.0019] share n/a          gaining  0/20 p 0.018 | over LCB1 +0.0067 [+0.0011, +0.0133] p 0.28 | over LCB2 +0.0070 [+0.0014, +0.0143] p 0.23 | over always sitting +0.0227 [+0.0106, +0.0382] | fires 12%
+    0.25sigma_from_trial_1   gain -0.0078 [-0.0137, -0.0027] share n/a          gaining  1/20 p 0.0076 | over LCB1 -0.0008 [-0.0133, +0.0139] p 0.31 | over LCB2 -0.0018 [-0.0132, +0.0120] p 0.33 | over always sitting +0.0228 [+0.0110, +0.0381] | fires 18%
+    0.25sigma_from_trial_21  gain -0.0097 [-0.0186, -0.0021] share n/a          gaining  2/20 p 0.037 | over LCB1 +0.0000 [-0.0094, +0.0111] p 0.23 | over LCB2 +0.0028 [-0.0077, +0.0148] p 0.37 | over always sitting +0.0193 [+0.0080, +0.0330] | fires 14%
+    1sigma_from_trial_1      gain -0.0213 [-0.0460, +0.0035] -8% [-19, 1]       gaining  7/20 p 0.14 | over LCB1 -0.0570 [-0.0838, -0.0284] p 0.001 | over LCB2 -0.0511 [-0.0788, -0.0192] p 0.002 | over always sitting +0.0140 [+0.0077, +0.0214] | fires 82%
+    1sigma_from_trial_21     gain +0.0053 [-0.0129, +0.0239] 4% [-10, 17]       gaining 11/20 p 0.66 | over LCB1 -0.0166 [-0.0435, +0.0094] p 0.16 | over LCB2 -0.0169 [-0.0413, +0.0079] p 0.16 | over always sitting +0.0140 [+0.0003, +0.0295] | fires 64%
+    5sigma_from_trial_1      gain -0.0324 [-0.0684, -0.0003] -4% [-9, 0]        gaining  9/20 p 0.18 | over LCB1 -0.0742 [-0.1523, -0.0062] p 0.11 | over LCB2 -0.0886 [-0.1622, -0.0239] p 0.044 | over always sitting +0.0004 [-0.0048, +0.0068] | fires 96%
+    5sigma_from_trial_21     gain +0.1388 [+0.0881, +0.1902] 31% [21, 39]       gaining 17/20 p 6.3e-05 | over LCB1 +0.1131 [+0.0520, +0.1754] p 0.0032 | over LCB2 +0.0561 [+0.0049, +0.1095] p 0.058 | over always sitting -0.0076 [-0.0169, +0.0009] | fires 90%
+    pooled                   gain +0.0071 [-0.0031, +0.0185] 3% [-1, 8]         gaining 10/20 p 0.26 | over LCB1 -0.0022 [-0.0200, +0.0149] p 0.7 | over LCB2 -0.0101 [-0.0266, +0.0057] p 0.25 | over always sitting +0.0138 [+0.0063, +0.0232] | fires 48%
+  G2 (scale-free): price 0.0025 [0.0002, 0.0054]; gate fires on 2.2% of clean twins; V (8 cells and no error) +0.0097
+    0.05sigma_from_trial_1   gain -0.0012 [-0.0036, +0.0000] share n/a          gaining  0/20 p 0.18 | over LCB1 +0.0191 [+0.0041, +0.0402] p 0.13 | over LCB2 +0.0190 [+0.0036, +0.0402] p 0.23 | over always sitting +0.0144 [+0.0045, +0.0264] | fires 1%
+    0.05sigma_from_trial_21  gain -0.0034 [-0.0079, -0.0004] share n/a          gaining  0/20 p 0.068 | over LCB1 +0.0104 [+0.0018, +0.0221] p 0.15 | over LCB2 +0.0107 [+0.0020, +0.0217] p 0.13 | over always sitting +0.0095 [+0.0026, +0.0185] | fires 2%
+    0.25sigma_from_trial_1   gain -0.0021 [-0.0053, +0.0001] share n/a          gaining  2/20 p 0.22 | over LCB1 +0.0049 [-0.0079, +0.0210] p 0.84 | over LCB2 +0.0038 [-0.0074, +0.0180] p 0.81 | over always sitting +0.0045 [-0.0051, +0.0162] | fires 3%
+    0.25sigma_from_trial_21  gain -0.0028 [-0.0090, +0.0005] share n/a          gaining  1/20 p 0.35 | over LCB1 +0.0069 [-0.0072, +0.0243] p 0.65 | over LCB2 +0.0097 [-0.0050, +0.0295] p 0.7 | over always sitting +0.0056 [-0.0056, +0.0185] | fires 2%
+    1sigma_from_trial_1      gain +0.0116 [-0.0087, +0.0288] 4% [-3, 10]        gaining 13/20 p 0.15 | over LCB1 -0.0241 [-0.0356, -0.0117] p 0.0017 | over LCB2 -0.0182 [-0.0285, -0.0079] p 0.0037 | over always sitting -0.0165 [-0.0240, -0.0081] | fires 44%
+    1sigma_from_trial_21     gain +0.0035 [-0.0064, +0.0130] 3% [-4, 10]        gaining 12/20 p 0.33 | over LCB1 -0.0184 [-0.0351, -0.0012] p 0.053 | over LCB2 -0.0187 [-0.0334, -0.0025] p 0.044 | over always sitting -0.0238 [-0.0350, -0.0131] | fires 31%
+    5sigma_from_trial_1      gain +0.0249 [-0.0275, +0.0814] 3% [-4, 11]        gaining 11/20 p 0.47 | over LCB1 -0.0169 [-0.0672, +0.0260] p 0.7 | over LCB2 -0.0313 [-0.0734, +0.0113] p 0.22 | over always sitting -0.0020 [-0.0144, +0.0089] | fires 90%
+    5sigma_from_trial_21     gain +0.0592 [+0.0216, +0.0956] 13% [5, 20]        gaining 18/20 p 0.0023 | over LCB1 +0.0334 [-0.0062, +0.0770] p 0.28 | over LCB2 -0.0236 [-0.0600, +0.0163] p 0.12 | over always sitting -0.0027 [-0.0112, +0.0044] | fires 85%
+    pooled                   gain +0.0112 [-0.0009, +0.0213] 5% [-0, 10]        gaining 14/20 p 0.021 | over LCB1 +0.0019 [-0.0086, +0.0135] p 0.99 | over LCB2 -0.0061 [-0.0157, +0.0058] p 0.14 | over always sitting -0.0014 [-0.0077, +0.0059] | fires 32%
+  G16+G2 (scale-free): price 0.0073 [0.0024, 0.0127]; V (8 cells and no error) +0.0057
+    0.05sigma_from_trial_1   gain -0.0089 [-0.0167, -0.0027] share n/a          gaining  0/20 p 0.018 | over LCB1 +0.0115 [-0.0006, +0.0258] p 0.35 | over LCB2 +0.0113 [-0.0009, +0.0281] p 0.4
+    0.05sigma_from_trial_21  gain -0.0072 [-0.0138, -0.0019] share n/a          gaining  0/20 p 0.018 | over LCB1 +0.0065 [+0.0009, +0.0133] p 0.31 | over LCB2 +0.0069 [+0.0012, +0.0143] p 0.3
+    0.25sigma_from_trial_1   gain -0.0078 [-0.0140, -0.0028] share n/a          gaining  1/20 p 0.0076 | over LCB1 -0.0008 [-0.0123, +0.0140] p 0.31 | over LCB2 -0.0018 [-0.0131, +0.0112] p 0.33
+    0.25sigma_from_trial_21  gain -0.0097 [-0.0188, -0.0027] share n/a          gaining  2/20 p 0.037 | over LCB1 +0.0000 [-0.0092, +0.0113] p 0.23 | over LCB2 +0.0028 [-0.0078, +0.0159] p 0.37
+    1sigma_from_trial_1      gain -0.0233 [-0.0486, +0.0033] -9% [-20, 1]       gaining  6/20 p 0.12 | over LCB1 -0.0590 [-0.0849, -0.0309] p 0.00085 | over LCB2 -0.0531 [-0.0797, -0.0232] p 0.001
+    1sigma_from_trial_21     gain +0.0048 [-0.0129, +0.0237] 4% [-11, 16]       gaining 11/20 p 0.75 | over LCB1 -0.0171 [-0.0451, +0.0099] p 0.14 | over LCB2 -0.0174 [-0.0405, +0.0065] p 0.14
+    5sigma_from_trial_1      gain -0.0316 [-0.0676, +0.0032] -4% [-9, 0]        gaining  9/20 p 0.19 | over LCB1 -0.0734 [-0.1459, -0.0066] p 0.11 | over LCB2 -0.0877 [-0.1576, -0.0251] p 0.044
+    5sigma_from_trial_21     gain +0.1423 [+0.0909, +0.1942] 31% [23, 39]       gaining 18/20 p 3.6e-05 | over LCB1 +0.1166 [+0.0609, +0.1778] p 0.0017 | over LCB2 +0.0596 [+0.0096, +0.1156] p 0.058
+    pooled                   gain +0.0073 [-0.0027, +0.0186] 4% [-1, 8]         gaining 10/20 p 0.22 | over LCB1 -0.0020 [-0.0192, +0.0150] p 0.78 | over LCB2 -0.0099 [-0.0258, +0.0072] p 0.26
+
+== headline cells (gain over the standard process; increments over LCB1, LCB2 and always sitting;
+   p two-sided Wilcoxon over the twenty landscapes, Holm over the cells of the procedure and over the 24)
+  seeds 12-16 (held out)
+    G16    5sigma_from_trial_21   gain +0.1897 [+0.1192, +0.2662] 34% [25, 42] p 1.9e-05 (Holm 0.00015, 0.00044); over LCB1 +0.2118 [+0.1403, +0.2843] ahead 18/20 p 1.9e-05 (Holm 0.00015, 0.00046); over LCB2 +0.1806 [+0.1225, +0.2397] ahead 18/20 p 3.6e-05 (Holm 0.00029, 0.00083); over always sitting -0.0374 [-0.0631, -0.0158] p 0.0049; price 0.0000 [0.0000, 0.0000]; fires on 85% of the cell's runs, 0.0% of clean twins
+    G16    5sigma_from_trial_1    gain +0.0620 [+0.0225, +0.1058] 8% [3, 14] p 0.021 (Holm 0.15, 0.43); over LCB1 +0.0165 [-0.0254, +0.0611] ahead 13/20 p 0.43 (Holm 1, 1); over LCB2 -0.0011 [-0.0410, +0.0376] ahead 10/20 p 0.93 (Holm 1, 1); over always sitting +0.0015 [-0.0053, +0.0103] p 0.88; price 0.0000 [0.0000, 0.0000]; fires on 96% of the cell's runs, 0.0% of clean twins
+    G2     1sigma_from_trial_1    gain +0.0298 [+0.0126, +0.0481] 11% [5, 18] p 0.0042 (Holm 0.03, 0.089); over LCB1 +0.0029 [-0.0044, +0.0095] ahead 12/20 p 0.45 (Holm 1, 1); over LCB2 +0.0038 [-0.0031, +0.0114] ahead 10/20 p 0.57 (Holm 1, 1); over always sitting -0.0005 [-0.0028, +0.0018] p 0.63; price 0.0037 [0.0010, 0.0068]; fires on 86% of the cell's runs, 7.5% of clean twins
+    G16+G2 5sigma_from_trial_21   gain +0.1984 [+0.1266, +0.2788] 36% [26, 44] p 1.3e-05 (Holm 0.00011, 0.00032); over LCB1 +0.2204 [+0.1474, +0.2980] ahead 18/20 p 1.9e-05 (Holm 0.00015, 0.00046); over LCB2 +0.1892 [+0.1285, +0.2480] ahead 18/20 p 1.9e-05 (Holm 0.00015, 0.00046); price 0.0037 [0.0010, 0.0069]
+    G16+G2 1sigma_from_trial_1    gain +0.0251 [+0.0069, +0.0451] 10% [3, 16] p 0.024 (Holm 0.17, 0.46); over LCB1 -0.0018 [-0.0089, +0.0054] ahead 8/20 p 0.67 (Holm 1, 1); over LCB2 -0.0009 [-0.0085, +0.0069] ahead 9/20 p 0.67 (Holm 1, 1); price 0.0037 [0.0010, 0.0069]
+    G16: largest |gain| at 0.05-1 sigma -0.0049 (1sigma_from_trial_1); V +0.0272
+    G2: largest |gain| at 0.05-1 sigma +0.0298 (1sigma_from_trial_1); V +0.0111
+    G16+G2: largest |gain| at 0.05-1 sigma +0.0251 (1sigma_from_trial_1); V +0.0303
+    always sitting 16: price 0.0325 [0.0141, 0.0531], V +0.0160
+    always sitting 2: price 0.0176 [0.0059, 0.0337], V +0.0079
+  seeds 27-36 (untouched, gaussian)
+    G16    5sigma_from_trial_21   gain +0.1365 [+0.0807, +0.1893] 30% [20, 38] p 8.2e-05 (Holm 0.00057, 0.0018); over LCB1 +0.1108 [+0.0543, +0.1722] ahead 15/20 p 0.0037 (Holm 0.026, 0.08); over LCB2 +0.0538 [+0.0031, +0.1057] ahead 13/20 p 0.064 (Holm 0.38, 1); over always sitting -0.0099 [-0.0189, -0.0026] p 0.056; price 0.0016 [0.0000, 0.0048]; fires on 90% of the cell's runs, 0.8% of clean twins
+    G16    5sigma_from_trial_1    gain -0.0347 [-0.0691, -0.0035] -5% [-10, -0] p 0.16 (Holm 0.82, 1); over LCB1 -0.0764 [-0.1531, -0.0060] ahead 8/20 p 0.097 (Holm 0.49, 1); over LCB2 -0.0908 [-0.1605, -0.0256] ahead 7/20 p 0.044 (Holm 0.31, 1); over always sitting -0.0018 [-0.0058, +0.0015] p 0.48; price 0.0016 [0.0000, 0.0048]; fires on 97% of the cell's runs, 0.8% of clean twins
+    G2     1sigma_from_trial_1    gain +0.0251 [+0.0047, +0.0447] 10% [2, 17] p 0.03 (Holm 0.18, 0.56); over LCB1 -0.0106 [-0.0215, -0.0004] ahead 6/20 p 0.09 (Holm 0.72, 1); over LCB2 -0.0047 [-0.0152, +0.0060] ahead 7/20 p 0.43 (Holm 1, 1); over always sitting -0.0030 [-0.0068, +0.0005] p 0.23; price 0.0030 [0.0003, 0.0068]; fires on 93% of the cell's runs, 6.2% of clean twins
+    G16+G2 5sigma_from_trial_21   gain +0.1423 [+0.0935, +0.1919] 31% [22, 39] p 3.6e-05 (Holm 0.00029, 0.00083); over LCB1 +0.1165 [+0.0571, +0.1781] ahead 15/20 p 0.0017 (Holm 0.014, 0.041); over LCB2 +0.0595 [+0.0122, +0.1184] ahead 12/20 p 0.064 (Holm 0.45, 1); price 0.0039 [0.0008, 0.0082]
+    G16+G2 1sigma_from_trial_1    gain +0.0205 [-0.0012, +0.0420] 8% [-0, 15] p 0.11 (Holm 0.32, 1); over LCB1 -0.0152 [-0.0269, -0.0033] ahead 6/20 p 0.024 (Holm 0.17, 0.5); over LCB2 -0.0093 [-0.0207, +0.0031] ahead 6/20 p 0.14 (Holm 0.86, 1); price 0.0039 [0.0008, 0.0082]
+    G16: largest |gain| at 0.05-1 sigma -0.0058 (1sigma_from_trial_1); V +0.0102
+    G2: largest |gain| at 0.05-1 sigma +0.0251 (1sigma_from_trial_1); V +0.0131
+    G16+G2: largest |gain| at 0.05-1 sigma +0.0229 (1sigma_from_trial_21); V +0.0154
+    always sitting 16: price 0.0297 [0.0154, 0.0454], V -0.0093
+    always sitting 2: price 0.0184 [0.0068, 0.0312], V +0.0091
+
+== sensitivity over the threshold (gain over the standard process per cell, price, V)
+  seeds 7-11 (selection), G16 (noise SD in landscape SDs)
+     tau  price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21  5s/t1  5s/t21  value_uniform
+    0.00 0.0245            1.000   -0.0264    -0.0260   -0.0301    -0.0104 -0.0338  0.0236 0.0495  0.2242         0.0162
+    0.10 0.0148            0.355   -0.0202    -0.0177   -0.0268    -0.0107 -0.0337  0.0183 0.0495  0.2241         0.0187
+    0.20 0.0106            0.225   -0.0167    -0.0147   -0.0195    -0.0121 -0.0317  0.0158 0.0495  0.2165         0.0196
+    0.30 0.0066            0.175   -0.0123    -0.0118   -0.0118    -0.0090 -0.0301  0.0111 0.0488  0.1955         0.0193
+    0.40 0.0035            0.125   -0.0085    -0.0074   -0.0085    -0.0049 -0.0280  0.0075 0.0472  0.1905         0.0205
+    0.50 0.0021            0.085   -0.0055    -0.0059   -0.0044    -0.0026 -0.0241 -0.0005 0.0428  0.1902         0.0209
+    0.60 0.0019            0.060   -0.0038    -0.0035   -0.0025    -0.0013 -0.0180 -0.0036 0.0437  0.1886         0.0220
+    0.75 0.0007            0.030   -0.0019    -0.0019   -0.0011    -0.0010 -0.0038 -0.0021 0.0437  0.1871         0.0243
+    1.00 0.0007            0.015   -0.0005    -0.0014   -0.0006    -0.0008  0.0007 -0.0008 0.0434  0.1833         0.0247
+    1.25 0.0007            0.005   -0.0003    -0.0005   -0.0000    -0.0006  0.0001 -0.0001 0.0439  0.1761         0.0242
+    1.50 0.0007            0.005   -0.0003    -0.0002   -0.0000    -0.0002 -0.0000 -0.0002 0.0411  0.1666         0.0229
+    2.00 0.0000            0.000   -0.0003     0.0000   -0.0000    -0.0002  0.0000 -0.0002 0.0401  0.1157         0.0172
+    2.50 0.0000            0.000   -0.0003     0.0000    0.0000    -0.0001  0.0000 -0.0002 0.0247  0.0785         0.0114
+    3.00 0.0000            0.000   -0.0003     0.0000    0.0000    -0.0001  0.0000 -0.0001 0.0157  0.0561         0.0079
+     inf 0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0000  0.0000         0.0000
+  seeds 7-11 (selection), G2 (noise SD in landscape SDs)
+     tau   price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21  5s/t1  5s/t21  value_uniform
+    0.00  0.0131            1.000   -0.0146    -0.0167   -0.0062    -0.0042  0.0212  0.0161 0.0472  0.0280         0.0064
+    0.10  0.0122            0.365   -0.0150    -0.0166   -0.0065    -0.0047  0.0213  0.0158 0.0472  0.0281         0.0064
+    0.20  0.0110            0.250   -0.0144    -0.0163   -0.0075    -0.0081  0.0209  0.0162 0.0472  0.0281         0.0061
+    0.30  0.0099            0.195   -0.0134    -0.0156   -0.0108    -0.0102  0.0207  0.0162 0.0472  0.0272         0.0057
+    0.40  0.0088            0.150   -0.0102    -0.0147   -0.0083    -0.0093  0.0205  0.0142 0.0470  0.0254         0.0062
+    0.50  0.0042            0.100   -0.0072    -0.0111   -0.0057    -0.0072  0.0209  0.0124 0.0454  0.0255         0.0076
+    0.60  0.0017            0.060   -0.0046    -0.0079   -0.0038    -0.0053  0.0204  0.0071 0.0452  0.0255         0.0083
+    0.75  0.0009            0.030   -0.0031    -0.0057   -0.0015    -0.0039  0.0162 -0.0007 0.0452  0.0245         0.0078
+    1.00  0.0004            0.015   -0.0011    -0.0043   -0.0010    -0.0008 -0.0001 -0.0046 0.0453  0.0253         0.0065
+    1.25 -0.0000            0.005   -0.0000    -0.0000   -0.0001    -0.0002 -0.0006 -0.0024 0.0452  0.0253         0.0075
+    1.50 -0.0000            0.005   -0.0000    -0.0000   -0.0000    -0.0002 -0.0001  0.0000 0.0452  0.0250         0.0078
+    2.00  0.0000            0.000   -0.0000     0.0000   -0.0000    -0.0002  0.0000  0.0000 0.0435  0.0285         0.0080
+    2.50  0.0000            0.000   -0.0000     0.0000   -0.0000    -0.0002  0.0000  0.0000 0.0400  0.0313         0.0079
+    3.00  0.0000            0.000   -0.0000     0.0000   -0.0000    -0.0002  0.0000  0.0000 0.0402  0.0287         0.0076
+     inf  0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0000  0.0000         0.0000
+  seeds 12-16 (held out), G16 (noise SD in landscape SDs)
+     tau  price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21  5s/t1  5s/t21  value_uniform
+    0.00 0.0325            1.000   -0.0242    -0.0306   -0.0262    -0.0255 -0.0160  0.0110 0.0605  0.2271         0.0160
+    0.10 0.0262            0.370   -0.0155    -0.0251   -0.0244    -0.0256 -0.0162  0.0083 0.0605  0.2229         0.0176
+    0.20 0.0222            0.250   -0.0134    -0.0226   -0.0213    -0.0214 -0.0152  0.0056 0.0605  0.2213         0.0191
+    0.30 0.0108            0.175   -0.0105    -0.0172   -0.0157    -0.0171 -0.0140  0.0046 0.0605  0.2071         0.0208
+    0.40 0.0089            0.115   -0.0078    -0.0115   -0.0095    -0.0073 -0.0128  0.0001 0.0604  0.1953         0.0220
+    0.50 0.0066            0.075   -0.0044    -0.0079   -0.0054    -0.0033 -0.0136 -0.0007 0.0608  0.1951         0.0238
+    0.60 0.0008            0.050   -0.0024    -0.0031   -0.0029    -0.0024 -0.0111 -0.0078 0.0618  0.1956         0.0252
+    0.75 0.0005            0.035   -0.0006    -0.0014   -0.0001    -0.0010 -0.0082 -0.0033 0.0618  0.1962         0.0270
+    1.00 0.0000            0.000    0.0000    -0.0006   -0.0003    -0.0003 -0.0049 -0.0012 0.0620  0.1897         0.0272
+    1.25 0.0000            0.000   -0.0000    -0.0006   -0.0003    -0.0001 -0.0024  0.0000 0.0629  0.1668         0.0251
+    1.50 0.0000            0.000   -0.0000    -0.0004   -0.0004     0.0000 -0.0000  0.0000 0.0630  0.1558         0.0242
+    2.00 0.0000            0.000   -0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0602  0.1155         0.0195
+    2.50 0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0538  0.0819         0.0151
+    3.00 0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0515  0.0292         0.0090
+     inf 0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0000  0.0000         0.0000
+  seeds 12-16 (held out), G2 (noise SD in landscape SDs)
+     tau  price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21  5s/t1  5s/t21  value_uniform
+    0.00 0.0176            1.000   -0.0137    -0.0143   -0.0082    -0.0041  0.0303  0.0112 0.0643  0.0236         0.0079
+    0.10 0.0169            0.310   -0.0141    -0.0146   -0.0085    -0.0046  0.0303  0.0114 0.0643  0.0236         0.0079
+    0.20 0.0165            0.250   -0.0138    -0.0144   -0.0120    -0.0089  0.0309  0.0116 0.0643  0.0236         0.0072
+    0.30 0.0154            0.200   -0.0128    -0.0131   -0.0129    -0.0106  0.0311  0.0116 0.0643  0.0230         0.0072
+    0.40 0.0137            0.165   -0.0107    -0.0094   -0.0116    -0.0098  0.0314  0.0113 0.0646  0.0206         0.0081
+    0.50 0.0080            0.120   -0.0075    -0.0057   -0.0091    -0.0046  0.0306  0.0110 0.0623  0.0197         0.0099
+    0.60 0.0037            0.075   -0.0040    -0.0029   -0.0063    -0.0027  0.0298  0.0074 0.0623  0.0198         0.0111
+    0.75 0.0015            0.035   -0.0026    -0.0011   -0.0021    -0.0014  0.0260 -0.0016 0.0623  0.0198         0.0109
+    1.00 0.0007            0.010   -0.0011    -0.0001    0.0000    -0.0005  0.0005 -0.0041 0.0623  0.0197         0.0084
+    1.25 0.0000            0.000   -0.0005    -0.0001    0.0000    -0.0005 -0.0017 -0.0016 0.0623  0.0190         0.0086
+    1.50 0.0000            0.000   -0.0005    -0.0000    0.0000    -0.0005 -0.0008 -0.0004 0.0623  0.0175         0.0086
+    2.00 0.0000            0.000   -0.0003     0.0000    0.0000    -0.0005  0.0000 -0.0002 0.0627  0.0100         0.0080
+    2.50 0.0000            0.000   -0.0002     0.0000    0.0000    -0.0005  0.0000 -0.0002 0.0637  0.0142         0.0086
+    3.00 0.0000            0.000    0.0000     0.0000    0.0000    -0.0005  0.0000 -0.0002 0.0670  0.0023         0.0076
+     inf 0.0000            0.000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0000  0.0000         0.0000
+  seeds 27-36 (untouched, gaussian), G16 (noise SD in landscape SDs)
+     tau  price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21   5s/t1  5s/t21  value_uniform
+    0.00 0.0297           1.0000   -0.0340    -0.0297   -0.0306    -0.0290 -0.0352 -0.0088 -0.0328  0.1464        -0.0093
+    0.10 0.0229           0.3725   -0.0257    -0.0229   -0.0285    -0.0251 -0.0333 -0.0091 -0.0328  0.1464        -0.0060
+    0.20 0.0151           0.2300   -0.0223    -0.0173   -0.0213    -0.0223 -0.0288 -0.0049 -0.0328  0.1461        -0.0021
+    0.30 0.0134           0.1950   -0.0203    -0.0155   -0.0147    -0.0152 -0.0277 -0.0054 -0.0328  0.1436        -0.0002
+    0.40 0.0076           0.1275   -0.0117    -0.0122   -0.0070    -0.0122 -0.0259 -0.0040 -0.0320  0.1391         0.0030
+    0.50 0.0048           0.0825   -0.0048    -0.0067   -0.0023    -0.0060 -0.0262 -0.0014 -0.0345  0.1393         0.0058
+    0.60 0.0045           0.0650   -0.0020    -0.0043   -0.0013    -0.0036 -0.0181 -0.0004 -0.0349  0.1393         0.0078
+    0.75 0.0029           0.0375   -0.0018    -0.0018   -0.0008    -0.0003 -0.0118 -0.0026 -0.0347  0.1387         0.0091
+    1.00 0.0016           0.0075   -0.0011    -0.0013   -0.0008     0.0000 -0.0058  0.0007 -0.0347  0.1365         0.0102
+    1.25 0.0016           0.0050   -0.0009    -0.0001    0.0000     0.0000 -0.0017 -0.0000 -0.0347  0.1352         0.0107
+    1.50 0.0007           0.0025   -0.0005    -0.0001    0.0000     0.0000 -0.0005 -0.0000 -0.0347  0.1221         0.0095
+    2.00 0.0007           0.0025   -0.0005    -0.0001    0.0000     0.0000 -0.0003 -0.0000 -0.0280  0.1022         0.0081
+    2.50 0.0007           0.0025    0.0000    -0.0001    0.0000     0.0000 -0.0003  0.0000 -0.0201  0.0683         0.0052
+    3.00 0.0000           0.0000    0.0000     0.0000    0.0000     0.0000 -0.0003  0.0000 -0.0214  0.0269         0.0006
+     inf 0.0000           0.0000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000  0.0000  0.0000         0.0000
+  seeds 27-36 (untouched, gaussian), G2 (noise SD in landscape SDs)
+     tau   price  fire_rate_clean  0.05s/t1  0.05s/t21  0.25s/t1  0.25s/t21   1s/t1  1s/t21  5s/t1  5s/t21  value_uniform
+    0.00  0.0184           1.0000   -0.0156    -0.0129   -0.0066    -0.0084  0.0281  0.0273 0.0269  0.0618         0.0091
+    0.10  0.0158           0.3450   -0.0158    -0.0136   -0.0056    -0.0079  0.0281  0.0273 0.0269  0.0618         0.0095
+    0.20  0.0143           0.2375   -0.0154    -0.0130   -0.0061    -0.0099  0.0273  0.0273 0.0269  0.0618         0.0094
+    0.30  0.0133           0.2025   -0.0124    -0.0122   -0.0093    -0.0128  0.0276  0.0273 0.0269  0.0617         0.0093
+    0.40  0.0090           0.1525   -0.0095    -0.0099   -0.0092    -0.0089  0.0276  0.0271 0.0264  0.0583         0.0103
+    0.50  0.0052           0.1025   -0.0057    -0.0070   -0.0069    -0.0065  0.0277  0.0253 0.0272  0.0598         0.0121
+    0.60  0.0030           0.0625   -0.0039    -0.0041   -0.0022    -0.0055  0.0251  0.0243 0.0272  0.0598         0.0131
+    0.75  0.0014           0.0400   -0.0021    -0.0025   -0.0009    -0.0040  0.0188  0.0091 0.0272  0.0598         0.0115
+    1.00  0.0000           0.0100   -0.0009    -0.0001   -0.0008    -0.0028 -0.0060 -0.0036 0.0272  0.0598         0.0081
+    1.25 -0.0000           0.0050   -0.0001    -0.0001   -0.0008     0.0000 -0.0031 -0.0040 0.0272  0.0598         0.0088
+    1.50 -0.0000           0.0050   -0.0001    -0.0000   -0.0008     0.0000 -0.0007  0.0000 0.0272  0.0602         0.0095
+    2.00 -0.0000           0.0050   -0.0000     0.0000   -0.0008     0.0000 -0.0007  0.0000 0.0272  0.0630         0.0099
+    2.50  0.0000           0.0025    0.0000     0.0000   -0.0008     0.0000 -0.0007  0.0000 0.0297  0.0645         0.0103
+    3.00  0.0000           0.0025    0.0000     0.0000    0.0000     0.0000 -0.0007  0.0000 0.0272  0.0447         0.0079
+     inf  0.0000           0.0000    0.0000     0.0000    0.0000     0.0000  0.0000  0.0000 0.0000  0.0000         0.0000
+
+wrote output-boba/analysis/review/gated_sitting.csv, gated_sitting_sensitivity.csv, gated_sitting_selection.json

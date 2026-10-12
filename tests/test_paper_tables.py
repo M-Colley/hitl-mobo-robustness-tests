@@ -23,6 +23,63 @@ def _row(mean: float, lo: float, hi: float) -> pd.DataFrame:
     return pd.DataFrame([{"mean": mean, "ci_low": lo, "ci_high": hi}])
 
 
+def _dose_inputs(root: Path, suppressed: dict | None = None, flag_column: bool = True) -> Path:
+    """cell_means.csv and regret_decomposition.csv for two landscapes at four magnitudes and two onsets."""
+    import boba_benchmarks as bb
+
+    stats = bb.load_stats(bb.DEFAULT_STATS_PATH)
+    lands = ("branin", "ackley")
+    cells, dec = [], []
+    for std in (0.05, 0.25, 1.0, 5.0):
+        for onset in (0, 20):
+            deployed = 0.1 * std + 0.01
+            for land in lands:
+                for acq in ("logei", "random"):
+                    cells.append({"dataset": land, "acquisition": acq, "error_model": "gaussian",
+                                  "jitter_std": std, "jitter_iteration": onset, "fragility": 0.05 * std,
+                                  "inference_excess": deployed * float(stats[land]["opt_z"])})
+            row = {"error_model": "pooled", "jitter_std": std, "jitter_iteration": float(onset),
+                   "mean_excess_search": 0.06 * std, "mean_excess_deployed": deployed,
+                   "excess_selection_share": 0.4, "excess_selection_share_lo": 0.3,
+                   "excess_selection_share_hi": 0.5}
+            if flag_column:
+                row["excess_selection_share_suppressed"] = (suppressed or {}).get((std, onset), "")
+            dec.append(row)
+    dec.append({"error_model": "pooled", "jitter_std": "pooled", "jitter_iteration": "pooled"})
+    pd.DataFrame(cells).to_csv(root / "cell_means.csv", index=False)
+    pd.DataFrame(dec).to_csv(root / "regret_decomposition.csv", index=False)
+    return root
+
+
+def test_dose_table_prints_no_share_where_the_deployed_excess_is_near_zero(tmp_path):
+    """A share of a deployed excess that is near zero or negative on a landscape is not a share:
+    the cell prints '--' with a dagger and a note row explains it."""
+    _dose_inputs(tmp_path, {(0.05, 0): "reference negative on 1 of 20 landscapes",
+                            (0.05, 20): "reference 0.0078 below 0.01"})
+    mt.table_dose_response(tmp_path, tmp_path)
+    tex = (tmp_path / "dose_response.tex").read_text(encoding="utf-8")
+    share_rows = [line for line in tex.splitlines() if line.startswith("\\quad from trial")][-2:]
+    assert all(row.split("&")[1].strip() == "--$^{\\dagger}$" for row in share_rows)
+    assert all("40\\%" in row.split("&")[2] for row in share_rows)
+    assert "No share: the deployed excess is negative on a landscape or below $1\\%$." in tex
+    assert tex.index("\\bottomrule") < tex.index("No share")
+
+
+def test_dose_table_has_no_note_when_every_share_is_reported(tmp_path):
+    _dose_inputs(tmp_path)
+    mt.table_dose_response(tmp_path, tmp_path)
+    tex = (tmp_path / "dose_response.tex").read_text(encoding="utf-8")
+    assert "dagger" not in tex and "No share" not in tex
+
+
+def test_dose_table_refuses_a_decomposition_without_the_share_screen(tmp_path):
+    import pytest
+
+    _dose_inputs(tmp_path, flag_column=False)
+    with pytest.raises(ValueError, match="excess_selection_share_suppressed"):
+        mt.table_dose_response(tmp_path, tmp_path)
+
+
 def test_pct_ci_formats_a_cell():
     assert mt._pct_ci(_row(0.123, 0.051, 0.249)) == r"12.3 \makebox[3.4em][l]{\scriptsize [5, 25]}"
 

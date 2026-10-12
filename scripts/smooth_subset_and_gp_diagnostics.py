@@ -139,6 +139,12 @@ ONSETS = (0, 20)
 POOL_MIN_STD = 0.25
 BOOT = 2000
 BOOT_SEED = 20260922
+# With three landscapes a percentile landscape bootstrap is exactly the range of
+# the three per-landscape values: each extreme is the whole resample with
+# probability 1/27 > 2.5%. Such a bracket is printed as the range it is, labelled
+# "range" (column `interval`), and computed as that range directly; with four or
+# more landscapes it is a 95% bootstrap interval.
+RANGE_MAX_CLUSTERS = 3
 COMPARE_RULES = ("pm", "lcb1", "lcb2", "best_mean", "best_visited")
 PER_LANDSCAPE_RULES = ("pm", "lcb1", "lcb2")
 
@@ -206,6 +212,35 @@ def boot_ratio_diff(na, da, nb, db, rng) -> tuple[float, float, float]:
     ok = np.isfinite(d)
     return float(na.mean() / da.mean() - nb.mean() / db.mean()), float(np.percentile(d[ok], 2.5)), \
         float(np.percentile(d[ok], 97.5))
+
+
+def interval_kind(n_landscapes: int) -> str:
+    """'range' where a landscape bootstrap can only return the range of the values, else 'bootstrap95'."""
+    return "range" if n_landscapes <= RANGE_MAX_CLUSTERS else "bootstrap95"
+
+
+def value_range(values) -> tuple[float, float]:
+    v = np.asarray(values, float)
+    v = v[np.isfinite(v)]
+    return (float(v.min()), float(v.max())) if len(v) else (np.nan, np.nan)
+
+
+def ratio_range(num, den) -> tuple[float, float]:
+    """Range of the per-landscape ratios, the bracket a three-landscape bootstrap of a
+    ratio of means returns; undefined (NaN) when a denominator is not positive."""
+    num, den = np.asarray(num, float), np.asarray(den, float)
+    if len(den) == 0 or not (den > 0).all():
+        return np.nan, np.nan
+    return value_range(num / den)
+
+
+def excess_selection_range(noisy: pd.DataFrame, clean: pd.DataFrame) -> tuple[float, float]:
+    """Per-landscape range of the selection share of the deployed excess, paired as
+    decompose_regret.summarise pairs it."""
+    base = clean.groupby(dr.PAIR_KEYS)[["deployed"]].mean().rename(columns={"deployed": "deployed_clean"})
+    m = noisy.merge(base, on=dr.PAIR_KEYS, how="inner")
+    per = m.assign(ex=m["deployed"] - m["deployed_clean"]).groupby("dataset")[["selection", "ex"]].mean()
+    return ratio_range(per["selection"], per["ex"])
 
 
 def crossed_weights(n_a: int, n_s: int, rng: np.random.Generator) -> tuple[np.ndarray, np.ndarray]:
@@ -309,6 +344,18 @@ def headline(cells: pd.DataFrame, noisy: pd.DataFrame, clean: pd.DataFrame) -> p
                                  .rename(columns={"search": "search_clean"}), on=dr.PAIR_KEYS)
                 perx = (pairs["search"] - pairs["search_clean"]).groupby(pairs["dataset"]).mean()
                 sf, sflo, sfhi = boot_mean(perx.to_numpy(), rng)
+                sel_lo, sel_hi = dec["excess_selection_share_lo"], dec["excess_selection_share_hi"]
+                kind = interval_kind(len(g))
+                if kind == "range":
+                    # Every draw above is still taken, so the other groups' intervals
+                    # (each from its own generator) are unchanged; only the bracket
+                    # printed for three landscapes is replaced by the range it equals.
+                    dlo, dhi = value_range(g["deployed"])
+                    slo, shi = value_range(g["search_traj"])
+                    sflo, sfhi = value_range(perx)
+                    exact = excess_selection_range(ng, clean)
+                    if np.isfinite(exact[0]):
+                        sel_lo, sel_hi = exact
                 rows.append({
                     "error_model": em, "jitter_std": float(std), "jitter_iteration": int(onset), "group": gname,
                     "n_landscapes": len(g),
@@ -318,9 +365,13 @@ def headline(cells: pd.DataFrame, noisy: pd.DataFrame, clean: pd.DataFrame) -> p
                     "search_final": sf, "search_final_lo": sflo, "search_final_hi": sfhi,
                     "selection_excess": dec["mean_excess_selection"],
                     "selection_share": dec["excess_selection_share"],
-                    "selection_share_lo": dec["excess_selection_share_lo"],
-                    "selection_share_hi": dec["excess_selection_share_hi"],
+                    "selection_share_lo": sel_lo,
+                    "selection_share_hi": sel_hi,
                     "deployed_decomposition_check": dec["mean_excess_deployed"],
+                    # 'range' (three landscapes) or 'bootstrap95', for every bracket of the row.
+                    "interval": kind,
+                    # Why the selection share is not a share (decompose_regret's screen), if it is not.
+                    "selection_share_suppressed": dec.get("excess_selection_share_suppressed", ""),
                 })
     return pd.DataFrame(rows)
 
@@ -460,9 +511,19 @@ def ship_rules_subset(analysis: Path, opt_z: dict, noisy_dec: pd.DataFrame) -> p
                 cond_rows = []
                 for cell, std, onset, block in ship_cells(G):
                     s = aba.summarise(block, np.random.default_rng(aba.BOOTSTRAP_SEED))
+                    # Whether the recovery is a share at all (cost near zero or
+                    # negative on a landscape: analyse_boba_adaptations.share_flags).
+                    s.update(aba.share_flags(block))
+                    kind = interval_kind(s["n_landscapes"])
                     if s["n_landscapes"] < 3:
                         s["recovered_lo"] = s["recovered_hi"] = np.nan
                         s["wilcoxon_p"] = np.nan
+                        kind = "none"
+                    elif kind == "range":
+                        per = block.groupby("dataset")[["ref_noisy", "ref_clean", "trt_noisy"]].mean()
+                        s["recovered_lo"], s["recovered_hi"] = ratio_range(
+                            per["ref_noisy"] - per["trt_noisy"], per["ref_noisy"] - per["ref_clean"])
+                    s["interval"] = kind
                     num, *_ = cube(block, "gain_run")
                     den, *_ = cube(block, "cost_run")
                     clo, chi = crossed_ratio_ci(num, den, np.random.default_rng(BOOT_SEED))
@@ -500,13 +561,22 @@ def ship_rules_subset(analysis: Path, opt_z: dict, noisy_dec: pd.DataFrame) -> p
             # The last cell pools every magnitude, as the paper's -8.7% (regret_decomposition.csv, all pooled) does.
             for cell, std, onset, block in list(ship_cells(G)) + [("pooled_all_magnitudes", np.nan, np.nan, G)]:
                 rec = dr.rule_recovery(block, np.random.default_rng(dr.BOOTSTRAP_SEED))
+                n_land = block["dataset"].nunique()
+                kind = interval_kind(n_land)
+                per = block.groupby("dataset")[["search", "selection"]].mean()
                 for rule in ("pm", "lcb1", "lcb2", "best_mean"):
+                    lo, hi = rec[f"{rule}_selection_recovered_lo"], rec[f"{rule}_selection_recovered_hi"]
+                    if kind == "range":
+                        # rule_recovery's per-landscape numerator and denominator.
+                        rule_sel = (block.groupby("dataset")[f"deployed_{rule}"].mean() - per["search"]).clip(lower=0.0)
+                        lo, hi = ratio_range(per["selection"] - rule_sel, per["selection"])
                     rows.append({"estimand": "share_of_selection_loss", "rule": rule, "reference": asr.STANDARD,
                                  "error_model": em, "group": gname, "cell": cell, "jitter_std": std,
-                                 "jitter_iteration": onset, "n_landscapes": block["dataset"].nunique(),
+                                 "jitter_iteration": onset, "n_landscapes": n_land,
                                  "recovered": rec[f"{rule}_selection_recovered"],
-                                 "recovered_lo": rec[f"{rule}_selection_recovered_lo"],
-                                 "recovered_hi": rec[f"{rule}_selection_recovered_hi"]})
+                                 "recovered_lo": lo, "recovered_hi": hi,
+                                 "recovered_suppressed": rec.get(f"{rule}_selection_recovered_suppressed", ""),
+                                 "interval": kind})
     return pd.DataFrame(rows)
 
 
@@ -740,7 +810,8 @@ def gp_summary(gp_runs: pd.DataFrame) -> pd.DataFrame:
         for cond in sorted(gp_runs["condition"].unique()):
             block = per.xs(cond, level="condition").loc[list(lands)]
             row = {"level": "group", "name": gname, "group": gname, "condition": cond,
-                   "n_landscapes": len(lands), "n_runs": int(counts.xs(cond, level="condition").loc[list(lands)].sum())}
+                   "n_landscapes": len(lands), "n_runs": int(counts.xs(cond, level="condition").loc[list(lands)].sum()),
+                   "interval": interval_kind(len(lands))}
             rng = np.random.default_rng(BOOT_SEED)
             for mcol in GP_METRICS:
                 vals = block[mcol].to_numpy(float)
@@ -748,6 +819,8 @@ def gp_summary(gp_runs: pd.DataFrame) -> pd.DataFrame:
                     row[mcol] = np.nan
                     continue
                 v, lo, hi = boot_mean(vals[np.isfinite(vals)], rng)
+                if row["interval"] == "range":
+                    lo, hi = value_range(vals)
                 row[mcol] = v
                 if mcol in GP_KEY:
                     row[f"{mcol}_lo"], row[f"{mcol}_hi"] = lo, hi
@@ -813,21 +886,33 @@ def pm_by_fit_stratum(gp_runs: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
-def _pct(v, lo=None, hi=None, digits=1) -> str:
+def _bracket(kind) -> str:
+    """'range ' before a bracket that is the range of three landscapes, nothing otherwise."""
+    return "range " if kind == "range" else ""
+
+
+def _pct(v, lo=None, hi=None, digits=1, kind=None) -> str:
     if v is None or not np.isfinite(v):
         return "n/a"
     s = f"{v * 100:+.{digits}f}%"
     if lo is not None and np.isfinite(lo) and np.isfinite(hi):
-        s += f" [{lo * 100:+.0f}, {hi * 100:+.0f}]"
+        s += f" {_bracket(kind)}[{lo * 100:+.0f}, {hi * 100:+.0f}]"
     return s
 
 
-def _num(v, lo=None, hi=None, fmt="{:.3f}") -> str:
+def _share(v, lo, hi, reason, digits=0, kind=None) -> str:
+    """A share, or '--' with the reason when its denominator is near zero or negative on a landscape."""
+    if isinstance(reason, str) and reason.strip():
+        return f"-- ({reason})"
+    return _pct(v, lo, hi, digits, kind)
+
+
+def _num(v, lo=None, hi=None, fmt="{:.3f}", kind=None) -> str:
     if v is None or not np.isfinite(v):
         return "n/a"
     s = fmt.format(v)
     if lo is not None and np.isfinite(lo) and np.isfinite(hi):
-        s += f" [{fmt.format(lo)}, {fmt.format(hi)}]"
+        s += f" {_bracket(kind)}[{fmt.format(lo)}, {fmt.format(hi)}]"
     return s
 
 
@@ -861,13 +946,16 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
              "smoothness from those other differences.\n")
 
     L.append("## 2. Headline by group\n")
-    L.append("Means of landscape means, 95% landscape bootstrap (2,000 draws). Deployed = excess regret of the "
+    L.append("Means of landscape means, 95% landscape bootstrap (2,000 draws); for a group of three landscapes "
+             "the bracket is the range of the three per-landscape values, which is all a percentile bootstrap of "
+             "three clusters can return, and is labelled 'range'. Deployed = excess regret of the "
              "shipped design at the final trial / opt_z. Search (trajectory) = the paper's search-loss row, "
              "post-onset per-iteration excess / opt_z. Search (final) = excess of the best VISITED design at the "
              "final trial / opt_z. Selection share = share of the deployed excess that is selection loss (ratio of "
-             "landscape means). Pooled over the four error processes, model-free floors excluded. The deployed "
-             "column is computed from cell_means.csv and from the decomposition independently; they agree to 5e-4 "
-             "in every cell.\n")
+             "landscape means; '--' where the deployed excess is below 0.01 of opt_z or negative on a landscape, "
+             "decompose_regret's screen). Pooled over the four error processes, model-free floors excluded. The "
+             "deployed column is computed from cell_means.csv and from the decomposition independently; they agree "
+             "to 5e-4 in every cell.\n")
     for std, onset in ((1.0, 0), (1.0, 20), (5.0, 0), (5.0, 20), (0.25, 0)):
         L.append(f"**{std:g} SD, error from trial {onset + 1}**\n")
         L.append("| group | n | deployed | search (trajectory) | search (final) | selection share |")
@@ -876,10 +964,12 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
                    & (head["jitter_iteration"] == onset)]
         for g in GROUPS:
             r = blk[blk["group"] == g].iloc[0]
-            L.append(f"| {g} | {r['n_landscapes']} | {_pct(r['deployed'], r['deployed_lo'], r['deployed_hi'])} | "
-                     f"{_pct(r['search_traj'], r['search_traj_lo'], r['search_traj_hi'])} | "
-                     f"{_pct(r['search_final'], r['search_final_lo'], r['search_final_hi'])} | "
-                     f"{_pct(r['selection_share'], r['selection_share_lo'], r['selection_share_hi'], 0)} |")
+            k = r["interval"]
+            L.append(f"| {g} | {r['n_landscapes']} | "
+                     f"{_pct(r['deployed'], r['deployed_lo'], r['deployed_hi'], kind=k)} | "
+                     f"{_pct(r['search_traj'], r['search_traj_lo'], r['search_traj_hi'], kind=k)} | "
+                     f"{_pct(r['search_final'], r['search_final_lo'], r['search_final_hi'], kind=k)} | "
+                     f"{_share(r['selection_share'], r['selection_share_lo'], r['selection_share_hi'], r['selection_share_suppressed'], 0, k)} |")
         d = diffs[(diffs["error_model"] == "pooled") & np.isclose(diffs["jitter_std"], std)
                   & (diffs["jitter_iteration"] == onset)].iloc[0]
         L.append(f"| laws6 - classical13 | | {_pct(d['deployed'], d['deployed_lo'], d['deployed_hi'])} | "
@@ -917,9 +1007,11 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
              "the single best rating (best_observed) to the rule named, the estimand of "
              "`scripts/analyse_ship_rules.py`: recovered = gain / cost, cost = std_noisy - std_clean, gain = "
              "std_noisy - rule_noisy, ratio of landscape means in opt_z units. First interval: landscape bootstrap "
-             "(coarse with six landscapes); second: landscapes fixed, acquisitions and seeds resampled (crossed). "
-             "'better/worse' = landscapes whose mean gain is positive/negative. 'price' = rule_clean - std_clean "
-             "(opt_z units), what the rule costs without error.\n")
+             "(coarse with six landscapes; with three it is the range of the three per-landscape recoveries, "
+             "labelled 'range'); second: landscapes fixed, acquisitions and seeds resampled (crossed). "
+             "'--' where the cost is below 0.01 of opt_z or negative on a landscape (share_flags); the gain is "
+             "then the result. 'better/worse' = landscapes whose mean gain is positive/negative. 'price' = "
+             "rule_clean - std_clean (opt_z units), what the rule costs without error.\n")
 
     def ship_row(rule, em, group, cell, std, onset):
         s = ship[(ship["estimand"] == "share_of_deployed_cost") & (ship["rule"] == rule)
@@ -943,7 +1035,7 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
                     if r is None:
                         continue
                     L.append(f"| {label} | {g} | {r['cost']:.3f} | "
-                             f"{_pct(r['recovered'], r['recovered_lo'], r['recovered_hi'])} | "
+                             f"{_share(r['recovered'], r['recovered_lo'], r['recovered_hi'], r['recovered_suppressed'], 1, r['interval'])} | "
                              f"{_pct(np.nan) if not np.isfinite(r['recovered_cond_lo']) else '[' + format(r['recovered_cond_lo'] * 100, '+.0f') + ', ' + format(r['recovered_cond_hi'] * 100, '+.0f') + ']'} | "
                              f"{int(r['n_landscapes_rule_better'])}/{int(r['n_landscapes_rule_worse'])} | "
                              f"{r['price']:+.4f} | {r['share_runs_same_design'] * 100:.0f}% |")
@@ -972,7 +1064,8 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
             for cell, std, onset in (("condition", 1.0, 0.0), ("condition", 5.0, 20.0),
                                      (f"pooled_std_ge_{POOL_MIN_STD:g}", np.nan, np.nan)):
                 r = ship_row("pm", em, g, cell, std, onset)
-                vals.append(_pct(r["recovered"], r["recovered_lo"], r["recovered_hi"]) if r is not None else "n/a")
+                vals.append(_share(r["recovered"], r["recovered_lo"], r["recovered_hi"], r["recovered_suppressed"],
+                                   1, r["interval"]) if r is not None else "n/a")
             L.append(f"| {em} | {g} | " + " | ".join(vals) + " |")
     L.append("")
     # The selection-loss estimand for comparison with the paper's -8.7%.
@@ -990,7 +1083,8 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
                          & (ship["error_model"] == "pooled") & (ship["group"] == g) & (ship["cell"] == cell)]
                 s = s[(np.isclose(s["jitter_std"], std) if np.isfinite(std) else s["jitter_std"].isna())]
                 s = s[(np.isclose(s["jitter_iteration"], onset) if np.isfinite(onset) else s["jitter_iteration"].isna())]
-                vals.append(_pct(s.iloc[0]["recovered"], s.iloc[0]["recovered_lo"], s.iloc[0]["recovered_hi"])
+                vals.append(_share(s.iloc[0]["recovered"], s.iloc[0]["recovered_lo"], s.iloc[0]["recovered_hi"],
+                                   s.iloc[0]["recovered_suppressed"], 1, s.iloc[0]["interval"])
                             if len(s) else "n/a")
             L.append(f"| {rule} | {g} | " + " | ".join(vals) + " |")
     L.append("")
@@ -1059,7 +1153,7 @@ def write_markdown(path: Path, definition: pd.DataFrame, head: pd.DataFrame, dif
                 for g in PRIMARY_GROUPS + ("smooth_classical3", "rugged_classical10"):
                     r = gps[(gps["level"] == "group") & (gps["name"] == g) & (gps["condition"] == cond)].iloc[0]
                     lo, hi = r.get(f"{col}_lo", np.nan), r.get(f"{col}_hi", np.nan)
-                    vals.append(_num(r[col], lo, hi, fmt))
+                    vals.append(_num(r[col], lo, hi, fmt, r.get("interval")))
                 L.append(f"| {label} | " + " | ".join(vals) + " |")
             L.append("")
         L.append("**Per landscape, gaussian 1 SD from trial 1** (means over 20 runs)\n")
@@ -1170,7 +1264,9 @@ def interpretation(head, diffs, perl, ship, gps, fitpm) -> list[str]:
              f"{_pct(c5['recovered'], c5['recovered_lo'], c5['recovered_hi'])} on the classical functions. The "
              f"secondary split puts the line at smoothness, not at 'law': pooled over >= 0.25 SD, pm recovers "
              f"{_pct(lp['recovered'], lp['recovered_lo'], lp['recovered_hi'])} on the laws, "
-             f"{_pct(sm['recovered'], sm['recovered_lo'], sm['recovered_hi'])} on the three smooth classical "
+             f"{_pct(sm['recovered'], sm['recovered_lo'], sm['recovered_hi'], kind=sm['interval'])} "
+             f"(run-level [{sm['recovered_cond_lo'] * 100:+.0f}, {sm['recovered_cond_hi'] * 100:+.0f}]) "
+             f"on the three smooth classical "
              f"functions and {_pct(ru['recovered'], ru['recovered_lo'], ru['recovered_hi'])} on the ten rugged ones. "
              f"With six landscapes the smallest attainable two-sided Wilcoxon p is 0.031, which the 1 SD cells reach.\n")
     L.append("The GP diagnostics say why.\n")

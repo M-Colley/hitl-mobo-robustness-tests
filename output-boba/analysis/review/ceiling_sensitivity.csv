@@ -1,0 +1,89 @@
+scope,n_landscapes,quantity,jitter_std,estimate,lo,hi
+all 20 landscapes,20,"trajectory search loss, from trial 21",0.05,0.0028732374216910634,,
+all 20 landscapes,20,"trajectory search loss, onset ratio (trial 1 / trial 21)",0.05,3.3007217168497425,,
+all 20 landscapes,20,"trajectory search loss, from trial 21",0.25,0.011916857418954598,,
+all 20 landscapes,20,"trajectory search loss, onset ratio (trial 1 / trial 21)",0.25,4.475617861218697,,
+all 20 landscapes,20,"trajectory search loss, from trial 21",1.0,0.028110018092070185,,
+all 20 landscapes,20,"trajectory search loss, onset ratio (trial 1 / trial 21)",1.0,5.0109214345558435,,
+all 20 landscapes,20,"trajectory search loss, from trial 21",5.0,0.0490306221807953,,
+all 20 landscapes,20,"trajectory search loss, onset ratio (trial 1 / trial 21)",5.0,4.480259742804332,,
+all 20 landscapes,20,"deployed excess, from trial 21",0.05,0.007751830814883597,,
+all 20 landscapes,20,"deployed excess, onset ratio (trial 1 / trial 21)",0.05,1.8904310714878878,,
+all 20 landscapes,20,"deployed excess, from trial 21",0.25,0.040767144860459716,,
+all 20 landscapes,20,"deployed excess, onset ratio (trial 1 / trial 21)",0.25,2.2200025050108567,,
+all 20 landscapes,20,"deployed excess, from trial 21",1.0,0.136062424879674,,
+all 20 landscapes,20,"deployed excess, onset ratio (trial 1 / trial 21)",1.0,2.1826706500023363,,
+all 20 landscapes,20,"deployed excess, from trial 21",5.0,0.4442785040156673,,
+all 20 landscapes,20,"deployed excess, onset ratio (trial 1 / trial 21)",5.0,1.6001725696659181,,
+all 20 landscapes,20,"final search loss, from trial 21",0.05,0.003474973284447584,,
+all 20 landscapes,20,"final search loss, from trial 21",0.25,0.01625308322371318,,
+all 20 landscapes,20,"final search loss, from trial 21",1.0,0.04149360314240603,,
+all 20 landscapes,20,"final search loss, from trial 21",5.0,0.07517213205195711,,
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 21",0.05,0.04369039270059269,0.01430243495329135,0.0729225455595784
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 1",0.05,0.02740740657116741,0.016467384745048216,0.039633007385785096
+all 20 landscapes,20,normalised ratio (trial 1 / trial 21),0.05,0.6273096870286453,0.3247968071267507,1.6755399716438981
+all 20 landscapes,20,bound ratio (trial 1 / trial 21),0.05,5.261710101248608,3.55821249644663,8.849883414073973
+all 20 landscapes,20,raw trajectory ratio (trial 1 / trial 21),0.05,3.3007217168497256,1.7506914042913355,8.670548607640429
+all 20 landscapes,20,"share of late-onset runs: no progress after trial 21, clean twin progresses",0.05,0.07775,,
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 21",0.25,0.18120750358481064,0.1171764515464549,0.25796467481710533
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 1",0.25,0.15413535220014757,0.1278280196182428,0.18030698522808472
+all 20 landscapes,20,normalised ratio (trial 1 / trial 21),0.25,0.8506013777073393,0.6030486192699197,1.2494951716410225
+all 20 landscapes,20,bound ratio (trial 1 / trial 21),0.25,5.261710101248608,3.55821249644663,8.849883414073973
+all 20 landscapes,20,raw trajectory ratio (trial 1 / trial 21),0.25,4.47561786121869,3.0671806827295733,7.296395378097795
+all 20 landscapes,20,"share of late-onset runs: no progress after trial 21, clean twin progresses",0.25,0.15625,,
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 21",1.0,0.42744039180043686,0.34487553047862474,0.5143187752997741
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 1",1.0,0.40706731842932337,0.3592456612546892,0.45270871184947553
+all 20 landscapes,20,normalised ratio (trial 1 / trial 21),1.0,0.9523370421655769,0.7756566114763485,1.19993233163002
+all 20 landscapes,20,bound ratio (trial 1 / trial 21),1.0,5.261710101248608,3.55821249644663,8.849883414073973
+all 20 landscapes,20,raw trajectory ratio (trial 1 / trial 21),1.0,5.010921434555837,3.507814992337941,8.129087996166529
+all 20 landscapes,20,"share of late-onset runs: no progress after trial 21, clean twin progresses",1.0,0.26825,,
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 21",5.0,0.7455586932222739,0.6912824900722233,0.7971419525817406
+all 20 landscapes,20,"normalised search loss (excess / bound), from trial 1",5.0,0.6348309836280985,0.5669152713656104,0.6922502920022421
+all 20 landscapes,20,normalised ratio (trial 1 / trial 21),5.0,0.8514835778849084,0.7777299435239666,0.9337592075470267
+all 20 landscapes,20,bound ratio (trial 1 / trial 21),5.0,5.261710101248608,3.55821249644663,8.849883414073973
+all 20 landscapes,20,raw trajectory ratio (trial 1 / trial 21),5.0,4.480259742804328,3.0964422491792303,7.4706921111463656
+all 20 landscapes,20,"share of late-onset runs: no progress after trial 21, clean twin progresses",5.0,0.436875,,
+without the 4 ceiling-limited,16,"trajectory search loss, from trial 21",0.05,0.003253957771865602,,
+without the 4 ceiling-limited,16,"trajectory search loss, onset ratio (trial 1 / trial 21)",0.05,2.8550723977374792,,
+without the 4 ceiling-limited,16,"trajectory search loss, from trial 21",0.25,0.014108565530278463,,
+without the 4 ceiling-limited,16,"trajectory search loss, onset ratio (trial 1 / trial 21)",0.25,3.3048018713920118,,
+without the 4 ceiling-limited,16,"trajectory search loss, from trial 21",1.0,0.03417938530797865,,
+without the 4 ceiling-limited,16,"trajectory search loss, onset ratio (trial 1 / trial 21)",1.0,3.5894057898735774,,
+without the 4 ceiling-limited,16,"trajectory search loss, from trial 21",5.0,0.06001794769421642,,
+without the 4 ceiling-limited,16,"trajectory search loss, onset ratio (trial 1 / trial 21)",5.0,3.3193857061791876,,
+without the 4 ceiling-limited,16,"deployed excess, from trial 21",0.05,0.008897635514241387,,
+without the 4 ceiling-limited,16,"deployed excess, onset ratio (trial 1 / trial 21)",0.05,1.8068896778180932,,
+without the 4 ceiling-limited,16,"deployed excess, from trial 21",0.25,0.04526118449691505,,
+without the 4 ceiling-limited,16,"deployed excess, onset ratio (trial 1 / trial 21)",0.25,1.948684473694833,,
+without the 4 ceiling-limited,16,"deployed excess, from trial 21",1.0,0.14916301256052245,,
+without the 4 ceiling-limited,16,"deployed excess, onset ratio (trial 1 / trial 21)",1.0,1.9433695174645178,,
+without the 4 ceiling-limited,16,"deployed excess, from trial 21",5.0,0.4775709147019994,,
+without the 4 ceiling-limited,16,"deployed excess, onset ratio (trial 1 / trial 21)",5.0,1.496736133664998,,
+without the 4 ceiling-limited,16,"final search loss, from trial 21",0.05,0.00409110135931921,,
+without the 4 ceiling-limited,16,"final search loss, from trial 21",0.25,0.01949658560426219,,
+without the 4 ceiling-limited,16,"final search loss, from trial 21",1.0,0.05101380235076748,,
+without the 4 ceiling-limited,16,"final search loss, from trial 21",5.0,0.09263992514220276,,
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 21",0.05,0.041008939562292686,0.011035373385054534,0.0689770943604675
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 1",0.05,0.029403405145621772,0.017037506265768346,0.043152880878384973
+without the 4 ceiling-limited,16,normalised ratio (trial 1 / trial 21),0.05,0.716999889766911,0.3421180600610389,2.156371443682732
+without the 4 ceiling-limited,16,bound ratio (trial 1 / trial 21),0.05,3.9819704835179524,2.8668255862385643,6.0370710328787665
+without the 4 ceiling-limited,16,raw trajectory ratio (trial 1 / trial 21),0.05,2.855072397737465,1.368699977052904,8.638869574594576
+without the 4 ceiling-limited,16,"share of late-onset runs: no progress after trial 21, clean twin progresses",0.05,0.09609375,,
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 21",0.25,0.17780725863879768,0.11477325211324504,0.2566988054034813
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 1",0.25,0.1475695923736326,0.1196714083406711,0.17464235005220388
+without the 4 ceiling-limited,16,normalised ratio (trial 1 / trial 21),0.25,0.8299413280613551,0.5771619487303967,1.2025806108742865
+without the 4 ceiling-limited,16,bound ratio (trial 1 / trial 21),0.25,3.9819704835179524,2.8668255862385643,6.0370710328787665
+without the 4 ceiling-limited,16,raw trajectory ratio (trial 1 / trial 21),0.25,3.3048018713920055,2.3708048992750417,4.844446325133585
+without the 4 ceiling-limited,16,"share of late-onset runs: no progress after trial 21, clean twin progresses",0.25,0.1928125,,
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 21",1.0,0.4307555428316407,0.34707966256243983,0.5228381332153875
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 1",1.0,0.38828927684417247,0.3316549059092997,0.4386277114362562
+without the 4 ceiling-limited,16,normalised ratio (trial 1 / trial 21),1.0,0.9014144642032709,0.7135361934317866,1.139827745884983
+without the 4 ceiling-limited,16,bound ratio (trial 1 / trial 21),1.0,3.9819704835179524,2.8668255862385643,6.0370710328787665
+without the 4 ceiling-limited,16,raw trajectory ratio (trial 1 / trial 21),1.0,3.589405789873574,2.7659470836829954,4.907410385811846
+without the 4 ceiling-limited,16,"share of late-onset runs: no progress after trial 21, clean twin progresses",1.0,0.3321875,,
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 21",5.0,0.7563934636539003,0.7035037061854424,0.8108265669887184
+without the 4 ceiling-limited,16,"normalised search loss (excess / bound), from trial 1",5.0,0.6305324617278274,0.5389532427871508,0.7043506073293377
+without the 4 ceiling-limited,16,normalised ratio (trial 1 / trial 21),5.0,0.8336037948846389,0.7319693916440732,0.9331977254111802
+without the 4 ceiling-limited,16,bound ratio (trial 1 / trial 21),5.0,3.9819704835179524,2.8668255862385643,6.0370710328787665
+without the 4 ceiling-limited,16,raw trajectory ratio (trial 1 / trial 21),5.0,3.3193857061791854,2.4594067469145937,4.80687467068465
+without the 4 ceiling-limited,16,"share of late-onset runs: no progress after trial 21, clean twin progresses",5.0,0.5396875,,

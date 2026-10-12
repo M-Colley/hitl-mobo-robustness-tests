@@ -333,14 +333,17 @@ def beneficial_regime(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
 
 
 def headroom_screen(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
-    """How much a benchmark had to lose in the first place.
+    """How much better than the model-free floor the best learner's clean run does.
 
-    On an easy landscape BO reaches the optimum in the noise-free baseline and
-    stays there, so there is nothing for feedback error to destroy and a null is
-    guaranteed by construction rather than earned. This measures that directly:
-    the best learner's noise-free regret against the model-free floor's. A
-    benchmark near zero headroom cannot produce a detectable effect at any error
-    level, and a null there says nothing about robustness.
+    headroom = 1 - (best learner's clean trajectory regret) / (floor's), so it
+    measures BO's advantage over random search without error, not whether the
+    clean run is at the optimum: a landscape whose clean runs sit at the optimum
+    from trial 21 on still shows a large headroom, because the floor is far from
+    it. ``low_headroom`` (True when headroom < 0.10; called ``ceiling_free``
+    until 2026-10-09, which said the opposite of what it held) marks a landscape
+    where BO barely beats random search, so a null there says little. Whether
+    the clean run is at the optimum when a late onset arrives is
+    ceiling_screen's question.
     """
     baseline = (
         df.groupby(["dataset", "acquisition"])["auc_simple_regret_true_baseline"]
@@ -369,13 +372,90 @@ def headroom_screen(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
         print("HEADROOM: skipped (this arm runs no model-free acquisitions).")
         empty = pd.DataFrame(columns=["dataset", "floor_auc_baseline",
                                       "best_learner_auc_baseline", "best_learner",
-                                      "headroom", "ceiling_free"])
+                                      "headroom", "low_headroom"])
         empty.to_csv(output_dir / "headroom_screen.csv", index=False)
         return empty
     table = pd.DataFrame(rows).sort_values("headroom")
-    table["ceiling_free"] = table["headroom"] < 0.10
+    table["low_headroom"] = table["headroom"] < 0.10
     table.to_csv(output_dir / "headroom_screen.csv", index=False)
     return table
+
+
+# A clean run is at the optimum when its search loss is at most this, in
+# landscape SDs. In the main sweep a clean run's regret is either exactly 0.0
+# (it proposed the optimum, a corner of the box on four of the laws) or at least
+# 4.5e-8, so every tolerance below that gives the same shares.
+CEILING_TOL = 1e-9
+# The late onset: error from trial 21. Its noisy run and clean twin share every
+# design up to trial 21 (the 21st is chosen from 20 clean ratings), so a clean
+# run at the optimum at trial 21 forces the post-onset search excess to zero.
+CEILING_ONSET = 20
+
+
+def ceiling_screen(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
+    """Is the clean run already at the optimum when a late onset arrives?
+
+    A late-onset pair shares its designs up to trial s = 21, so the noisy run's
+    search loss can never exceed the clean run's at s, and its post-onset search
+    excess is at most what the clean run still gains after s (onset_bound.py).
+    Where the clean run is at the optimum at s, that excess is exactly zero; where
+    it gains nothing after s, it is at most zero. This measures both directly, per
+    landscape, over the model-based learners' clean twins, from the paired
+    metrics alone: search loss never increases and is never negative, so
+
+      at the optimum at trial 21  <=>  the clean twin's post-onset window mean of
+                                       search loss (trials 21..T) is <= CEILING_TOL
+      at the optimum at trial T   <=>  its final search loss is <= CEILING_TOL
+      gains nothing after trial 21 <=> window mean - final search loss <= CEILING_TOL
+
+    (scripts/checks/ceiling_clean_runs.py checks the first two against the
+    per-trial regrets of the onset-bound cache, and adds trial 20). The last is
+    reported over the late-onset noisy runs, which here is the same share as over
+    the twins, since every twin has the same number of noisy runs. The landscape's
+    late-onset post-onset search excess (``late_search_excess_s<magnitude>``) and
+    deployed excess (``late_deployed_excess_s<magnitude>``), fractions of opt_z
+    averaged over error processes, learners and seeds, sit beside them: the
+    deployed design is not bounded this way. A landscape is
+    ``ceiling_limited_late`` when most of its clean runs are at the optimum at
+    trial 21, so its late-onset search loss is near zero by construction.
+    """
+    columns = ["dataset", "n_clean_runs", "share_clean_at_optimum_t21", "share_clean_at_optimum_T",
+               "share_late_runs_clean_gains_nothing_after_t21", "ceiling_limited_late"]
+    learners = df[~df["acquisition"].isin(MODEL_FREE)]
+    late = learners[learners["jitter_iteration"] == CEILING_ONSET]
+    if late.empty:
+        print(f"CEILING: skipped (no runs with error from trial {CEILING_ONSET + 1}).")
+        empty = pd.DataFrame(columns=columns)
+        empty.to_csv(output_dir / "ceiling_screen.csv", index=False)
+        return empty
+    window = "auc_simple_regret_true_postonset_per_iter_baseline"
+    final = "final_simple_regret_true_baseline"
+    key = ["dataset", "acquisition", "seed"]
+    spread = late.groupby(key)[[window, final]].agg(lambda s: float(np.ptp(s.to_numpy())))
+    if len(spread) and float(spread.to_numpy().max()) > 1e-12:
+        raise ValueError("a clean twin's columns differ between its noisy runs; the pairing is broken")
+    twins = late.groupby(key)[[window, final]].first().reset_index()
+    if (twins[[window, final]].to_numpy() < -CEILING_TOL).any():
+        raise ValueError("a clean run has negative search loss: y_opt is not the supremum")
+    twins = twins.assign(at_t21=twins[window] <= CEILING_TOL, at_T=twins[final] <= CEILING_TOL)
+    late = late.assign(no_gain=(late[window] - late[final]) <= CEILING_TOL,
+                       deployed_excess=late[INFERENCE_METRIC] / late["opt_z"])
+    per_twin = twins.groupby("dataset").agg(n_clean_runs=("at_t21", "size"),
+                                            share_clean_at_optimum_t21=("at_t21", "mean"),
+                                            share_clean_at_optimum_T=("at_T", "mean"))
+    per_run = late.groupby("dataset").agg(share_late_runs_clean_gains_nothing_after_t21=("no_gain", "mean"))
+    table = per_twin.join(per_run).reset_index()
+    table["ceiling_limited_late"] = table["share_clean_at_optimum_t21"] >= 0.5
+    by_magnitude = late.groupby(["dataset", "jitter_std"])[["fragility", "deployed_excess"]].mean().unstack()
+    extra = []
+    for std in sorted(late["jitter_std"].unique()):
+        for source, name in (("fragility", "late_search_excess"), ("deployed_excess", "late_deployed_excess")):
+            column = f"{name}_s{std:g}"
+            table[column] = table["dataset"].map(by_magnitude[(source, std)])
+            extra.append(column)
+    table = table.sort_values(["share_clean_at_optimum_t21", "dataset"], ascending=[False, True])
+    table[columns + extra].to_csv(output_dir / "ceiling_screen.csv", index=False)
+    return table[columns + extra].reset_index(drop=True)
 
 
 def bias_onset_control(df: pd.DataFrame, output_dir: Path) -> pd.DataFrame:
@@ -1348,6 +1428,7 @@ def write_report(
     output_dir: Path,
     tolerance: float,
     mediator_units: pd.DataFrame | None = None,
+    ceiling: pd.DataFrame | None = None,
 ) -> None:
     lines: list[str] = []
     add = lines.append
@@ -1393,24 +1474,52 @@ def write_report(
             add("  Noise is reaching the candidate stream; every result below is suspect.")
     add("")
 
-    add("1b. HEADROOM (could this benchmark have shown an effect at all?)")
+    add("1b. HEADROOM (does BO beat the model-free floor without error?)")
     add("-" * 72)
     if headroom.empty:
         add("  not computed: this arm runs no model-free acquisitions, so there is no")
         add("  floor to measure headroom against. See the main sweep's screen.")
     else:
-        ceiling_free = headroom[headroom["ceiling_free"]]
+        low = headroom[headroom["low_headroom"]]
         add(f"  {'benchmark':<20s} {'headroom':>9s}   (noise-free advantage of the best")
         add(f"  {'':<20s} {'':>9s}    learner over the model-free floor)")
         for _, row in headroom.iterrows():
-            mark = "  <- ceiling-free" if row["ceiling_free"] else ""
+            mark = "  <- under 10% headroom" if row["low_headroom"] else ""
             add(f"  {row['dataset']:<20s} {row['headroom']:>9.3f}{mark}")
-        if len(ceiling_free):
+        if len(low):
             add("")
-            add(f"  {len(ceiling_free)} benchmark(s) have under 10% headroom: BO already reaches")
-            add("  the optimum without noise, so a null there is guaranteed by construction")
-            add("  and says nothing about robustness. Exclude them before interpreting any")
-            add("  per-benchmark null.")
+            add(f"  {len(low)} benchmark(s) have under 10% headroom: BO barely beats random search")
+            add("  without noise, so a null there says little about robustness.")
+        add("  Headroom compares BO with random search; it does not say whether the clean")
+        add("  run is at the optimum. 1b' does.")
+    add("")
+
+    add("1b'. CEILING (is the clean run already at the optimum when a late onset arrives?)")
+    add("-" * 72)
+    if ceiling is None or ceiling.empty:
+        add(f"  not computed: this arm has no runs with error from trial {CEILING_ONSET + 1}.")
+    else:
+        add(f"  Share of the model-based learners' clean runs at the optimum (search loss <= {CEILING_TOL:g})")
+        add(f"  at trial {CEILING_ONSET + 1}, the last design a late-onset pair shares, and at the final trial;")
+        add(f"  share of late-onset runs whose clean twin gains nothing after trial {CEILING_ONSET + 1} (their")
+        add("  post-onset search excess is then at most zero); and the late-onset search and deployed")
+        add("  excess at 1 SD, fractions of opt_z.")
+        add(f"  {'benchmark':<20s} {'at opt t21':>10s} {'at opt T':>9s} {'no gain':>8s} "
+            f"{'search 1SD':>11s} {'deployed 1SD':>13s}")
+        for _, row in ceiling.iterrows():
+            mark = "  <- ceiling-limited" if row["ceiling_limited_late"] else ""
+            add(f"  {row['dataset']:<20s} {row['share_clean_at_optimum_t21']:>10.2f} "
+                f"{row['share_clean_at_optimum_T']:>9.2f} "
+                f"{row['share_late_runs_clean_gains_nothing_after_t21']:>8.2f} "
+                f"{row.get('late_search_excess_s1', float('nan')):>11.4f} "
+                f"{row.get('late_deployed_excess_s1', float('nan')):>13.4f}{mark}")
+        limited = ceiling[ceiling["ceiling_limited_late"]]
+        if len(limited):
+            add("")
+            add(f"  {len(limited)} benchmark(s) are ceiling-limited for the late onset: most clean runs")
+            add(f"  are at the optimum by trial {CEILING_ONSET + 1}, so their post-onset search excess from")
+            add("  that onset is exactly zero in those runs by construction. The deployed design is")
+            add("  not bounded this way.")
     add("")
 
     add("1c. CONTROL: a constant bias from iteration 1 should cost nothing")
@@ -1619,6 +1728,7 @@ def main(argv: list[str] | None = None) -> None:
     balance_check(df, args.output_dir)
     helpful = beneficial_regime(df, args.output_dir)
     headroom = headroom_screen(df, args.output_dir)
+    ceiling = ceiling_screen(df, args.output_dir)
     bias_control = bias_onset_control(df, args.output_dir)
     currency = noise_currency(df, args.output_dir)
     descriptors = descriptor_regression(df, args.output_dir)
@@ -1628,7 +1738,7 @@ def main(argv: list[str] | None = None) -> None:
     make_figures(df, rankings, args.output_dir)
     write_report(df, floor, headroom, bias_control, helpful, currency, descriptors, mediator,
                  overall, stats, args.output_dir, args.floor_tolerance,
-                 mediator_units=mediator_units)
+                 mediator_units=mediator_units, ceiling=ceiling)
 
     summary = {
         "n_runs": int(len(df)),

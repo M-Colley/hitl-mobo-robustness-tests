@@ -43,8 +43,10 @@ def test_the_real_paper_inputs_every_table_this_script_needs_to_make():
     required = mt.paper_table_inputs(REPO / "paper" / "main.tex")
     assert {"shortlist", "adaptations", "fitted_companion", "known_noise", "incumbent",
             "incumbent_by_acquisition", "benchmarks"} <= required
-    # Everything the paper inputs is either made here or has its own producer.
-    assert required - mt.PRODUCED <= {"benchmarks_wrapper", "sitting_by_magnitude"}
+    # Everything the paper inputs is either made here or has its own producer: sitting_by_magnitude.py,
+    # checks/known_variance_ship.py, checks/decision_map.py and checks/winners_curse.py (AGENTS.md).
+    assert required - mt.PRODUCED <= {"benchmarks_wrapper", "sitting_by_magnitude", "known_variance", "decision_map",
+                                      "winners_curse", "winners_curse_landscapes"}
 
 
 def test_a_missing_input_of_a_required_table_stops_the_run(tmp_path, monkeypatch):

@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import torch
+from statsmodels.stats.multitest import multipletests
 
 REPO = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO / "scripts"
@@ -300,6 +301,48 @@ def test_within_arm_estimand_against_the_standard_rule():
     conditions = [r for r in out if r["cell"] == "condition"]
     assert sorted(r["jitter_std"] for r in conditions) == [0.05, 1.0]
     assert all("wilcoxon_p_fdr" in r for r in conditions)
+
+
+def test_bh_family_spans_every_variant_of_an_error_process():
+    """The main sweep's bias runs carry one variant per magnitude (bias0.25, bias1, ...). The BH
+    family is arm x rule x error process, so its cells across variants are corrected together,
+    as the gaussian cells (one variant) are; per variant, bias was corrected over two cells."""
+    opt_z = {"branin": 1.0, "ackley": 2.0, "levy_10": 4.0}
+    rows = []
+    for d, z in opt_z.items():
+        rows.append(_row(d, "logei", 7, True, 0, 0, {"best_observed": 0.1 * z, "pm": 0.2 * z}))
+        for k, (std, onset) in enumerate([(0.25, 0), (0.25, 20), (1.0, 0), (1.0, 20)]):
+            regrets = {"best_observed": (0.5 + 0.1 * k) * z, "pm": (0.3 + 0.05 * k + 0.01 * len(d)) * z}
+            rows.append(_row(d, "logei", 7, False, std, onset, regrets, variant=f"bias{std:g}", error_model="bias"))
+            rows.append(_row(d, "logei", 7, False, std, onset, regrets, error_model="gaussian"))
+    out = asr.within_arm("arm", pd.DataFrame(rows), opt_z, ["best_observed", "pm"], _args())
+    for model, n_cells in (("bias", 4), ("gaussian", 4)):
+        cells = [r for r in out if r["error_model"] == model and r["cell"] == "condition"]
+        assert len(cells) == n_cells
+        assert {r["fdr_family_size"] for r in cells} == {n_cells}
+        expected = multipletests([r["wilcoxon_p"] for r in cells], method="fdr_bh")[1]
+        assert [r["wilcoxon_p_fdr"] for r in cells] == pytest.approx(list(expected))
+    # The pooled rows are not tests and carry no q value.
+    assert all("wilcoxon_p_fdr" not in r for r in out if r["cell"] != "condition")
+
+
+def test_a_recovery_whose_cost_changes_sign_is_flagged_not_blanked():
+    """share_flags from analyse_boba_adaptations: the recovery stays, the reason is given."""
+    opt_z = {"branin": 1.0, "ackley": 2.0}
+    rows = [
+        _row("branin", "logei", 7, True, 0, 0, {"best_observed": 0.2, "pm": 0.3}),
+        _row("ackley", "logei", 7, True, 0, 0, {"best_observed": 0.8, "pm": 0.8}),
+        _row("branin", "logei", 7, False, 1.0, 0, {"best_observed": 1.2, "pm": 0.7}),
+        _row("ackley", "logei", 7, False, 1.0, 0, {"best_observed": 0.6, "pm": 0.6}),   # cost -0.1 of opt_z
+        _row("branin", "logei", 7, False, 1.0, 20, {"best_observed": 1.2, "pm": 0.7}),
+        _row("ackley", "logei", 7, False, 1.0, 20, {"best_observed": 2.8, "pm": 1.8}),
+    ]
+    out = asr.within_arm("arm", pd.DataFrame(rows), opt_z, ["best_observed", "pm"], _args())
+    early = [r for r in out if r["cell"] == "condition" and r["jitter_iteration"] == 0][0]
+    late = [r for r in out if r["cell"] == "condition" and r["jitter_iteration"] == 20][0]
+    assert early["n_cost_negative"] == 1 and "negative on 1 of 2" in early["recovered_suppressed"]
+    assert np.isfinite(early["recovered"])
+    assert late["n_cost_negative"] == 0 and late["recovered_suppressed"] == ""
 
 
 def test_input_error_arms_pool_on_their_own_scale():

@@ -117,6 +117,15 @@ from botorch.acquisition.multi_objective.logei import (
     qLogExpectedHypervolumeImprovement,
     qLogNoisyExpectedHypervolumeImprovement,
 )
+import botorch.acquisition.multi_objective.logei as _botorch_mo_logei
+
+# qLog(N)EHVI compiles a fused C++ kernel with -O3 -march=native when a compiler
+# is present and uses it instead of the pure-Python path; BoTorch tests it only
+# to match within 1e-6. Every logged multi-objective run used the Python path
+# (no compiler on the simulation machine), so the kernel is switched off here:
+# a run then reproduces bit for bit on any machine, compiler or not.
+_botorch_mo_logei._load_attempted = True
+_botorch_mo_logei._C = None
 from botorch.optim import optimize_acqf
 from botorch.models.transforms import Normalize, Standardize
 from botorch.utils.multi_objective import is_non_dominated
@@ -747,7 +756,11 @@ def hold_until_fraction(args: argparse.Namespace) -> float:
     value = getattr(args, "hold_until", None)
     if value is None:
         value = getattr(args, "hold_until_frac", None)
-    return 0.6 if value is None else float(value)
+    value = 0.6 if value is None else float(value)
+    if not 0.0 <= value <= 1.0:
+        # above 1 a held design would never be rated; the fraction is of the budget T
+        raise ValueError(f"--hold-until must be a fraction of the budget in [0, 1], got {value}")
+    return value
 
 
 # What code_stamp treats as the code and the inputs of a run: the scripts, the
@@ -839,8 +852,9 @@ def code_stamp(repo_root: Path, patch_dir: Path | None = None) -> dict:
         "code_diff_sha256": sha,
         "dirty_files": dirty_files,
         "stamped_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
-        # the home directory is masked so that metadata served by the anonymous mirror stays anonymous
-        "argv": [arg.replace(str(Path.home()), "~") for arg in sys.argv],
+        # the home directory is masked, in every spelling a Windows checkout writes it, so that
+        # metadata served by the anonymous mirror stays anonymous
+        "argv": [mask_home(arg.encode("utf-8")).decode("utf-8") for arg in sys.argv],
     }
     if patch_dir is not None and patch and sha:
         try:
@@ -2461,6 +2475,10 @@ def collect_package_versions(packages: list[str]) -> dict[str, str]:
         except importlib.metadata.PackageNotFoundError:
             versions[package] = "not_installed"
             continue
+        except KeyError:
+            # Python 3.15 raises KeyError instead of returning None for a dist-info
+            # without METADATA (the leftover statsmodels entry here); handled below.
+            version = None
         if version is None:
             # A leftover dist-info without METADATA (statsmodels here) makes the
             # lookup return None; the imported module still knows its version.
@@ -3490,13 +3508,20 @@ class ShipRuleExpectedImprovement(AnalyticAcquisitionFunction):
         return v * (z * normal.cdf(z) + torch.exp(normal.log_prob(z)))
 
 
-def build_ship_rule_ei(model: object, train_X: torch.Tensor, noise_sd: float,
+def build_ship_rule_ei(model: object, train_X: torch.Tensor, noise_sd: float | None = None,
                        beta: float = 1.0) -> "ShipRuleExpectedImprovement":
-    """The acquisition, with the bound the ship rule currently achieves."""
+    """The acquisition, with the bound the ship rule currently achieves.
+
+    noise_sd defaults to the model's own observation-noise SD in output units, as
+    for build_augmented_ei. (Until 2026-10-09 the loop passed None here and the
+    float() conversion raised on every trial, so every proposal fell back to a
+    uniform random point: the first shiplcb arm was the random floor.)
+    """
     # The helper is the loop's own lcb incumbent: mean minus ONE latent SD.
     _, lcb = _posterior_mean_and_lcb(model, train_X)
+    sd = observation_noise_sd(model) if noise_sd is None else float(noise_sd)
     return ShipRuleExpectedImprovement(
-        model=model, best_lcb=float(lcb.max()), noise_sd=float(noise_sd), beta=beta)
+        model=model, best_lcb=float(lcb.max()), noise_sd=sd, beta=beta)
 
 
 class LogAugmentedExpectedImprovement(AnalyticAcquisitionFunction):
@@ -4715,7 +4740,26 @@ def _load_resumable_run(path: Path, iterations: int) -> pd.DataFrame | None:
         return None
     if len(loaded) != iterations or not required.issubset(loaded.columns):
         return None
+    # A file cut off in the middle of its last row still has the right row count;
+    # its last row then lacks values. Every run logs trials 1..T in order.
+    last = loaded.iloc[-1]
+    if last[["simple_regret_true", "inference_simple_regret_true", "best_true_so_far"]].isna().any():
+        return None
+    try:
+        if list(loaded["iteration"].astype(int)) != list(range(1, iterations + 1)):
+            return None
+    except (TypeError, ValueError):
+        return None
     return loaded
+
+
+def write_csv_atomic(frame: pd.DataFrame, path: Path) -> None:
+    """Write a run log so that a killed process never leaves a half-written file
+    that --resume could take for a complete one: write a sibling, then replace."""
+    path = Path(path)
+    tmp = path.with_name(path.name + ".tmp")
+    frame.to_csv(tmp, index=False)
+    os.replace(tmp, path)
 
 
 def run_single_seed(
@@ -4871,7 +4915,7 @@ def run_single_seed(
                     baseline_results["dataset"] = dataset.name
                     baseline_runtime = time.perf_counter() - run_start
 
-                    baseline_results.to_csv(results_path, index=False)
+                    write_csv_atomic(baseline_results, results_path)
 
                 for jitter_iteration in jitter_iterations:
                     summary = summarize_adjustment(
@@ -4968,7 +5012,7 @@ def run_single_seed(
                             results["dataset"] = dataset.name
                             run_runtime = time.perf_counter() - run_start
 
-                            results.to_csv(results_path, index=False)
+                            write_csv_atomic(results, results_path)
 
                         summary = summarize_adjustment(
                             results,
@@ -5002,6 +5046,14 @@ def run_single_seed(
 def main() -> None:
     args = parse_args()
     validate_inputs(args)
+    # The input-error flags are parsed here (the synthetic driver shares the parser)
+    # but this fitted-oracle driver never passes them to SimulationConfig, so a run
+    # asked for input error would silently run without it. Refuse instead.
+    if (args.input_error != "none" or args.input_error_scale != 0.0 or args.input_error_from_sweep
+            or args.input_error_recorded != "proposed"):
+        raise SystemExit("the fitted-oracle driver does not implement input error (--input-error, "
+                         "--input-error-scale, --input-error-from-sweep, --input-error-recorded); "
+                         "use scripts/bo_synthetic_error_simulation.py")
 
     error_models = parse_error_models(args.error_model, args.error_models)
     jitter_stds = resolve_sweep_values(

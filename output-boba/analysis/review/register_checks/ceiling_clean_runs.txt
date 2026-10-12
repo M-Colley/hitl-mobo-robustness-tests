@@ -1,0 +1,78 @@
+clean twins: 2000; regrets exactly 0.0 at trial 21: 349, <= 1e-09: 349; smallest positive clean regret at trials 20, 21, T: 4.50e-08
+
+CLEAN RUNS AT THE OPTIMUM, ten model-based learners x ten seeds per landscape
+(search loss <= 1e-09 landscape SDs; 'no gain': the clean twin's search loss at trial 21 equals its final one, so the late-onset excess is at most zero)
+  landscape             trial 5  trial 20  trial 21  trial T  no gain
+  stevens                  0.00      0.97      0.97     0.97     1.00  <- ceiling-limited
+  power_law_practice       0.00      0.93      0.94     0.99     0.95  <- ceiling-limited
+  hicks_law                0.00      0.85      0.87     0.92     0.93  <- ceiling-limited
+  weber_fechner            0.00      0.68      0.71     0.97     0.71  <- ceiling-limited
+  griewank                 0.00      0.00      0.00     0.00     0.14
+  eggholder                0.00      0.00      0.00     0.00     0.11
+  branin                   0.00      0.00      0.00     0.00     0.22
+  ackley                   0.00      0.00      0.00     0.00     0.05
+  levy_10                  0.00      0.00      0.00     0.00     0.00
+  michalewicz              0.00      0.00      0.00     0.00     0.11
+  hartmann_6               0.00      0.00      0.00     0.00     0.00
+  hartmann_3               0.00      0.00      0.00     0.00     0.05
+  powell                   0.00      0.00      0.00     0.00     0.25
+  moving_peaks             0.00      0.00      0.00     0.00     0.08
+  rastrigin                0.00      0.00      0.00     0.00     0.14
+  rosenbrock               0.00      0.00      0.00     0.00     0.35
+  shekel                   0.00      0.00      0.00     0.00     0.03
+  schwefel                 0.00      0.00      0.00     0.00     0.14
+  steering_law             0.00      0.00      0.00     0.00     0.31
+  yerkes_dodson            0.00      0.00      0.00     0.00     0.08
+  (trial 5: the last design an early-onset pair shares; no landscape is ceiling-limited there)
+cross-check: ceiling_screen.csv (paired metrics only) equals the per-trial regrets of the onset-bound cache on all 20 landscapes (largest difference 0.0e+00)
+
+LATE-ONSET NUMBERS WITH AND WITHOUT THE CEILING-LIMITED LANDSCAPES (hicks_law, power_law_practice, stevens, weber_fechner)
+fractions of opt_z (or ratios), pooled over the four error processes and the ten model-based learners;
+brackets: 95% landscape bootstrap, 10,000 paired resamples (onset_bound.py)
+  trajectory search loss, from trial 21                                           0.05    0.0029                       0.0033                  
+  trajectory search loss, from trial 21                                           0.25    0.0119                       0.0141                  
+  trajectory search loss, from trial 21                                              1    0.0281                       0.0342                  
+  trajectory search loss, from trial 21                                              5    0.0490                       0.0600                  
+  trajectory search loss, onset ratio (trial 1 / trial 21)                        0.05    3.3007                       2.8551                  
+  trajectory search loss, onset ratio (trial 1 / trial 21)                        0.25    4.4756                       3.3048                  
+  trajectory search loss, onset ratio (trial 1 / trial 21)                           1    5.0109                       3.5894                  
+  trajectory search loss, onset ratio (trial 1 / trial 21)                           5    4.4803                       3.3194                  
+  deployed excess, from trial 21                                                  0.05    0.0078                       0.0089                  
+  deployed excess, from trial 21                                                  0.25    0.0408                       0.0453                  
+  deployed excess, from trial 21                                                     1    0.1361                       0.1492                  
+  deployed excess, from trial 21                                                     5    0.4443                       0.4776                  
+  deployed excess, onset ratio (trial 1 / trial 21)                               0.05    1.8904                       1.8069                  
+  deployed excess, onset ratio (trial 1 / trial 21)                               0.25    2.2200                       1.9487                  
+  deployed excess, onset ratio (trial 1 / trial 21)                                  1    2.1827                       1.9434                  
+  deployed excess, onset ratio (trial 1 / trial 21)                                  5    1.6002                       1.4967                  
+  final search loss, from trial 21                                                0.05    0.0035                       0.0041                  
+  final search loss, from trial 21                                                0.25    0.0163                       0.0195                  
+  final search loss, from trial 21                                                   1    0.0415                       0.0510                  
+  final search loss, from trial 21                                                   5    0.0752                       0.0926                  
+  normalised search loss (excess / bound), from trial 21                          0.05    0.0437 [0.0143, 0.0729]     0.0410 [0.0110, 0.0690]
+  normalised search loss (excess / bound), from trial 21                          0.25    0.1812 [0.1172, 0.2580]     0.1778 [0.1148, 0.2567]
+  normalised search loss (excess / bound), from trial 21                             1    0.4274 [0.3449, 0.5143]     0.4308 [0.3471, 0.5228]
+  normalised search loss (excess / bound), from trial 21                             5    0.7456 [0.6913, 0.7971]     0.7564 [0.7035, 0.8108]
+  normalised search loss (excess / bound), from trial 1                           0.05    0.0274 [0.0165, 0.0396]     0.0294 [0.0170, 0.0432]
+  normalised search loss (excess / bound), from trial 1                           0.25    0.1541 [0.1278, 0.1803]     0.1476 [0.1197, 0.1746]
+  normalised search loss (excess / bound), from trial 1                              1    0.4071 [0.3592, 0.4527]     0.3883 [0.3317, 0.4386]
+  normalised search loss (excess / bound), from trial 1                              5    0.6348 [0.5669, 0.6923]     0.6305 [0.5390, 0.7044]
+  normalised ratio (trial 1 / trial 21)                                           0.05    0.6273 [0.3248, 1.6755]     0.7170 [0.3421, 2.1564]
+  normalised ratio (trial 1 / trial 21)                                           0.25    0.8506 [0.6030, 1.2495]     0.8299 [0.5772, 1.2026]
+  normalised ratio (trial 1 / trial 21)                                              1    0.9523 [0.7757, 1.1999]     0.9014 [0.7135, 1.1398]
+  normalised ratio (trial 1 / trial 21)                                              5    0.8515 [0.7777, 0.9338]     0.8336 [0.7320, 0.9332]
+  bound ratio (trial 1 / trial 21)                                                0.05    5.2617 [3.5582, 8.8499]     3.9820 [2.8668, 6.0371]
+  bound ratio (trial 1 / trial 21)                                                0.25    5.2617 [3.5582, 8.8499]     3.9820 [2.8668, 6.0371]
+  bound ratio (trial 1 / trial 21)                                                   1    5.2617 [3.5582, 8.8499]     3.9820 [2.8668, 6.0371]
+  bound ratio (trial 1 / trial 21)                                                   5    5.2617 [3.5582, 8.8499]     3.9820 [2.8668, 6.0371]
+  raw trajectory ratio (trial 1 / trial 21)                                       0.05    3.3007 [1.7507, 8.6705]     2.8551 [1.3687, 8.6389]
+  raw trajectory ratio (trial 1 / trial 21)                                       0.25    4.4756 [3.0672, 7.2964]     3.3048 [2.3708, 4.8444]
+  raw trajectory ratio (trial 1 / trial 21)                                          1    5.0109 [3.5078, 8.1291]     3.5894 [2.7659, 4.9074]
+  raw trajectory ratio (trial 1 / trial 21)                                          5    4.4803 [3.0964, 7.4707]     3.3194 [2.4594, 4.8069]
+  share of late-onset runs: no progress after trial 21, clean twin progresses     0.05    0.0777                       0.0961                  
+  share of late-onset runs: no progress after trial 21, clean twin progresses     0.25    0.1562                       0.1928                  
+  share of late-onset runs: no progress after trial 21, clean twin progresses        1    0.2682                       0.3322                  
+  share of late-onset runs: no progress after trial 21, clean twin progresses        5    0.4369                       0.5397                  
+  (columns: all 20 landscapes | without the 4 ceiling-limited)
+
+wrote output-boba\analysis\review\ceiling_clean_runs.csv and output-boba\analysis\review\ceiling_sensitivity.csv

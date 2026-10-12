@@ -3,7 +3,10 @@
 Every table under `paper/tables/` is written by
 `python scripts/make_boba_paper_tables.py --analysis output-boba/analysis --out paper/tables`,
 except `paper/tables/sitting_by_magnitude.tex`, which `scripts/sitting_by_magnitude.py`
-writes (Section 5 below), and the hand-written caption wrapper
+writes (Section 5 below), `known_variance.tex` (`scripts/checks/known_variance_ship.py`,
+Section 5), `decision_map.tex` (`scripts/checks/decision_map.py`, Section 6),
+`winners_curse.tex` and `winners_curse_landscapes.tex` (`scripts/checks/winners_curse.py
+report`, Section 2), and the hand-written caption wrapper
 `paper/tables/benchmarks_wrapper.tex`; every figure under `paper/figures/` is written by
 `python scripts/make_paper_figures.py`.
 This file records the commands that produce the analysis outputs those two read,
@@ -60,7 +63,9 @@ they are in Sections 3 and 4 below.
 ```
 python scripts/diagnose_gp_noise.py --input-dir output-boba --per-cell 3 --at-iterations 8,15,25,50
 python scripts/analyse_boba_robustness.py --input-dir output-boba --output-dir output-boba/analysis
-    # among its outputs: descriptor_vif.csv (the VIFs of the primary descriptor model's own design,
+    # also ceiling_screen.csv (clean runs at the optimum at trial 21 and at T, and the share with no post-onset
+    # gain) and headroom_screen.csv's low_headroom column (formerly the inverted ceiling_free; not a ceiling test).
+    # Among its other outputs: descriptor_vif.csv (the VIFs of the primary descriptor model's own design,
     # indicators included: the tab:descriptors column), descriptor_vif_all.csv (the seven-descriptor
     # design: log opt_z 9.2, sparsity 5.8, skew 6.3), bias_onset0_control.csv (with landscape-,
     # stream- and two-way clustered SEs) and mediator_model_normalised.csv (the opt_z-free rows on
@@ -68,10 +73,17 @@ python scripts/analyse_boba_robustness.py --input-dir output-boba --output-dir o
 python scripts/factor_variance_shares.py               # factor_variance_shares.csv: main-effect shares on both responses (fragility as a fraction of opt_z; excess_sd in landscape SDs), the factor sentence of Section 4
 python scripts/rescore_ship_rules.py                   # ship_rules_per_run.csv
 python scripts/analyse_ship_rules.py                   # ship_rules_recovery.csv: the cautious rule's 10.1% [4.6, 15.9] at price 0.015 (gaussian, 0.25 sigma and above, ten acquisitions, seeds 7-16)
+    # recovered_suppressed and n_cost_negative flag shares whose cost is near zero or negative on a landscape; the
+    # BH family is arm x rule x error process across that process's variants (fdr_family_size; until 2026-10-09
+    # bias was corrected over two cells only)
 python scripts/decompose_regret.py --input-dir output-boba
+    # excess_selection_share_suppressed: no share at 0.05 sigma or at 0.25 sigma from trial 21 (tab:dose prints --);
+    # a missing opt_z raises
 python scripts/onset_bound.py                          # review/onset_bound.{csv,md} and onset_bound_runs.parquet (tracked: the input of checks/mo_onset_bound.py)
 python scripts/remedy_decomposition.py
-python scripts/smooth_subset_and_gp_diagnostics.py
+python scripts/smooth_subset_and_gp_diagnostics.py --reuse-gp
+    # re-aggregates review/gp_diagnostics_per_run.csv; the three convex or unimodal landscapes get a range, not an
+    # interval (tab:smooth); without --reuse-gp it refits the 800 GPs first
 python scripts/bootstrap_coverage.py                   # review/bootstrap_coverage.csv: the selection-share t interval [32.7, 51.0] and the 20,000-resample percentile interval [33.6, 50.2]
 python scripts/analyse_pilot_frag.py                   # pilot_frag_summary.csv (tab:pilot: pooled columns over n = 80 landscape-by-magnitude cells)
 python scripts/checks/frag_residuals.py > output-boba/analysis/review/register_checks/frag_residuals.txt
@@ -80,8 +92,22 @@ python scripts/checks/frag_residuals.py > output-boba/analysis/review/register_c
     # model (0.44) and of the descriptors with the magnitude (0.41), reusing analyse_boba_robustness's cells
 python scripts/checks/floor_deployed.py > output-boba/analysis/review/register_checks/floor_deployed.txt
     # the floors' absolute deployed regret against each acquisition at onsets 0 and 20: paired landscape-bootstrap
-    # differences (2000 resamples), Holm over the ten comparisons, a signed-rank check, and the split of the
-    # deployed excess into search and selection (Section 6, 'On the deployed design'); writes review/floor_deployed.csv
+    # differences (100,000 resamples), a t test and a signed-rank test, each with Holm over the ten comparisons
+    # (at 5 sigma only LogPI, by the bootstrap alone, adjusted p 0.03; at 1 sigma six acquisitions under all three),
+    # and the split of the deployed excess into search and selection (Section 6); writes review/floor_deployed.csv
+python scripts/checks/ceiling_clean_runs.py > output-boba/analysis/review/register_checks/ceiling_clean_runs.txt
+    # after onset_bound.py and analyse_boba_robustness.py: the clean runs at the optimum per landscape (four laws
+    # ceiling-limited from trial 21) and the late-onset numbers with and without them (review/ceiling_clean_runs.csv,
+    # ceiling_sensitivity.csv): the controls of Section 3.5 and Appendix A.1
+python scripts/checks/winners_curse.py scan --workers 4
+    # reads the git-ignored run logs of output-boba, -confirmatory, -budget25 and -budget100 (about 5 minutes) and
+    # writes review/winners_curse_runs.parquet (git-ignored); rerun it after any change to apply_sensor_error
+python scripts/checks/winners_curse.py report
+    # selection loss as a winner's curse on the visited designs (Section 5, app:winners): stops unless the error
+    # streams replay exactly and regret_decomposition.csv and per_landscape_headline.csv reproduce; writes
+    # review/winners_curse_{cells,landscapes,onset,budget,budget_contrast,checks}.csv,
+    # register_checks/winners_curse.txt and paper/tables/winners_curse{,_landscapes}.tex (tab:winners,
+    # tab:winnerslandscapes); make_paper_figures.py draws figures/winners_curse.pdf from winners_curse_landscapes.csv
 python scripts/checks/friedman_multiplicity.py > output-boba/analysis/review/register_checks/friedman_multiplicity.txt
     # BH, Holm and Bonferroni over the 32 Friedman p-values of the acquisition ranking (28 raw, 28 BH, 25 Holm; median W 0.247)
 python scripts/test_confirmatory_hypotheses.py --screening output-boba --confirmatory output-boba-confirmatory
@@ -194,6 +220,15 @@ python scripts/replay_end_of_study.py --workers 5 --output-dir output-boba/analy
 python scripts/replay_end_of_study.py --workers 5 --output-dir output-boba/analysis/end_of_study_kwide --acquisitions logei,qnei --tournament-k 16,20,25,30 --confirm-k 2
     # the k-sweep and k-wide replays over the three standard arms (the default --arms); checked by
     # byte-identical spot reruns of published stems
+python scripts/replay_end_of_study.py --workers 5 --summary-only
+python scripts/replay_end_of_study.py --workers 5 --output-dir output-boba/analysis/end_of_study_ksweep --acquisitions logei,qnei --tournament-k 2,3,5,8,12 --confirm-k 2,4,6 --summary-only
+python scripts/replay_end_of_study.py --workers 5 --output-dir output-boba/analysis/end_of_study_kwide --acquisitions logei,qnei --tournament-k 16,20,25,30 --confirm-k 2 --summary-only
+    # rerun 2026-10-09 from the per-run files: n_looks and unused_trials per tournament row and
+    # end_of_study_looks.csv (k = 30 shows every distinct prefix design once, 19.6 on average; k = 25, 20, 16 and 12
+    # fall short in 8.4%, 4.0%, 1.8% and 0.3% of runs), and end_of_study_claims.csv with both claim definitions
+    # (the fresh-mean claim 6.6% when runs whose chosen design is the initial design may claim, 6.3% [4.8, 8.2]
+    # when they make none). The recovery tables were restored, not rewritten: they predate summarise's interval
+    # refusal, and a rewrite would blank intervals in low-cost cells no published number uses
 python scripts/replay_end_of_study.py --arms output-boba --output-dir output-boba/analysis/end_of_study_ksweep_seq --tournament-k 2,3,5,8,12 --confirm-k 2,4,6 --rho 1,0.5 --sitting-process sequential --workers 12 --resume
 python scripts/replay_end_of_study.py --arms output-boba --output-dir output-boba/analysis/end_of_study_kwide_seq --tournament-k 16,20,25,30 --confirm-k 2 --rho 1,0.5 --sitting-process sequential --workers 12 --resume
     # the sitting as a sequence of trials: the drift ramp and the AR(1) state continue through it, candidates in random order
@@ -203,7 +238,15 @@ python scripts/replay_end_of_study.py --arms output-boba --output-dir output-bob
 for sd in 0 0.1 0.25 0.5; do python scripts/replay_end_of_study.py --arms output-boba-slip,output-boba-misclick --tournament-k 5 --confirm-k "" --rho 1 --slip-look-sd $sd --rerate-dirs none --output-dir output-boba/analysis/end_of_study_slipsd$sd --workers 12 --resume; done
     # the input arms' sitting over the assumed look SD (the 0.25 run reproduces end_of_study)
 python scripts/replay_end_of_study.py --arms output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/end_of_study_fresh --acquisitions logei,qnei,ucb --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian --stds 0.05,0.25,1.0,5.0 --onsets 0,20 --tournament-k 2,5,12 --confirm-k 2 --rho 1 --rerate-dirs none
+python scripts/replay_end_of_study.py --arms output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/end_of_study_fresh --acquisitions logei,qnei,ucb --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian --stds 0.05,0.25,1.0,5.0 --onsets 0,20 --tournament-k 2,5,12 --confirm-k 2 --rho 1 --rerate-dirs none --summary-only
+    # the same summaries for the untouched seeds (both claim definitions)
 python scripts/rescore_ship_rules.py --input-dir output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/ship_rules_fresh --acquisitions logei,ei,qei,pi,logpi,qpi,ucb,qucb,qnei,greedy --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian
+python scripts/replay_end_of_study.py --arms output-boba-confirmatory --output-dir output-boba-confirmatory/analysis/end_of_study_fresh_k16 --acquisitions logei,qnei,ucb --seeds 27,28,29,30,31,32,33,34,35,36 --error-models gaussian --stds 0.05,0.25,1.0,5.0 --onsets 0,20 --tournament-k 16 --confirm-k "" --rho 1 --rerate-dirs none --workers 8
+python scripts/checks/gated_sitting.py fresh-k16 > output-boba/analysis/review/register_checks/fresh_k16.txt
+    # post hoc: the sitting of sixteen on the untouched seeds 27-36 (LogEI and qNEI, gaussian): +0.146 [0.094, 0.200]
+    # at 5 sigma from trial 21, +0.121 over LCB1 and +0.064 over LCB2 (Holm over the eight cells 0.007 and 0.11),
+    # +0.009 [-0.020, +0.040] over the sitting of twelve; review/gated_sitting_fresh_k16.csv (Section 7, app:heldout).
+    # output-boba-confirmatory is git-ignored: force-add the replay's named files only
 python scripts/budget_split.py --workers 5 --ksweep-dir output-boba/analysis/end_of_study_ksweep,output-boba/analysis/end_of_study_kwide --k-grid 2,3,5,8,12,16,20,25,30
     # the derived budget rule as published, rho = 1 (the paper's sitting): budget_split_derived.csv and
     # budget_split_policies.csv (reproduced byte for byte), budget_split_by_onset.csv (all seeds and the
@@ -231,21 +274,25 @@ python scripts/checks/budget_split_by_onset.py
     # search-term inflation from the logs, the posterior-mean-to-LCB and clairvoyant counterfactuals, the
     # clean-twin prices, and a reproduction of heldout_remedies. Its 'gains at 0.05 sigma' block is not a price.
 python scripts/replay_hitl_remedies.py --input-dir output-boba --workers 8
-    # hitl_remedies/: the best-arm (LUCB) sitting against one look each to the top eight at half the
-    # idiosyncratic SD, seeds 7-16: 16.1% [10.8, 20.6] at price 0.017 against 18.7% [13.1, 23.6] at 0.015
-    # (hitl_remedies_recovery.csv, error_model pooled, procedures lucb_k8_rho0.5 and tournament_k8_lcb_rho0.5_look)
+    # hitl_remedies/ (rerun 2026-10-09 with the corrected best-arm rule: kriging-anchored bounds of one SD, the
+    # first look per candidate shared with the tournament; every LUCB number before that date is void): at eight
+    # looks and the full idiosyncratic SD the best-arm sitting recovers 3.4% [-2.5, 8.8] at price 0.024 against
+    # 9.7% [4.8, 14.0] at 0.015 for one look each, and at half the SD 9.6% [3.0, 15.4] against 18.7% [13.1, 23.6]
+    # (hitl_remedies_recovery.csv, error_model pooled, procedures lucb_k8_rho* and tournament_k8_lcb_rho*_look).
+    # The seven remedy replays of Section 6 below were rerun with it; their non-LUCB rows are unchanged
 python scripts/heldout_remedies.py
     # review/heldout_remedies.{csv,md}: held-out scopes, landscapes gaining and Holm p (section 4_holm: columns
     # scope, landscapes_gaining_test, p_holm_core_test, p_holm_all_test), for Section 7 and the Multiplicity
     # paragraph of Appendix E.3: the cautious rule's held-out 10.7% [5, 16] on seeds 12-16, the five rho-0.5
-    # sitting survivors, fixed k = 5 (0.25), k = 8 (13 of 20, 0.27), k = 30 (0.029), and the best-arm sitting of
-    # eight looks at half the idiosyncratic SD (17 of 20, adjusted p = 0.008). Name the Holm family with every p.
+    # sitting survivors, fixed k = 5 (0.27), k = 8 (13 of 20, 0.29), k = 30 (0.03); no best-arm sitting survives
+    # (the strongest gains on 14 of 20, adjusted p 0.20), and section 4d tests each against one look each at the same
+    # k and noise (ahead on at most 5 of 20, Holm p <= 0.011 over the four pairs). Name the Holm family with every p.
     # Section 4b_holm_rank_scope: the rank rules tested on the gross-fault and capped arms' seeds 12-16, the scope
     # of their recoveries (ordinal_lcb1 48.8% [35, 63], 19 of 20, p 5.7e-6; 37.9% [31, 45], 20 of 20, p 1.9e-6;
     # Holm 1.4e-4 and 5.1e-5 over the 27 with the two main-sweep rank tests replaced, column
     # p_holm_core_lcb1_replaced_test). Section 4c_holm_lucb_comparators: the four one-look sittings the best-arm
     # sittings compete with, added to the all family (45 tests; the top-eight one at half the SD gains on 18 of
-    # 20, adjusted p 0.0086; lucb_k8_rho0.5 0.0086; all nine all-family survivors survive). Appendix E.3.
+    # 20, adjusted p 0.0086; all eight all-family survivors survive). Appendix E.3.
 python scripts/sitting_by_magnitude.py
     # the sitting cell by cell against the standard process and the zero-trial ship rules on the same runs,
     # four processes pooled: PM, LCB1 and LCB2 after 50 trials; the sitting's paired increments over LCB1, LCB2
@@ -274,6 +321,15 @@ python scripts/checks/sitting_sequential.py > output-boba/analysis/review/regist
     # cell, the derived rule, the tab:heldout k row with its landscape-split column, the optimism of the choice
     # of k, the 41-procedure Holm family), plus the slip-SD and spike summaries. Its shared side must reproduce
     # the published outputs first, and it exits non-zero otherwise.
+python scripts/checks/gated_sitting.py refit --workers 8
+    # post hoc: the noise SD of the GP that ranks each sitting's candidates, refitted on trials 1..T-k (T-k = 34
+    # and 48) for every noisy run and clean twin of LogEI and qNEI on seeds 7-16 and 27-36; needs the run logs,
+    # about 12 minutes; writes review/gated_sitting_noise.csv.gz (tracked) and stops unless every refit
+    # reproduces the replay's top candidate to 1e-9
+python scripts/checks/gated_sitting.py score > output-boba/analysis/review/register_checks/gated_sitting.txt
+    # the gated sittings G16 and G2: thresholds chosen on seeds 7-11 by the rule fixed in advance (1 and 0.6
+    # landscape SDs), scored on 12-16 and 27-36, the threshold sensitivity and the scale-free gate;
+    # review/gated_sitting{.csv,_sensitivity.csv,_selection.json} (Section 7, tab:remedies, app:gated)
 ```
 
 ## 6. Process changes, faulty raters and ties
@@ -288,6 +344,12 @@ python scripts/analyse_boba_mo.py
     # output-boba-mo/analysis: the headroom screen at 0.15 (mo_headroom.csv: DH2 0.0, Penicillin 0.197), the
     # dose-response, the acquisition agreement and the cross-arm floor-gap cells (mo_vs_scalar.csv); all six
     # outputs reproduce byte for byte
+python scripts/bo_synthetic_error_simulation.py --functions all --acq-list shiplcb --seeds 7,8,9,10,11 --jitter-stds 0.05,0.25,1.0,5.0 --jitter-iterations 0,20 --error-models gaussian --n-jobs 16 --output-dir output-boba-idea-shiplcb2 --resume
+for d in output-boba-idea-shiplcb2/*/; do python scripts/evaluate_research_question.py --input-dir $d --output-dir ${d}evaluation; done
+    # the ship-rule acquisition rerun after a fault in the first arm (output-boba-idea-shiplcb) made every trial
+    # fall back to a random proposal; 0 fallbacks here. analyse_boba_adaptations' idea-shiplcb rows read this arm
+    # (+7% [-7, 21] of the deployed cost against LogEI, price +0.2 points). The simulator now refuses to mark a
+    # sweep complete when an acquisition fell back (--allow-acq-fallback overrides), and load() raises on such runs
 python scripts/analyse_boba_adaptations.py
     # adaptations_recovery.csv, adaptations_per_dataset.csv (per-dataset cost, gain, price and recovery) and
     # adaptations_extra_runs.csv: tab:adapt, tab:budgetneutral, tab:remedies, Appendices E.4 and E.5. The
@@ -329,6 +391,23 @@ python scripts/changepoint_compare.py
     # false-alarm budgets (changepoint_detectors.csv), and the freeze rule's own operating point with every
     # detector re-tuned to its rate and a check against rule A's logged alarms (changepoint_freeze_point.csv,
     # changepoint_metadata.json). Runs after replay_stopping.py; about 6 s
+python scripts/checks/known_variance_ship.py --workers 8
+    # post hoc: the final refit given the rater's noise variance (train_Yvar) at ten levels of knowledge, for the
+    # posterior-mean, LCB1 and LCB2 rules. Needs the run logs of output-boba, -confirmatory and -knownnoise, the
+    # git-ignored stopping_per_run.csv of replay_stopping.py above (the CUSUM levels) and ship_rules_fresh of
+    # Section 5 (the control); caches the refits in review/known_variance_ship/per_run/ (git-ignored, 109 MB) and
+    # writes review/known_variance_ship_per_run.csv.gz. 381,193 GP fits, 54 minutes on eight workers
+python scripts/checks/known_variance_ship.py --stage score
+    # from the tracked per-run table only, about four minutes: review/known_variance_ship_{cells.csv,selection.json},
+    # register_checks/known_variance_ship.txt and paper/tables/known_variance.tex (tab:knownvar, app:knownvar,
+    # the Section 7 paragraph and tab:remedies rows). The learned level must reproduce ship_rules_per_run.csv bit
+    # for bit; the price of every level given the variance is zero by construction
+python scripts/checks/decision_map.py > output-boba/analysis/review/register_checks/decision_map.txt
+    # post hoc: F1 (freeze only on an alarm) against the published freeze rule, and the per-cell choice of
+    # procedure on seeds 7-11 scored on 12-16, in four candidate sets (published; with F1 and the gated sittings;
+    # with the self-gating combinations; with the known-variance rules at the knowledge each policy has). Reads
+    # the git-ignored stopping_per_run.csv, gated_sitting_noise.csv.gz and known_variance_ship_per_run.csv.gz, so
+    # it runs after both; writes review/decision_map_*.csv and paper/tables/decision_map.tex (tab:decisionmap, app:decisionmap)
 python scripts/design_rules_from_pilot.py --ceiling-seeds 7,8,9,10,11
     # design_rule_{instrument,instrument_screen,sizing}.csv, reproduced byte for byte: the instrument screen
     # (Spearman 0.65 over the 40 landscape-by-magnitude cells at 0.25 and 1 sigma; half split 0.153 / 0.316;
@@ -364,11 +443,14 @@ sensitivity, the ehmi sigma_f on two surfaces, the companion ratio interval and
 its estimators, the augmentation contrast per dataset, the matched opt_z, the
 oracle-isolation checks of Section 4 above, the anchor interval propagated, the
 untouched-seed test, the sitting against the zero-trial ship rules and under the
-sequential rating process, the budget rule by onset, the floors' deployed
-regret, the Friedman multiplicity, the archival instruments' scales, the
-multi-objective onset bound, the extra-trial reach, the one-shot predictor's
-residuals and out-of-sample fit, the comparison loop's determinism and the
-tie-break sensitivity. `python scripts/run_checks.py` runs them all in dependency
+sequential rating process, the budget rule by onset, the ship rules given the
+rater's noise variance, the gated sittings, the decision map, the floors' deployed
+regret, the ceiling-limited clean runs, the Friedman multiplicity, the archival
+instruments' scales, the multi-objective onset bound, the extra-trial reach, the
+winner's curse, the one-shot predictor's residuals and out-of-sample fit, the
+comparison loop's determinism, the library-version rerun and the tie-break
+sensitivity (Sections 2, 5, 6 and 9 above give the direct invocations of the
+new ones). `python scripts/run_checks.py` runs them all in dependency
 order and writes each one's standard output to
 `output-boba/analysis/review/register_checks/<check>.txt`; `--only a,b` runs a
 subset, and the direct invocations given elsewhere in this file are equivalent.
@@ -469,7 +551,24 @@ python -m pytest tests/test_regression_logged_run.py -q -p no:cacheprovider
     # the current simulator reproduces a logged main-sweep run (branin, LogEI, seed 7, gaussian 1 sigma from
     # trial 21) and its clean twin exactly; skips where output-boba is absent
 python -m pytest tests/test_tie_break.py tests/test_sitting_by_magnitude.py tests/test_replay_sitting_process.py -q -p no:cacheprovider
+<venv>/Scripts/python scripts/checks/version_sensitivity.py run --out-dir output-version-check --workers 12
+<venv>/Scripts/python scripts/checks/version_sensitivity.py run --out-dir output-version-check --workers 16 --seeds 12,13,14,15,16
+<venv>/Scripts/python scripts/checks/version_sensitivity.py evaluate --out-dir output-version-check
+python scripts/checks/version_sensitivity.py compare --out-dir output-version-check
+    # the reproducibility statement's library check: <venv> is a separate, git-ignored environment with torch
+    # 2.14.1+cpu, pandas 3.0.6, scikit-learn 1.9.1, matplotlib 3.11.2, pyarrow 26.0.0 and tqdm 4.70.1 over the
+    # pinned BoTorch commit, NumPy and SciPy. It reruns the main sweep's LogEI and qNEI runs in two gaussian cells
+    # (1 sigma from the first rating, 5 sigma from trial 21; twenty landscapes, seeds 7-16) with the settings of
+    # output-boba/run_metadata.json into output-version-check/ (git-ignored), and compare writes
+    # review/version_sensitivity.csv and register_checks/version_sensitivity.txt. In that environment
+    # tests/test_regression_logged_run.py checks the first designs and skips the exact comparison
 ```
+
+`requirements.txt` and `pyproject.toml` pin BoTorch to commit eea35f51a and SciPy
+below 1.19: the 0.18.1 release on PyPI and SciPy 1.19 or later take another path
+through L-BFGS-B (`tests/test_repro_hygiene.py` checks the pins). The simulator
+switches off BoTorch's fused qLogEHVI C++ kernel, so multi-objective runs take
+the pure-Python path every logged run took.
 
 Of the 71 BO runs checked (one per output directory and archival dataset, and
 `iso_branin` for each oracle-isolation arm), 64 reproduce exactly from their

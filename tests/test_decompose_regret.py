@@ -63,9 +63,12 @@ def test_regret_is_divided_by_the_landscapes_achievable_improvement():
     assert branin["deployed"].iloc[0] == pytest.approx(1.0)
 
 
-def test_a_landscape_absent_from_the_stats_is_left_unscaled():
-    out = dr.decompose(_runs(dataset=["zzz"] * 4), {})
-    assert out["deployed"].iloc[0] == pytest.approx(1.0)
+def test_a_landscape_absent_from_the_stats_raises():
+    """A missing opt_z once left that landscape in raw units (1.0), mixing units in every mean."""
+    with pytest.raises(KeyError, match="no opt_z for \\['zzz'\\]"):
+        dr.decompose(_runs(dataset=["zzz"] * 4), {})
+    with pytest.raises(ValueError, match="not a positive number"):
+        dr.decompose(_runs(), {"ackley": 2.0, "branin": 0.0})
 
 
 def test_selection_loss_cannot_be_negative():
@@ -120,3 +123,56 @@ def test_the_excess_share_uses_the_identically_seeded_clean_twin():
     assert row["n_paired"] == 4
     assert row["mean_excess_selection"] == pytest.approx(row["mean_selection"])
     assert 0.0 < row["excess_selection_share"] <= 1.0
+    # Positive and well above 0.01 of opt_z on both landscapes: a share to quote.
+    assert row["excess_selection_share_suppressed"] == ""
+    assert row["n_landscapes_excess_negative"] == 0
+
+
+def _clean(observed: list[float]) -> pd.DataFrame:
+    """Clean twins: exact ratings, so the best observed design is the best visited one."""
+    return dr.decompose(_runs(regret_best_observed=observed, regret_best_visited=observed, baseline=True), OPT_Z)
+
+
+def test_the_excess_share_is_flagged_where_the_deployed_excess_is_negative_on_a_landscape():
+    """A share of a denominator that changes sign is not a share (AGENTS.md): the value stays,
+    the reason is given, and the absolute selection loss is what a cell may quote."""
+    noisy = dr.decompose(_runs(), OPT_Z)
+    # branin's clean twin ships worse designs (regret 10, i.e. 2.5 of opt_z) than its noisy runs.
+    row = dr.summarise(noisy, _clean([0.4, 0.4, 10.0, 10.0]), np.random.default_rng(0))
+    assert row["n_landscapes_excess_negative"] == 1
+    assert "negative on 1 of 2 landscapes" in row["excess_selection_share_suppressed"]
+    assert dr.share_is_suppressed(row["excess_selection_share_suppressed"])
+    assert np.isfinite(row["excess_selection_share"])                 # kept, not blanked
+    assert row["mean_excess_selection"] == pytest.approx(row["mean_selection"])
+
+
+def test_the_excess_share_is_flagged_where_the_deployed_excess_is_near_zero():
+    noisy = dr.decompose(_runs(), OPT_Z)
+    # Clean deployed 0.745 and 1.495 of opt_z against noisy means 0.75 and 1.5: excess 0.005.
+    row = dr.summarise(noisy, _clean([1.49, 1.49, 5.98, 5.98]), np.random.default_rng(0))
+    assert row["mean_excess_deployed"] == pytest.approx(0.005)
+    assert row["n_landscapes_excess_negative"] == 0
+    assert "below 0.01" in row["excess_selection_share_suppressed"]
+
+
+def test_the_share_guard_draws_nothing_from_the_generator():
+    """The flags are computed after the bootstrap, so every interval of the decomposition
+    (and of smooth_subset_and_gp_diagnostics, which calls summarise) is unchanged."""
+    noisy = dr.decompose(_runs(), OPT_Z)
+    used = np.random.default_rng(11)
+    dr.summarise(noisy, _clean([0.4, 0.4, 10.0, 10.0]), used)
+    expected = np.random.default_rng(11)
+    dummy = np.ones(2)                     # the draws depend only on the number of landscapes
+    dr._boot_ratio(dummy, dummy, expected)
+    dr._boot_ratio(dummy, dummy, expected)
+    assert used.bit_generator.state == expected.bit_generator.state
+
+
+def test_a_rule_recovery_of_a_near_zero_selection_loss_is_flagged():
+    # Selection loss 0.005 of opt_z on ackley and 0.0025 on branin: below 0.01 pooled.
+    tiny = dr.decompose(_runs(regret_best_visited=[0.99, 1.99, 3.99, 7.99]), OPT_Z)
+    rec = dr.rule_recovery(tiny, np.random.default_rng(0))
+    assert "below 0.01" in rec["lcb2_selection_recovered_suppressed"]
+    assert np.isfinite(rec["lcb2_selection_recovered"])
+    big = dr.rule_recovery(dr.decompose(_runs(), OPT_Z), np.random.default_rng(0))
+    assert big["lcb2_selection_recovered_suppressed"] == ""

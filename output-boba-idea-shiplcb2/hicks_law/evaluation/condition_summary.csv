@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,mean_response_l2_excess,median_response_l2_excess,mean_final_simple_regret_excess_true,median_final_simple_regret_excess_true,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,std_auc_simple_regret_excess_true,ci95_low_auc_simple_regret_excess_true,ci95_high_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_final_inference_simple_regret_excess_true,acq_opt_failures
+hicks_law,value,exact,gaussian,0,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,-0.7757949336040234,-0.09340318983941032,1.6656667185557288,-2.2631758639175885,0.14040585616030016,-0.015832549665388218,26.317676134333823,0.0,0
+hicks_law,value,exact,gaussian,0,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,5.892250709497982,0.38728814943130985,14.026733525905954,-0.9826084299312875,18.444728514842673,0.12025001447955067,32.98572177743583,0.0,0
+hicks_law,value,exact,gaussian,0,1.0,,shiplcb,5,0.0,0.0,0.07679018774365058,0.0,22.803905679489553,3.4501212851055527,36.08542354372114,-0.922981665429927,55.28303464000455,0.4653858301936644,49.8973767474274,0.23373305886333035,0
+hicks_law,value,exact,gaussian,0,5.0,,shiplcb,5,0.0,0.0,1.7323021157979164,1.689969533686349,103.03175490170982,99.62392625974854,28.525583078985903,80.36105467615548,124.7572057053947,2.1026888755450983,130.12522596964766,4.091159241361494,0
+hicks_law,value,exact,gaussian,20,0.05,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,27.09347106793785,0.0,0
+hicks_law,value,exact,gaussian,20,0.25,,shiplcb,5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,27.09347106793785,0.0,0
+hicks_law,value,exact,gaussian,20,1.0,,shiplcb,5,-0.6695749640881574,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,27.09347106793785,0.35735754971889105,0
+hicks_law,value,exact,gaussian,20,5.0,,shiplcb,5,-3.81003710554522,-3.0709533305419354,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,27.09347106793785,0.3035050591172696,0

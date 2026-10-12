@@ -1,0 +1,135 @@
+Selection loss as a winner's curse on the visited set (scripts/checks/winners_curse.py).
+Selection loss = deployed minus best-visited regret at the final trial; predicted = its mean over 4000 fresh error paths of the run's own process on the run's own visited designs, standard ship rule (first index of the best rating). Ratios of landscape means over twenty landscapes, units of opt_z unless a line says landscape SDs; 95% percentile intervals from 2000 landscape resamples, which treat the landscapes (which share seeds) as independent clusters.
+
+Inputs and reproduction checks
+  main      output-boba                 64000 noisy runs,  2000 clean twins (main sweep, ten acquisitions, seeds 7-16)
+  untouched output-boba-confirmatory    16000 noisy runs,  2000 clean twins (untouched seeds 27-36, ten acquisitions, GAUSSIAN)
+  T25       output-boba-budget25         4800 noisy runs,   600 clean twins (T = 25, six acquisitions, seeds 7-11, GAUSSIAN)
+  T100      output-boba-budget100        4800 noisy runs,   600 clean twins (T = 100, six acquisitions, seeds 7-11, GAUSSIAN)
+  the error stream rebuilt from each run's noise seed reproduces its logged ratings and errors exactly in 89600 of 89600 noisy runs (largest deviation 0.0e+00); pre-onset ratings are exact in 89600
+  realised selection loss reproduces each log's deployed minus search regret to 1e-12 (checked in scan); largest |max g - g[d] - (deployed - search)| 7.1e-15
+  main sweep against ship_rules_per_run.csv: 66000 runs matched, 0 unmatched, largest deviation 0.0e+00 (deployed and search regret)
+  main sweep against regret_decomposition.csv (45 rows): largest deviation 3.3e-16 over n_runs, mean_deployed, mean_search, mean_selection, selection_share, mean_excess_deployed, mean_excess_search, mean_excess_selection, excess_selection_share
+  main sweep against per_landscape_headline.csv (800 landscape-cell rows): largest deviation 6.7e-16 (deployed excess, selection share)
+  Monte Carlo standard error of a cell's predicted selection loss, at most: main 0.06%, untouched 0.06%, T25 0.15%, T100 0.10% of the prediction
+
+Main sweep, four processes pooled, ten acquisitions: selection loss at the final trial
+  cell                           realised predicted  realised/predicted   share realised    share predicted   set effect        
+  0.05 sigma from the first rating   0.0045    0.0042  1.07 [1.03, 1.12]    -- (reference negative on 1 of 20 landscapes) --                1.26 [1.11, 1.52] 
+  0.25 sigma from the first rating   0.0287    0.0255  1.12 [1.10, 1.15]    31.7% [24, 40]    28.2% [21, 36]    1.51 [1.29, 1.83] 
+  1 sigma from the first rating    0.1243    0.1113  1.12 [1.09, 1.14]    41.8% [34, 50]    37.5% [30, 45]    1.76 [1.50, 2.14] 
+  5 sigma from the first rating    0.4260    0.4049  1.05 [1.04, 1.07]    59.9% [51, 68]    56.9% [49, 65]    1.97 [1.65, 2.35] 
+  0.05 sigma from trial 21         0.0043    0.0040  1.07 [1.04, 1.09]    -- (reference 0.0078 below 0.01; reference negative on 4 of 20 landscapes) --                1.24 [1.11, 1.50] 
+  0.25 sigma from trial 21         0.0245    0.0223  1.10 [1.08, 1.12]    -- (reference negative on 1 of 20 landscapes) --                1.35 [1.18, 1.62] 
+  1 sigma from trial 21            0.0946    0.0891  1.06 [1.04, 1.08]    69.5% [59, 79]    65.5% [55, 74]    1.46 [1.18, 1.88] 
+  5 sigma from trial 21            0.3691    0.3629  1.02 [1.00, 1.03]    83.1% [75, 89]    81.7% [74, 88]    2.06 [1.63, 2.59] 
+  (set effect = predicted selection loss on the run's visited designs over that on its clean twin's, same error paths)
+
+Realised / predicted by process (main sweep, ten acquisitions)
+  gaussian  0.05/0: 1.07 [1.01, 1.13]  0.25/0: 1.14 [1.10, 1.18]  1/0: 1.10 [1.06, 1.14]  5/0: 1.03 [1.01, 1.05]  0.05/20: 1.13 [1.06, 1.19]  0.25/20: 1.05 [1.01, 1.09]  1/20: 1.02 [0.97, 1.06]  5/20: 0.98 [0.95, 1.01]
+  bias      0.05/0: 1.00 [0.95, 1.06]  0.25/0: 1.09 [1.05, 1.13]  1/0: 1.12 [1.08, 1.16]  5/0: 1.03 [1.00, 1.06]  0.05/20: 1.05 [0.98, 1.12]  0.25/20: 1.05 [1.01, 1.09]  1/20: 0.99 [0.97, 1.01]  5/20: 0.95 [0.92, 0.98]
+  drift     0.05/0: 1.05 [0.99, 1.13]  0.25/0: 1.05 [1.00, 1.11]  1/0: 1.05 [1.01, 1.09]  5/0: 1.03 [1.01, 1.05]  0.05/20: 1.00 [0.92, 1.11]  0.25/20: 1.10 [1.04, 1.15]  1/20: 1.02 [0.99, 1.04]  5/20: 1.03 [1.01, 1.05]
+  ar1       0.05/0: 1.19 [1.08, 1.31]  0.25/0: 1.21 [1.13, 1.28]  1/0: 1.21 [1.17, 1.26]  5/0: 1.12 [1.08, 1.16]  0.05/20: 1.12 [1.03, 1.20]  0.25/20: 1.22 [1.15, 1.29]  1/20: 1.27 [1.21, 1.33]  5/20: 1.14 [1.10, 1.18]
+  range over the 8 pooled cells 1.02 to 1.12; over the 32 process cells 0.95 to 1.27
+
+The visited set: designs near the best (main sweep, pooled; trials within 0.1 landscape SD of the best visited, the best included; distinct designs in brackets) and within sigma_e of it
+  0.05 sigma from the first rating noisy  16.6 (13.1)  clean twin  14.8 (11.7);  within sigma_e: noisy  14.4, clean  13.2 of 50 trials
+  0.25 sigma from the first rating noisy  14.1 (11.5)  clean twin  14.8 (11.7);  within sigma_e: noisy  20.4, clean  18.2 of 50 trials
+  1 sigma from the first rating  noisy   7.6 ( 6.5)  clean twin  14.8 (11.7);  within sigma_e: noisy  29.0, clean  26.4 of 50 trials
+  5 sigma from the first rating  noisy   3.4 ( 3.1)  clean twin  14.8 (11.7);  within sigma_e: noisy  48.2, clean  43.9 of 50 trials
+  0.05 sigma from trial 21       noisy  16.3 (12.8)  clean twin  14.8 (11.7);  within sigma_e: noisy  14.3, clean  13.2 of 50 trials
+  0.25 sigma from trial 21       noisy  15.7 (12.2)  clean twin  14.8 (11.7);  within sigma_e: noisy  20.7, clean  18.2 of 50 trials
+  1 sigma from trial 21          noisy  11.9 ( 8.7)  clean twin  14.8 (11.7);  within sigma_e: noisy  29.2, clean  26.4 of 50 trials
+  5 sigma from trial 21          noisy   8.4 ( 5.9)  clean twin  14.8 (11.7);  within sigma_e: noisy  45.8, clean  43.9 of 50 trials
+
+Rule of thumb, in units of the rater's noise sigma_e (landscape SDs, mean over landscapes)
+  four processes pooled:
+    0.05 sigma from the first rating shipped design below the best visited by 0.19 [0.15, 0.23] sigma_e (predicted 0.18); its rating overstates its true value by 1.60 [1.34, 1.84] sigma_e (predicted 1.61); wrong design shipped in 50.0% (predicted 48.8%)
+    0.25 sigma from the first rating shipped design below the best visited by 0.29 [0.24, 0.33] sigma_e (predicted 0.26); its rating overstates its true value by 1.97 [1.75, 2.16] sigma_e (predicted 1.95); wrong design shipped in 70.1% (predicted 67.7%)
+    1 sigma from the first rating  shipped design below the best visited by 0.39 [0.32, 0.45] sigma_e (predicted 0.34); its rating overstates its true value by 2.32 [2.22, 2.41] sigma_e (predicted 2.27); wrong design shipped in 87.0% (predicted 84.1%)
+    5 sigma from the first rating  shipped design below the best visited by 0.28 [0.23, 0.32] sigma_e (predicted 0.26); its rating overstates its true value by 2.50 [2.49, 2.51] sigma_e (predicted 2.52); wrong design shipped in 97.7% (predicted 94.9%)
+    0.05 sigma from trial 21       shipped design below the best visited by 0.18 [0.14, 0.23] sigma_e (predicted 0.17); its rating overstates its true value by 1.48 [1.22, 1.72] sigma_e (predicted 1.46); wrong design shipped in 48.9% (predicted 48.2%)
+    0.25 sigma from trial 21       shipped design below the best visited by 0.26 [0.21, 0.31] sigma_e (predicted 0.24); its rating overstates its true value by 1.83 [1.61, 2.02] sigma_e (predicted 1.81); wrong design shipped in 67.1% (predicted 65.6%)
+    1 sigma from trial 21          shipped design below the best visited by 0.30 [0.24, 0.36] sigma_e (predicted 0.28); its rating overstates its true value by 2.09 [1.97, 2.19] sigma_e (predicted 2.11); wrong design shipped in 81.0% (predicted 79.7%)
+    5 sigma from trial 21          shipped design below the best visited by 0.27 [0.21, 0.33] sigma_e (predicted 0.26); its rating overstates its true value by 2.26 [2.23, 2.28] sigma_e (predicted 2.29); wrong design shipped in 91.4% (predicted 90.4%)
+  GAUSSIAN:
+    0.05 sigma from the first rating shipped design below the best visited by 0.20 [0.15, 0.25] sigma_e (predicted 0.19); its rating overstates its true value by 1.25 [0.98, 1.50] sigma_e (predicted 1.26); wrong design shipped in 51.0% (predicted 49.5%)
+    0.25 sigma from the first rating shipped design below the best visited by 0.31 [0.26, 0.36] sigma_e (predicted 0.27); its rating overstates its true value by 1.66 [1.42, 1.87] sigma_e (predicted 1.60); wrong design shipped in 72.1% (predicted 68.6%)
+    1 sigma from the first rating  shipped design below the best visited by 0.40 [0.33, 0.46] sigma_e (predicted 0.35); its rating overstates its true value by 2.01 [1.89, 2.11] sigma_e (predicted 1.94); wrong design shipped in 87.9% (predicted 84.6%)
+    5 sigma from the first rating  shipped design below the best visited by 0.28 [0.24, 0.32] sigma_e (predicted 0.27); its rating overstates its true value by 2.16 [2.16, 2.17] sigma_e (predicted 2.21); wrong design shipped in 97.6% (predicted 94.8%)
+    0.05 sigma from trial 21       shipped design below the best visited by 0.19 [0.14, 0.24] sigma_e (predicted 0.17); its rating overstates its true value by 1.21 [0.94, 1.46] sigma_e (predicted 1.14); wrong design shipped in 49.6% (predicted 48.3%)
+    0.25 sigma from trial 21       shipped design below the best visited by 0.25 [0.19, 0.30] sigma_e (predicted 0.23); its rating overstates its true value by 1.51 [1.29, 1.69] sigma_e (predicted 1.49); wrong design shipped in 67.0% (predicted 65.5%)
+    1 sigma from trial 21          shipped design below the best visited by 0.27 [0.20, 0.34] sigma_e (predicted 0.27); its rating overstates its true value by 1.77 [1.64, 1.88] sigma_e (predicted 1.80); wrong design shipped in 79.9% (predicted 79.6%)
+    5 sigma from trial 21          shipped design below the best visited by 0.24 [0.19, 0.30] sigma_e (predicted 0.25); its rating overstates its true value by 1.99 [1.97, 2.01] sigma_e (predicted 1.98); wrong design shipped in 90.4% (predicted 89.5%)
+
+Per landscape (main sweep, four processes pooled): realised against predicted
+  0.05 sigma from the first rating Spearman over landscapes: landscape SDs 0.974, opt_z units 0.997, shares nan; realised/predicted per landscape 0.62 (hicks_law) to 1.69 (stevens); per run 0.59
+  0.25 sigma from the first rating Spearman over landscapes: landscape SDs 0.962, opt_z units 0.991, shares 0.995; realised/predicted per landscape 0.88 (ackley) to 1.20 (weber_fechner); per run 0.53
+  1 sigma from the first rating  Spearman over landscapes: landscape SDs 0.980, opt_z units 0.989, shares 0.997; realised/predicted per landscape 1.05 (rosenbrock) to 1.28 (hartmann_6); per run 0.59
+  5 sigma from the first rating  Spearman over landscapes: landscape SDs 0.973, opt_z units 0.989, shares 0.988; realised/predicted per landscape 0.99 (schwefel) to 1.10 (shekel); per run 0.75
+  0.05 sigma from trial 21       Spearman over landscapes: landscape SDs 0.988, opt_z units 0.985, shares nan; realised/predicted per landscape 0.45 (stevens) to 1.39 (hicks_law); per run 0.61
+  0.25 sigma from trial 21       Spearman over landscapes: landscape SDs 0.965, opt_z units 0.995, shares nan; realised/predicted per landscape 0.67 (hicks_law) to 1.20 (yerkes_dodson); per run 0.57
+  1 sigma from trial 21          Spearman over landscapes: landscape SDs 0.995, opt_z units 0.992, shares 0.980; realised/predicted per landscape 0.98 (rosenbrock) to 1.16 (power_law_practice); per run 0.62
+  5 sigma from trial 21          Spearman over landscapes: landscape SDs 0.989, opt_z units 0.994, shares 0.935; realised/predicted per landscape 0.97 (eggholder) to 1.10 (hartmann_6); per run 0.77
+  1 sigma from the first rating: selection share realised 4.0% (shekel) to 84.6% (powell), predicted 3.3% to 79.0%; selection loss in landscape SDs realised 0.149 to 0.606, predicted 0.141 to 0.538
+
+Onset decomposition of the deployed excess at the final trial (main sweep, four processes pooled): from the first rating against from trial 21, landscape means
+  0.05 sigma: deployed 0.015 vs 0.008, difference 0.007 [0.003, 0.011]; search 0.010 vs 0.003, difference 0.007 [0.003, 0.011]; selection 0.004 vs 0.004, difference 0.000 [-0.000, 0.001]; selection predicted 0.004 vs 0.004, difference 0.000 [-0.000, 0.000]; search part of the difference -- (reference 0.0069 below 0.01; reference negative on 5 of 20 landscapes)
+      onset ratios: deployed -- (reference 0.0078 below 0.01; reference negative on 4 of 20 landscapes); search -- (reference 0.0035 below 0.01; reference negative on 4 of 20 landscapes); selection -- (reference 0.0043 below 0.01); selection predicted -- (reference 0.0040 below 0.01); late-onset search share 0.448 (identity gap 0.0e+00)
+  0.25 sigma: deployed 0.091 vs 0.041, difference 0.050 [0.038, 0.063]; search 0.062 vs 0.016, difference 0.046 [0.034, 0.058]; selection 0.029 vs 0.025, difference 0.004 [0.002, 0.007]; selection predicted 0.026 vs 0.022, difference 0.003 [0.001, 0.005]; search part of the difference 91.6% [86, 97]
+      onset ratios: deployed -- (reference negative on 1 of 20 landscapes); search -- (reference negative on 2 of 20 landscapes); selection 1.17 [1.07, 1.28]; selection predicted 1.14 [1.06, 1.23]; late-onset search share 0.399 (identity gap 0.0e+00)
+  1 sigma: deployed 0.297 vs 0.136, difference 0.161 [0.129, 0.195]; search 0.173 vs 0.041, difference 0.131 [0.102, 0.162]; selection 0.124 vs 0.095, difference 0.030 [0.021, 0.039]; selection predicted 0.111 vs 0.089, difference 0.022 [0.013, 0.032]; search part of the difference 81.5% [75, 87]
+      onset ratios: deployed 2.18 [1.85, 2.62]; search -- (reference negative on 2 of 20 landscapes); selection 1.31 [1.21, 1.44]; selection predicted 1.25 [1.15, 1.37]; late-onset search share 0.305 (identity gap -4.4e-16)
+  5 sigma: deployed 0.711 vs 0.444, difference 0.267 [0.208, 0.325]; search 0.285 vs 0.075, difference 0.210 [0.158, 0.265]; selection 0.426 vs 0.369, difference 0.057 [0.021, 0.092]; selection predicted 0.405 vs 0.363, difference 0.042 [0.008, 0.076]; search part of the difference 78.6% [66, 91]
+      onset ratios: deployed 1.60 [1.44, 1.79]; search -- (reference negative on 1 of 20 landscapes); selection 1.15 [1.06, 1.26]; selection predicted 1.12 [1.02, 1.22]; late-onset search share 0.169 (identity gap 2.2e-16)
+
+Replication: untouched seeds 27-36 and the budget arms (GAUSSIAN)
+  untouched realised/predicted 0.05/0: 1.01 [0.95, 1.07]  0.25/0: 1.07 [1.02, 1.11]  1/0: 1.13 [1.08, 1.17]  5/0: 1.04 [1.02, 1.05]  0.05/20: 1.01 [0.94, 1.09]  0.25/20: 1.08 [1.03, 1.13]  1/20: 1.07 [1.03, 1.11]  5/20: 0.95 [0.91, 0.99]
+  T25       realised/predicted 0.05/0: 0.83 [0.72, 0.99]  0.25/0: 1.15 [1.07, 1.26]  1/0: 1.20 [1.08, 1.30]  5/0: 1.00 [0.95, 1.05]  0.05/10: 1.25 [1.04, 1.53]  0.25/10: 1.07 [0.97, 1.19]  1/10: 1.03 [0.96, 1.10]  5/10: 0.97 [0.89, 1.03]
+  T100      realised/predicted 0.05/0: 0.92 [0.85, 1.05]  0.25/0: 1.19 [1.10, 1.28]  1/0: 1.17 [1.09, 1.25]  5/0: 0.99 [0.93, 1.05]  0.05/40: 1.10 [1.00, 1.21]  0.25/40: 1.04 [0.94, 1.13]  1/40: 0.98 [0.88, 1.09]  5/40: 1.04 [0.95, 1.15]
+  main GAUSSIAN realised/predicted 0.05/0: 1.07  0.25/0: 1.14  1/0: 1.10  5/0: 1.03  0.05/20: 1.13  0.25/20: 1.05  1/20: 1.02  5/20: 0.98
+  untouched 0.05 sigma from the first rating realised 0.0043, predicted 0.0043, share realised --, predicted --
+  untouched 0.25 sigma from the first rating realised 0.0282, predicted 0.0264, share realised 29.7% [21, 39], predicted 27.8%
+  untouched 1 sigma from the first rating  realised 0.1293, predicted 0.1144, share realised 42.6% [34, 52], predicted 37.7%
+  untouched 5 sigma from the first rating  realised 0.4310, predicted 0.4158, share realised 60.2% [52, 68], predicted 58.0%
+  untouched 0.05 sigma from trial 21       realised 0.0038, predicted 0.0038, share realised --, predicted --
+  untouched 0.25 sigma from trial 21       realised 0.0225, predicted 0.0208, share realised --, predicted --
+  untouched 1 sigma from trial 21          realised 0.0839, predicted 0.0782, share realised 65.6% [55, 75], predicted 61.2%
+  untouched 5 sigma from trial 21          realised 0.3246, predicted 0.3412, share realised 81.1% [73, 88], predicted 85.3%
+
+Budget (GAUSSIAN, six acquisitions, seeds 7-11; T = 50 is the main sweep on the same scope): final trial
+  cell                          T  deployed   search selection predicted share realised    share pred.  realised/predicted
+  0.05 sigma, first rating    25    0.0117   0.0084    0.0033    0.0040 --                         --  0.83 [0.72, 0.99]
+  0.05 sigma, first rating    50    0.0028  -0.0015    0.0043    0.0043 --                         --  1.01 [0.92, 1.13]
+  0.05 sigma, first rating   100    0.0041   0.0002    0.0039    0.0042 --                         --  0.92 [0.85, 1.05]
+  0.25 sigma, first rating    25    0.0821   0.0484    0.0337    0.0293 41.0% [29, 54]          35.6%  1.15 [1.07, 1.26]
+  0.25 sigma, first rating    50    0.0703   0.0386    0.0317    0.0251 45.0% [33, 57]          35.8%  1.26 [1.16, 1.37]
+  0.25 sigma, first rating   100    0.0562   0.0281    0.0281    0.0235 --                         --  1.19 [1.10, 1.28]
+  1 sigma, first rating    25    0.3114   0.1520    0.1594    0.1330 51.2% [41, 61]          42.7%  1.20 [1.08, 1.30]
+  1 sigma, first rating    50    0.2582   0.1209    0.1373    0.1198 53.2% [44, 62]          46.4%  1.15 [1.06, 1.24]
+  1 sigma, first rating   100    0.2203   0.0977    0.1226    0.1044 55.7% [46, 64]          47.4%  1.17 [1.09, 1.25]
+  5 sigma, first rating    25    0.6859   0.2634    0.4225    0.4223 61.6% [52, 71]          61.6%  1.00 [0.95, 1.05]
+  5 sigma, first rating    50    0.6886   0.2660    0.4226    0.4340 61.4% [52, 70]          63.0%  0.97 [0.91, 1.03]
+  5 sigma, first rating   100    0.6949   0.2660    0.4289    0.4350 61.7% [52, 71]          62.6%  0.99 [0.93, 1.05]
+  0.05 sigma, 0.4 T           25    0.0070   0.0024    0.0046    0.0037 --                         --  1.25 [1.04, 1.53]
+  0.05 sigma, 0.4 T           50    0.0042  -0.0003    0.0045    0.0040 --                         --  1.14 [0.93, 1.28]
+  0.05 sigma, 0.4 T          100    0.0035  -0.0007    0.0042    0.0038 --                         --  1.10 [1.00, 1.21]
+  0.25 sigma, 0.4 T           25    0.0452   0.0188    0.0264    0.0246 58.5% [46, 70]          54.5%  1.07 [0.97, 1.19]
+  0.25 sigma, 0.4 T           50    0.0356   0.0125    0.0231    0.0228 64.9% [51, 79]          64.0%  1.01 [0.91, 1.11]
+  0.25 sigma, 0.4 T          100    0.0287   0.0077    0.0210    0.0202 --                         --  1.04 [0.94, 1.13]
+  1 sigma, 0.4 T           25    0.1704   0.0656    0.1048    0.1016 61.5% [52, 71]          59.7%  1.03 [0.96, 1.10]
+  1 sigma, 0.4 T           50    0.1262   0.0335    0.0927    0.0955 73.4% [64, 83]          75.7%  0.97 [0.90, 1.04]
+  1 sigma, 0.4 T          100    0.1006   0.0188    0.0818    0.0833 81.3% [73, 90]          82.8%  0.98 [0.88, 1.09]
+  5 sigma, 0.4 T           25    0.5023   0.1290    0.3733    0.3847 74.3% [66, 82]          76.6%  0.97 [0.89, 1.03]
+  5 sigma, 0.4 T           50    0.4720   0.0689    0.4031    0.4172 85.4% [78, 91]          88.4%  0.97 [0.92, 1.01]
+  5 sigma, 0.4 T          100    0.4623   0.0407    0.4216    0.4049 91.2% [85, 96]          87.6%  1.04 [0.95, 1.15]
+
+From T = 25 to T = 100 (same scope; ratio of landscape means T = 100 / T = 25, landscapes paired)
+  0.05 sigma, first rating  deployed -- (reference negative on 3 of 20 landscapes); search -- (reference 0.0084 below 0.01; reference negative on 4 of 20 landscapes); selection -- (reference 0.0033 below 0.01); selection_pred -- (reference 0.0040 below 0.01)
+  0.25 sigma, first rating  deployed 0.68 [0.52, 0.89]; search -- (reference negative on 1 of 20 landscapes); selection 0.83 [0.72, 0.97]; selection_pred 0.80 [0.69, 0.96]
+  1 sigma, first rating  deployed 0.71 [0.58, 0.87]; search 0.64 [0.48, 0.89]; selection 0.77 [0.65, 0.92]; selection_pred 0.78 [0.70, 0.88]
+  5 sigma, first rating  deployed 1.01 [0.89, 1.16]; search 1.01 [0.76, 1.32]; selection 1.02 [0.90, 1.15]; selection_pred 1.03 [0.93, 1.14]
+  0.05 sigma, 0.4 T         deployed -- (reference 0.0070 below 0.01; reference negative on 5 of 20 landscapes); search -- (reference 0.0024 below 0.01; reference negative on 7 of 20 landscapes); selection -- (reference 0.0046 below 0.01); selection_pred -- (reference 0.0037 below 0.01)
+  0.25 sigma, 0.4 T         deployed 0.63 [0.48, 0.81]; search -- (reference negative on 2 of 20 landscapes); selection 0.79 [0.66, 1.00]; selection_pred 0.82 [0.68, 1.03]
+  1 sigma, 0.4 T         deployed 0.59 [0.44, 0.74]; search 0.29 [0.14, 0.46]; selection 0.78 [0.66, 0.92]; selection_pred 0.82 [0.71, 0.95]
+  5 sigma, 0.4 T         deployed 0.92 [0.75, 1.12]; search 0.32 [0.13, 0.58]; selection 1.13 [0.93, 1.39]; selection_pred 1.05 [0.92, 1.19]

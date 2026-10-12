@@ -191,7 +191,7 @@ replayed remedies (replay_hitl_remedies.recovery_table), reference = the standar
   output-boba/hitl_remedies: 891 rows of hitl_remedies_recovery.csv reproduced, max abs difference 7.1e-15; 0 noisy runs move under the uniform rule
   output-boba-spike/hitl_remedies: 34 rows of hitl_remedies_recovery.csv reproduced, max abs difference 1.1e-16; 0 noisy runs move under the uniform rule
   output-boba-spike/hitl_remedies_heldout: 54 rows of hitl_remedies_recovery.csv reproduced, max abs difference 9.7e-17; 0 noisy runs move under the uniform rule
-  output-boba-ceiling/hitl_remedies: 51 rows of hitl_remedies_recovery.csv reproduced, max abs difference 9.5e-17; 398 noisy runs move under the uniform rule
+  output-boba-ceiling/hitl_remedies: 51 rows of hitl_remedies_recovery.csv reproduced, max abs difference 9.7e-17; 398 noisy runs move under the uniform rule
   output-boba-ceiling/hitl_remedies_heldout: 81 rows of hitl_remedies_recovery.csv reproduced, max abs difference 1.1e-16; 398 noisy runs move under the uniform rule
   output-boba/hitl_remedies (seeds 7-16):
     ordinal_lcb1  first -1.1% [-11.3%, +7.8%] (cost 0.2238, gain -0.0026, price +0.0266); uniform -1.1% [-11.3%, +7.8%] (cost 0.2238, gain -0.0026, price +0.0266)

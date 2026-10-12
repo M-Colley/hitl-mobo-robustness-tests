@@ -103,12 +103,20 @@ def parse_args(argv=None) -> argparse.Namespace:
 # ---------------------------------------------------------------------------
 
 
+def landscape_scale(datasets: pd.Series, opt_z: dict[str, float]) -> pd.Series:
+    """Each row's opt_z; a landscape without one raises (it was once left in raw units, 1.0)."""
+    lacking = sorted(set(datasets) - set(opt_z))
+    if lacking:
+        raise KeyError(f"no opt_z for {lacking}: regrets of landscapes in different units cannot be pooled")
+    return datasets.map(lambda d: opt_z[d])
+
+
 def selection_share_inputs(input_dir: Path, opt_z: dict[str, float]) -> pd.DataFrame:
     """decompose_regret.summarise, row (pooled, 1.0, 0): per-run division by opt_z,
     noisy runs paired with the clean twin on (dataset, acquisition, seed), then
     landscape means of the selection loss and of the deployed excess."""
     df = pd.read_csv(input_dir / "analysis" / "ship_rules_per_run.csv")
-    z = df["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    z = landscape_scale(df["dataset"], opt_z)
     df = df.assign(deployed=df["regret_best_observed"] / z,
                    search=df["regret_best_visited"] / z)
     df = df.assign(selection=(df["deployed"] - df["search"]).clip(lower=0.0))
@@ -136,7 +144,7 @@ def shortlist_inputs(input_dir: Path, opt_z: dict[str, float], procedure: str = 
     path = input_dir / "analysis" / "hitl_remedies" / "hitl_remedies_per_run.csv.gz"
     h = pd.read_csv(path, usecols=cols)
     g = h[h["procedure"] == procedure]
-    z = g["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    z = landscape_scale(g["dataset"], opt_z)
     g = g.assign(**{c: g[c] / z for c in cols[2:]})
     per = g.groupby("dataset")[["ref_noisy", "ref_clean", "regret_noisy"]].mean()
     out = pd.DataFrame({"num": per["ref_noisy"] - per["regret_noisy"],   # gain
@@ -151,7 +159,7 @@ def deployed_cost_inputs(input_dir: Path, opt_z: dict[str, float]) -> pd.DataFra
     cm = pd.read_csv(input_dir / "analysis" / "cell_means.csv")
     c = cm[(cm["jitter_std"] == 1.0) & (cm["jitter_iteration"] == 0)
            & ~cm["acquisition"].isin(MODEL_FREE)]
-    c = c.assign(x=c["inference_excess"] / c["dataset"].map(opt_z))
+    c = c.assign(x=c["inference_excess"] / landscape_scale(c["dataset"], opt_z))
     per = c.groupby("dataset")[["x"]].mean().rename(columns={"x": "num"})
     per.attrs["n_runs"] = int(c["seeds"].sum())
     return per

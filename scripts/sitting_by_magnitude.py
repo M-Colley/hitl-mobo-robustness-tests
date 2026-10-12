@@ -52,6 +52,16 @@ summary also names the zero-trial rule with the largest gain on seeds 7-11, the
 seeds that choose k, and gives the sitting's increment over that rule on seeds
 12-16, with Holm's correction over the eight cells (increment_over_chosen_rule).
 
+Shares of the cost. A held-out gain is also given as a share of the standard
+process's cost of error in the cell (recovered_all, recovered_test,
+test_recovered_share and its interval), but only where that share means
+something: following analyse_boba_adaptations.share_of_reference, a share is
+withheld (NaN, with the reason in share_suppressed and the *_suppressed columns)
+where the cell's reference cost is below 0.01 of the achievable improvement or
+negative on any landscape, which is the case in the 0.05 and 0.25 sigma cells;
+the absolute gain is the result there. The bootstrap draws either way, so no
+other number moves.
+
 The look model. The replays above cancel the error that one sitting shares,
 including the drift ramp and the AR(1) state. ``--replay-dirs`` rescores the
 sequential replays of replay_end_of_study.py, in which that state moves on from
@@ -71,12 +81,18 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
 from statsmodels.stats.multitest import multipletests
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+import analyse_boba_adaptations as aba  # noqa: E402 - the share guard, defined once there
 
 TRAIN_SEEDS = (7, 8, 9, 10, 11)
 TEST_SEEDS = (12, 13, 14, 15, 16)
@@ -94,6 +110,10 @@ OTHER_RULES = ("lcb2", "pm")
 OTHER_RULES_BOOTSTRAP_SEED = BOOTSTRAP_SEED + 3
 SEED_SETS = {"all": TRAIN_SEEDS + TEST_SEEDS, "train": TRAIN_SEEDS, "test": TEST_SEEDS}
 REF_TOL = 1e-9
+# Withhold the sitting's shares of the cost of error where the reference is near
+# zero or negative on a landscape (share_suppressed); off only to test that the
+# guard moves nothing else.
+SHARE_GUARD = True
 
 
 def read_opt_z(stats: Path) -> dict[str, float]:
@@ -242,6 +262,22 @@ def share_defined(c: np.ndarray) -> bool:
     return bool(len(c) and np.all(c > 0))
 
 
+def share_suppressed(cost: np.ndarray) -> str:
+    """Why the sitting's share of a cell's cost of error is withheld, '' when it is reported.
+
+    ``cost`` holds the per-landscape reference cost in units of the achievable
+    improvement. The rule is analyse_boba_adaptations.share_of_reference's: the
+    pooled reference below 0.01 or negative on any landscape (an exactly zero
+    landscape does not suppress).
+    """
+    if not SHARE_GUARD:
+        return ""
+    c = np.asarray(cost, dtype=float)
+    if not len(c):
+        return "no landscapes"
+    return aba.share_of_reference(pd.DataFrame({"ref": c, "trt": np.zeros(len(c))}))["share_suppressed"]
+
+
 def two_way_ci(sub: pd.DataFrame, k: int, seeds: tuple[int, ...], rng: np.random.Generator) -> tuple[float, float]:
     """Resample landscapes and seeds independently; a seed is shared by every landscape."""
     x = sub[(sub["k"] == k) & sub["seed"].isin(seeds)]
@@ -264,6 +300,7 @@ def analyse_cell(sub: pd.DataFrame, label: str, rng: np.random.Generator,
     te_l = per_landscape(sub[sub["seed"].isin(TEST_SEEDS)])[ks]
     cost = sub[sub["k"] == ks[0]].groupby("dataset")["cost"].mean()
     cost_te = sub[(sub["k"] == ks[0]) & sub["seed"].isin(TEST_SEEDS)].groupby("dataset")["cost"].mean()
+    why_all, why_te = share_suppressed(cost.to_numpy()), share_suppressed(cost_te.to_numpy())
     p_te = np.array([wilcoxon(te_l[k].to_numpy()).pvalue for k in ks])
     p_holm = holm(p_te)
     rows = []
@@ -274,8 +311,8 @@ def analyse_cell(sub: pd.DataFrame, label: str, rng: np.random.Generator,
                      "gain_train": tr_l[k].mean(), "gain_test": te_l[k].mean(), "gain_test_lo": tlo,
                      "gain_test_hi": thi, "test_landscapes_gaining": int((te_l[k] > 0).sum()),
                      "p_test": p_te[i], "p_test_holm_over_k": p_holm[i],
-                     "recovered_all": all_l[k].mean() / cost.mean(),
-                     "recovered_test": te_l[k].mean() / cost_te.mean()})
+                     "recovered_all": np.nan if why_all else all_l[k].mean() / cost.mean(),
+                     "recovered_test": np.nan if why_te else te_l[k].mean() / cost_te.mean()})
     k_fwd = int(tr_l.mean().idxmax())
     k_rev = int(te_l.mean().idxmax())
     # landscape splits: choose on ten landscapes (all seeds), score on the other ten
@@ -303,7 +340,9 @@ def analyse_cell(sub: pd.DataFrame, label: str, rng: np.random.Generator,
         "test_two_way_lo": tw_lo, "test_two_way_hi": tw_hi,
         "test_landscapes_gaining": int((fwd > 0).sum()),
         "test_p": float(p_te[ks.index(k_fwd)]), "test_p_holm_over_k": float(p_holm[ks.index(k_fwd)]),
-        "test_recovered_share": float(fwd.mean() / cost_te.mean()), "cost_of_error_test": float(cost_te.mean()),
+        "test_recovered_share": np.nan if why_te else float(fwd.mean() / cost_te.mean()),
+        "cost_of_error_test": float(cost_te.mean()),
+        "share_suppressed": {"all_seeds": why_all, "seeds_12_16": why_te},
         "k_chosen_on_12_16": k_rev, "reverse_test_gain": float(rev.mean()), "reverse_lo": rlo, "reverse_hi": rhi,
         "split_median": float(np.median(held)), "split_p2_5": float(np.percentile(held, 2.5)),
         "split_p97_5": float(np.percentile(held, 97.5)),
@@ -705,6 +744,12 @@ def main() -> None:
     print("sitting runs by error process and k:")
     print(counts.to_string())
     print(show.round(4).to_string(index=False))
+    for s in summaries:
+        why = s.get("share_suppressed", {}).get("seeds_12_16")
+        if why:
+            print(f"   {s['cell']}: no share of the cost on seeds 12-16 ({why}); the held-out gain at k = "
+                  f"{s['k_chosen_on_7_11']} is {s['test_gain']:+.4f} [{s['test_lo']:+.4f}, {s['test_hi']:+.4f}] "
+                  f"of the achievable improvement")
     without = next(s for s in summaries if s["cell"] == "pooled_k12_without_5sigma_from_trial_21")
     print("pooled k = 12 without the 5 sigma, trial-21 cell:", without)
     prices = next(s for s in summaries if s["cell"] == "clean_twin_prices")
@@ -759,7 +804,10 @@ def run(d: pd.DataFrame, ship: pd.DataFrame, processes: tuple[str, ...] = PROCES
     frame = frame.merge(cells_only[["cell", "k", "p_test_holm_all_cells"]], on=["cell", "k"], how="left")
     by_label = dict(cells)
     for s in summaries:
+        # Drawn whether or not the share is withheld, so the later draws do not move.
         lo, hi = share_ci(by_label[s["cell"]], s["k_chosen_on_7_11"], TEST_SEEDS, rng2)
+        if s["share_suppressed"]["seeds_12_16"]:
+            lo, hi = np.nan, np.nan
         s["test_recovered_lo"], s["test_recovered_hi"] = lo, hi
         s["test_p_holm_all_cells"] = float(frame.loc[(frame["cell"] == s["cell"]) & (frame["k"] == s["k_chosen_on_7_11"]),
                                                      "p_test_holm_all_cells"].iloc[0]) if s["cell"] != "pooled" else float("nan")
@@ -776,6 +824,10 @@ def run(d: pd.DataFrame, ship: pd.DataFrame, processes: tuple[str, ...] = PROCES
     # The zero-trial references, the increments over LCB1 and the prices (their own generator).
     frame, rules, prices = add_increments(d, ship, cells, frame, summaries)
     summaries.append({"cell": "clean_twin_prices", "processes": list(processes), **prices})
+    # Why a cell's shares are withheld, last, so every earlier column keeps its place.
+    why = {s["cell"]: s["share_suppressed"] for s in summaries if "share_suppressed" in s}
+    frame["recovered_all_suppressed"] = frame["cell"].map(lambda c: why[c]["all_seeds"])
+    frame["recovered_test_suppressed"] = frame["cell"].map(lambda c: why[c]["seeds_12_16"])
     return frame, rules, summaries
 
 

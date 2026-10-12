@@ -543,6 +543,13 @@ def _boot_mean_diff(a: np.ndarray, b: np.ndarray, rng: np.random.Generator) -> t
     return float(d.mean()), float(np.percentile(draws, 2.5)), float(np.percentile(draws, 97.5))
 
 
+def require_opt_z(datasets, opt_z: dict[str, float]) -> None:
+    """Every landscape needs its opt_z: a missing one used to be left in raw units (1.0)."""
+    lacking = sorted(set(datasets) - set(opt_z))
+    if lacking:
+        raise KeyError(f"no opt_z for {lacking}: regrets of landscapes in different units cannot be pooled")
+
+
 def score_policies(joined: pd.DataFrame, no_trial: pd.DataFrame, opt_z: dict[str, float],
                    rng: np.random.Generator) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
     """Per policy: the deployed regret it would have produced, per landscape.
@@ -552,7 +559,8 @@ def score_policies(joined: pd.DataFrame, no_trial: pd.DataFrame, opt_z: dict[str
     the ship-rule rescoring. The derived policy is scored on whichever of the
     three it actually chose, so it is never given a choice it could not make.
     """
-    z = joined["dataset"].map(lambda d: opt_z.get(d, 1.0))
+    require_opt_z(joined["dataset"], opt_z)
+    z = joined["dataset"].map(lambda d: opt_z[d])
     joined = joined.assign(regret_n=joined["regret_noisy"] / z, ref_n=joined["ref_noisy"] / z)
 
     per_run = joined.pivot_table(index=["dataset", "file"], columns="k", values="regret_n")
@@ -562,7 +570,7 @@ def score_policies(joined: pd.DataFrame, no_trial: pd.DataFrame, opt_z: dict[str
     # The no-trial policies, on the same index and the same scale.
     nt = no_trial.set_index("file")
     for name, column in (("pm", "regret_pm"), ("lcb", "regret_lcb1")):
-        vals = [nt[column].get(f, np.nan) / opt_z.get(d, 1.0) for d, f in per_run.index]
+        vals = [nt[column].get(f, np.nan) / opt_z[d] for d, f in per_run.index]
         per_run[name] = vals
 
     def _look_up(idx, key):
@@ -690,6 +698,7 @@ def price_frame(sweep: pd.DataFrame, derived_clean: pd.DataFrame, no_trial: pd.D
     regret of the policy it chose on the clean twin. Twins whose fit failed are
     dropped and counted.
     """
+    require_opt_z(sweep["dataset"], opt_z)
     sweep = sweep.assign(stem=sweep["file"].map(twin_stem))
     for column in ("regret_clean", "ref_clean"):
         spread = sweep.groupby(["stem", "k"])[column].agg(lambda s: float(np.ptp(s.to_numpy())))
@@ -710,7 +719,7 @@ def price_frame(sweep: pd.DataFrame, derived_clean: pd.DataFrame, no_trial: pd.D
     for (dataset, stem, seed) in per_stem.index:
         if stem not in clean.index:
             continue
-        z = opt_z.get(dataset, 1.0)
+        z = opt_z[dataset]
         base = float(ref.loc[(dataset, stem, seed)])
         clean_file = clean.loc[stem, "file"]
         record = {f"fixed_k{k}": (float(per_stem.loc[(dataset, stem, seed), k]) - base) / z

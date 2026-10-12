@@ -58,7 +58,6 @@ whole error the paper is about.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
@@ -70,6 +69,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import analyse_boba_robustness as ab  # noqa: E402
+import boba_benchmarks as bb  # noqa: E402
 
 RESPONSE = "auc_simple_regret_excess_true_postonset_per_iter"
 BASELINE_BEST = "final_best_true_baseline"
@@ -91,7 +91,23 @@ def parse_args(argv=None):
     p.add_argument("--synthetic", type=Path, default=Path("output-boba"))
     p.add_argument("--manifest", type=Path, default=Path("output/per_dataset/manifest.json"))
     p.add_argument("--output-dir", type=Path, default=Path("output-fitted/analysis"))
+    p.add_argument("--stats-path", type=Path, default=bb.DEFAULT_STATS_PATH,
+                   help="the landscape statistics that give the synthetic arm's opt_z")
     return p.parse_args(argv)
+
+
+def synthetic_opt_z(datasets, stats_path: Path = bb.DEFAULT_STATS_PATH) -> pd.Series:
+    """opt_z of each synthetic landscape, from the tracked landscape statistics.
+
+    Until 2026-10-09 it was read from output-boba/run_metadata.json, which is
+    git-ignored (it records local paths), so a fresh checkout could not run this;
+    the two agree on all twenty landscapes. A landscape without one raises.
+    """
+    stats = bb.load_stats(stats_path)
+    lacking = sorted(d for d in datasets if "opt_z" not in stats.get(d, {}))
+    if lacking:
+        raise KeyError(f"no opt_z for {lacking} in {stats_path}")
+    return pd.Series({d: float(stats[d]["opt_z"]) for d in sorted(datasets)})
 
 
 def floor_gap(paired: pd.DataFrame, optimum: pd.Series) -> pd.Series:
@@ -242,8 +258,9 @@ def main(argv=None) -> None:
 
     synth_raw = ab.load_paired(args.synthetic)
     synth_raw = synth_raw[synth_raw.error_model == "gaussian"]
-    meta = json.loads((args.synthetic / "run_metadata.json").read_text(encoding="utf-8"))
-    optz = pd.Series({k: float(v["opt_z"]) for k, v in meta["landscape_stats"].items()})
+    # opt_z from the tracked landscape statistics, as every other table takes it;
+    # the arm's run_metadata.json is git-ignored and holds local paths (AGENTS.md).
+    optz = synthetic_opt_z(synth_raw["dataset"].unique(), args.stats_path)
     synth = floor_fraction(synth_raw, optz)
     synth["sigma_multiple"] = synth["jitter_std"].round(2)
     print("\n=== SYNTHETIC arm, same denominator, gaussian only ===")

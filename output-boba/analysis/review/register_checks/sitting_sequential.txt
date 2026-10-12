@@ -23,8 +23,10 @@ heldout_remedies' k-curve scoring (budget_split.score_policies with
 budget_split_derived*.csv, the derived budget rule, the tab:heldout k row with its
 landscape-split column, the optimism of the choice of k, and the Holm family of
 App. H). Its shared side must reproduce
-review/sitting_by_magnitude_selection.json, review/sitting_by_magnitude_gaussian_selection.json
-and review/heldout_remedies.csv before any sequential value is printed.
+review/sitting_by_magnitude_selection.json, review/sitting_by_magnitude_gaussian_selection.json,
+review/heldout_remedies.csv, budget_split_policies*.csv and end_of_study_claims.csv
+before any sequential value is printed: every check runs first, and the script exits
+non-zero, printing no sequential value, if any fails.
 The rows are those of sitting_by_magnitude.py and the k-curve: tournament,
 candidates by the posterior mean less one latent SD, the best look ships, looks
 at the full idiosyncratic SD (rho = 1), LogEI and qNEI, the four main processes.
@@ -38,7 +40,57 @@ same runs, the same fresh draws. The shared replays hold LogEI and qNEI (and
 the input arms), the sequential ones also UCB; every comparison here is on the
 runs both hold.
 
-shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True; drift and ar1 rows whose shipped design changed: 22.3%
+=== Checks: the shared side against the published outputs (no sequential value is printed unless every check passes) ===
+shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True
+rho = 0.5: shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True
+
+The shared side against the published values:
+  1sigma onset 0 k=2, seeds 12-16 (tab:sittingcell)              here +0.0303  published +0.0300  ok
+  5sigma onset 20 k=16, seeds 12-16 (tab:sittingcell)            here +0.2271  published +0.2270  ok
+  pooled fixed k=5, rho=1, all seeds (budget_split_policies.csv) here +0.0199  published +0.0199  ok
+  pooled fixed k=8, rho=1, all seeds (budget_split_policies.csv) here +0.0218  published +0.0218  ok
+  pooled fixed k=12, rho=1, all seeds (budget_split_policies.csv) here +0.0207  published +0.0207  ok
+  pooled fixed k=16, rho=1, all seeds (budget_split_policies.csv) here +0.0217  published +0.0217  ok
+  pooled fixed k=5, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0347  published +0.0347  ok
+  pooled fixed k=8, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0418  published +0.0418  ok
+  pooled fixed k=12, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0455  published +0.0455  ok
+  pooled fixed k=16, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0510  published +0.0510  ok
+confirmation claims, shared, on the 57,600 (run, procedure) pairs both replays hold, against end_of_study/end_of_study_claims.csv: 12 of 12 pooled false-claim rates reproduced
+
+sitting_by_magnitude.run re-run in-process; the shared side against its published outputs:
+  shared   vs review/sitting_by_magnitude_selection.json: 11 summaries, identical
+  gaussian vs review/sitting_by_magnitude_gaussian_selection.json: 11 summaries, identical
+heldout_remedies' k-curve scoring re-run in-process:
+  k-curve frame, shared, against heldout_remedies.load_kcurve: identical
+  the shared side against review/heldout_remedies.csv:
+    derived rule, seeds 12-16                    here -0.006787  published -0.006787  ok
+    k chosen on 7-11 vs derived, seeds 12-16     here +0.023975  published +0.023975  ok
+      its interval, low                          here +0.009169  published +0.009169  ok
+      its interval, high                         here +0.039185  published +0.039185  ok
+    tab:heldout k row, seeds 12-16               here +0.017189  published +0.017189  ok
+      its interval, low                          here +0.001152  published +0.001152  ok
+      its interval, high                         here +0.033490  published +0.033490  ok
+    Holm p over the 41 procedures, max |diff|    here +0.000000  published +0.000000  ok
+    raw p on the test seeds, max |diff|          here +0.000000  published +0.000000  ok
+    k, landscape splits: test_median             here +0.019465  published +0.019465  ok
+    k, landscape splits: test_p2_5               here +0.000474  published +0.000474  ok
+    k, landscape splits: test_p97_5              here +0.034039  published +0.034039  ok
+    k, landscape splits: share_selected_k5_to_16 here +0.999500  published +0.999500  ok
+    k, landscape splits: optimism_mean           here +0.005148  published +0.005148  ok
+    k, landscape splits: optimism_net_of_shift_mean here +0.005148  published +0.005148  ok
+    k, crossed splits: test_median               here +0.017653  published +0.017653  ok
+    k, crossed splits: test_p2_5                 here -0.001599  published -0.001599  ok
+    k, crossed splits: test_p97_5                here +0.036845  published +0.036845  ok
+    k, crossed splits: share_selected_k5_to_16   here +0.999500  published +0.999500  ok
+    k, crossed splits: optimism_mean             here +0.007104  published +0.007104  ok
+    k, crossed splits: optimism_net_of_shift_mean here +0.005865  published +0.005865  ok
+    k, seed split 7-11 -> 12-16: optimism        here +0.007098  published +0.007098  ok
+    k, seed split 7-11 -> 12-16: seed shift      here +0.001238  published +0.001238  ok
+    k, seed split 12-16 -> 7-11: optimism        here +0.001846  published +0.001846  ok
+    k, seed split 12-16 -> 7-11: seed shift      here -0.001238  published -0.001238  ok
+All checks passed.
+
+drift and ar1 rows whose shipped design changed under the sequential process (random order): 22.3% at rho = 1, 23.3% at rho = 0.5
 
 Reproduction of the paper's shared-model cells (seeds 12-16, pooled over processes):
   1sigma_from_trial_1 k=2: pooled +0.0303; gaussian +0.0420, bias +0.0468, drift +0.0209, ar1 +0.0116
@@ -344,10 +396,10 @@ Pooled over the four magnitudes, both onsets and the four processes, all seeds (
 
 Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (shared; sitting_by_magnitude.analyse_cell)
   pooled                   k=12 held-out gain +0.017 [+0.001, +0.033] on 14/20, Holm p over k 0.291, share +7.6%; per process gaussian +0.020, bias -0.012, drift +0.034, ar1 +0.027; k=12 all seeds +0.021; k chosen on 12-16 8
-  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share -211.9%; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.018; k chosen on 12-16 5
-  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  6/20, Holm p over k 0.056, share -405.6%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
-  0.25sigma_from_trial_1   k= 5 held-out gain -0.006 [-0.014, +0.003] on 10/20, Holm p over k 1.000, share -13.3%; per process gaussian -0.001, bias -0.006, drift -0.014, ar1 -0.000; k=12 all seeds -0.017; k chosen on 12-16 3
-  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share -19.0%; per process gaussian -0.004, bias -0.009, drift -0.003, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share withheld; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.018; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  6/20, Holm p over k 0.056, share withheld; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 5 held-out gain -0.006 [-0.014, +0.003] on 10/20, Holm p over k 1.000, share withheld; per process gaussian -0.001, bias -0.006, drift -0.014, ar1 -0.000; k=12 all seeds -0.017; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share withheld; per process gaussian -0.004, bias -0.009, drift -0.003, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
   1sigma_from_trial_1      k= 2 held-out gain +0.030 [+0.012, +0.050] on 14/20, Holm p over k 0.029, share +11.6%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.012; k=12 all seeds -0.010; k chosen on 12-16 2
   1sigma_from_trial_21     k=16 held-out gain +0.011 [-0.012, +0.033] on 13/20, Holm p over k 0.884, share +7.4%; per process gaussian -0.014, bias +0.013, drift +0.014, ar1 +0.030; k=12 all seeds +0.019; k chosen on 12-16 5
   5sigma_from_trial_1      k= 8 held-out gain +0.058 [+0.017, +0.102] on 17/20, Holm p over k 0.029, share +7.6%; per process gaussian +0.040, bias +0.035, drift +0.079, ar1 +0.076; k=12 all seeds +0.059; k chosen on 12-16 5
@@ -355,10 +407,10 @@ Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (shared; sitting_
 
 Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (sequential, random order; sitting_by_magnitude.analyse_cell)
   pooled                   k=12 held-out gain +0.018 [+0.001, +0.034] on 13/20, Holm p over k 0.266, share +8.0%; per process gaussian +0.020, bias -0.012, drift +0.033, ar1 +0.031; k=12 all seeds +0.021; k chosen on 12-16 8
-  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share -211.0%; per process gaussian -0.013, bias -0.010, drift -0.006, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
-  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.099, share -403.1%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
-  0.25sigma_from_trial_1   k= 3 held-out gain -0.005 [-0.015, +0.004] on 10/20, Holm p over k 1.000, share -11.7%; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.001; k=12 all seeds -0.017; k chosen on 12-16 3
-  0.25sigma_from_trial_21  k= 3 held-out gain -0.003 [-0.012, +0.005] on 11/20, Holm p over k 1.000, share -9.1%; per process gaussian -0.001, bias -0.004, drift +0.001, ar1 -0.007; k=12 all seeds -0.011; k chosen on 12-16 3
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  7/20, Holm p over k 0.117, share withheld; per process gaussian -0.013, bias -0.010, drift -0.006, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.099, share withheld; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.015; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 3 held-out gain -0.005 [-0.015, +0.004] on 10/20, Holm p over k 1.000, share withheld; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.001; k=12 all seeds -0.017; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 3 held-out gain -0.003 [-0.012, +0.005] on 11/20, Holm p over k 1.000, share withheld; per process gaussian -0.001, bias -0.004, drift +0.001, ar1 -0.007; k=12 all seeds -0.011; k chosen on 12-16 3
   1sigma_from_trial_1      k= 2 held-out gain +0.031 [+0.013, +0.051] on 14/20, Holm p over k 0.022, share +12.0%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.015; k=12 all seeds -0.008; k chosen on 12-16 2
   1sigma_from_trial_21     k=16 held-out gain +0.007 [-0.017, +0.029] on 11/20, Holm p over k 0.865, share +4.6%; per process gaussian -0.014, bias +0.013, drift +0.011, ar1 +0.017; k=12 all seeds +0.018; k chosen on 12-16 3
   5sigma_from_trial_1      k= 8 held-out gain +0.055 [+0.017, +0.096] on 16/20, Holm p over k 0.050, share +7.3%; per process gaussian +0.040, bias +0.035, drift +0.082, ar1 +0.064; k=12 all seeds +0.060; k chosen on 12-16 2
@@ -660,15 +712,14 @@ Pooled over the four magnitudes, both onsets and the four processes, all seeds (
 
 Per-cell choice of k re-made on seeds 7-11 and scored on 12-16 (sequential, rank order; sitting_by_magnitude.analyse_cell)
   pooled                   k=12 held-out gain +0.014 [-0.002, +0.030] on 13/20, Holm p over k 0.422, share +6.4%; per process gaussian +0.020, bias -0.012, drift +0.033, ar1 +0.017; k=12 all seeds +0.019; k chosen on 12-16 5
-  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  6/20, Holm p over k 0.088, share -212.8%; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
-  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.081, share -402.4%; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.014; k=12 all seeds -0.020; k chosen on 12-16 3
-  0.25sigma_from_trial_1   k= 3 held-out gain -0.006 [-0.016, +0.003] on  9/20, Holm p over k 1.000, share -14.0%; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.004; k=12 all seeds -0.018; k chosen on 12-16 3
-  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share -19.7%; per process gaussian -0.004, bias -0.009, drift -0.004, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
+  0.05sigma_from_trial_1   k= 3 held-out gain -0.010 [-0.020, -0.003] on  6/20, Holm p over k 0.088, share withheld; per process gaussian -0.013, bias -0.010, drift -0.007, ar1 -0.011; k=12 all seeds -0.019; k chosen on 12-16 5
+  0.05sigma_from_trial_21  k= 5 held-out gain -0.014 [-0.024, -0.005] on  7/20, Holm p over k 0.081, share withheld; per process gaussian -0.021, bias -0.009, drift -0.011, ar1 -0.014; k=12 all seeds -0.020; k chosen on 12-16 3
+  0.25sigma_from_trial_1   k= 3 held-out gain -0.006 [-0.016, +0.003] on  9/20, Holm p over k 1.000, share withheld; per process gaussian +0.003, bias -0.009, drift -0.013, ar1 -0.004; k=12 all seeds -0.018; k chosen on 12-16 3
+  0.25sigma_from_trial_21  k= 5 held-out gain -0.006 [-0.018, +0.004] on 11/20, Holm p over k 1.000, share withheld; per process gaussian -0.004, bias -0.009, drift -0.004, ar1 -0.009; k=12 all seeds -0.011; k chosen on 12-16 3
   1sigma_from_trial_1      k= 2 held-out gain +0.031 [+0.013, +0.051] on 14/20, Holm p over k 0.025, share +12.0%; per process gaussian +0.042, bias +0.047, drift +0.021, ar1 +0.016; k=12 all seeds -0.011; k chosen on 12-16 2
   1sigma_from_trial_21     k= 3 held-out gain +0.017 [+0.005, +0.030] on 15/20, Holm p over k 0.172, share +11.4%; per process gaussian +0.014, bias +0.018, drift +0.012, ar1 +0.023; k=12 all seeds +0.017; k chosen on 12-16 5
   5sigma_from_trial_1      k= 8 held-out gain +0.050 [+0.011, +0.093] on 16/20, Holm p over k 0.077, share +6.7%; per process gaussian +0.040, bias +0.035, drift +0.070, ar1 +0.057; k=12 all seeds +0.060; k chosen on 12-16 2
   5sigma_from_trial_21     k=16 held-out gain +0.212 [+0.128, +0.305] on 18/20, Holm p over k 0.000, share +38.1%; per process gaussian +0.210, bias +0.109, drift +0.339, ar1 +0.189; k=12 all seeds +0.156; k chosen on 12-16 20
-rho = 0.5: shared vs sequential (random order): 115,200 paired rows. gaussian and bias rows identical: True; standard process and clean twin identical on every row: True; drift and ar1 rows whose shipped design changed: 23.3%
 
 Pooled over the four magnitudes, both onsets and the four processes, all seeds (sequential = random order, rho = 0.5, the half-SD sensitivity)
   k= 2  shared +0.016 [+0.003, +0.028]  sequential +0.017 [+0.004, +0.029]  diff +0.000 [+0.000, +0.001]   | without 5sigma from trial 21: shared +0.013 [+0.001, +0.026]  sequential +0.014 [+0.002, +0.026]
@@ -692,31 +743,19 @@ Pooled over the four magnitudes, both onsets and the four processes, all seeds (
   k=25  shared +0.022 [-0.012, +0.051]  sequential +0.006 [-0.024, +0.033]  diff -0.016 [-0.019, -0.012]   | without 5sigma from trial 21: shared -0.014 [-0.044, +0.012]  sequential -0.021 [-0.052, +0.004]
   k=30  shared -0.008 [-0.049, +0.028]  sequential -0.019 [-0.061, +0.017]  diff -0.011 [-0.014, -0.008]   | without 5sigma from trial 21: shared -0.044 [-0.085, -0.011]  sequential -0.048 [-0.089, -0.015]
 
-The shared side against the published values:
-  1sigma onset 0 k=2, seeds 12-16 (tab:sittingcell)              here +0.0303  published +0.0300  ok
-  5sigma onset 20 k=16, seeds 12-16 (tab:sittingcell)            here +0.2271  published +0.2270  ok
-  pooled fixed k=5, rho=1, all seeds (budget_split_policies.csv) here +0.0199  published +0.0199  ok
-  pooled fixed k=8, rho=1, all seeds (budget_split_policies.csv) here +0.0218  published +0.0218  ok
-  pooled fixed k=12, rho=1, all seeds (budget_split_policies.csv) here +0.0207  published +0.0207  ok
-  pooled fixed k=16, rho=1, all seeds (budget_split_policies.csv) here +0.0217  published +0.0217  ok
-  pooled fixed k=5, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0347  published +0.0347  ok
-  pooled fixed k=8, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0418  published +0.0418  ok
-  pooled fixed k=12, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0455  published +0.0455  ok
-  pooled fixed k=16, rho=0.5, all seeds (budget_split_policies_rho0.5.csv) here +0.0510  published +0.0510  ok
-
-Confirmation claims per process, pooled over the eight cells, on the 57,600 (run, procedure) pairs both replays hold (shared = end_of_study, sequential = end_of_study_ksweep_seq; LogEI, qNEI and UCB; replay_end_of_study.claims_table):
-  ar1      confirm_k2  false-claim rate shared 0.50% [0.27%, 0.75%] power 59.1% (= end_of_study_claims);  sequential 0.62% [0.27%, 1.00%] power 63.2%
-  ar1      confirm_k4  false-claim rate shared 0.38% [0.12%, 0.67%] power 73.0% (= end_of_study_claims);  sequential 0.52% [0.31%, 0.75%] power 76.4%
-  ar1      standard    false-claim rate shared 16.10% [12.79%, 19.94%] power 100.0% (= end_of_study_claims);  sequential 16.10% [12.79%, 19.94%] power 100.0%
-  bias     confirm_k2  false-claim rate shared 0.52% [0.27%, 0.79%] power 52.1% (= end_of_study_claims);  sequential 0.52% [0.27%, 0.79%] power 52.1%
-  bias     confirm_k4  false-claim rate shared 0.65% [0.40%, 0.94%] power 66.1% (= end_of_study_claims);  sequential 0.65% [0.40%, 0.94%] power 66.1%
-  bias     standard    false-claim rate shared 15.85% [12.62%, 19.50%] power 100.0% (= end_of_study_claims);  sequential 15.85% [12.62%, 19.50%] power 100.0%
-  drift    confirm_k2  false-claim rate shared 0.67% [0.33%, 1.04%] power 52.2% (= end_of_study_claims);  sequential 0.67% [0.38%, 0.98%] power 52.3%
-  drift    confirm_k4  false-claim rate shared 0.48% [0.25%, 0.73%] power 66.4% (= end_of_study_claims);  sequential 0.52% [0.29%, 0.77%] power 66.4%
-  drift    standard    false-claim rate shared 17.75% [14.00%, 21.96%] power 100.0% (= end_of_study_claims);  sequential 17.75% [14.00%, 21.96%] power 100.0%
-  gaussian confirm_k2  false-claim rate shared 0.50% [0.31%, 0.69%] power 50.7% (= end_of_study_claims);  sequential 0.50% [0.31%, 0.69%] power 50.7%
-  gaussian confirm_k4  false-claim rate shared 0.46% [0.27%, 0.71%] power 65.7% (= end_of_study_claims);  sequential 0.46% [0.27%, 0.71%] power 65.7%
-  gaussian standard    false-claim rate shared 15.73% [12.33%, 19.60%] power 100.0% (= end_of_study_claims);  sequential 15.73% [12.33%, 19.60%] power 100.0%
+Confirmation claims per process, pooled over the eight cells, on the 57,600 (run, procedure) pairs both replays hold (shared = end_of_study, sequential = end_of_study_ksweep_seq; LogEI, qNEI and UCB; replay_end_of_study.claims_table; the shared side reproduces end_of_study/end_of_study_claims.csv, checked above):
+  ar1      confirm_k2  false-claim rate shared 0.50% [0.27%, 0.75%] power 59.1%;  sequential 0.62% [0.27%, 1.00%] power 63.2%
+  ar1      confirm_k4  false-claim rate shared 0.38% [0.12%, 0.67%] power 73.0%;  sequential 0.52% [0.31%, 0.75%] power 76.4%
+  ar1      standard    false-claim rate shared 16.10% [12.79%, 19.94%] power 100.0%;  sequential 16.10% [12.79%, 19.94%] power 100.0%
+  bias     confirm_k2  false-claim rate shared 0.52% [0.27%, 0.79%] power 52.1%;  sequential 0.52% [0.27%, 0.79%] power 52.1%
+  bias     confirm_k4  false-claim rate shared 0.65% [0.40%, 0.94%] power 66.1%;  sequential 0.65% [0.40%, 0.94%] power 66.1%
+  bias     standard    false-claim rate shared 15.85% [12.62%, 19.50%] power 100.0%;  sequential 15.85% [12.62%, 19.50%] power 100.0%
+  drift    confirm_k2  false-claim rate shared 0.67% [0.33%, 1.04%] power 52.2%;  sequential 0.67% [0.38%, 0.98%] power 52.3%
+  drift    confirm_k4  false-claim rate shared 0.48% [0.25%, 0.73%] power 66.4%;  sequential 0.52% [0.29%, 0.77%] power 66.4%
+  drift    standard    false-claim rate shared 17.75% [14.00%, 21.96%] power 100.0%;  sequential 17.75% [14.00%, 21.96%] power 100.0%
+  gaussian confirm_k2  false-claim rate shared 0.50% [0.31%, 0.69%] power 50.7%;  sequential 0.50% [0.31%, 0.69%] power 50.7%
+  gaussian confirm_k4  false-claim rate shared 0.46% [0.27%, 0.71%] power 65.7%;  sequential 0.46% [0.27%, 0.71%] power 65.7%
+  gaussian standard    false-claim rate shared 15.73% [12.33%, 19.60%] power 100.0%;  sequential 15.73% [12.33%, 19.60%] power 100.0%
 
 === code-estimands-10: the input arms' sitting over the assumed look SD (tournament_k5_lcb_rho1_look, pooled over cells) ===
   look SD    0 output-boba-misclick   cost 0.0679  gain -0.0016  price +0.0124  recovered -2.4% [-15.7%, +11.2%]
@@ -731,8 +770,8 @@ Confirmation claims per process, pooled over the eight cells, on the 57,600 (run
 === code-estimands-9: gross faults (spike sp0.15-20), look-buying rows as now logged (rerun in place at the run's spikes) against the two corrected replays (pooled, recovered share of the deployed cost) ===
   tournament rows: a spike drawn per look at the run's rate and size; LUCB rows: Gaussian looks at the run's marginal SD sqrt(sigma^2 + p s^2) = 7.75, since lucb_sitting takes only an SD
   seeds 7-11: hitl_remedies (as logged, corrected in place) -> end_of_study_spikesd (tournament) / hitl_remedies_spikesd (LUCB)
-    lucb_k8_rho0.5                      +42.0% [+30.1%, +52.8%] ->    +42.0% [+30.1%, +52.8%] (Gaussian at SD 7.75)  gain +0.3636 -> +0.3636  price +0.0160 -> +0.0160  cost 0.8652
-    lucb_k8_rho1                        +34.6% [+23.4%, +45.2%] ->    +34.6% [+23.4%, +45.2%] (Gaussian at SD 7.75)  gain +0.2995 -> +0.2995  price +0.0160 -> +0.0160  cost 0.8652
+    lucb_k8_rho0.5                      +32.0% [+18.7%, +44.3%] ->    +32.0% [+18.7%, +44.3%] (Gaussian at SD 7.75)  gain +0.2772 -> +0.2772  price +0.0230 -> +0.0230  cost 0.8652
+    lucb_k8_rho1                        +29.5% [+17.4%, +41.1%] ->    +29.5% [+17.4%, +41.1%] (Gaussian at SD 7.75)  gain +0.2555 -> +0.2555  price +0.0230 -> +0.0230  cost 0.8652
     tournament_k8_lcb_rho0.5_look       +48.3% [+37.4%, +57.2%] ->    +48.3% [+37.5%, +57.7%] (spikes per look)  gain +0.4177 -> +0.4177  price +0.0143 -> +0.0143  cost 0.8652  (both corrected replays agree)
     tournament_k8_lcb_rho0.5_post       +34.4% [+22.3%, +45.4%] ->    +34.4% [+22.8%, +45.4%] (spikes per look)  gain +0.2974 -> +0.2974  price +0.0319 -> +0.0319  cost 0.8652  (both corrected replays agree)
     tournament_k8_lcb_rho1_look         +46.8% [+36.0%, +56.0%] ->    +46.8% [+36.2%, +56.0%] (spikes per look)  gain +0.4052 -> +0.4052  price +0.0143 -> +0.0143  cost 0.8652  (both corrected replays agree)
@@ -743,10 +782,10 @@ Confirmation claims per process, pooled over the eight cells, on the 57,600 (run
     tournament_k8_obs_rho1_post         +36.9% [+26.5%, +46.9%] ->    +36.9% [+26.3%, +47.0%] (spikes per look)  gain +0.3195 -> +0.3195  price +0.0276 -> +0.0276  cost 0.8652  (both corrected replays agree)
     the 7 rows that buy no look (standard, shortlist, ordinal) identical in hitl_remedies_spikesd: True
   seeds 12-16: hitl_remedies_heldout (as logged, corrected in place) -> end_of_study_spikesd_heldout (tournament) / hitl_remedies_spikesd_heldout (LUCB)
-    lucb_k4_rho0.5                      +25.9% [+14.3%, +36.6%] ->    +25.9% [+14.3%, +36.6%] (Gaussian at SD 7.75)  gain +0.2290 -> +0.2290  price +0.0119 -> +0.0119  cost 0.8852
-    lucb_k4_rho1                        +23.4% [+11.9%, +35.5%] ->    +23.4% [+11.9%, +35.5%] (Gaussian at SD 7.75)  gain +0.2071 -> +0.2071  price +0.0119 -> +0.0119  cost 0.8852
-    lucb_k8_rho0.5                      +24.7% [+12.9%, +37.1%] ->    +24.7% [+12.9%, +37.1%] (Gaussian at SD 7.75)  gain +0.2190 -> +0.2190  price +0.0189 -> +0.0189  cost 0.8852
-    lucb_k8_rho1                        +24.6% [+13.6%, +35.7%] ->    +24.6% [+13.6%, +35.7%] (Gaussian at SD 7.75)  gain +0.2175 -> +0.2175  price +0.0189 -> +0.0189  cost 0.8852
+    lucb_k4_rho0.5                      +23.1% [+13.2%, +32.5%] ->    +23.1% [+13.2%, +32.5%] (Gaussian at SD 7.75)  gain +0.2041 -> +0.2041  price +0.0152 -> +0.0152  cost 0.8852
+    lucb_k4_rho1                         +14.6% [+6.3%, +23.1%] ->     +14.6% [+6.3%, +23.1%] (Gaussian at SD 7.75)  gain +0.1296 -> +0.1296  price +0.0152 -> +0.0152  cost 0.8852
+    lucb_k8_rho0.5                       +19.2% [+7.9%, +30.3%] ->     +19.2% [+7.9%, +30.3%] (Gaussian at SD 7.75)  gain +0.1700 -> +0.1700  price +0.0250 -> +0.0250  cost 0.8852
+    lucb_k8_rho1                         +17.1% [+6.5%, +27.7%] ->     +17.1% [+6.5%, +27.7%] (Gaussian at SD 7.75)  gain +0.1511 -> +0.1511  price +0.0250 -> +0.0250  cost 0.8852
     tournament_k4_lcb_rho0.5_look       +34.0% [+23.0%, +44.4%] ->    +34.0% [+22.9%, +44.9%] (spikes per look)  gain +0.3009 -> +0.3009  price +0.0112 -> +0.0112  cost 0.8852  (both corrected replays agree)
     tournament_k4_lcb_rho0.5_post        +20.3% [+8.7%, +32.0%] ->     +20.3% [+8.9%, +32.7%] (spikes per look)  gain +0.1795 -> +0.1795  price +0.0168 -> +0.0168  cost 0.8852  (both corrected replays agree)
     tournament_k4_lcb_rho1_look         +31.0% [+21.3%, +41.1%] ->    +31.0% [+20.8%, +41.9%] (spikes per look)  gain +0.2742 -> +0.2742  price +0.0112 -> +0.0112  cost 0.8852  (both corrected replays agree)
@@ -765,39 +804,7 @@ Confirmation claims per process, pooled over the eight cells, on the 57,600 (run
     tournament_k8_obs_rho1_post          +19.6% [+7.6%, +32.4%] ->     +19.6% [+7.6%, +32.0%] (spikes per look)  gain +0.1731 -> +0.1731  price +0.0226 -> +0.0226  cost 0.8852  (both corrected replays agree)
     the 7 rows that buy no look (standard, shortlist, ordinal) identical in hitl_remedies_spikesd_heldout: True
 
-=== The paper's own producers re-run on each replay set (shared = the published outputs) ===
-
-sitting_by_magnitude.run re-run in-process; the shared side against its published outputs:
-  shared   vs review/sitting_by_magnitude_selection.json: 11 summaries, identical
-  gaussian vs review/sitting_by_magnitude_gaussian_selection.json: 11 summaries, identical
-heldout_remedies' k-curve scoring re-run in-process:
-  k-curve frame, shared, against heldout_remedies.load_kcurve: identical
-  the shared side against review/heldout_remedies.csv:
-    derived rule, seeds 12-16                    here -0.006787  published -0.006787  ok
-    k chosen on 7-11 vs derived, seeds 12-16     here +0.023975  published +0.023975  ok
-      its interval, low                          here +0.009169  published +0.009169  ok
-      its interval, high                         here +0.039185  published +0.039185  ok
-    tab:heldout k row, seeds 12-16               here +0.017189  published +0.017189  ok
-      its interval, low                          here +0.001152  published +0.001152  ok
-      its interval, high                         here +0.033490  published +0.033490  ok
-    Holm p over the 41 procedures, max |diff|    here +0.000000  published +0.000000  ok
-    raw p on the test seeds, max |diff|          here +0.000000  published +0.000000  ok
-    k, landscape splits: test_median             here +0.019465  published +0.019465  ok
-    k, landscape splits: test_p2_5               here +0.000474  published +0.000474  ok
-    k, landscape splits: test_p97_5              here +0.034039  published +0.034039  ok
-    k, landscape splits: share_selected_k5_to_16 here +0.999500  published +0.999500  ok
-    k, landscape splits: optimism_mean           here +0.005148  published +0.005148  ok
-    k, landscape splits: optimism_net_of_shift_mean here +0.005148  published +0.005148  ok
-    k, crossed splits: test_median               here +0.017653  published +0.017653  ok
-    k, crossed splits: test_p2_5                 here -0.001599  published -0.001599  ok
-    k, crossed splits: test_p97_5                here +0.036845  published +0.036845  ok
-    k, crossed splits: share_selected_k5_to_16   here +0.999500  published +0.999500  ok
-    k, crossed splits: optimism_mean             here +0.007104  published +0.007104  ok
-    k, crossed splits: optimism_net_of_shift_mean here +0.005865  published +0.005865  ok
-    k, seed split 7-11 -> 12-16: optimism        here +0.007098  published +0.007098  ok
-    k, seed split 7-11 -> 12-16: seed shift      here +0.001238  published +0.001238  ok
-    k, seed split 12-16 -> 7-11: optimism        here +0.001846  published +0.001846  ok
-    k, seed split 12-16 -> 7-11: seed shift      here -0.001238  published -0.001238  ok
+=== The paper's own producers on each replay set (the shared side reproduced above) ===
 
 === Every sitting value the paper prints, shared vs sequential (random order) vs sequential (rank order) ===
 Gains of the deployed design at the final trial over the standard process, in units of the achievable improvement; LogEI and qNEI, the four processes, looks at the full idiosyncratic SD. '*' marks a value at a k that differs from the shared one.
@@ -896,16 +903,16 @@ Other quantities the text quotes (shared / random / rank):
   5sigma_from_trial_21, gaussian error alone (sitting_by_magnitude --processes gaussian; identical under every process model): k 16 held-out +0.210 [+0.099, +0.348] on 16/20
   k-curve (shared): pooled k chosen fixed_k12 on 7-11 / fixed_k8 on 12-16; held-out gain +0.017 [+0.001, +0.033]; derived rule held-out -0.007 [-0.022, +0.006], +0.024 [+0.009, +0.039] below the chosen k
       landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.019 [+0.000, +0.034], chosen k in 5..16 in 99.95% (outside in 0.05%); crossed median +0.018 [-0.002, +0.037], chosen k in 5..16 in 99.95% (outside in 0.05%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0059, +0.0031, +0.0051, +0.0059 (range +0.003 to +0.006)
-      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1429 adj 1.000; fixed_k3 14/20 p 0.0484 adj 0.678; fixed_k5 13/20 p 0.0107 adj 0.246; fixed_k8 13/20 p 0.0121 adj 0.266; fixed_k12 14/20 p 0.0484 adj 0.678; fixed_k16 13/20 p 0.1054 adj 1.000; fixed_k20 10/20 p 0.4749 adj 1.000; fixed_k25 7/20 p 0.1140 adj 1.000; fixed_k30 4/20 p 0.0009 adj 0.029; derived 10/20 p 0.9273 adj 1.000
-      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.059), lucb_k8_rho0.5 (+0.037)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1429 adj 1.000; fixed_k3 14/20 p 0.0484 adj 0.823; fixed_k5 13/20 p 0.0107 adj 0.267; fixed_k8 13/20 p 0.0121 adj 0.290; fixed_k12 14/20 p 0.0484 adj 0.823; fixed_k16 13/20 p 0.1054 adj 1.000; fixed_k20 10/20 p 0.4749 adj 1.000; fixed_k25 7/20 p 0.1140 adj 1.000; fixed_k30 4/20 p 0.0009 adj 0.030; derived 10/20 p 0.9273 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.059)
   k-curve (random): pooled k chosen fixed_k12 on 7-11 / fixed_k8 on 12-16; held-out gain +0.018 [+0.001, +0.035]; derived rule held-out -0.007 [-0.022, +0.006], +0.025 [+0.010, +0.040] below the chosen k
       landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.019 [-0.000, +0.034], chosen k in 5..16 in 99.95% (outside in 0.05%); crossed median +0.019 [-0.005, +0.037], chosen k in 5..16 in 99.95% (outside in 0.05%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0032, +0.0040, +0.0050, +0.0048 (range +0.003 to +0.005)
-      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.0897 adj 0.908; fixed_k3 14/20 p 0.0400 adj 0.616; fixed_k5 13/20 p 0.0083 adj 0.208; fixed_k8 13/20 p 0.0121 adj 0.266; fixed_k12 13/20 p 0.0532 adj 0.638; fixed_k16 13/20 p 0.1650 adj 1.000; fixed_k20 11/20 p 0.6742 adj 1.000; fixed_k25 7/20 p 0.0826 adj 0.908; fixed_k30 5/20 p 0.0020 adj 0.064; derived 11/20 p 0.9563 adj 1.000
-      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), lucb_k8_rho0.5 (+0.037)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.0897 adj 1.000; fixed_k3 14/20 p 0.0400 adj 0.688; fixed_k5 13/20 p 0.0083 adj 0.216; fixed_k8 13/20 p 0.0121 adj 0.290; fixed_k12 13/20 p 0.0532 adj 0.798; fixed_k16 13/20 p 0.1650 adj 1.000; fixed_k20 11/20 p 0.6742 adj 1.000; fixed_k25 7/20 p 0.0826 adj 1.000; fixed_k30 5/20 p 0.0020 adj 0.066; derived 11/20 p 0.9563 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078)
   k-curve (rank): pooled k chosen fixed_k12 on 7-11 / fixed_k5 on 12-16; held-out gain +0.014 [-0.001, +0.031]; derived rule held-out -0.007 [-0.022, +0.006], +0.021 [+0.006, +0.037] below the chosen k
       landscape splits (heldout_remedies, 1000 partitions x 2 folds, full-data winner fixed_k8): landscape median +0.017 [-0.003, +0.032], chosen k in 5..16 in 99.75% (outside in 0.25%); crossed median +0.015 [-0.003, +0.035], chosen k in 5..16 in 99.80% (outside in 0.20%); optimism net of the seed shift, seed split both ways and the two split schemes: +0.0073, +0.0078, +0.0055, +0.0071 (range +0.005 to +0.008)
-      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1054 adj 1.000; fixed_k3 14/20 p 0.0532 adj 0.638; fixed_k5 13/20 p 0.0094 adj 0.236; fixed_k8 13/20 p 0.0172 adj 0.344; fixed_k12 13/20 p 0.1054 adj 1.000; fixed_k16 11/20 p 0.2943 adj 1.000; fixed_k20 10/20 p 0.8983 adj 1.000; fixed_k25 6/20 p 0.0153 adj 0.337; fixed_k30 2/20 p 0.0002 adj 0.008; derived 11/20 p 0.9854 adj 1.000
-      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.067), lucb_k8_rho0.5 (+0.037)
+      Holm over the 41 procedures, test seeds: fixed_k2 13/20 p 0.1054 adj 1.000; fixed_k3 14/20 p 0.0532 adj 0.798; fixed_k5 13/20 p 0.0094 adj 0.245; fixed_k8 13/20 p 0.0172 adj 0.378; fixed_k12 13/20 p 0.1054 adj 1.000; fixed_k16 11/20 p 0.2943 adj 1.000; fixed_k20 10/20 p 0.8983 adj 1.000; fixed_k25 6/20 p 0.0153 adj 0.367; fixed_k30 2/20 p 0.0002 adj 0.008; derived 11/20 p 0.9854 adj 1.000
+      surviving at 0.05 over the 41: tournament_k3_lcb_rho0.5_look (+0.049), tournament_k3_obs_rho0.5_look (+0.031), tournament_k5_lcb_rho0.5_look (+0.053), tournament_k5_obs_rho0.5_look (+0.041), shortlist_m2 (+0.035), shortlist_m3 (+0.054), shortlist_m5 (+0.078), fixed_k30 (-0.067)
 
 The chosen k, shared / random / rank (seeds 7-11 choose and 12-16 score, and the reverse):
   pooled                   chosen on 7-11 : 12 / 12 / 12

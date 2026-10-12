@@ -386,6 +386,20 @@ def test_requirements_eval_pins_the_build_that_ran():
     assert 'requires-python = ">=3.12"' in toml
 
 
+def test_the_loose_requirements_cannot_install_another_numerical_path():
+    """requirements.txt and pyproject.toml must not admit BoTorch 0.18.1 from PyPI or scipy >= 1.19.
+
+    With either, BoTorch's SCIPY_UNTESTED_VERSION gate picks the other L-BFGS-B
+    path (joint instead of per-restart optimisation) and no logged run reproduces.
+    """
+    reqs = (REPO / "requirements.txt").read_text(encoding="utf-8")
+    toml = (REPO / "pyproject.toml").read_text(encoding="utf-8")
+    for text in (reqs, toml):
+        assert re.search(r"botorch @ git\+https://github\.com/meta-pytorch/botorch\.git@eea35f51a", text)
+        assert "botorch>=" not in text
+        assert re.search(r"scipy>=1\.18\.1,<1\.19", text)
+
+
 def test_requirements_eval_matches_the_recorded_package_versions():
     meta_path = REPO / "output-boba" / "run_metadata.json"
     if not meta_path.is_file():

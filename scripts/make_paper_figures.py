@@ -2,7 +2,7 @@
 
 Every figure here is a picture of a table the paper already prints, so the
 number a reader takes from the figure can be checked against the table, and
-the command that produced it is this file. Five figures (decomposition.pdf is
+the command that produced it is this file. Six figures (decomposition.pdf is
 kept for the record; the paper now shows the per-landscape split instead):
 
   dose_response.pdf   deployed loss and search loss at the same final trial
@@ -21,6 +21,12 @@ kept for the record; the paper now shows the per-landscape split instead):
   frag_scatter.pdf    the one-shot selection loss of a landscape against the
                       cost the sweep measured on it, one point per landscape
                       and magnitude
+  winners_curse.pdf   the headline cell per landscape: the realised selection
+                      loss against its prediction from redrawing each run's
+                      error on its own visited designs, as a share of the
+                      deployed excess and in landscape SDs
+                      (review/winners_curse_landscapes.csv, written by
+                      scripts/checks/winners_curse.py report)
 
 Colour is assigned by the job it does, in the fixed order of the reference
 palette: two categorical hues for the two responses, one sequential hue for the
@@ -352,6 +358,60 @@ def fig_frag_scatter(cells: pd.DataFrame, stats: dict, out: Path) -> float:
     return rho
 
 
+def fig_winners_curse(lands: pd.DataFrame, out: Path, jitter_std: float = 1.0, onset: int = 0) -> float:
+    """The headline cell per landscape: realised selection loss against its winner's-curse
+    prediction (each run's own error process redrawn on its own visited designs, the
+    standard ship rule applied), (a) as a share of the deployed excess, (b) in landscape SDs.
+
+    Input: winners_curse_landscapes.csv from scripts/checks/winners_curse.py (main sweep,
+    four processes pooled, ten acquisitions). Panel (b) carries the rank correlation,
+    because there the two sides share no normaliser; in (a) they share the deployed
+    excess and in units of opt_z they would share opt_z, which inflates a correlation."""
+    from scipy.stats import spearmanr
+
+    cell = lands[(lands.arm == "main") & (lands.error_model == "pooled") & (lands.jitter_std == jitter_std)
+                 & (lands.onset == onset)].reset_index(drop=True)
+    if len(cell) != 20:
+        raise SystemExit(f"expected 20 landscapes in the headline cell of the winner's-curse table, found {len(cell)}")
+    rho = float(spearmanr(cell.sel_real_sd, cell.sel_pred_sd).statistic)
+    fig, axes = plt.subplots(1, 2, figsize=(WIDTH, 2.55))
+    # (axis, x, y, title, percent axes, tick step, label offsets of the lowest and highest point)
+    panels = ((axes[0], "share_real", "share_pred", "(a) share of the deployed excess", True, 0.2,
+               ((6, 0), (4, -9))),
+              (axes[1], "sel_real_sd", "sel_pred_sd", "(b) selection loss, landscape SDs", False, 0.1,
+               ((4, -10), (4, -9))))
+    for ax, x, y, title, percent, step, offsets in panels:
+        hi = float(max(cell[x].max(), cell[y].max())) * 1.08
+        lo = 0.0 if percent else float(min(cell[x].min(), cell[y].min())) * 0.6
+        ax.plot([lo, hi], [lo, hi], color=INK2, linewidth=0.8, linestyle="--", zorder=1)
+        ax.scatter(cell[x], cell[y], s=22, color=DEPLOYED, edgecolor="white", linewidth=0.6, zorder=3)
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
+        ax.set_aspect("equal", adjustable="box")
+        for axis in (ax.xaxis, ax.yaxis):
+            axis.set_major_locator(matplotlib.ticker.MultipleLocator(step))
+            if percent:
+                axis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0, decimals=0))
+        ax.grid(True)
+        ax.set_axisbelow(True)
+        ax.set_title(title, loc="left", fontweight="normal")
+        ax.set_xlabel("realised")
+        ax.set_ylabel("predicted")
+        # Name the two ends of each panel; the table names every point.
+        for idx, offset in zip((int(cell[x].idxmin()), int(cell[x].idxmax())), offsets):
+            r = cell.loc[idx]
+            ax.annotate(PRETTY.get(r.landscape, r.landscape), (r[x], r[y]), xytext=offset,
+                        textcoords="offset points", va="center" if offset[1] == 0 else "baseline",
+                        fontsize=7, color=INK2)
+    # The dashed identity line is named in the caption. The points sit on or below
+    # it, so the upper left of a panel is free.
+    axes[1].annotate(rf"Spearman $\rho$ = {rho:.2f}", (0.03, 0.97), xycoords="axes fraction", va="top",
+                     fontsize=7.5, color=INK2)
+    fig.tight_layout(w_pad=2.0)
+    _save(fig, out, "winners_curse")
+    return rho
+
+
 def main(argv=None) -> None:
     args = parse_args(argv)
     args.out.mkdir(parents=True, exist_ok=True)
@@ -377,6 +437,11 @@ def main(argv=None) -> None:
     for name in ("dose_response", "decomposition", "per_landscape", "kcurve", "frag_scatter"):
         print(f"wrote {args.out / (name + '.pdf')}")
     print(f"frag scatter: Spearman rho on log-log = {rho:.3f}")
+    # The winner's-curse table is written by scripts/checks/winners_curse.py report.
+    winners = args.analysis / "review" / "winners_curse_landscapes.csv"
+    if winners.is_file():
+        wc_rho = fig_winners_curse(pd.read_csv(winners), args.out)
+        print(f"wrote {args.out / 'winners_curse.pdf'} (Spearman rho in landscape SDs = {wc_rho:.3f})")
 
 
 if __name__ == "__main__":

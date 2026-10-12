@@ -377,6 +377,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--n-jobs", type=int, default=-2)
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument(
+        "--allow-acq-fallback", action="store_true", default=False,
+        help="Write SWEEP_COMPLETE and exit 0 even if some acquisition optimisations fell back "
+             "to random proposals. Without it such a sweep exits with code 3 and stays incomplete, "
+             "because an arm whose acquisition falls back is not the arm it is labelled as.")
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         default=False,
@@ -823,7 +828,7 @@ def run_task(
                 )
                 baseline_results["dataset"] = function
                 runtime = time.perf_counter() - start
-                baseline_results.to_csv(path, index=False)
+                sim.write_csv_atomic(baseline_results, path)
 
             for jitter_iteration in jitter_iterations:
                 _finish(baseline_results, acq_name, "none", 0.0, jitter_iteration,
@@ -915,7 +920,7 @@ def run_task(
                         )
                         results["dataset"] = function
                         runtime = time.perf_counter() - start
-                        results.to_csv(path, index=False)
+                        sim.write_csv_atomic(results, path)
 
                     # Record the arm under the corruption it actually applied.
                     # With --input-error-from-sweep the response channel is off
@@ -1318,6 +1323,10 @@ def main(argv: list[str] | None = None) -> None:
     if failures:
         print(f"ERROR: {len(failures)} task(s) failed; outputs are incomplete.", file=sys.stderr)
         sys.exit(1)
+    if failed_acq and not args.allow_acq_fallback:
+        print(f"ERROR: {failed_acq} acquisition-optimisation failure(s) fell back to random proposals; "
+              "SWEEP_COMPLETE is not written (pass --allow-acq-fallback to accept them).", file=sys.stderr)
+        sys.exit(3)
     (output_dir / "SWEEP_COMPLETE").write_text(
         json.dumps({"total_runs": total_runs, "runtime_sec": elapsed}, indent=2), encoding="utf-8"
     )

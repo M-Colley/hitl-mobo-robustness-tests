@@ -16,19 +16,28 @@ main sweep's seeds. Each landscape's value is the mean over processes and seeds,
 and the summary is the mean of the twenty landscape means. The floor is the mean
 of random and Sobol within each landscape. Beside each acquisition the paired
 difference floor - acquisition (positive: the floor ships the worse design) is
-given with a percentile bootstrap over landscapes (2000 resamples, as for every
-interval in the paper; one set of resamples is shared by the ten acquisitions).
-The landscapes share their random numbers by design, so that bootstrap treats
-correlated clusters as independent.
+given with a percentile bootstrap over landscapes (100,000 resamples; one set of
+resamples is shared by the ten acquisitions at a magnitude). The landscapes
+share their random numbers by design, so that bootstrap treats correlated
+clusters as independent.
 
 Ten acquisitions are compared with the floor at each magnitude, so each
-comparison also carries a two-sided bootstrap p (twice the smaller tail mass of
-the resampled mean at zero, floored at 1/resamples, the definition used by
-analyse_boba_robustness._cluster_bootstrap), its Holm adjustment over the ten
-(``p_holm``), and a Wilcoxon signed-rank test over the twenty landscape
-differences with its own Holm adjustment. The clean twin's absolute deployed
-regret and the deployed excess are printed too, so the three quantities can be
-told apart. Onset 20 is repeated at the end for completeness.
+comparison carries three two-sided tests, each Holm-adjusted over the ten
+acquisitions at that magnitude and onset (the Holm family): the bootstrap p
+(twice the smaller tail mass of the resampled mean at zero, floored at
+1/resamples, the definition used by analyse_boba_robustness._cluster_bootstrap;
+``p_bootstrap``, ``p_holm``), a one-sample t test of the twenty landscape
+differences (``t_p``, ``t_p_holm``; with twenty clusters a t interval is the one
+that covers about 95%, scripts/bootstrap_coverage.py) and a Wilcoxon
+signed-rank test (``wilcoxon_p``, ``wilcoxon_p_holm``). Until 2026-10-09 the
+bootstrap used 2000 resamples, which floors p at 0.0005 and leaves a Holm p near
+0.01 to the luck of one draw: LogPI's at 5 sigma printed 0.010, its median over
+bootstrap seeds was 0.030, and with 100,000 resamples it is 0.033 (0.031 with
+200,000; its t-test and signed-rank Holm p are 0.10 and 0.12). A comparison
+is called detectable below only when all three Holm-adjusted p values are below
+0.05. The clean twin's absolute deployed regret and the deployed excess are
+printed too, so the three quantities can be told apart. Onset 20 is repeated at
+the end for completeness.
 
 The deployed excess is also split by the paper's decomposition into its search
 part (``final_simple_regret_excess_true / opt_z``, the excess regret of the best
@@ -53,7 +62,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.stats import wilcoxon
+from scipy.stats import ttest_1samp, wilcoxon
 from statsmodels.stats.multitest import multipletests
 
 REPO = Path(__file__).resolve().parents[2]
@@ -64,8 +73,13 @@ import boba_benchmarks as bb  # noqa: E402
 
 PROCESSES = ("gaussian", "bias", "drift", "ar1")
 FLOORS = ("random", "sobol")
-REPS = 2000
+# 100,000 resamples: a bootstrap p is floored at 1/REPS, and a Holm adjustment
+# over ten multiplies a raw p near 0.003 by up to ten, so 2000 resamples left
+# the adjusted p's second digit to chance.
+REPS = 100_000
 SEED = 20260930
+TESTS = {"bootstrap": ("p_bootstrap", "p_holm"), "t": ("t_p", "t_p_holm"),
+         "wilcoxon": ("wilcoxon_p", "wilcoxon_p_holm")}
 ALPHA = 0.05
 NOISY = "final_inference_simple_regret_true_jitter"
 CLEAN = "final_inference_simple_regret_true_baseline"
@@ -110,8 +124,7 @@ def floor_table(cells: pd.DataFrame, reps: int = REPS, seed: int = SEED) -> pd.D
         rows.append({"jitter_std": float(std), "acquisition": "floor", "deployed": float(floor.mean()),
                      **{v: float(t[present].mean(axis=1).mean()) for v, t in extra.items()},
                      "floor_minus_acq": 0.0, "ci_low": np.nan, "ci_high": np.nan,
-                     "p_bootstrap": np.nan, "p_holm": np.nan,
-                     "wilcoxon_p": np.nan, "wilcoxon_p_holm": np.nan,
+                     **{col: np.nan for pair in TESTS.values() for col in pair},
                      "landscapes_floor_better": np.nan, "n_landscapes": n})
         arms = []
         for acq in sorted(c for c in wide.columns if c not in FLOORS):
@@ -120,18 +133,20 @@ def floor_table(cells: pd.DataFrame, reps: int = REPS, seed: int = SEED) -> pd.D
             lo, hi = np.percentile(draws, [2.5, 97.5])
             p_boot = 2.0 * min(float((draws <= 0).mean()), float((draws >= 0).mean()))
             p_boot = float(np.clip(p_boot, 1.0 / reps, 1.0))
-            p_wil = float(wilcoxon(diff).pvalue) if np.any(diff != 0) else 1.0
+            nonzero = bool(np.any(diff != 0))
+            p_t = float(ttest_1samp(diff, 0.0).pvalue) if nonzero else 1.0
+            p_wil = float(wilcoxon(diff).pvalue) if nonzero else 1.0
             arms.append({"jitter_std": float(std), "acquisition": acq,
                          "deployed": float(wide[acq].mean()),
                          **{v: float(t[acq].mean()) for v, t in extra.items()},
                          "floor_minus_acq": float(diff.mean()), "ci_low": float(lo),
-                         "ci_high": float(hi), "p_bootstrap": p_boot, "wilcoxon_p": p_wil,
+                         "ci_high": float(hi), "p_bootstrap": p_boot, "t_p": p_t, "wilcoxon_p": p_wil,
                          "landscapes_floor_better": int((diff < 0).sum()), "n_landscapes": n})
         if arms:
-            # Holm over the acquisitions compared with the floor at this magnitude.
-            for key in ("p_bootstrap", "wilcoxon_p"):
-                adjusted = multipletests([a[key] for a in arms], alpha=ALPHA, method="holm")[1]
-                label = "p_holm" if key == "p_bootstrap" else "wilcoxon_p_holm"
+            # Holm over the acquisitions compared with the floor at this magnitude
+            # and onset, separately for each test.
+            for raw, label in TESTS.values():
+                adjusted = multipletests([a[raw] for a in arms], alpha=ALPHA, method="holm")[1]
                 for a, value in zip(arms, adjusted):
                     a[label] = float(value)
         rows.extend(arms)
@@ -143,13 +158,16 @@ def floor_table(cells: pd.DataFrame, reps: int = REPS, seed: int = SEED) -> pd.D
              .groupby("jitter_std")["floor_better"].sum())
     table["acquisitions_worse_than_floor"] = table["jitter_std"].map(worse).astype(int)
     # Detectable after Holm over the ten: the arm ships a better (floor-arm > 0) or a
-    # worse (floor-arm < 0) design than the floor.
-    better_holm = (arms_only.assign(hit=lambda t: (t["floor_minus_acq"] > 0) & (t["p_holm"] < ALPHA))
-                   .groupby("jitter_std")["hit"].sum())
-    worse_holm = (arms_only.assign(hit=lambda t: (t["floor_minus_acq"] < 0) & (t["p_holm"] < ALPHA))
-                  .groupby("jitter_std")["hit"].sum())
-    table["acquisitions_better_than_floor_holm"] = table["jitter_std"].map(better_holm).astype(int)
-    table["acquisitions_worse_than_floor_holm"] = table["jitter_std"].map(worse_holm).astype(int)
+    # worse (floor-arm < 0) design than the floor, by each test and by all three.
+    holm = {name: arms_only[label] < ALPHA for name, (_, label) in TESTS.items()}
+    holm["all"] = holm["bootstrap"] & holm["t"] & holm["wilcoxon"]
+    for name, hit in holm.items():
+        suffix = "" if name == "bootstrap" else f"_{name}"
+        for direction, sign in (("better", arms_only["floor_minus_acq"] > 0),
+                                ("worse", arms_only["floor_minus_acq"] < 0)):
+            count = (hit & sign).groupby(arms_only["jitter_std"]).sum()
+            table[f"acquisitions_{direction}_than_floor_holm{suffix}"] = (
+                table["jitter_std"].map(count).fillna(0).astype(int))
     return table
 
 
@@ -173,8 +191,8 @@ def cross_check(paired: pd.DataFrame, summary_path: Path, onset: int) -> str:
 def format_block(table: pd.DataFrame, onset: int) -> list[str]:
     out = [f"onset {onset}: absolute deployed regret / opt_z, mean of landscape means",
            f"  {'sigma':>6s} {'arm':<8s} {'deployed':>9s} {'clean':>7s} {'excess':>7s} "
-           f"{'floor-arm':>10s} {'95% CI':>18s} {'p boot':>7s} {'p Holm':>7s} "
-           f"{'p Wilc.':>7s} {'Holm':>7s} {'floor better on':>16s}"]
+           f"{'floor-arm':>10s} {'95% CI':>18s} {'p boot':>8s} {'Holm':>7s} {'p t':>8s} {'Holm':>7s} "
+           f"{'p Wilc.':>8s} {'Holm':>7s} {'floor better on':>16s}"]
     for std, block in table.groupby("jitter_std"):
         block = block.assign(order=lambda t: np.where(t["acquisition"] == "floor", -1.0,
                                                       t["deployed"]))
@@ -186,16 +204,20 @@ def format_block(table: pd.DataFrame, onset: int) -> list[str]:
                 out.append(f"  {std:>6g} {r['acquisition']:<8s} {r['deployed']:>9.3f} "
                            f"{r['deployed_clean']:>7.3f} {r['deployed_excess']:>7.3f} "
                            f"{r['floor_minus_acq']:>+10.3f} [{r['ci_low']:>+7.3f}, {r['ci_high']:>+7.3f}] "
-                           f"{r['p_bootstrap']:>7.4f} {r['p_holm']:>7.4f} "
-                           f"{r['wilcoxon_p']:>7.4f} {r['wilcoxon_p_holm']:>7.4f} "
+                           f"{r['p_bootstrap']:>8.5f} {r['p_holm']:>7.4f} "
+                           f"{r['t_p']:>8.5f} {r['t_p_holm']:>7.4f} "
+                           f"{r['wilcoxon_p']:>8.5f} {r['wilcoxon_p_holm']:>7.4f} "
                            f"{int(r['landscapes_floor_better']):>7d} of {int(r['n_landscapes'])}")
         n_arms = int((block["acquisition"] != "floor").sum())
         first = block.iloc[0]
+        tests = "; ".join(
+            f"{label}: {int(first[f'acquisitions_better_than_floor_holm{suffix}'])} better, "
+            f"{int(first[f'acquisitions_worse_than_floor_holm{suffix}'])} worse"
+            for label, suffix in (("bootstrap p", ""), ("t test", "_t"), ("signed-rank", "_wilcoxon"),
+                                  ("all three", "_all")))
         out.append(f"  {std:>6g} acquisitions shipping a worse design than the floor: "
                    f"{int(first['acquisitions_worse_than_floor'])} of {n_arms} (point estimates); "
-                   f"detectably, after Holm over the {n_arms} (bootstrap p): "
-                   f"{int(first['acquisitions_worse_than_floor_holm'])} worse, "
-                   f"{int(first['acquisitions_better_than_floor_holm'])} better")
+                   f"detectably, after Holm over the {n_arms}: {tests}")
         out.append("")
     return out
 
@@ -232,9 +254,11 @@ def main(argv: list[str] | None = None) -> None:
              "=" * 80,
              "metric: final_inference_simple_regret_true of the noisy run / opt_z; four response",
              "processes (gaussian, bias, drift, ar1); floor = mean of random and sobol per landscape;",
-             f"floor-arm is the paired floor - acquisition difference, landscape bootstrap ({REPS} resamples);",
-             "p boot is its two-sided bootstrap p, p Holm that p Holm-adjusted over the ten acquisitions,",
-             "p Wilc. a Wilcoxon signed-rank test over the twenty landscape differences and Holm its adjustment;",
+             f"floor-arm is the paired floor - acquisition difference, landscape bootstrap ({REPS:,} resamples,",
+             f"so a bootstrap p is floored at {1 / REPS:.0e});",
+             "p boot is its two-sided bootstrap p, p t a one-sample t test and p Wilc. a Wilcoxon signed-rank",
+             "test over the twenty landscape differences; each 'Holm' column is the p to its left, Holm-adjusted",
+             "over the ten acquisitions at that magnitude and onset (one family per test, magnitude and onset);",
              "'clean' is the clean twin's absolute deployed regret, 'excess' the deployed excess.",
              "Each onset's second block splits that excess into search (final_simple_regret_excess_true",
              "/ opt_z, the best design visited) and selection (the rest).",

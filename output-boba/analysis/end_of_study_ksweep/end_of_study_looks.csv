@@ -1,0 +1,16 @@
+arm,k,n_runs,n_clean_twins,share_short_noisy,mean_looks_noisy,min_looks_noisy,mean_unused_noisy,share_short_clean,mean_looks_clean,min_looks_clean,mean_unused_clean
+output-boba,2,12800,400,0.0,2.0,2,0.0,0.0,2.0,2,0.0
+output-boba,3,12800,400,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba,5,12800,400,0.0,5.0,5,0.0,0.0,5.0,5,0.0
+output-boba,8,12800,400,0.0,8.0,8,0.0,0.0,8.0,8,0.0
+output-boba,12,12800,400,0.0034375,11.99375,8,0.00625,0.0,12.0,12,0.0
+output-boba-misclick,2,1600,200,0.0,2.0,2,0.0,0.0,2.0,2,0.0
+output-boba-misclick,3,1600,200,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba-misclick,5,1600,200,0.0,5.0,5,0.0,0.0,5.0,5,0.0
+output-boba-misclick,8,1600,200,0.0,8.0,8,0.0,0.0,8.0,8,0.0
+output-boba-misclick,12,1600,200,0.000625,11.999375,11,0.000625,0.0,12.0,12,0.0
+output-boba-slip,2,1600,200,0.0,2.0,2,0.0,0.0,2.0,2,0.0
+output-boba-slip,3,1600,200,0.0,3.0,3,0.0,0.0,3.0,3,0.0
+output-boba-slip,5,1600,200,0.0,5.0,5,0.0,0.0,5.0,5,0.0
+output-boba-slip,8,1600,200,0.0,8.0,8,0.0,0.0,8.0,8,0.0
+output-boba-slip,12,1600,200,0.000625,11.998125,9,0.001875,0.0,12.0,12,0.0

@@ -1,4 +1,4 @@
-dataset,floor_auc_baseline,best_learner_auc_baseline,best_learner,headroom,ceiling_free
+dataset,floor_auc_baseline,best_learner_auc_baseline,best_learner,headroom,low_headroom
 rosenbrock,3.5566590865115244,2.932106985635042,pi,0.17560077749511305,False
 shekel,2635.764302529923,2141.3788277869508,greedy,0.18756816543438248,False
 rastrigin,90.48790502250343,71.99012817823473,ei,0.2044226445475612,False

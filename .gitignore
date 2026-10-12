@@ -305,8 +305,9 @@ output-boba-confirmatory/*
 !output-boba-confirmatory/HYPOTHESIS.md
 !output-boba-confirmatory/analysis-sensitivity/
 
-# Overleaf upload bundle, built by hand from paper/; never committed.
+# Overleaf upload bundle and the PDF compiled from it, built by hand from paper/; never committed.
 paper/*.zip
+paper/hitl-noisy-feedback-tmlr.pdf
 # LaTeX build outputs of paper/main.tex; build with paper/build_overleaf_bundle.py.
 paper/main.pdf
 paper/main.aux
@@ -327,3 +328,6 @@ external_datasets/
 
 # scratch files from the 2026-09-25 audit session (delete)
 output-oracle-iso/*_tmp.csv
+
+# Library version-sensitivity reruns (scripts/checks/version_sensitivity.py); the comparison is in output-boba/analysis/review.
+output-version-check/

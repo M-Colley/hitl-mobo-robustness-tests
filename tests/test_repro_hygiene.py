@@ -468,7 +468,7 @@ def test_the_provenance_check_resolves_functions_as_the_script_does():
 
     stats = ec.bb.load_stats(ec.bb.DEFAULT_STATS_PATH)
     argv = ["--functions", "suite", "--error-models", "bias", "--magnitudes", "1", "--seeds", "7",
-            "--iterations", "3"]
+            "--iterations", "3", "--initial-samples", "2"]
     _, clean, names = cp.elicitation_tasks(argv, "clean")
     assert names == ec.landscape_names("suite", stats) == sorted(ec.bb.DEFAULT_SUITE)
     assert {t["dataset"] for t in clean} == set(names) and not any(t["apply_error"] for t in clean)

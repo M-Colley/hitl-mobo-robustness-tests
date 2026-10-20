@@ -1,0 +1,48 @@
+{
+  "functions": [
+    "hartmann_3"
+  ],
+  "methods": [
+    "bo_logei",
+    "random",
+    "sobol",
+    "cem",
+    "ridge_ucb",
+    "dueling_ucb",
+    "reward_policy",
+    "dpo"
+  ],
+  "seeds": [
+    7
+  ],
+  "error_models": [
+    "gaussian",
+    "bias",
+    "drift",
+    "ar1",
+    "spike",
+    "lapse",
+    "position",
+    "contrast",
+    "fatigue",
+    "heteroscedastic",
+    "rater"
+  ],
+  "magnitudes": [
+    0.25
+  ],
+  "onsets": [
+    0,
+    3
+  ],
+  "budget": 6,
+  "candidate_pool": 16,
+  "comparison_cost": 2,
+  "reference": "bo_logei",
+  "reference_rule": "observed_max",
+  "rating_clip": [
+    -2,
+    2
+  ],
+  "rating_step": 0.5
+}

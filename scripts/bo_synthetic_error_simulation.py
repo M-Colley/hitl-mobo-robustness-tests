@@ -377,6 +377,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--n-jobs", type=int, default=-2)
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument(
+        "--allow-legacy-resume", action="store_true", default=False,
+        help="With --resume, explicitly trust historical logs without configuration fingerprints. "
+             "Mismatched fingerprints are always rejected; use fresh output directories for changed settings.",
+    )
+    parser.add_argument(
         "--allow-acq-fallback", action="store_true", default=False,
         help="Write SWEEP_COMPLETE and exit 0 even if some acquisition optimisations fell back "
              "to random proposals. Without it such a sweep exits with code 3 and stays incomplete, "
@@ -739,6 +744,23 @@ def run_task(
 
     summaries: list[dict] = []
     diagnostics: list[dict] = []
+    fingerprint_context = {
+        "function": function, "statistics": stats_entry,
+        "driver_sha256": sim.source_sha256(str(Path(__file__).resolve())),
+        "objective_sha256": sim.source_sha256(str(Path(mob.__file__ if multi else bb.__file__).resolve())),
+    }
+
+    def _fingerprint(config: sim.SimulationConfig, acq: sim.AcquisitionConfig, noisy: bool) -> str:
+        return sim.run_config_fingerprint(
+            config, acq, bounds=bounds, apply_error=noisy, oracle_model=ORACLE_TAG,
+            y_opt=y_opt, context=fingerprint_context,
+        )
+
+    def _resume(path: Path, fingerprint: str) -> pd.DataFrame | None:
+        return (sim._load_resumable_run(
+            path, args.iterations, expected_fingerprint=fingerprint,
+            allow_legacy=bool(getattr(args, "allow_legacy_resume", False)),
+        ) if args.resume else None)
 
     def _tick() -> None:
         if progress_q is not None:
@@ -805,7 +827,8 @@ def run_task(
                 f"bo_sensor_error_{function}_{objective_name}_{acq_name}_seed{seed}"
                 f"_baseline_{ORACLE_TAG}{arm}.csv"
             )
-            baseline_results = sim._load_resumable_run(path, args.iterations) if args.resume else None
+            fingerprint = _fingerprint(base_config, acq, False)
+            baseline_results = _resume(path, fingerprint)
             if baseline_results is not None:
                 run_id = str(baseline_results["run_id"].iloc[0])
                 runtime = 0.0
@@ -827,6 +850,7 @@ def run_task(
                     y_opt=y_opt,
                 )
                 baseline_results["dataset"] = function
+                baseline_results["run_config_fingerprint"] = fingerprint
                 runtime = time.perf_counter() - start
                 sim.write_csv_atomic(baseline_results, path)
 
@@ -862,7 +886,18 @@ def run_task(
                         f"_jittered_{ORACLE_TAG}_{channel}_jit{jitter_iteration}"
                         f"_std{jitter_std}{suffix}.csv"
                     )
-                    results = sim._load_resumable_run(path, args.iterations) if args.resume else None
+                    config = dataclasses.replace(
+                        base_config, seed=seed, error_model=error_model,
+                        jitter_std=float(jitter_std), jitter_iteration=int(jitter_iteration),
+                        error_bias=error_bias, error_spike_std=spike_std,
+                    )
+                    if args.input_error_from_sweep:
+                        # Only the input channel receives the swept corruption.
+                        config = dataclasses.replace(
+                            config, input_error_scale=float(jitter_std), error_model="none",
+                        )
+                    fingerprint = _fingerprint(config, acq, True)
+                    results = _resume(path, fingerprint)
                     if results is not None:
                         run_id = str(results["run_id"].iloc[0])
                         runtime = 0.0
@@ -886,25 +921,6 @@ def run_task(
                                 ]
                             )
                         )
-                        config = dataclasses.replace(
-                            base_config,
-                            seed=seed,
-                            error_model=error_model,
-                            jitter_std=float(jitter_std),
-                            jitter_iteration=int(jitter_iteration),
-                            error_bias=error_bias,
-                            error_spike_std=spike_std,
-                        )
-                        if args.input_error_from_sweep:
-                            # The swept grid drives the INPUT error instead. The
-                            # response error is switched off so the arm measures
-                            # one corruption at a time: leaving both on at the
-                            # same swept value would confound them at every cell.
-                            config = dataclasses.replace(
-                                config,
-                                input_error_scale=float(jitter_std),
-                                error_model="none",
-                            )
                         start = time.perf_counter()
                         results = sim.run_simulation(
                             oracle=oracle,
@@ -919,6 +935,7 @@ def run_task(
                             y_opt=y_opt,
                         )
                         results["dataset"] = function
+                        results["run_config_fingerprint"] = fingerprint
                         runtime = time.perf_counter() - start
                         sim.write_csv_atomic(results, path)
 
@@ -1136,6 +1153,9 @@ def main(argv: list[str] | None = None) -> None:
 
     if args.dry_run:
         return
+    # A prior success must not survive an interrupted or failed new invocation.
+    # Dry runs above leave the existing completion claim alone.
+    (output_dir / "SWEEP_COMPLETE").unlink(missing_ok=True)
     _guard_clean_run_settings(output_dir, args)
     _guard_instrument_naming(output_dir, args)
 

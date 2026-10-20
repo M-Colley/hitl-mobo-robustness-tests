@@ -1,4 +1,9 @@
 # Byte-compiled / optimized / DLL files
+# Fresh finite-candidate feedback-arm results and target-PC environment freeze.
+output-feedback*/
+feedback-environment.txt
+.venv-feedback*/
+validation-local/
 __pycache__/
 *.py[codz]
 *$py.class

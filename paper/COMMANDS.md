@@ -600,3 +600,89 @@ python scripts/check_paper.py --paper paper
 cd paper && pdflatex main && bibtex main && pdflatex main && pdflatex main && pdflatex main
 python paper/build_overleaf_bundle.py                  # compiles in a clean directory, repeating pdflatex until main.log asks for no rerun, and prints where the main text ends
 ```
+
+## 11. Finite-candidate feedback alternatives (implementation, 2026-10-20)
+
+These are a NEW scalar finite-candidate arm, not inputs to existing paper
+tables. No experiment command below was executed during the code review.
+The comparison producers reuse analyse_boba_adaptations.paired_frame and
+summarise, with bo_logei:observed_max as the fixed standard reference.
+
+Read-only planning commands (no objective evaluation or model fitting):
+
+```
+python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --dry-run
+python scripts/human_feedback_benchmark.py --config configs/feedback_screen.json --dry-run
+python scripts/human_feedback_benchmark.py --config configs/feedback_heldout.json --dry-run
+```
+
+Commands prepared for execution on the OTHER PC, in this order:
+
+```
+python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-smoke --workers 2 --run
+python scripts/human_feedback_benchmark.py --config configs/feedback_screen.json --output-dir output-feedback-screen --workers 4 --run
+# freeze all choices from seeds 7-11 before evaluating held-out seeds:
+python scripts/human_feedback_benchmark.py --config configs/feedback_heldout.json --output-dir output-feedback-heldout --workers 4 --run
+python scripts/human_feedback_benchmark.py --output-dir output-feedback-heldout --summarize
+```
+
+Each output directory holds manifest.json, atomic runs/<task-hash>.json,
+per_run_metrics.csv, comparison_summary.csv and comparison_per_landscape.csv.
+The CSV comparisons report FINAL-budget search/deployed/selection endpoints,
+gain and clean price in fractions of opt_z, with landscape bootstrap intervals
+and unsafe recovery-ratio suppression. They do not produce a post-onset AUC or
+confirmatory p-values. Use the same command plus --resume after interruption;
+changed source/settings/environment requires a fresh directory.
+
+Source-only distribution producer (no experiment execution):
+
+```
+python scripts/build_feedback_bundle.py --output dist/human-feedback-portable.zip
+```
+
+## 12. Initial execution and Python 3.15 validation (2026-10-21)
+
+Section 11 records the original no-execution implementation. The user then
+authorized initial real benchmark runs. These are software smoke tests, not
+scientific robustness rankings. The smoke configuration now uses Hartmann 3D,
+Hartmann 6D, Branin and Ackley; eight methods; eight judgments; one seed;
+Gaussian/drift magnitude 1 at onset 0/4; 160 tasks including clean twins.
+
+```
+python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-smoke-py313-20261021 --workers 2 --run
+python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-smoke-py313-20261021 --workers 1 --run --resume
+python scripts/bo_synthetic_error_simulation.py --functions hartmann_3,hartmann_6,branin --acq logei,random,sobol --iterations 8 --initial-samples 3 --candidate-pool 32 --acq-num-restarts 2 --acq-maxiter 20 --seeds 7 --error-models gaussian,dropout --jitter-stds 1 --jitter-iterations 0,4 --n-jobs 2 --output-dir output-feedback-legacy-smoke-py313-20261021
+```
+
+Native Windows Python 3.15.0 was tested in `.venv-feedback315`, using official
+PyTorch CPU wheels. `requirements-feedback-py315.txt` records the portable
+installation route and was checked with a binary-only clean resolver.
+
+```
+py -3.15 -m venv .venv-feedback315
+.venv-feedback315/Scripts/python.exe -m pip install --only-binary=:all: -r requirements-feedback-py315.txt
+.venv-feedback315/Scripts/python.exe scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-smoke-py315-20261021 --workers 2 --run
+.venv-feedback315/Scripts/python.exe scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-smoke-py315-20261021 --workers 1 --run --resume
+.venv-feedback315/Scripts/python.exe scripts/human_feedback_benchmark.py --config configs/feedback_edge_smoke.json --output-dir output-feedback-edge-smoke-py315-20261021 --workers 2 --run
+```
+
+The edge configuration spends six budget units per run and uses a clipped,
+rounded instrument. Comparisons cost two units and receive three judgments;
+ratings receive six. All eleven fault definitions are exercised. The outputs
+retain final search/deployed/selection metrics and both numeric tie rules.
+Full test and static-check logs are local under `validation-local/`; the
+review's results and limitations are recorded in `docs/VALIDATION_2026-10-21.md`.
+
+Final legacy smoke and resume with native Python 3.15, after fingerprint and
+completion-marker fixes:
+
+```
+.venv-feedback315/Scripts/python.exe scripts/bo_synthetic_error_simulation.py --functions hartmann_3,hartmann_6,branin --acq logei,random,sobol --iterations 8 --initial-samples 3 --candidate-pool 32 --acq-num-restarts 2 --acq-maxiter 20 --seeds 7 --error-models gaussian,dropout --jitter-stds 1 --jitter-iterations 0,4 --n-jobs 2 --output-dir output-feedback-legacy-smoke-py315-final-20261021
+# repeat the exact command with --resume: all 45 per-run CSV byte hashes remain unchanged
+# --resume with candidate-pool 33 is rejected and removes SWEEP_COMPLETE;
+# restoring candidate-pool 32 and resuming restores completion with unchanged CSVs
+python -m pytest tests/ -o addopts= -q
+.venv-feedback315/Scripts/python.exe -m pytest tests/ -o addopts= -q
+python scripts/check_paper.py --paper paper
+python scripts/build_feedback_bundle.py --output dist/human-feedback-portable-2026-10-21.zip
+```

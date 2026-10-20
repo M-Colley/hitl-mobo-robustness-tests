@@ -125,7 +125,36 @@ def parse_args(argv=None) -> argparse.Namespace:
     p.add_argument("--stats-path", type=Path, default=bb.DEFAULT_STATS_PATH)
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--summary-only", action="store_true")
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.iterations < 1 or not 1 <= args.initial_samples <= args.iterations:
+        p.error("require 1 <= --initial-samples <= --iterations")
+    if args.candidate_pool < 1 or args.workers < 1:
+        p.error("--candidate-pool and --workers must be positive")
+    if not np.isfinite(args.spike_prob) or not 0 <= args.spike_prob <= 1:
+        p.error("--spike-prob must be finite and in [0, 1]")
+    if not np.isfinite(args.spike_sd) or args.spike_sd < 0:
+        p.error("--spike-sd must be finite and nonnegative")
+    if not np.isfinite(args.ceiling_quantile) or not 0 <= args.ceiling_quantile <= 1:
+        p.error("--ceiling-quantile must be finite and in [0, 1]")
+    try:
+        seeds = [int(s) for s in args.seeds.split(",")]
+        magnitudes = [float(m) for m in args.magnitudes.split(",")]
+    except ValueError:
+        p.error("--seeds and --magnitudes must be nonempty comma-separated numbers")
+    if any(seed < 0 or seed >= 2**32 for seed in seeds):
+        p.error("--seeds must be integers in [0, 2**32)")
+    if len(set(seeds)) != len(seeds):
+        p.error("--seeds must not contain duplicates")
+    if any(not np.isfinite(m) or m < 0 for m in magnitudes):
+        p.error("--magnitudes must be finite and nonnegative")
+    if len(set(magnitudes)) != len(magnitudes):
+        p.error("--magnitudes must not contain duplicates")
+    models = [m.strip() for m in args.error_models.split(",")]
+    if any(m not in ALL_FAULTS for m in models):
+        p.error(f"--error-models must be drawn from {', '.join(ALL_FAULTS)}")
+    if len(set(models)) != len(models):
+        p.error("--error-models must not contain duplicates")
+    return args
 
 
 # ---------------------------------------------------------------------------
@@ -554,6 +583,10 @@ def landscape_names(functions: str, stats: dict) -> list[str]:
         names = sorted(bb.DEFAULT_SUITE)
     else:
         names = [f.strip() for f in functions.split(",") if f.strip()]
+    if not names:
+        raise SystemExit("--functions must name at least one landscape")
+    if len(set(names)) != len(names):
+        raise SystemExit("--functions must not contain duplicates")
     unknown = [n for n in names if n not in stats]
     if unknown:
         raise SystemExit(f"--functions names landscapes the stats file does not hold: {unknown}")
@@ -562,13 +595,18 @@ def landscape_names(functions: str, stats: dict) -> list[str]:
 
 def main(argv=None) -> pd.DataFrame:
     args = parse_args(argv)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
     runs_path = args.output_dir / f"{OUTPUT_NAME}_runs.csv"
+    if args.summary_only and not runs_path.is_file():
+        raise FileNotFoundError(
+            f"--summary-only requires an existing run log: {runs_path}. "
+            "No experiments were started."
+        )
+    args.output_dir.mkdir(parents=True, exist_ok=True)
 
     stats = bb.load_stats(args.stats_path)
     names = landscape_names(args.functions, stats)
 
-    if args.summary_only and runs_path.is_file():
+    if args.summary_only:
         runs = pd.read_csv(runs_path)
     else:
         tasks = build_tasks(args, names)

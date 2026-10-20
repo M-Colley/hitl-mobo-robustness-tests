@@ -1,0 +1,5 @@
+# Additional dependencies for the whole legacy test suite on Python 3.15.
+-r requirements-feedback-py315.txt
+-r requirements-dev.txt
+xgboost>=3.4.1,<4
+lightgbm>=4.7,<5

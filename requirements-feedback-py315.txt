@@ -1,0 +1,15 @@
+# Tested CPU stack for Python 3.15, including native Windows x86-64 wheels.
+# The official PyTorch index is needed: cp315 torch wheels are not on PyPI.
+--extra-index-url https://download.pytorch.org/whl/cpu
+-r requirements-feedback.txt
+torch==2.14.1+cpu
+numpy>=2.5.3,<3
+scipy>=1.18.1,<2
+pandas>=3.0.6,<4
+statsmodels>=0.15,<1
+# Imports used by the legacy core and full test suite (optional tree oracles
+# remain optional; these packages all provide Python 3.15 binary wheels).
+scikit-learn>=1.9.1,<2
+matplotlib>=3.11.1,<4
+seaborn>=0.13.2,<1
+tqdm>=4.70,<5

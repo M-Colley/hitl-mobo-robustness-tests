@@ -1,0 +1,64 @@
+{
+  "functions": [
+    "ackley",
+    "branin",
+    "eggholder",
+    "griewank",
+    "hartmann_3",
+    "hartmann_6",
+    "hicks_law",
+    "levy_10",
+    "michalewicz",
+    "moving_peaks",
+    "powell",
+    "power_law_practice",
+    "rastrigin",
+    "rosenbrock",
+    "schwefel",
+    "shekel",
+    "steering_law",
+    "stevens",
+    "weber_fechner",
+    "yerkes_dodson"
+  ],
+  "methods": [
+    "bo_logei",
+    "random",
+    "sobol",
+    "cem",
+    "ridge_ucb",
+    "dueling_ucb",
+    "reward_policy",
+    "dpo"
+  ],
+  "seeds": [
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "error_models": [
+    "gaussian",
+    "bias",
+    "drift",
+    "ar1",
+    "spike",
+    "position"
+  ],
+  "magnitudes": [
+    0.05,
+    0.25,
+    1,
+    5
+  ],
+  "onsets": [
+    0,
+    20
+  ],
+  "budget": 50,
+  "candidate_pool": 512,
+  "comparison_cost": 1,
+  "reference": "bo_logei",
+  "reference_rule": "observed_max"
+}

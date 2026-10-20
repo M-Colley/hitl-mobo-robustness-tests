@@ -1,5 +1,14 @@
 # HITL MOBO Robustness Tests
 
+For the new finite-candidate comparison of BO, evolutionary search, bandits,
+dueling preferences, and one-step RLHF/DPO analogues, see
+[the other-PC setup and run guide](docs/HUMAN_FEEDBACK.md). The runner defaults
+to a read-only plan; executing experiments requires `--run` explicitly.
+[The 2026-10-20 code audit](docs/CODE_AUDIT_2026-10-20.md) records the fixes,
+remaining legacy issues, and validation limits.
+The [2026-10-21 validation](docs/VALIDATION_2026-10-21.md) covers real Hartmann
+smoke benchmarks, Python 3.15 CPU installation, and subsequent bug fixes.
+
 This repository simulates Bayesian optimization under noisy human feedback.
 
 It is meant to answer a simple question:

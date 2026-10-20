@@ -1,0 +1,37 @@
+{
+  "functions": [
+    "hartmann_3",
+    "hartmann_6",
+    "branin",
+    "ackley"
+  ],
+  "methods": [
+    "bo_logei",
+    "random",
+    "sobol",
+    "cem",
+    "ridge_ucb",
+    "dueling_ucb",
+    "reward_policy",
+    "dpo"
+  ],
+  "seeds": [
+    7
+  ],
+  "error_models": [
+    "gaussian",
+    "drift"
+  ],
+  "magnitudes": [
+    1
+  ],
+  "onsets": [
+    0,
+    4
+  ],
+  "budget": 8,
+  "candidate_pool": 32,
+  "comparison_cost": 1,
+  "reference": "bo_logei",
+  "reference_rule": "observed_max"
+}

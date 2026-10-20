@@ -234,10 +234,22 @@ def frame_to_record(frame: pd.DataFrame) -> dict:
             "data": data}
 
 
+def without_initial_samples_metadata(frame: pd.DataFrame, expected: int) -> pd.DataFrame:
+    """Validate the new timing metadata before comparing the historical schema."""
+    if "initial_samples" not in frame:
+        return frame
+    assert _kind(frame["initial_samples"]) == "int", "initial_samples must be integer metadata"
+    assert frame["initial_samples"].eq(expected).all(), "initial_samples differs from the recorded recipe"
+    return frame.drop(columns="initial_samples")
+
+
 def assert_matches_backup_run(frame: pd.DataFrame, key: str = "mo_default_run") -> None:
     """``frame`` against the run the 2026-09-14 simulator produced (fit_time_sec dropped)."""
     fixture = backup_fixture()
     record = fixture["runs"][key]
+    # The recorded MO recipe uses five initialization trials. This is the only
+    # added column accepted; every historical column and value remains checked.
+    frame = without_initial_samples_metadata(frame, expected=5)
     exact = environment() == fixture["_header"]["environment"]
     assert list(frame.columns) == record["columns"]
     for column in record["columns"]:

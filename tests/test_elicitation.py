@@ -25,6 +25,51 @@ import boba_benchmarks as bb  # noqa: E402
 import elicitation_compare as ec  # noqa: E402
 
 
+def test_summary_only_never_starts_experiments_when_the_run_log_is_missing(tmp_path, monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("summary-only must not create tasks, load landscapes or start workers")
+
+    monkeypatch.setattr(ec, "build_tasks", forbidden)
+    monkeypatch.setattr(ec, "ProcessPoolExecutor", forbidden)
+    monkeypatch.setattr(bb, "load_stats", forbidden)
+    output_dir = tmp_path / "missing"
+    with pytest.raises(FileNotFoundError, match="No experiments were started"):
+        ec.main(["--summary-only", "--output-dir", str(output_dir)])
+    assert not output_dir.exists()
+
+
+@pytest.mark.parametrize("arguments", [
+    ["--iterations", "0"],
+    ["--initial-samples", "0"],
+    ["--iterations", "4", "--initial-samples", "5"],
+    ["--candidate-pool", "0"],
+    ["--workers", "0"],
+    ["--spike-prob", "nan"],
+    ["--spike-prob", "1.1"],
+    ["--spike-sd", "-1"],
+    ["--ceiling-quantile", "inf"],
+    ["--ceiling-quantile", "-0.1"],
+    ["--seeds", ""],
+    ["--seeds", "7,7"],
+    ["--seeds", "4294967296"],
+    ["--magnitudes", "nan"],
+    ["--magnitudes", "-1"],
+    ["--magnitudes", "1,1.0"],
+    ["--error-models", "gausian"],
+    ["--error-models", "bias,bias"],
+])
+def test_invalid_experiment_arguments_fail_before_dispatch(arguments):
+    with pytest.raises(SystemExit) as error:
+        ec.parse_args(arguments)
+    assert error.value.code == 2
+
+
+@pytest.mark.parametrize("functions", ["", " , ", "branin,branin"])
+def test_invalid_landscape_lists_fail_before_dispatch(functions):
+    with pytest.raises(SystemExit):
+        ec.landscape_names(functions, {"branin": {}})
+
+
 def _cell(**over):
     task = dict(dataset="branin", elicitation="rating", error_model="gaussian", magnitude=1.0,
                 seed=7, apply_error=True, iterations=12, initial_samples=5, candidate_pool=32,

@@ -45,6 +45,8 @@ from scipy.stats import friedmanchisquare, ttest_1samp, wilcoxon
 from scipy.stats import t as student_t
 from statsmodels.stats.multitest import multipletests
 
+from _feedback_timing import response_step
+
 from _plot_style import (
     DIVERGING_CMAP,
     SEQUENTIAL_CMAP,
@@ -160,6 +162,13 @@ def infer_param_columns(run_df: pd.DataFrame) -> list[str]:
         "oracle_model",
         "objective",
         "param_columns",
+        "initial_samples",
+        "run_config_fingerprint",
+        "variant",
+        "observation_noise",
+        "known_noise_var",
+        "input_error_l2",
+        "input_error_applied",
         "y_opt",
         "best_true_so_far",
         "regret_inst_true",
@@ -240,21 +249,25 @@ def build_response_table(logs: pd.DataFrame) -> pd.DataFrame:
 
         for jitter_iteration in target_iterations:
             # Noise starts affecting observations at iteration jitter_iteration + 1.
-            # The first candidate that can react to that observation is iteration jitter_iteration + 2.
-            start_iter = jitter_iteration + 1
-            end_iter = jitter_iteration + 2
-            if end_iter > max_iter:
+            # The search first reacts after the initial, rating-independent design.
+            noise_start = jitter_iteration + 1
+            if noise_start > max_iter:
                 continue
-
-            start_params = run_df.loc[run_df["iteration"] == start_iter, param_columns].iloc[0]
-            end_params = run_df.loc[run_df["iteration"] == end_iter, param_columns].iloc[0]
-            response = end_params - start_params
-            response_l2 = float(np.linalg.norm(response.to_numpy(dtype=float)))
+            step = response_step(run_df, jitter_iteration)
+            start_iter, end_iter = step if step is not None else (float("nan"), float("nan"))
+            if step is not None and end_iter <= max_iter:
+                start_params = run_df.loc[run_df["iteration"] == start_iter, param_columns].iloc[0]
+                end_params = run_df.loc[run_df["iteration"] == end_iter, param_columns].iloc[0]
+                response = end_params - start_params
+                response_l2 = float(np.linalg.norm(response.to_numpy(dtype=float)))
+            else:
+                response = pd.Series(float("nan"), index=param_columns, dtype=float)
+                response_l2 = float("nan")
 
             # Post-onset window: iterations jitter_iteration+1 .. max_iter.
             # Whole-run AUC mechanically shrinks for late onsets; the per-noisy-
             # iteration normalization makes values comparable across onsets.
-            postonset_mask = run_df["iteration"].to_numpy() >= start_iter
+            postonset_mask = run_df["iteration"].to_numpy() >= noise_start
             n_noisy_iters = int(postonset_mask.sum())
             auc_postonset = _auc(simple_regret[postonset_mask]) if n_noisy_iters > 1 else 0.0
 
@@ -272,8 +285,8 @@ def build_response_table(logs: pd.DataFrame) -> pd.DataFrame:
                 "jitter_iteration": int(jitter_iteration),
                 "n_iterations": max_iter,
                 "acq_opt_failures": acq_failures,
-                "response_start_iteration": int(start_iter),
-                "response_end_iteration": int(end_iter),
+                "response_start_iteration": start_iter,
+                "response_end_iteration": end_iter,
                 "response_l2": response_l2,
                 "final_best_true": float(base_row["best_true_so_far"]),
                 "final_simple_regret_true": float(base_row["simple_regret_true"]),

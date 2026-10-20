@@ -1,0 +1,11 @@
+# New finite-candidate arm only; this is NOT the historical simulation lock.
+# The run manifest records the installed versions. Freeze them on the target PC
+# before screening, and use the same environment for held-out runs.
+numpy>=1.26,<3
+scipy>=1.11,<2
+pandas>=2.1,<4
+statsmodels>=0.14,<1
+torch>=2.4,<3
+gpytorch>=1.13,<2
+botorch>=0.13,<0.19
+pytest>=8,<10

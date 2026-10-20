@@ -35,6 +35,7 @@ import importlib
 import importlib.metadata
 import json
 import math
+import platform
 import re
 import shutil
 import subprocess
@@ -42,6 +43,8 @@ import time
 import uuid
 import warnings
 from pathlib import Path
+
+from _feedback_timing import response_step
 
 import threading
 
@@ -1242,6 +1245,12 @@ def parse_args() -> argparse.Namespace:
         "re-simulating them. Safe because runs are fully seeded and "
         "deterministic; summaries are rebuilt from the loaded files. Use to "
         "continue a multi-day sweep after an interruption (e.g. reboot).",
+    )
+    parser.add_argument(
+        "--allow-legacy-resume", action="store_true", default=False,
+        help="With --resume, explicitly trust historical CSVs without a configuration "
+             "fingerprint. Verify their original settings and code yourself; mismatched "
+             "fingerprints are always rejected.",
     )
 
     return parser.parse_args()
@@ -2564,13 +2573,29 @@ def anchor_detrend(anchor_rows: list[int], anchor_ids: list[int],
     ids = np.asarray(anchor_ids, dtype=int)
     vals = np.asarray([observed[r] for r in rows], dtype=float)
     resid = np.empty_like(vals)
+    centred_rows = np.empty_like(vals)
     for a in np.unique(ids):
         sel = ids == a
         resid[sel] = vals[sel] - vals[sel].mean()
+        centred_rows[sel] = rows[sel] - rows[sel].mean()
     if not np.all(np.isfinite(resid)) or np.ptp(rows) == 0:
         return out
-    slope, intercept = np.polyfit(rows.astype(float), resid, 1)
-    return intercept + slope * np.arange(n_trials, dtype=float)
+    # Remove each anchor's intercept from BOTH variables. Centring only the
+    # ratings attenuates even a noiseless linear drift when anchors are visited
+    # at different trial indices. An anchor seen once identifies no slope.
+    denominator = float(centred_rows @ centred_rows)
+    if denominator == 0.0:
+        return out
+    slope = float(centred_rows @ resid) / denominator
+    return slope * (np.arange(n_trials, dtype=float) - rows.mean())
+
+
+def anchor_corrected_ratings(anchor_rows: list[int], anchor_ids: list[int],
+                             observed: list[float]) -> list[float]:
+    """Ratings on the common scale used to choose the deployed design."""
+    correction = anchor_detrend(anchor_rows, anchor_ids, observed, len(observed))
+    return (np.asarray(observed, dtype=float) - correction).tolist()
+
 
 def known_noise_variance(
     iteration: int, config: SimulationConfig, apply_error: bool
@@ -2628,6 +2653,21 @@ def known_noise_variance(
             "holding the previous value is not additive noise."
         )
     return max(variance, floor)
+
+
+def logged_noise_variance(iteration: int, config: SimulationConfig,
+                          apply_error: bool) -> float:
+    """Log undefined additive variance without rejecting learned-noise runs.
+
+    Dropout holds the preceding rating, so its additive variance is undefined.
+    The metadata column can record NaN; an explicit known-noise GP still must
+    reject it rather than receive a made-up variance.
+    """
+    if (config.observation_noise == "learned" and config.error_model == "dropout"
+            and apply_error and iteration > config.jitter_iteration
+            and (not config.single_error or iteration == config.jitter_iteration + 1)):
+        return float("nan")
+    return known_noise_variance(iteration, config, apply_error)
 
 
 # missing_mcar / missing_low (appended): the rating is LOST rather than the
@@ -4495,7 +4535,7 @@ def run_simulation(
             noise_variances.append(
                 self_reported_variance(error_magnitude, config, confidence_rng, apply_error))
         else:
-            noise_variances.append(known_noise_variance(iteration, config, apply_error))
+            noise_variances.append(logged_noise_variance(iteration, config, apply_error))
         y_true_list.append(true_value)
         y_observed_list.append(observed_value)
         error_magnitudes.append(error_magnitude)
@@ -4539,6 +4579,10 @@ def run_simulation(
             # (highest OBSERVED value so far), scored by its TRUE value. With
             # replication on, the pick is by mean over a design's ratings.
             ratings = objective_observed_scalar
+            if config.anchor_model == "detrend" and config.anchor_every > 0:
+                # Include the rating just received, including a new anchor: the
+                # deployment decision must use the same corrected scale as the GP.
+                ratings = anchor_corrected_ratings(anchor_rows, anchor_ids, ratings)
             if config.rater_model == "backfit":
                 # Deploy on the corrected ratings, under the latest offset estimates
                 # (zero for a rater no fit has seen yet).
@@ -4648,6 +4692,7 @@ def run_simulation(
     # Authoritative schema marker so downstream consumers do not have to
     # infer parameter columns from a hand-maintained reserved-column set.
     results["param_columns"] = ",".join(config.param_columns)
+    results["initial_samples"] = int(config.initial_samples)
 
     # Regret columns
     results["y_opt"] = float(y_opt)
@@ -4669,18 +4714,18 @@ def summarize_adjustment(
 ) -> pd.Series:
     """Summarize a run relative to a jitter onset.
 
-    The response delta uses the (t+1) -> (t+2) convention: noise first affects
-    the observation at iteration jitter_iteration + 1, so the first candidate
-    that can react to it is proposed at iteration jitter_iteration + 2. This
-    matches evaluate_research_question.build_response_table and the README.
+    The first affected observation is at jitter_iteration+1. A proposal can
+    react one trial later, once the rating-independent initial design has
+    ended. Model-free search has no rating-dependent response. This uses the
+    same timing helper as evaluate_research_question.build_response_table.
     """
     max_iter = int(results["iteration"].max())
     if jitter_iteration < 0 or jitter_iteration >= max_iter:
         raise ValueError("jitter_iteration must be within [0, max_iteration - 1].")
 
-    start_iter = jitter_iteration + 1
-    end_iter = jitter_iteration + 2
-    if end_iter <= max_iter:
+    step = response_step(results, jitter_iteration)
+    if step is not None and step[1] <= max_iter:
+        start_iter, end_iter = step
         current = results.loc[results["iteration"] == start_iter, param_columns].iloc[0]
         nxt = results.loc[results["iteration"] == end_iter, param_columns].iloc[0]
         delta = nxt - current
@@ -4712,12 +4757,78 @@ def summarize_adjustment(
     return pd.Series(summary)
 
 
-def _load_resumable_run(path: Path, iterations: int) -> pd.DataFrame | None:
+@functools.lru_cache(maxsize=None)
+def source_sha256(path: str) -> str:
+    """Content identity without a machine-specific path in the recorded hash."""
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+@functools.lru_cache(maxsize=1)
+def _resume_environment() -> dict:
+    return {
+        "python": list(sys.version_info[:3]),
+        "platform": platform.platform(), "machine": platform.machine(),
+        "packages": collect_package_versions([
+            "numpy", "pandas", "scipy", "torch", "botorch", "gpytorch", "linear_operator",
+            "scikit-learn", "xgboost", "lightgbm", "catboost", "tabpfn",
+        ]),
+        "core_sha256": source_sha256(str(Path(__file__).resolve())),
+        "timing_sha256": source_sha256(str(Path(__file__).with_name("_feedback_timing.py").resolve())),
+    }
+
+
+def run_config_fingerprint(config: SimulationConfig, acq: AcquisitionConfig, *,
+                           bounds: Bounds, apply_error: bool, oracle_model: str,
+                           y_opt: float, context: dict | None = None) -> str:
+    """Identify the full run configuration before reusing a per-run CSV.
+
+    Callers add their objective's data/statistics and oracle-fitting settings in
+    context. Filenames intentionally retain their historical spelling.
+    """
+    def portable(value):
+        if isinstance(value, np.ndarray):
+            return value.tolist()
+        if isinstance(value, np.generic):
+            return value.item()
+        raise TypeError(f"Unsupported fingerprint value: {type(value).__name__}")
+
+    def diagnostic(value):
+        # Some verified landscapes retain undefined *diagnostics*, such as a
+        # missing published optimum (y_best=-inf, opt_gap=NaN). Keep these
+        # distinctions in the identity without admitting non-finite run
+        # settings, bounds or y_opt, which allow_nan=False still rejects.
+        if isinstance(value, np.ndarray):
+            return diagnostic(value.tolist())
+        if isinstance(value, np.generic):
+            return diagnostic(value.item())
+        if isinstance(value, float) and not math.isfinite(value):
+            tag = "nan" if math.isnan(value) else ("+inf" if value > 0 else "-inf")
+            return {"__nonfinite_float__": tag}
+        if isinstance(value, dict):
+            return {key: diagnostic(item) for key, item in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [diagnostic(item) for item in value]
+        return value
+
+    payload = {
+        "schema": 1, "config": dataclasses.asdict(config), "acquisition": dataclasses.asdict(acq),
+        "bounds": {"low": bounds.low, "high": bounds.high},
+        "apply_error": bool(apply_error), "oracle_model": oracle_model, "y_opt": float(y_opt),
+        "environment": _resume_environment(), "context": diagnostic(context or {}),
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"),
+                         allow_nan=False, default=portable).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _load_resumable_run(path: Path, iterations: int, *, expected_fingerprint: str | None = None,
+                        allow_legacy: bool = False) -> pd.DataFrame | None:
     """Load a previously written per-run CSV if it is complete and usable.
 
     Returns None (caller re-simulates) when the file is missing, truncated,
-    or lacks the columns the summary step needs. Reusing files is safe
-    because every run is fully determined by its seed and configuration.
+    or lacks the columns the summary step needs. Drivers also supply the
+    expected fingerprint: a conflicting configuration is an error, not a
+    reason to overwrite an otherwise complete run. Legacy readers may omit it.
     """
     if not path.is_file():
         return None
@@ -4750,6 +4861,20 @@ def _load_resumable_run(path: Path, iterations: int) -> pd.DataFrame | None:
             return None
     except (TypeError, ValueError):
         return None
+    if expected_fingerprint is not None:
+        column = "run_config_fingerprint"
+        if column not in loaded:
+            if not allow_legacy:
+                raise ValueError(
+                    f"{path} has no configuration fingerprint. Use a fresh --output-dir, "
+                    "or --allow-legacy-resume only after verifying its original settings and code."
+                )
+            warnings.warn(f"Resuming unverified legacy run {path}", RuntimeWarning)
+        elif not loaded[column].eq(expected_fingerprint).all():
+            raise ValueError(
+                f"{path} was produced by a different configuration, code, or numerical environment. "
+                "Use a fresh --output-dir; --allow-legacy-resume does not override a mismatch."
+            )
     return loaded
 
 
@@ -4782,6 +4907,7 @@ def run_single_seed(
     """Run all simulations for a single seed."""
     summaries: list[pd.Series] = []
     run_count = 0
+    data_digest = hashlib.sha256(pd.util.hash_pandas_object(df, index=True).to_numpy().tobytes()).hexdigest()
 
     def _tick() -> None:
         nonlocal run_count
@@ -4880,6 +5006,26 @@ def run_single_seed(
             observation_noise=args.observation_noise,
             **adaptation_fields(args),
         )
+        fingerprint_context = {
+            "dataset": dataset.name, "data_sha256": data_digest, "data_columns": list(df.columns),
+            "oracle_target": dataset.oracle_target,
+            "oracle_fit": {name: getattr(args, name) for name in (
+                "oracle_augmentation", "oracle_augment_repeats", "oracle_augment_std", "oracle_fast",
+                "oracle_opt_seed", "oracle_opt_samples", "oracle_opt_batch_size",
+            )},
+        }
+
+        def _fingerprint(config: SimulationConfig, acq: AcquisitionConfig, noisy: bool) -> str:
+            return run_config_fingerprint(
+                config, acq, bounds=bounds, apply_error=noisy, oracle_model=oracle_model,
+                y_opt=y_opt, context=fingerprint_context,
+            )
+
+        def _resume(path: Path, fingerprint: str) -> pd.DataFrame | None:
+            return (_load_resumable_run(
+                path, args.iterations, expected_fingerprint=fingerprint,
+                allow_legacy=bool(getattr(args, "allow_legacy_resume", False)),
+            ) if args.resume else None)
 
         for acq in acquisitions:
             # Baseline run
@@ -4887,9 +5033,8 @@ def run_single_seed(
                 results_path = args.output_dir / (
                     f"bo_sensor_error_{dataset.name}_{objective}_{acq.name}_seed{seed}_baseline_{oracle_model}.csv"
                 )
-                baseline_results = (
-                    _load_resumable_run(results_path, args.iterations) if args.resume else None
-                )
+                fingerprint = _fingerprint(base_config, acq, False)
+                baseline_results = _resume(results_path, fingerprint)
                 if baseline_results is not None:
                     baseline_run_id = str(baseline_results["run_id"].iloc[0])
                     baseline_runtime = 0.0
@@ -4913,6 +5058,7 @@ def run_single_seed(
                         y_opt=y_opt,
                     )
                     baseline_results["dataset"] = dataset.name
+                    baseline_results["run_config_fingerprint"] = fingerprint
                     baseline_runtime = time.perf_counter() - run_start
 
                     write_csv_atomic(baseline_results, results_path)
@@ -4964,11 +5110,12 @@ def run_single_seed(
                             f"{oracle_model}_{error_model}_jit{jitter_iteration}_std{jitter_std}{variant_suffix}.csv"
                         )
 
-                        results = (
-                            _load_resumable_run(results_path, args.iterations)
-                            if args.resume
-                            else None
+                        config = dataclasses.replace(
+                            base_config, seed=seed, error_model=error_model,
+                            jitter_std=float(jitter_std), jitter_iteration=int(jitter_iteration),
                         )
+                        fingerprint = _fingerprint(config, acq, True)
+                        results = _resume(results_path, fingerprint)
                         if results is not None:
                             run_id = str(results["run_id"].iloc[0])
                             run_runtime = 0.0
@@ -4988,14 +5135,6 @@ def run_single_seed(
                             )
                             jitter_rng = np.random.default_rng(jitter_seed)
 
-                            config = dataclasses.replace(
-                                base_config,
-                                seed=seed,
-                                error_model=error_model,
-                                jitter_std=float(jitter_std),
-                                jitter_iteration=int(jitter_iteration),
-                            )
-
                             run_start = time.perf_counter()
                             results = run_simulation(
                                 oracle=oracle,
@@ -5010,6 +5149,7 @@ def run_single_seed(
                                 y_opt=y_opt,
                             )
                             results["dataset"] = dataset.name
+                            results["run_config_fingerprint"] = fingerprint
                             run_runtime = time.perf_counter() - run_start
 
                             write_csv_atomic(results, results_path)

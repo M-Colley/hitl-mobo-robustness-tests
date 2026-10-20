@@ -39,3 +39,39 @@ jobs:
       - name: Run tests
         run: |
           python -m pytest -q
+
+  feedback-python315:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.15"
+          cache: pip
+          cache-dependency-path: |
+            requirements-feedback.txt
+            requirements-feedback-py315.txt
+            requirements-tests-py315.txt
+            requirements-dev.txt
+      - name: Install Python 3.15 CPU dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --only-binary=:all: -r requirements-tests-py315.txt
+          python -m pip check
+      - name: Test
+        run: python -m pytest -q
+      - name: Hartmann feedback smoke benchmark
+        run: python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-ci --workers 2 --run
+      - name: Resume all completed smoke runs
+        run: python scripts/human_feedback_benchmark.py --config configs/feedback_smoke.json --output-dir output-feedback-ci --workers 1 --run --resume
+      - name: Save smoke outputs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: feedback-python315-${{ matrix.os }}
+          path: output-feedback-ci/

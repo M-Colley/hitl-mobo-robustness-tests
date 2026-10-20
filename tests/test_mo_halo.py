@@ -133,7 +133,9 @@ def test_a_default_multi_objective_run_reproduces_the_backup_simulator(backup_mo
     assert not HALO_COLUMNS & set(current.columns)
     if ref.is_live(backup_module):
         backup = _run(backup_module, iterations=6)
-        pd.testing.assert_frame_equal(_without_timing(current), _without_timing(backup), check_exact=True)
+        current_values = ref.without_initial_samples_metadata(_without_timing(current), expected=5)
+        backup_values = ref.without_initial_samples_metadata(_without_timing(backup), expected=5)
+        pd.testing.assert_frame_equal(current_values, backup_values, check_exact=True)
         ref.assert_matches_backup_run(_without_timing(backup))  # the fixture is not stale
     else:
         # The same call on the 2026-09-14 simulator, recorded; exact where the

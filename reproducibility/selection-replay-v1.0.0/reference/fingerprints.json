@@ -1,0 +1,10 @@
+{
+  "files_sha256": {
+    "comparison_summary.csv": "b480b3f4ec4332114f653f2b15bb8666c7d0d4f3967c6f877d6f53436c18c8e0",
+    "comparison_per_problem.csv": "dab78d442d315fe40416898e39cf0c8e75a3f3d77f9b798803bc8aaef1d16ea7",
+    "per_archive_metrics.csv": "dc64d097924b8e25f77fb08433e0e7307e94537c4cd8c5e5fa1b337f27fa1bd6",
+    "preference_groups.csv": "ac3d7c94a5cc1e5dc00534ace3cebd5474d21c1fa3b716e877d17775a3432fc3",
+    "report.txt": "86fb98e1059a6cea574007948df510ffe14f1cc3c1aa0562981709857f02148d"
+  },
+  "raw_decisions_uncompressed_sha256": "c40261729ce6dd3f227dc8f5092d095ff6337f2ad5553406e80e17cdb0894997"
+}

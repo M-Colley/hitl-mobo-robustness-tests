@@ -1,0 +1,25 @@
+Fixed-archive selection replay: 100 logs, 4 problems, seeds (12, 13, 14, 15, 16).
+98100 preference/family/condition/rule rows; no new objective evaluations or fits.
+
+Headline: recorded measurement error, exact preference weights, all noisy archives pooled.
+Units: final selected design's regret in within-archive true-PF normalized utility.
+gain = matching ordinary reference noisy regret - treatment noisy regret.
+price = treatment exact-feedback regret - matching ordinary reference exact-feedback regret.
+
+    utility_family          rule  trt_noisy      gain    price   gain_lo   gain_hi
+            linear      weighted   0.237706  0.000000 0.000000  0.000000  0.000000
+            linear nearest_ideal   0.269813 -0.032106 0.033651 -0.054487 -0.011376
+            linear knee_weighted   0.332108 -0.094402 0.072301 -0.132244 -0.034174
+quadratic_distance      weighted   0.448362  0.004357 0.031272 -0.036977  0.063200
+quadratic_distance nearest_ideal   0.452719  0.000000 0.000000  0.000000  0.000000
+quadratic_distance knee_weighted   0.547495 -0.094777 0.032571 -0.136187 -0.034236
+
+See comparison_per_problem.csv: only four problem clusters, correlated source streams.
+Intervals are descriptive problem bootstraps treating these clusters as independent; no p-values/stars.
+Truth families are declared separately. Schmitt uses linear preferences even under quadratic truth;
+its resulting clean loss is model/decision-rule mismatch, not mislabeled observation error.
+Preference noise is a separate illustrative multiplicative log-weight process; axis weights remain axes.
+Objective errors are the archive's Gaussian1 process; no bias/drift/AR1 extrapolation is supported.
+Same candidates across selectors/counterfactuals; different source logs can have different candidates.
+Archive normalization is oracle-only for scoring and is not a deployable source of true ranges.
+These endpoints concern selection among visited designs, not global regret, Pareto coverage or human benefit.

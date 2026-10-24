@@ -3124,6 +3124,12 @@ def validate_error_extensions(
         if value not in choices:
             raise ValueError(f"{flag} {value!r} is not one of {choices}.")
 
+    if is_multi and observation_noise in ("known", "self_report"):
+        raise ValueError(
+            f"observation_noise={observation_noise!r} is single-objective only; "
+            "the multi-objective surrogate supports observation_noise='learned'."
+        )
+
     # (2) relevance pursuit: the restrictions of the Student-t surrogate.
     if likelihood == "relevance_pursuit" and (
         is_multi or observation_noise in ("known", "self_report") or input_noise_model != "none"
@@ -4221,13 +4227,6 @@ def run_simulation(
         if iteration <= config.initial_samples:
             candidate_np = sample_uniform(bounds, rng, size=1)[0]
             fit_time = 0.0
-        elif acq.name == "random":
-            candidate_np = sample_uniform(bounds, rng, size=1)[0]
-            fit_time = 0.0
-        elif acq.name == "sobol":
-            draw = sobol_engine.draw(1).to(torch.double).cpu().numpy()[0]
-            candidate_np = bounds.low + draw * (bounds.high - bounds.low)
-            fit_time = 0.0
         elif rerate_window and iteration > config.iterations - rerate_window:
             # Re-evaluate before deploying: the last trials go to the designs
             # that currently look best, so the final pick rests on more than
@@ -4237,6 +4236,13 @@ def run_simulation(
                     X_list, objective_observed_scalar, config.final_rerate_top, config.final_rerate_reps
                 )
             candidate_np = rerate_schedule.pop(0)
+            fit_time = 0.0
+        elif acq.name == "random":
+            candidate_np = sample_uniform(bounds, rng, size=1)[0]
+            fit_time = 0.0
+        elif acq.name == "sobol":
+            draw = sobol_engine.draw(1).to(torch.double).cpu().numpy()[0]
+            candidate_np = bounds.low + draw * (bounds.high - bounds.low)
             fit_time = 0.0
         elif (config.anchor_every > 0 and anchor_designs is not None
               and iteration > config.initial_samples
@@ -4810,11 +4816,20 @@ def run_config_fingerprint(config: SimulationConfig, acq: AcquisitionConfig, *,
             return [diagnostic(item) for item in value]
         return value
 
+    environment = _resume_environment()
+    if config.likelihood in ("student_t", "student_t_rbf"):
+        # These surrogates are implemented outside the core. Keep their code
+        # in the identity without changing unrelated likelihoods' inputs or
+        # mutating the cached shared environment.
+        environment = {
+            **environment,
+            "robust_gp_sha256": source_sha256(str(Path(__file__).with_name("robust_gp.py").resolve())),
+        }
     payload = {
         "schema": 1, "config": dataclasses.asdict(config), "acquisition": dataclasses.asdict(acq),
         "bounds": {"low": bounds.low, "high": bounds.high},
         "apply_error": bool(apply_error), "oracle_model": oracle_model, "y_opt": float(y_opt),
-        "environment": _resume_environment(), "context": diagnostic(context or {}),
+        "environment": environment, "context": diagnostic(context or {}),
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"),
                          allow_nan=False, default=portable).encode("utf-8")

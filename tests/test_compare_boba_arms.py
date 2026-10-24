@@ -134,6 +134,34 @@ def test_main_divides_by_opt_z_before_any_mean(arms):
     assert np.isclose(s.loc[(1.0, 0), "mean_reference"], 0.25)
 
 
+@pytest.mark.parametrize("metric,description", [
+    (METRIC, "Post-onset time-averaged excess search regret"),
+    ("final_inference_simple_regret_excess_true", "Final deployed excess regret"),
+])
+def test_plot_labels_follow_the_selected_metric_and_normalised_units(arms, monkeypatch, metric, description):
+    from matplotlib.axes import Axes
+    ref, trt, out = arms
+    load = cba.load
+    monkeypatch.setattr(cba, "load", lambda root: load(root).rename(columns={METRIC: metric}))
+    labels = []
+    original = Axes.set_xlabel
+
+    def capture(ax, label, *a, **k):
+        labels.append(label)
+        return original(ax, label, *a, **k)
+
+    monkeypatch.setattr(Axes, "set_xlabel", capture)
+    _run(ref, trt, out, "--metric", metric)
+    assert labels[-1] == f"{description} (fraction of achievable improvement)"
+
+
+def test_plot_labels_keep_integrated_time_and_raw_rating_units():
+    assert cba.metric_label("auc_simple_regret_excess_true", True) == (
+        "Whole-run AUC of excess search regret (fraction of achievable improvement × trials)")
+    assert cba.metric_label(METRIC, False) == (
+        "Post-onset time-averaged excess search regret (dataset rating units)")
+
+
 def test_main_writes_the_per_acquisition_shares_under_the_same_rule(arms):
     ref, trt, out = arms
     _run(ref, trt, out)

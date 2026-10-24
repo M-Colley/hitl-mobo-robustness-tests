@@ -85,6 +85,25 @@ def _share_text(value: float) -> str:
     return "      --" if pd.isna(value) else f"{value:>+8.1%}"
 
 
+def metric_label(metric: str, normalised: bool) -> str:
+    """The plotted response, time base and the units used in the paired frame."""
+    descriptions = {
+        METRIC: "Post-onset time-averaged excess search regret",
+        "final_inference_simple_regret_excess_true": "Final deployed excess regret",
+        "final_simple_regret_excess_true": "Final excess search regret",
+        "auc_simple_regret_excess_true": "Whole-run AUC of excess search regret",
+        "auc_inference_simple_regret_excess_true": "Whole-run AUC of deployed excess regret",
+        "final_cum_regret_excess_true": "Final cumulative excess regret",
+        "final_avg_regret_excess_true": "Final average excess regret",
+    }
+    integrated = (metric.startswith("auc_") and not metric.endswith("_per_iter")) or "_cum_" in metric
+    if normalised:
+        units = "fraction of achievable improvement × trials" if integrated else "fraction of achievable improvement"
+    else:
+        units = "dataset rating units × trials" if integrated else "dataset rating units"
+    return f"{descriptions.get(metric, metric)} ({units})"
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -255,7 +274,7 @@ def main(argv: list[str] | None = None) -> None:
     ax.scatter(by_benchmark["reference"], y, s=28, label=args.label_reference, zorder=2)
     ax.scatter(by_benchmark["treatment"], y, s=28, label=args.label_treatment, zorder=2)
     ax.set_yticks(y, by_benchmark["dataset"])
-    ax.set_xlabel("post-onset per-iteration excess regret (landscape SDs)")
+    ax.set_xlabel(metric_label(metric, normalised=not lacking))
     ax.grid(alpha=0.3, axis="x")
     ax.legend()
     ax.set_title(f"{args.label_treatment} vs {args.label_reference}")

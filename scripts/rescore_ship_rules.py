@@ -77,7 +77,11 @@ PREFIX = "bo_sensor_error_"
 UNSUPPORTED_VARIANT_PARTS = ("nigp", "studentt")
 
 STEM = re.compile(r"^bo_sensor_error_(?P<dataset>.+)_(?P<objective>[a-z]+)_(?P<acq>[a-z]+)_seed(?P<seed>\d+)$")
-JITTERED = re.compile(r"^exact_(?P<model>[a-z0-9]+)_jit(?P<onset>\d+)_std(?P<std>[0-9.]+)(?P<suffix>.*)$")
+_MAGNITUDE = r"(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+JITTERED = re.compile(
+    rf"^exact_(?P<model>[a-z][a-z0-9_]*)_jit(?P<onset>\d+)_std"
+    rf"(?P<std>{_MAGNITUDE})(?P<suffix>(?:_.*)?)$"
+)
 
 ID_COLUMNS = ["dataset", "acquisition", "error_model", "jitter_std", "jitter_iteration", "seed",
               "baseline", "variant"]

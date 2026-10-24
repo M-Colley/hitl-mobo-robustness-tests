@@ -105,6 +105,64 @@ def test_resume_identity_includes_acquisition_and_objective_context():
     assert _fingerprint(context={"a": [1, 2], "b": 3}) == _fingerprint(context={"b": 3, "a": [1, 2]})
 
 
+@pytest.mark.parametrize("likelihood", ["student_t", "student_t_rbf"])
+def test_student_t_resume_identity_tracks_the_external_surrogate(monkeypatch, tmp_path, likelihood):
+    config = replace(_config(), likelihood=likelihood)
+    expected = _fingerprint(config=config)
+    gaussian = _fingerprint()
+    original = sim.source_sha256
+    robust_source = Path(sim.__file__).with_name("robust_gp.py").resolve()
+    changed = "changed-surrogate-implementation"
+    monkeypatch.setattr(
+        sim, "source_sha256",
+        lambda path: changed if Path(path).resolve() == robust_source else original(path),
+    )
+    actual = _fingerprint(config=config)
+    assert actual != expected
+    assert _fingerprint() == gaussian
+    assert "robust_gp_sha256" not in sim._resume_environment()
+    path = tmp_path / "student_t.csv"
+    _complete_log(expected).to_csv(path, index=False)
+    with pytest.raises(ValueError, match="different configuration"):
+        sim._load_resumable_run(path, 3, expected_fingerprint=actual)
+
+
+@pytest.mark.parametrize("observation_noise", ["known", "self_report"])
+@pytest.mark.parametrize("apply_error", [False, True])
+def test_multi_objective_simulation_rejects_unsupported_noise_modes(observation_noise, apply_error):
+    config = replace(
+        _config(), objective="multi_objective", objective_columns=["a", "b"],
+        observation_noise=observation_noise, ref_point=np.asarray([-1.0, -1.0]),
+    )
+    with pytest.raises(ValueError, match="single-objective only"):
+        sim.run_simulation(
+            oracle=None,
+            bounds=sim.Bounds(low=np.asarray([0.0]), high=np.asarray([1.0])),
+            config=config, acq=sim.AcquisitionConfig(name="qehvi"),
+            rng=np.random.default_rng(7), jitter_rng=np.random.default_rng(8),
+            run_id="unsupported", apply_error=apply_error, oracle_model="exact", y_opt=4.0,
+        )
+
+
+@pytest.mark.parametrize("observation_noise", ["known", "self_report"])
+def test_multi_objective_driver_rejects_unsupported_noise_modes_before_loading_stats(
+    monkeypatch, tmp_path, observation_noise,
+):
+    import bo_synthetic_error_simulation as synthetic
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("invalid noise mode must fail before loading objectives")
+
+    monkeypatch.setattr(synthetic.mob, "load_mo_stats", forbidden)
+    with pytest.raises(ValueError, match="single-objective only"):
+        synthetic.main([
+            "--multi-objective", "--functions", "branincurrin", "--acq", "qehvi",
+            "--observation-noise", observation_noise, "--dry-run",
+            "--output-dir", str(tmp_path / "unused"),
+        ])
+    assert not (tmp_path / "unused").exists()
+
+
 def _complete_log(fingerprint=None):
     frame = pd.DataFrame({
         "iteration": [1, 2, 3], "run_id": "r", "jitter_std": 1.0, "error_model": "gaussian",

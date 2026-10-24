@@ -126,6 +126,48 @@ def test_run_names_are_parsed_with_their_variants():
     assert rsr.parse_seeds("7-9,12") == {7, 8, 9, 12}
 
 
+@pytest.mark.parametrize("model", ["missing_low", "missing_mcar", "gaussian"])
+@pytest.mark.parametrize("magnitude", [1e-5, 1e20, 0.15])
+def test_the_index_keeps_missing_rating_labels_and_float_magnitudes(tmp_path, model, magnitude):
+    # The simulator interpolates the float and run_error_label directly into the
+    # name. Indexing must keep every such noisy run beside its clean twin.
+    folder = tmp_path / "branin"
+    folder.mkdir()
+    channel = sim.run_error_label("none", model) if model.startswith("missing_") else sim.run_error_label(model, "none")
+    noisy = (f"bo_sensor_error_branin_value_logei_seed7_jittered_exact_{channel}"
+             f"_jit0_std{magnitude}_miss-drop.csv")
+    for name in (CLEAN_NAME, noisy):
+        (folder / name).touch()
+    tasks = rsr.index_runs(tmp_path, error_models={model})
+    assert len(tasks) == 2
+    parsed = next(task for task in tasks if not task["baseline"])
+    assert (parsed["error_model"], parsed["jitter_std"], parsed["variant"]) == (
+        model, magnitude, "miss-drop")
+
+
+@pytest.mark.parametrize("name,variant,ref_variant", [
+    ("ceiling-anchored", "ceil0.9-anchored", "ceil0.9-fixed"),
+    ("spike-rrp-sp0.15-20", "sp0.15-20_relevancepursuit", "sp0.15-20"),
+    ("relay-backfit-rr", "auto", "rater-roundrobin5-tau2"),
+])
+def test_registered_cross_specs_select_their_own_variants(name, variant, ref_variant):
+    spec = asr.cross_specs([name], [])[0]
+    assert (spec["variant"], spec["ref_variant"]) == (variant, ref_variant)
+    for key, expected in (("variant", variant), ("ref_variant", ref_variant)):
+        if expected == "auto":
+            continue
+        runs = pd.DataFrame({"baseline": [True, False, False], "variant": ["", expected, "other"]})
+        selected = asr.pick_variant(runs, spec[key], name)
+        assert selected.loc[~selected["baseline"], "variant"].tolist() == [expected]
+
+
+def test_registered_cross_specs_keep_an_explicit_empty_variant(monkeypatch):
+    base = {**asr.aba.ARMS["ceiling-anchored"], "variant": "", "ref_variant": ""}
+    monkeypatch.setitem(asr.aba.ARMS, "empty-variant", base)
+    spec = asr.cross_specs(["empty-variant"], [])[0]
+    assert (spec["variant"], spec["ref_variant"]) == ("", "")
+
+
 def test_each_rule_picks_its_design():
     X = np.array([[0.1, 0.0], [0.2, 0.0], [0.2, 0.0], [0.3, 0.0], [0.4, 0.0]])
     observed = np.array([2.68, 2.7, 2.0, 1.0, 1.9])       # one lucky rating of a design rated twice

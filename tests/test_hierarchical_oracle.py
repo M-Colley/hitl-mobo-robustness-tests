@@ -16,8 +16,10 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
+import pandas as pd
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -235,3 +237,45 @@ def test_gauss_metrics_calibrated() -> None:
     m = hier._gauss_metrics(y, mu, sd)
     assert 0.87 <= m["coverage90"] <= 0.93
     assert m["n"] == n
+
+
+@pytest.mark.parametrize(
+    "tau2, expected_mean, expected_variance",
+    [(None, 0.0, 2.0), (1e-12, 5e-12, 2.0), (2.0, 5.0, 3.0)],
+)
+def test_warm_prediction_shrinks_context_with_zero_between_user_variance(
+    monkeypatch, tau2, expected_mean, expected_variance
+) -> None:
+    # Equal training-group means legitimately floor the estimated tau2 at zero,
+    # despite positive within-user variance. A noisy context rating must then
+    # leave both the pooled mean and predictive variance unchanged.
+    residuals = np.array([-1.0, 1.0, -1.0, 1.0])
+    groups = np.array(["a", "a", "b", "b", "heldout", "heldout"])
+    assert hier.variance_components(residuals, groups[:4]) == (0.0, 2.0, 0.0)
+    frame = pd.DataFrame({"x": np.zeros(6), "y": [0., 0., 0., 0., 10., 0.]})
+    monkeypatch.setattr(hier, "parse_objective_weights", lambda *a: None)
+    monkeypatch.setattr(hier, "infer_oracle_groups", lambda df: (groups, "fixture"))
+    monkeypatch.setattr(
+        hier, "build_cv_splits", lambda *a: ([(np.arange(4), np.arange(4, 6))], {})
+    )
+    monkeypatch.setattr(hier, "compute_objective", lambda df, *a, **kw: df["y"])
+    monkeypatch.setattr(
+        hier, "_fit_tree", lambda *a: SimpleNamespace(predict=lambda X: np.zeros(len(X)))
+    )
+    monkeypatch.setattr(
+        hier, "_tree_oof_residuals", lambda *a: (residuals, groups[:4])
+    )
+    if tau2 is not None:
+        monkeypatch.setattr(hier, "variance_components", lambda *a: (tau2, 2.0, 0.0))
+    monkeypatch.setattr(
+        hier, "_gauss_metrics", lambda y, mu, sd: {"mean": mu, "variance": sd**2}
+    )
+    args = SimpleNamespace(
+        objective_weights=None, seed=7, cv_folds=2,
+        normalize_objective=False, warm_context=1,
+    )
+    result = hier.warm_evaluation(frame, "composite", ["y"], ["x"], args)
+    assert result["n_query_rows"] == 1
+    assert result["pooled_tree"]["mean"] == pytest.approx([0.0])
+    assert result["tree_hier_warm"]["mean"] == pytest.approx([expected_mean])
+    assert result["tree_hier_warm"]["variance"] == pytest.approx([expected_variance])

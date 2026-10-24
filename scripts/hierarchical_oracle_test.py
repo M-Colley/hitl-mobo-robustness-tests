@@ -512,10 +512,11 @@ def warm_evaluation(df, objective, objective_columns, param_columns, args) -> di
             ctx, qry = perm[:args.warm_context], perm[args.warm_context:]
             r_ctx = y_test[ctx] - m_test[ctx]
             n = ctx.size
-            prior_prec = (1.0 / tau2) if tau2 > 0 else 0.0
-            denom = n / sigma2 + prior_prec
-            alpha = float((r_ctx.sum() / sigma2) / denom) if denom > 0 else 0.0
-            alpha_var = float(1.0 / denom) if denom > 0 else tau2
+            # A zero between-user variance fixes the intercept at zero; it is
+            # not a flat prior. This form also avoids dividing by tiny tau2.
+            denom = sigma2 + n * tau2
+            alpha = float(tau2 * r_ctx.sum() / denom)
+            alpha_var = float(tau2 * sigma2 / denom)
             for qi in qry:
                 pooled_rows.append((y_test[qi], m_test[qi], total_sd))
                 warm_rows.append((y_test[qi], m_test[qi] + alpha, float(np.sqrt(sigma2 + alpha_var))))

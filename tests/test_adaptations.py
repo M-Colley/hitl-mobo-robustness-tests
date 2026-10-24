@@ -24,12 +24,12 @@ import boba_benchmarks as bb  # noqa: E402
 import bo_sensor_error_simulation as sim  # noqa: E402
 
 
-def _run(iterations: int, initial: int, seed: int = 7, **overrides):
+def _run(iterations: int, initial: int, seed: int = 7, acquisition: str = "logei", **overrides):
     stats = bb.load_stats()
     oracle = bb.SyntheticOracle.from_stats("hartmann_3", stats)
     spec = bb.BENCHMARKS["hartmann_3"]
     bounds = sim.Bounds(low=spec.bounds_low, high=spec.bounds_high)
-    acq = sim.AcquisitionConfig(name="logei")
+    acq = sim.AcquisitionConfig(name=acquisition)
     config = sim.SimulationConfig(
         iterations=iterations, jitter_iteration=0, jitter_std=0.25, single_error=False,
         initial_samples=initial, candidate_pool=64, objective="value",
@@ -61,9 +61,11 @@ def test_replicate_first_rates_each_early_design_twice():
     assert frame["objective_observed"].iloc[3] != frame["objective_observed"].iloc[4]
 
 
-def test_final_rerate_spends_the_last_trials_on_the_top_designs():
+@pytest.mark.parametrize("acquisition", ["logei", "random", "sobol"])
+def test_final_rerate_spends_the_last_trials_on_the_top_designs(acquisition):
     X, frame = _run(iterations=12, initial=3, final_rerate_top=2, final_rerate_reps=2,
-                    inference_rule="best_mean")
+                    inference_rule="best_mean", acquisition=acquisition)
+    assert not frame["acq_opt_failed"].any()
     tail = X[-4:]
     earlier = [sim._design_key(x) for x in X[:-4]]
     keys = [sim._design_key(x) for x in tail]
@@ -72,6 +74,22 @@ def test_final_rerate_spends_the_last_trials_on_the_top_designs():
     assert all(k in earlier for k in keys)
     # round-robin: design A, design B, design A, design B
     assert keys[0] == keys[2] and keys[1] == keys[3]
+
+
+@pytest.mark.parametrize("acquisition", ["random", "sobol"])
+def test_default_model_free_proposals_keep_their_original_draw_order(acquisition):
+    X, frame = _run(iterations=8, initial=3, acquisition=acquisition)
+    spec = bb.BENCHMARKS["hartmann_3"]
+    rng = np.random.default_rng(7)
+    initial = rng.uniform(spec.bounds_low, spec.bounds_high, size=(3, spec.dim))
+    if acquisition == "random":
+        remainder = rng.uniform(spec.bounds_low, spec.bounds_high, size=(5, spec.dim))
+    else:
+        engine = torch.quasirandom.SobolEngine(dimension=spec.dim, scramble=True, seed=7)
+        draws = torch.cat([engine.draw(1) for _ in range(5)]).to(torch.double).numpy()
+        remainder = spec.bounds_low + draws * (spec.bounds_high - spec.bounds_low)
+    np.testing.assert_array_equal(X, np.vstack([initial, remainder]))
+    assert not frame["acq_opt_failed"].any()
 
 
 def test_best_mean_index_prefers_the_design_with_the_best_mean_rating():

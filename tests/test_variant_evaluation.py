@@ -57,6 +57,14 @@ def test_parse_variant_reads_the_suffix(name, expected):
     assert ev.parse_variant(name) == expected
 
 
+@pytest.mark.parametrize("magnitude", [1e-5, 1e20, 0.15])
+@pytest.mark.parametrize("suffix", ["", "_miss-drop", "_sp0.15-20_clip-sample"])
+def test_float_magnitudes_never_become_a_variant(magnitude, suffix):
+    name = ("bo_sensor_error_ackley_value_logei_seed7_jittered_exact_missing_low"
+            f"_jit0_std{magnitude}{suffix}.csv")
+    assert ev.parse_variant(name, "exact") == suffix.lstrip("_")
+
+
 def test_parse_variant_ignores_a_directory_prefix():
     assert ev.parse_variant("x_std0.25_sp0.05-5.csv") == ""  # no _jittered_ stem, no suffix claimed
 

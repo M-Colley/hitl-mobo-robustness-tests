@@ -123,7 +123,44 @@ def _parse_csv_list(raw: str) -> list[str]:
 
 
 def _parse_seed_list(seed_start: int, num_new_seeds: int) -> list[int]:
+    if seed_start < 0 or num_new_seeds < 1:
+        raise ValueError("Confirmatory seeds need a non-negative start and at least one new seed.")
     return list(range(seed_start, seed_start + num_new_seeds))
+
+
+def screening_log_paths(base_input_dir: Path, objective: str, acquisitions: list[str]) -> list[Path]:
+    return sorted({
+        source
+        for acquisition in acquisitions
+        for source in base_input_dir.glob(
+            f"bo_sensor_error_*_{objective}_{acquisition}_seed*_*.csv"
+        )
+    })
+
+
+def validate_screening_seeds(paths: list[Path], confirmatory_seeds: list[int]) -> set[int]:
+    """Check against source-screen identities before copying or running anything.
+
+    Subtracting the requested block from pooled seeds cannot detect overlap:
+    it has already removed precisely the screening seeds we need to reject.
+    Read the logged seed rather than trusting a possibly renamed file.
+    """
+    screening_seeds: set[int] = set()
+    for path in paths:
+        values = pd.read_csv(path, usecols=["seed"])["seed"].unique()
+        if len(values) != 1:
+            raise ValueError(f"{path}: expected exactly one logged screening seed.")
+        value = float(values[0])
+        if not math.isfinite(value) or value < 0 or not value.is_integer():
+            raise ValueError(f"{path}: invalid logged screening seed {values[0]!r}.")
+        screening_seeds.add(int(value))
+    overlap = sorted(screening_seeds.intersection(confirmatory_seeds))
+    if overlap:
+        raise SystemExit(
+            f"ERROR: requested confirmatory seeds {overlap} already appear in the broad-screen logs; "
+            "choose a seed block disjoint from the screening data."
+        )
+    return screening_seeds
 
 
 def prepare_directories(output_root: Path) -> dict[str, Path]:
@@ -145,13 +182,11 @@ def copy_existing_logs(base_input_dir: Path, raw_dir: Path, objective: str, acqu
     (see module docstring).
     """
     copied: list[Path] = []
-    for acquisition in acquisitions:
-        pattern = f"bo_sensor_error_*_{objective}_{acquisition}_seed*_*.csv"
-        for source in sorted(base_input_dir.glob(pattern)):
-            destination = raw_dir / source.name
-            if not destination.exists():
-                shutil.copy2(source, destination)
-            copied.append(destination)
+    for source in screening_log_paths(base_input_dir, objective, acquisitions):
+        destination = raw_dir / source.name
+        if not destination.exists():
+            shutil.copy2(source, destination)
+        copied.append(destination)
     return copied
 
 
@@ -740,6 +775,9 @@ def main() -> None:
         raise ValueError("Confirmatory follow-up currently expects exactly two acquisitions.")
     reference, challenger = acquisitions
     seeds = _parse_seed_list(args.seed_start, args.num_new_seeds)
+    validate_screening_seeds(
+        screening_log_paths(args.base_input_dir, args.objective, acquisitions), seeds
+    )
     paths = prepare_directories(args.output_root)
 
     copied = copy_existing_logs(args.base_input_dir, paths["raw"], args.objective, acquisitions)
@@ -758,15 +796,14 @@ def main() -> None:
     exploratory_head_to_head = build_head_to_head_table(paired, reference, challenger)
     exploratory_condition_tests = summarize_condition_tests(exploratory_head_to_head, reference, challenger)
 
-    # Confirmatory analysis: EXACTLY the requested new-seed block. An exact
-    # set (not >=) plus a disjointness check guards against screening seeds
-    # leaking into the confirmatory tests (double-dipping).
-    new_seeds = set(range(args.seed_start, args.seed_start + args.num_new_seeds))
-    screening_seeds = sorted(set(paired["seed"].unique()) - new_seeds)
-    overlap = [s for s in screening_seeds if s >= args.seed_start]
-    if overlap:
+    # Source-screen disjointness was checked before copying or simulation.
+    # Also reject unrelated fresh-seed blocks left in the pooled directory.
+    new_seeds = set(seeds)
+    unexpected = sorted(s for s in set(paired["seed"].unique()) - new_seeds
+                        if s >= args.seed_start)
+    if unexpected:
         raise SystemExit(
-            f"ERROR: seeds {overlap} are outside the requested confirmatory block "
+            f"ERROR: seeds {unexpected} are outside the requested confirmatory block "
             f"[{args.seed_start}, {args.seed_start + args.num_new_seeds - 1}] but >= --seed-start; "
             "cannot separate screening from confirmatory data. Adjust --seed-start/--num-new-seeds."
         )

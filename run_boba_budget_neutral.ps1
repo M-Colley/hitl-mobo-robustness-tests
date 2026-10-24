@@ -43,7 +43,12 @@ if (-not (Test-Path "output-boba")) { New-Item -ItemType Directory "output-boba"
 if ($Smoke -and -not (Test-Path $SmokeDir)) { New-Item -ItemType Directory -Force $SmokeDir | Out-Null }
 $log = if ($Smoke) { Join-Path $SmokeDir "smoke.log" } else { "output-boba\budget-neutral.log" }
 "=== budget-neutral arms ($Arm) started $(Get-Date -Format o) (jobs $Jobs) ===" | Tee-Object -FilePath $log -Append
-if (-not $Smoke) { "$PID" | Set-Content -Path "output-boba\budget-neutral.PID" -Encoding ascii }
+if (-not $Smoke) {
+    "$PID" | Set-Content -Path "output-boba\budget-neutral.PID" -Encoding ascii
+    if (Test-Path "output-boba\budget-neutral.DONE") {
+        Remove-Item -LiteralPath "output-boba\budget-neutral.DONE"
+    }
+}
 
 Add-Type @'
 using System; using System.Runtime.InteropServices;
@@ -125,6 +130,10 @@ $script:Failures = @()
 
 function Run-Arm($name) {
     $a = $ARMS[$name]
+    $completionMarker = Join-Path $a.Dir "ARM_COMPLETE"
+    if ((-not $Smoke) -and (Test-Path $completionMarker)) {
+        Remove-Item -LiteralPath $completionMarker
+    }
     if ($a.Need -and ($HELP -notmatch [regex]::Escape($a.Need))) {
         "[$name] SKIPPED: the driver does not know '$($a.Need)'." | Tee-Object -FilePath $log -Append
         $script:Failures += "$name (guard: '$($a.Need)' not in --help)"
@@ -177,9 +186,14 @@ function Run-Arm($name) {
     foreach ($d in Get-ChildItem -Path $a.Dir -Directory) {
         if ($d.Name -in @("evaluation", "analysis")) { continue }
         & $PYTHON scripts\evaluate_research_question.py --input-dir $d.FullName --output-dir (Join-Path $d.FullName "evaluation") *>> $log
-        if ($LASTEXITCODE -ne 0) { "[$name] FAILED evaluation of $($d.Name)" | Tee-Object -FilePath $log -Append }
+        if ($LASTEXITCODE -ne 0) {
+            $evaluationCode = $LASTEXITCODE
+            "[$name] FAILED evaluation of $($d.Name) (exit $evaluationCode)" | Tee-Object -FilePath $log -Append
+            $script:Failures += "$name evaluation '$($d.Name)' (exit $evaluationCode)"
+        }
     }
-    New-Item -ItemType File -Force -Path (Join-Path $a.Dir "ARM_COMPLETE") | Out-Null
+    if ($script:Failures.Count -gt $before) { return }
+    New-Item -ItemType File -Force -Path $completionMarker | Out-Null
     "[$name] complete $(Get-Date -Format o)" | Tee-Object -FilePath $log -Append
 }
 
@@ -197,11 +211,11 @@ if ($Smoke) {
     $script:Failures | ForEach-Object { "  $_" | Tee-Object -FilePath $log -Append }
     exit 1
 }
-"done $(Get-Date -Format o)" | Set-Content -Path "output-boba\budget-neutral.DONE" -Encoding ascii
-"=== budget-neutral arms finished $(Get-Date -Format o) ===" | Tee-Object -FilePath $log -Append
 [void][PowerBN]::SetThreadExecutionState([uint32]"0x80000000")
 if ($script:Failures.Count -gt 0) {
     "=== $($script:Failures.Count) arm(s) did not finish ===" | Tee-Object -FilePath $log -Append
     $script:Failures | ForEach-Object { "  $_" | Tee-Object -FilePath $log -Append }
     exit 1
 }
+"done $(Get-Date -Format o)" | Set-Content -Path "output-boba\budget-neutral.DONE" -Encoding ascii
+"=== budget-neutral arms finished $(Get-Date -Format o) ===" | Tee-Object -FilePath $log -Append

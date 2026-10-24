@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 
@@ -23,6 +24,55 @@ if str(SCRIPTS) not in sys.path:
 
 import budget_split as bs  # noqa: E402
 import replay_end_of_study as eos  # noqa: E402
+
+
+@pytest.mark.parametrize("twin", ["noisy", "clean"])
+@pytest.mark.parametrize("cached", [False, True])
+def test_cli_filters_apply_before_derivation_cached_scoring_and_clean_pricing(tmp_path, monkeypatch, twin, cached):
+    sweep = pd.DataFrame([
+        {"dataset": dataset, "seed": seed, "file": f"{dataset}_{seed}.csv"}
+        for dataset in ("branin", "ackley") for seed in (7, 12)
+    ])
+    monkeypatch.setattr(bs, "load_sweep", lambda *a, **k: sweep)
+    monkeypatch.setattr(bs.eos, "load_arm", lambda *a, **k: object())
+    monkeypatch.setattr(bs, "load_no_trial", lambda *a, **k: None)
+    monkeypatch.setattr(bs, "load_opt_z", lambda *a, **k: {"branin": 1.0, "ackley": 1.0})
+    import analyse_extra_runs as aer
+    monkeypatch.setattr(aer, "index_runs", lambda *a, **k: ({}, []))
+
+    class SelectedRunsChecked(Exception):
+        pass
+
+    def inspect_selected(selected, *a, **k):
+        assert selected[["dataset", "seed", "file"]].to_dict("records") == [
+            {"dataset": "branin", "seed": 12, "file": "branin_12.csv"}]
+        raise SelectedRunsChecked
+
+    if cached:
+        # An existing cache can contain choices for many more runs. It must not
+        # broaden the requested scoring/pricing subset when joined back in.
+        derived = sweep[["file"]].assign(k_hat="pm", gp_failed=False)
+        suffix = "_clean" if twin == "clean" else ""
+        derived.to_csv(bs.output_paths(tmp_path, suffix)["derived"], index=False)
+        monkeypatch.setattr(bs, "score_price" if twin == "clean" else "score_policies", inspect_selected)
+    else:
+        monkeypatch.setattr(bs, "build_clean_tasks" if twin == "clean" else "build_tasks", inspect_selected)
+    argv = ["--functions", "branin", "--seeds", "12", "--output-dir", str(tmp_path)]
+    if twin == "clean":
+        argv += ["--twin", "clean", "--output-suffix", "_clean"]
+    if cached:
+        argv += ["--summary-only"]
+    with pytest.raises(SelectedRunsChecked):
+        bs.main(argv)
+
+
+def test_default_run_filters_preserve_all_historical_rows_and_order():
+    sweep = pd.DataFrame({"dataset": ["branin", "ackley"] * 10,
+                          "seed": np.repeat(np.arange(7, 17), 2)})
+    args = bs.parse_args([])
+    pd.testing.assert_frame_equal(bs.select_runs(sweep, args.functions, args.seeds), sweep)
+    with pytest.raises(SystemExit, match="no k-sweep rows"):
+        bs.select_runs(sweep, "branin", "99")
 
 
 # ---------------------------------------------------------------------------
@@ -461,6 +511,26 @@ def _toy_joined():
     return pd.DataFrame(rows), pd.DataFrame(no_trial), {"a": 1.0, "b": 10.0}
 
 
+def test_selected_noisy_scores_use_only_the_selected_runs_for_every_comparator():
+    sweep, no_trial, opt_z = _toy_joined()
+    sweep["seed"] = np.where(sweep["file"].str.endswith("_0.csv"), 7, 12)
+    derived = sweep.drop_duplicates("file")[["file", "k_hat"]].assign(gp_failed=False)
+    selected = bs.select_runs(sweep.drop(columns="k_hat"), "a", "12")
+    joined, failed = bs.join_derived(selected, derived)
+    summary, frame, _ = bs.score_policies(joined, no_trial, opt_z, np.random.default_rng(bs.BOOTSTRAP_SEED))
+    assert not failed
+    assert frame.index.tolist() == [("a", "a_0_1.csv"), ("a", "a_20_1.csv")]
+    selected_files = frame.index.get_level_values("file")
+    # Excluded caches and no-trial rows must not contribute to either no-trial
+    # baseline, any fixed k, the derived rule, or the oracle comparator.
+    small_no_trial = no_trial[no_trial["file"].isin(selected_files)]
+    expected, expected_frame, _ = bs.score_policies(
+        joined, small_no_trial, {"a": 1.0}, np.random.default_rng(bs.BOOTSTRAP_SEED))
+    pd.testing.assert_frame_equal(frame, expected_frame)
+    pd.testing.assert_frame_equal(summary, expected)
+    assert (summary["n_landscapes"] == 1).all()
+
+
 def test_the_by_onset_table_reproduces_the_pooled_policies_table():
     """Same point estimates as the policies table; each interval from its own generator."""
     joined, no_trial, opt_z = _toy_joined()
@@ -566,6 +636,52 @@ def _toy_price():
             no_trial.append({"file": clean, "regret_pm": ref + z * 0.01, "regret_lcb1": ref + z * 0.03})
             derived.append({"file": clean, "k_hat": choice[(d, seed)], "gp_failed": False})
     return pd.DataFrame(rows), pd.DataFrame(derived), pd.DataFrame(no_trial), {"a": 1.0, "b": 10.0}
+
+
+def test_selected_clean_prices_ignore_excluded_cached_twins_and_their_fit_failures():
+    sweep, derived, no_trial, opt_z = _toy_price()
+    selected = bs.select_runs(sweep, "a", "12")
+    derived.loc[0, "gp_failed"] = True  # this excluded seed must not count as a failure
+    frame, _, failed = bs.price_frame(selected, derived, no_trial, opt_z)
+    assert not failed and len(frame) == 1
+    assert frame.index.get_level_values("dataset").tolist() == ["a"]
+    assert frame.index.get_level_values("seed").tolist() == [12]
+    table = bs.score_price(selected, derived, no_trial, opt_z)
+    expected = {"fixed_k2": 0.02, "fixed_k8": 0.05, "always_pm": 0.01,
+                "always_lcb": 0.03, "derived": 0.01}
+    for label, rows in table[table["kind"] == "price"].groupby("seeds"):
+        assert label in {"all", "12-16"}
+        assert dict(zip(rows["policy"], rows["estimate"])) == pytest.approx(expected)
+    assert set(table["seeds"]) == {"all", "12-16"}
+    assert (table[["n_landscapes", "n_twins"]] == 1).all().all()
+    assert (table["n_failed"] == 0).all()
+
+
+@pytest.mark.parametrize("twin", ["noisy", "clean"])
+def test_cached_cli_finishes_for_one_landscape_and_only_held_out_seeds(tmp_path, monkeypatch, twin):
+    if twin == "clean":
+        sweep, derived, no_trial, _ = _toy_price()
+    else:
+        sweep, no_trial, _ = _toy_joined()
+        sweep["seed"] = np.where(sweep["file"].str.endswith("_0.csv"), 7, 12)
+        derived = sweep.drop_duplicates("file")[["file", "k_hat"]].assign(gp_failed=False)
+        sweep = sweep.drop(columns="k_hat")
+    sweep["dataset"] = sweep["dataset"].replace({"a": "branin", "b": "ackley"})
+    suffix = "_clean" if twin == "clean" else ""
+    derived.to_csv(bs.output_paths(tmp_path, suffix)["derived"], index=False)
+    monkeypatch.setattr(bs, "load_sweep", lambda *a, **k: sweep)
+    monkeypatch.setattr(bs, "load_no_trial", lambda *a, **k: no_trial)
+    monkeypatch.setattr(bs, "load_opt_z", lambda *a, **k: {"branin": 1.0, "ackley": 10.0})
+    argv = ["--functions", "branin", "--seeds", "12,13,14,15,16", "--summary-only",
+            "--output-dir", str(tmp_path)]
+    if twin == "clean":
+        argv += ["--twin", "clean", "--output-suffix", suffix]
+    result = bs.main(argv)
+    assert (result["n_landscapes"] == 1).all()
+    path = bs.price_path(tmp_path, suffix) if twin == "clean" else bs.output_paths(tmp_path)["by_onset"]
+    scored = pd.read_csv(path)
+    assert set(scored["seeds"]) == {"all", "12-16"}
+    assert (scored["n_landscapes"] == 1).all()
 
 
 def test_the_price_is_trt_clean_less_ref_clean_in_opt_z_units_and_counts_each_twin_once():

@@ -267,7 +267,8 @@ def cross_specs(names: list[str], custom: list[str]) -> list[dict]:
             continue
         specs.append({"name": name, "dir": s["dir"], "ref": s["ref"], "acqs": s["acqs"], "ref_acqs": s["ref_acqs"],
                       "seeds": s["seeds"], "pool": bool(s["pool"]), "error_model": s["error_model"],
-                      "variant": "auto", "ref_variant": "auto"})
+                      "variant": s["variant"] if s.get("variant") is not None else "auto",
+                      "ref_variant": s["ref_variant"] if s.get("ref_variant") is not None else "auto"})
     for text in custom:
         kv = dict(part.split("=", 1) for part in text.split(";") if part.strip())
         need = [k for k in ("name", "dir", "ref", "acqs", "error_model") if k not in kv]

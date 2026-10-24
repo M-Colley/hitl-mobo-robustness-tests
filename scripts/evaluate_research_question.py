@@ -96,7 +96,8 @@ def parse_args() -> argparse.Namespace:
 # oracle is read from the log and stripped exactly. Guessing it split
 # "extra_trees" into oracle "extra" and variant "trees" and would have
 # fragmented every fitted-oracle arm.
-_JITTERED_SUFFIX = re.compile(r"_jittered_.+?_jit\d+_std[0-9.]+(?P<suffix>.*)$")
+_MAGNITUDE = r"(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+_JITTERED_SUFFIX = re.compile(rf"_jittered_.+?_jit\d+_std{_MAGNITUDE}(?P<suffix>(?:_.*)?)$")
 
 
 def parse_variant(name: str, oracle_model: str | None = None) -> str:

@@ -710,6 +710,9 @@ def price_frame(sweep: pd.DataFrame, derived_clean: pd.DataFrame, no_trial: pd.D
     ref = sweep.groupby(keys)["ref_clean"].first()
 
     clean = derived_clean.assign(stem=derived_clean["file"].map(twin_stem))
+    # A cached derivation can cover more seeds/landscapes than this invocation;
+    # its excluded twins must not enter even the failed-fit count.
+    clean = clean[clean["stem"].isin(per_stem.index.get_level_values("stem"))]
     failed = eos._as_bool(clean["gp_failed"]) if "gp_failed" in clean else pd.Series(False, index=clean.index)
     n_failed = int(failed.sum())
     clean = clean[~failed].drop_duplicates("stem").set_index("stem")
@@ -802,6 +805,26 @@ def load_sweep(ksweep_dir: str, rho: float, acquisitions: str | None = "logei,qn
     return sweep
 
 
+def select_runs(sweep: pd.DataFrame, functions: str, seeds: str) -> pd.DataFrame:
+    """Restrict the common sweep before deriving, rescoring or pricing any policy."""
+    selected = sweep
+    if functions.strip() != "all":
+        names = {name.strip() for name in functions.split(",") if name.strip()}
+        if not names:
+            raise ValueError("--functions must name at least one landscape, or all")
+        selected = selected[selected["dataset"].isin(names)]
+    try:
+        seed_set = {int(seed.strip()) for seed in seeds.split(",") if seed.strip()}
+    except ValueError as exc:
+        raise ValueError("--seeds must be comma-separated integers") from exc
+    if not seed_set:
+        raise ValueError("--seeds must name at least one seed")
+    selected = selected[selected["seed"].isin(seed_set)]
+    if selected.empty:
+        raise SystemExit("no k-sweep rows match --functions and --seeds")
+    return selected
+
+
 def join_derived(sweep: pd.DataFrame, derived: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     """The sweep with each run's chosen policy; runs whose fit failed are dropped and counted."""
     joined = sweep.merge(derived[["file", "k_hat", "gp_failed"]], on="file", how="inner")
@@ -889,7 +912,8 @@ def main(argv=None) -> pd.DataFrame:
     paths = output_paths(out_dir, args.output_suffix)
     derived_path = paths["derived"]
 
-    sweep = load_sweep(args.ksweep_dir, args.rho, args.acquisitions, args.error_models)
+    sweep = select_runs(load_sweep(args.ksweep_dir, args.rho, args.acquisitions, args.error_models),
+                        args.functions, args.seeds)
 
     k_grid = tuple(int(k) for k in args.k_grid.split(","))
     settings = {"k_grid": k_grid, "beta": args.lcb_beta, "window": args.window, "rho": args.rho,

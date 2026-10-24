@@ -686,3 +686,142 @@ python -m pytest tests/ -o addopts= -q
 python scripts/check_paper.py --paper paper
 python scripts/build_feedback_bundle.py --output dist/human-feedback-portable-2026-10-21.zip
 ```
+
+## 2026-10-21 exploratory Schmitt decision replay (outside the paper)
+
+This new log-only replay does not regenerate or contribute numbers to the
+existing paper tables/figures. It fixes 100 available MOBO archives before
+scoring: four problems, qLogNEHVI, seeds 12–16, clean plus Gaussian 1 SD at
+onsets 0/20 and objective-error correlation 0/.85. All selectors and exact
+feedback counterfactuals share the same evaluated designs within each archive.
+It tests declared linear and weighted-quadratic utilities separately, with
+matching reference rules, and independent illustrative log-weight errors.
+
+Run from the repository root. The output directory must be empty for a run;
+use a new directory to reproduce instead of overwriting the first result.
+
+```powershell
+.\.venv-feedback315\Scripts\python.exe -m pytest tests/test_replay_schmitt_decisions.py -q
+.\.venv-feedback315\Scripts\python.exe scripts/replay_schmitt_decisions.py --input-dir output-boba-mo-halo --openbo-src C:\Users\Mark\Desktop\openbo\src --output-dir C:\Users\Mark\Documents\Codex\2026-10-21\wo\outputs\selection-replay
+.\.venv-feedback315\Scripts\python.exe scripts/replay_schmitt_decisions.py --input-dir output-boba-mo-halo --openbo-src C:\Users\Mark\Desktop\openbo\src --output-dir C:\Users\Mark\Documents\Codex\2026-10-21\wo\outputs\selection-replay --run
+.\.venv-feedback315\Scripts\python.exe -m pytest tests/ -q --durations=10 *> C:\Users\Mark\Documents\Codex\2026-10-21\wo\outputs\selection-replay\validation_full_tests.txt
+.\.venv-feedback315\Scripts\python.exe scripts/check_paper.py --paper paper *> C:\Users\Mark\Documents\Codex\2026-10-21\wo\outputs\selection-replay\validation_check_paper.txt
+```
+
+Outputs are `plan.json`, `manifest.json` (input and source SHA256 hashes and
+package versions), `per_preference_decisions.csv.gz`, `per_archive_metrics.csv`,
+`comparison_summary.csv`, `comparison_per_problem.csv`, `preference_groups.csv`
+and `report.txt` in that external output directory. Units are final selection
+regret in fixed within-archive true-front normalized utility, not global
+optimization regret or hypervolume. Bootstrap intervals are descriptive with
+only four correlated problem clusters; no p-values or significance stars are
+reported. The clean comparator is the same-archive exact-feedback/true-weight
+counterfactual, not a different search trajectory. No new objective trials,
+acquisition runs or GP refits are performed.
+
+### 2026-10-22 replay-test portability check
+
+The two OpenBO integration tests now accept an installed package or an
+`OPENBO_SRC` source root; the three pure replay tests always run. An explicit
+invalid source root raises a setup error. For a sibling OpenBO checkout,
+the source case can be repeated without changing the parent environment:
+
+```bash
+python -c "import os, subprocess, sys; child_env=os.environ.copy(); child_env['OPENBO_SRC']='../openbo/src'; raise SystemExit(subprocess.call([sys.executable, '-m', 'pytest', 'tests/test_replay_schmitt_decisions.py', '-o', 'addopts=', '-q', '-rs'], env=child_env))"
+```
+
+Replace the relative source root with the checkout being tested. With an
+installed OpenBO package, no environment variable is needed. Without either,
+the same pytest command runs three pure tests and skips only the two
+integration tests. Four isolated child-environment checks gave: source root
+5 passed; importable package without `OPENBO_SRC` 5 passed; unavailable
+OpenBO 3 passed/2 skipped; invalid explicit source 3 passed/2 expected setup
+errors. Logs are `portability_*.txt` with `portability_summary.json` in the
+external selection-replay output directory. The fixture-only correction did
+not rerun or change the experiment; the earlier complete-suite result of
+1,250 passed remains a separate historical validation.
+
+## 2026-10-23 codebase audit (software validation only)
+
+This review did not regenerate study tables, figures, or experiment results.
+Confirmed defects, reproductions, and validation limits are recorded in
+`docs/CODE_AUDIT_2026-10-23.md`. Existing uncommitted replay work was preserved.
+The validation commands ran in this order from the repository root; the test
+suite ran concurrently with the subsequent static checks.
+
+```powershell
+$reviewDir = Join-Path $env:TEMP 'hitl-code-review-20261023'
+New-Item -ItemType Directory -Force -Path $reviewDir | Out-Null
+python -m pytest tests/ -q -ra *> (Join-Path $reviewDir 'pytest-py313.log')
+python scripts/check_paper.py --paper paper
+ruff check scripts tests paper/build_overleaf_bundle.py --select E9,F63,F7,F82 --output-format concise
+
+$repoPath = (Get-Location).Path
+git ls-files '*.ps1' | ForEach-Object {
+    $tokens = $null
+    $parseErrors = $null
+    [void][System.Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $repoPath $_), [ref]$tokens, [ref]$parseErrors)
+    if ($parseErrors) { $parseErrors }
+}
+git diff --check
+```
+
+### 2026-10-23 audit corrections and regression validation
+
+The follow-up fixes all eleven recorded software findings. These commands
+validate software behavior; they do not rerun or revise the paper's study.
+The temporary producer outputs below preserve the published files; all 29
+regenerated tables were byte-identical. The complete implementation test log
+is `validation-local/code-fixes-20261023/pytest-py313.log` (git-ignored).
+
+Focused checks, launched before the full suite (some finished concurrently):
+
+```powershell
+python -m pytest tests/test_confirmatory_followup.py tests/test_budget_neutral_driver.py -o addopts= -q
+python -m pytest tests/test_core_audit.py tests/test_adaptations.py tests/test_error_extensions.py -o addopts= -q
+python -m pytest tests/test_hierarchical_oracle.py tests/test_replay_schmitt_decisions.py -o addopts= -q
+.\.venv-feedback315\Scripts\python.exe -m pytest tests/test_hierarchical_oracle.py tests/test_replay_schmitt_decisions.py -o addopts= -q
+python -m pytest tests/test_budget_split.py tests/test_ship_rules.py tests/test_variant_evaluation.py tests/test_compare_boba_arms.py -o addopts= -q -k "cli_filters_apply or default_run_filters or selected_noisy_scores or selected_clean_prices or cached_cli_finishes or index_keeps_missing or registered_cross_specs or float_magnitudes_never or plot_labels"
+```
+
+Producer and final checks, in launch order (the full suite ran concurrently
+with the subsequent read-only checks):
+
+```powershell
+python scripts/make_boba_paper_tables.py --analysis output-boba/analysis --out validation-local/code-fixes-20261023/tables
+python scripts/make_paper_figures.py --analysis output-boba/analysis --out validation-local/code-fixes-20261023/figures
+python scripts/check_provenance.py --out-dir validation-local/code-fixes-20261023/provenance --arms 'output-boba-missing-drop' --list
+$fixDir = Join-Path (Get-Location) 'validation-local/code-fixes-20261023'
+New-Item -ItemType Directory -Force -Path $fixDir | Out-Null
+python -m pytest tests/ -o addopts= -q -ra *> (Join-Path $fixDir 'pytest-py313.log')
+python scripts/check_paper.py --paper paper
+ruff check scripts tests paper/build_overleaf_bundle.py --select E9,F63,F7,F82 --output-format concise
+git diff --check
+python scripts/check_provenance.py --out-dir validation-local/code-fixes-20261023/provenance --arms 'output-boba-missing-drop' --workers 1
+```
+
+All tracked PowerShell files were also reparsed with the AST check from the
+initial audit. The provenance scope names one available arm explicitly;
+the main sweep's absent run logs still prevent its exact regression replay.
+
+The available missing-drop replay differed from its historical archive. A
+same-environment control then loaded the pre-fix core from Git HEAD
+(`e16f588b87f74f8c33ac4676e1df9b35488b82cd`) into an isolated module and
+replayed the same selected case through `check_provenance._attempt`. It matched
+the corrected run exactly on all 50 rows and 32 compared fields, excluding
+runtime/run identity and the code fingerprint. This verifies that the
+historical difference predates these repairs. The local control command and
+its JSON output were:
+
+```powershell
+python validation-local/code-fixes-20261023/compare_prefixed_core.py
+# writes validation-local/code-fixes-20261023/provenance_before_fix/ and
+# validation-local/code-fixes-20261023/prefixed_core_comparison.json
+```
+
+Final implementation-suite result: **1,334 passed, 11 skipped, zero failures**
+(Python 3.13.12, 141 warnings, 21m45s). All 70 added regression cases passed.
+The skipped tests require absent historical logs/metadata or OpenBO selector
+integration. Fatal Python lint, PowerShell parsing and static paper checks
+passed. Published study outputs were not overwritten.

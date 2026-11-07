@@ -1,0 +1,16 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_moving_peaks,composite,catboost,gaussian,0,0.22686,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.233049,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.233078,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.23753,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.240345,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.907438,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.932196,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.93231,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.950118,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,0.961378,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,4.537192,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,4.660982,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,4.661551,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,4.750592,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,catboost,gaussian,0,4.806891,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

@@ -190,7 +190,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         type=str,
         default="none",
         help="'none', 'sample' (clip to the standardised sampled range of the landscape, "
-        "the analogue of a bounded rating scale), or explicit 'low,high'.",
+        "the analogue of a bounded rating scale), explicit 'low,high', or 'running<c>' (clip each "
+        "rating after the initial design to the range of the ratings recorded so far, widened by c "
+        "robust SDs of them: the version a study can run, which also acts on the clean twin).",
     )
     parser.add_argument(
         "--response-round", type=float, default=None,
@@ -260,6 +262,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                         help="'student_t': outlier-robust Student-t variational GP surrogate. "
                              "'relevance_pursuit': BoTorch's robust GP with per-point outlier variances "
                              "(changes the clean run, so it needs its own --output-dir).")
+    parser.add_argument("--gp-prior", type=str, default="default", choices=sim.GP_PRIOR_CHOICES,
+                        help="The Gaussian surrogate's kernel and priors: 'default' is BoTorch's SingleTaskGP "
+                             "default (RBF, dimension-scaled log-normal priors); 'legacy' is BoTorch's default "
+                             "before 0.12 (scaled Matern-5/2 with Gamma priors and a Gamma(1.1, 0.05) noise "
+                             "prior). Changes the clean run, so it needs its own --output-dir.")
     parser.add_argument("--inference-rule", type=str, default=None, choices=sim.INFERENCE_RULE_CHOICES,
                         help="Deployed-design rule; defaults to best_mean when any replication is on.")
     parser.add_argument("--incumbent", type=str, default="posterior_mean",
@@ -430,9 +437,23 @@ def resolve_seeds(args: argparse.Namespace) -> list[int]:
     return [args.seed + i for i in range(args.num_seeds)]
 
 
+def running_margin(raw: str | None) -> float | None:
+    """The margin c of --response-clip running<c>, in robust SDs of the ratings so far; None otherwise."""
+    text = str(raw or "none").strip()
+    if not text.startswith("running"):
+        return None
+    try:
+        margin = float(text[len("running"):])
+    except ValueError as exc:
+        raise ValueError(f"--response-clip running<c> needs a number, e.g. running2; got {raw!r}") from exc
+    if not np.isfinite(margin) or margin < 0:
+        raise ValueError(f"--response-clip running<c> needs c >= 0; got {raw!r}")
+    return margin
+
+
 def resolve_clip(raw: str, stats_entry: dict[str, float]) -> tuple[np.ndarray | None, np.ndarray | None]:
-    """Response clipping in STANDARDISED units."""
-    if raw.strip() in {"", "none"}:
+    """Response clipping in STANDARDISED units. The running clip has no fixed bounds (running_margin)."""
+    if raw.strip() in {"", "none"} or running_margin(raw) is not None:
         return None, None
     if raw.strip() == "sample":
         mean, std = stats_entry["mean"], stats_entry["std"]
@@ -546,6 +567,8 @@ def instrument_suffix_parts(args: argparse.Namespace) -> list[str]:
     if clip not in ("", "none") and not getattr(args, "multi_objective", False):
         if clip == "sample":
             parts.append("clip-sample")
+        elif running_margin(clip) is not None:
+            parts.append(f"clip-run{running_margin(clip):g}")
         else:
             low, high = (float(v) for v in clip.split(","))
             parts.append(f"clip{low:g},{high:g}")
@@ -633,6 +656,13 @@ def _clean_run_settings(args: argparse.Namespace) -> dict:
     # --error-cross-corr acts on noisy ratings only and is not.
     if adapt["mo_halo_model"] != "none":
         settings["mo_halo_model"] = adapt["mo_halo_model"]
+    # The running clip reads the study's own record, so it clips the clean twin's ratings too.
+    margin = running_margin(getattr(args, "response_clip", "none"))
+    if margin is not None:
+        settings["response_clip_running"] = margin
+    # Another kernel and set of priors is another clean search.
+    if adapt["gp_prior"] != "default":
+        settings["gp_prior"] = adapt["gp_prior"]
     return settings
 
 
@@ -734,6 +764,7 @@ def run_task(
         response_clip_low=clip_low,
         response_clip_high=clip_high,
         response_round=args.response_round,
+        response_clip_running=running_margin(args.response_clip),
         incumbent=args.incumbent,
         observation_noise=args.observation_noise,
         input_error_model=args.input_error,
@@ -917,7 +948,7 @@ def run_task(
                                     sim.ACQUISITION_CHOICES.index(acq_name),
                                     int(jitter_iteration),
                                     int(round(float(jitter_std) * 1_000_000)),
-                                    sim.ERROR_MODEL_CHOICES.index(error_model),
+                                    sim.error_model_seed_index(error_model),
                                 ]
                             )
                         )
@@ -1072,7 +1103,9 @@ def main(argv: list[str] | None = None) -> None:
             min_distance=adapt["min_distance"],
         )
 
-    error_models = _parse_names(args.error_models, sim.ERROR_MODEL_CHOICES, "error model")
+    # "all" keeps its meaning from before drift_down was appended (sim.ALL_ERROR_MODELS).
+    error_models = (list(sim.ALL_ERROR_MODELS) if args.error_models.strip() == "all"
+                    else _parse_names(args.error_models, sim.ERROR_MODEL_CHOICES, "error model"))
     jitter_stds = _parse_floats(args.jitter_stds)
     jitter_iterations = _parse_ints(args.jitter_iterations)
     seeds = resolve_seeds(args)

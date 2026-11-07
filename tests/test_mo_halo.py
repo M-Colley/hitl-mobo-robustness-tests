@@ -103,8 +103,11 @@ def standard_clean() -> pd.DataFrame:
 
 def test_no_acquisition_or_error_model_was_added():
     # The halo error is a flag on the gaussian model, not a new model, so the
-    # seed indices of the jitter stream cannot have moved.
-    assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
+    # seed indices of the jitter stream cannot have moved. drift_down was appended
+    # on 2026-11-07 (it takes drift's seed index, sim.error_model_seed_index); the
+    # guarantee is that nothing was INSERTED before it.
+    assert sim.ERROR_MODEL_CHOICES[:6] == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
+    assert sim.ERROR_MODEL_CHOICES[6:] == ["drift_down"]
     # shiplcb was appended on 2026-09-21. The guarantee this test exists for is
     # that nothing was INSERTED (the index seeds the jitter stream) and that
     # nothing new reached the multi-objective suite, which is checked below.

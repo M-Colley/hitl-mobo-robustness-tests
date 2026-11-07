@@ -19,9 +19,15 @@
 % One correction was made: eggensperger2021hpobench was typed as an article entry and is a
 % proceedings paper in the NeurIPS Datasets and Benchmarks track.
 %
-% STILL UNCHECKED: the conference and arXiv entries, which carry no volume or
-% pages and so have less to get wrong -- but their years and venues have not
-% been confirmed against a record. Check those before submission.
+% On 2026-11-07 the conference and arXiv entries were checked as well, against the
+% proceedings' own records (PMLR volume pages, the NeurIPS BibTeX and metadata
+% files, Crossref for the ACM, IEEE and Elsevier DOIs, the arXiv abstracts), and
+% every entry carrying a DOI was compared with its Crossref record. No author,
+% title, venue, year, volume or page range differed from its record. Page ranges,
+% volumes and DOIs were added where those records give them. Two entries rest on
+% weaker records: srinivas2010gaussian (ICML 2010 has no DOI; venue and year from
+% a record derived from DBLP) and jones1995fitness (ICGA 1995; from the first
+% author's own page).
 
 @article{jones1998efficient,
   title   = {Efficient global optimization of expensive black-box functions},
@@ -48,6 +54,8 @@
   title     = {Practical {B}ayesian optimization of machine learning algorithms},
   author    = {Snoek, Jasper and Larochelle, Hugo and Adams, Ryan P.},
   booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {25},
+  pages     = {2951--2959},
   year      = {2012}
 }
 
@@ -77,6 +85,8 @@
   author    = {Ament, Sebastian and Daulton, Samuel and Eriksson, David and
                Balandat, Maximilian and Bakshy, Eytan},
   booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {36},
+  pages     = {20577--20612},
   year      = {2023}
 }
 
@@ -87,6 +97,8 @@
                Daulton, Samuel and Letham, Benjamin and Wilson, Andrew Gordon and
                Bakshy, Eytan},
   booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33},
+  pages     = {21524--21538},
   year      = {2020}
 }
 
@@ -134,14 +146,18 @@
   author    = {Kersting, Kristian and Plagemann, Christian and Pfaff, Patrick and
                Burgard, Wolfram},
   booktitle = {International Conference on Machine Learning},
-  year      = {2007}
+  pages     = {393--400},
+  year      = {2007},
+  doi       = {10.1145/1273496.1273546}
 }
 
 @inproceedings{chu2005preference,
   title     = {Preference learning with {G}aussian processes},
   author    = {Chu, Wei and Ghahramani, Zoubin},
   booktitle = {International Conference on Machine Learning},
-  year      = {2005}
+  pages     = {137--144},
+  year      = {2005},
+  doi       = {10.1145/1102351.1102369}
 }
 
 @article{brochu2010tutorial,
@@ -158,6 +174,7 @@
   author    = {Gonz{\'a}lez, Javier and Dai, Zhenwen and Damianou, Andreas and
                Lawrence, Neil D.},
   booktitle = {International Conference on Machine Learning},
+  pages     = {1282--1291},
   year      = {2017}
 }
 
@@ -166,6 +183,8 @@
                with expected hypervolume improvement},
   author    = {Daulton, Samuel and Balandat, Maximilian and Bakshy, Eytan},
   booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {34},
+  pages     = {2187--2200},
   year      = {2021}
 }
 
@@ -216,7 +235,8 @@
   booktitle = {Proceedings of the 1999 Congress on Evolutionary Computation (CEC)},
   volume    = {3},
   pages     = {1875--1882},
-  year      = {1999}
+  year      = {1999},
+  doi       = {10.1109/CEC.1999.785502}
 }
 
 @article{yerkes1908relation,
@@ -252,6 +272,7 @@
   title     = {Corruption-tolerant {G}aussian process bandit optimization},
   author    = {Bogunovic, Ilija and Krause, Andreas and Scarlett, Jonathan},
   booktitle = {International Conference on Artificial Intelligence and Statistics},
+  pages     = {1071--1081},
   year      = {2020}
 }
 
@@ -262,7 +283,8 @@
   volume    = {13},
   pages     = {501--534},
   publisher = {Elsevier},
-  year      = {2006}
+  year      = {2006},
+  doi       = {10.1016/S0927-0507(06)13017-0}
 }
 
 @inproceedings{audibert2010best,
@@ -278,6 +300,8 @@
   author    = {Ament, Sebastian and Santorella, Elizabeth and Eriksson, David and
                Letham, Benjamin and Balandat, Maximilian and Bakshy, Eytan},
   booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {37},
+  pages     = {61700--61734},
   year      = {2024}
 }
 
@@ -330,7 +354,8 @@
   volume  = {36},
   number  = {4},
   pages   = {48:1--48:11},
-  year    = {2017}
+  year    = {2017},
+  doi     = {10.1145/3072959.3073598}
 }
 
 @inproceedings{chan2022investigating,
@@ -717,4 +742,74 @@
   pages   = {2--13},
   year    = {2013},
   doi     = {10.1080/00401706.2012.707580}
+}
+
+% Added 2026-11-07 after the mock reviews. Written from memory first, then checked
+% the same day against the publishers' records (PMLR volume pages, the JMLR and
+% NeurIPS proceedings BibTeX, Crossref for the DOI): authors, titles, venues,
+% volumes and years were correct as written; the page ranges, the JMLR issue and
+% the DOI were added from those records.
+
+@inproceedings{hvarfner2024vanilla,
+  author    = {Hvarfner, Carl and Hellsten, Erik Orm and Nardi, Luigi},
+  title     = {Vanilla {B}ayesian Optimization Performs Great in High Dimensions},
+  booktitle = {Proceedings of the 41st International Conference on Machine Learning},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {235},
+  pages     = {20793--20817},
+  year      = {2024},
+  publisher = {PMLR}
+}
+
+@article{hennig2012entropy,
+  author    = {Hennig, Philipp and Schuler, Christian J.},
+  title     = {Entropy Search for Information-Efficient Global Optimization},
+  journal   = {Journal of Machine Learning Research},
+  volume    = {13},
+  number    = {57},
+  pages     = {1809--1837},
+  year      = {2012},
+  url       = {https://jmlr.org/papers/v13/hennig12a.html}
+}
+
+@inproceedings{wang2017max,
+  author    = {Wang, Zi and Jegelka, Stefanie},
+  title     = {Max-value Entropy Search for Efficient {B}ayesian Optimization},
+  booktitle = {Proceedings of the 34th International Conference on Machine Learning},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {70},
+  pages     = {3627--3635},
+  year      = {2017},
+  publisher = {PMLR}
+}
+
+@inproceedings{hoffman2014correlation,
+  author    = {Hoffman, Matthew W. and Shahriari, Bobak and de Freitas, Nando},
+  title     = {On Correlation and Budget Constraints in Model-Based Bandit Optimization with Application to Automatic Machine Learning},
+  booktitle = {Proceedings of the Seventeenth International Conference on Artificial Intelligence and Statistics},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {33},
+  pages     = {365--374},
+  year      = {2014},
+  publisher = {PMLR}
+}
+
+@inproceedings{makarova2021risk,
+  author    = {Makarova, Anastasia and Usmanova, Ilnura and Bogunovic, Ilija and Krause, Andreas},
+  title     = {Risk-averse Heteroscedastic {B}ayesian Optimization},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {34},
+  pages     = {17235--17245},
+  year      = {2021}
+}
+
+@article{shrout1979intraclass,
+  author    = {Shrout, Patrick E. and Fleiss, Joseph L.},
+  title     = {Intraclass Correlations: Uses in Assessing Rater Reliability},
+  journal   = {Psychological Bulletin},
+  volume    = {86},
+  number    = {2},
+  pages     = {420--428},
+  year      = {1979},
+  doi       = {10.1037/0033-2909.86.2.420}
 }

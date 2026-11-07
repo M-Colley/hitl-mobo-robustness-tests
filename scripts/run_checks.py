@@ -6,13 +6,15 @@ the like-for-like Kendall's W, the multi-objective front, the nugget-radius
 sensitivity, the fitted-oracle companion ratio and its estimators, the
 augmentation contrast, the headline on landscapes matched to the human studies'
 opt_z, the oracle-isolation result by oracle family (with each seed's refitted
-oracle and the achievable-improvement unit), the untouched-seed test of the
+oracle and the achievable-improvement unit, and rerun with each seed's own
+error grid), the untouched-seed test of the
 final sitting, the sitting against the zero-trial ship rules and under the
 sequential rating process, the budget rule by onset, the model-free floors'
 deployed regret, the multiplicity of the Friedman tests, the archival
 instruments' scales, the multi-objective onset bound, the reach trial of the
 extra-trial appendix, the one-shot predictor's residuals and out-of-sample fit,
-the comparison loop's determinism in another worker schedule, and the
+the comparison loop's determinism in another worker schedule, the review round's
+replication, reversed drift and second GP surrogate, and the
 tie-break sensitivity of every deployed-design number from an arm with ties.
 
 Each check is a script under scripts/checks/; this runs them in turn, in
@@ -27,7 +29,10 @@ their register file themselves as well, with exactly what they print.
 A fresh checkout holds every table and figure input but not the run logs, so
 some checks run only on the machine that holds the arms. structural_zeros,
 mo_front_check, budget_split_by_onset, extra_reach, mo_onset_bound and
-oracle_companion_estimators read git-ignored run logs. sitting_sequential reads
+oracle_companion_estimators read git-ignored run logs, and oracle_perseed reads the
+per-seed oracle-isolation arms (scripts/run_oracle_isolation_perseed.py). review_experiments reads the
+review-round arms (run_review_experiments.sh, then its own replay stage) and, for the plan's control, the clean
+run logs of output-boba-confirm4p-* and output-boba-confirmatory. sitting_sequential reads
 the per-run tables of end_of_study_ksweep_seq, end_of_study_kwide_seq and
 end_of_study_ksweep_seqrank (over 5 MB each, untracked). tie_break reads the
 per-run table of ``python scripts/checks/tie_break.py scan --workers 6``
@@ -54,13 +59,23 @@ CHECKS = [
     # oracle_achievable, which reads oracle_sigmaf_seeds' per-seed oracles.
     "c6_ratio", "aug_contrast_per_dataset", "oracle_companion_estimators", "matched_optz",
     "oracle_sigmaf_seeds", "oracle_achievable", "oracle_families",
+    # The same analysis on the arms rerun with each seed's grid scaled to its own oracle; it first reproduces the
+    # published files byte for byte (about ten minutes, needs output-oracle-iso*-perseed).
+    "oracle_perseed",
     "anchor_propagation",
     # The final sitting and the budget rule (Sec. 7, App. E): sitting_vs_shiprule
     # collates the sitting outputs and the untouched-seed test.
     "fresh_seed_replication", "sitting_sequential", "sitting_vs_shiprule", "budget_split_by_onset",
+    # Order effects within the sitting, and raters who remember a re-rated design's earlier rating (score
+    # stages; their replay stages need the run logs).
+    "sitting_order_effects", "rerating_memory",
     # The known-variance ship rules (score stage; reads the git-ignored refit cache under
     # review/known_variance_ship/per_run), the gated sittings, and the decision map, which reads both.
-    "known_variance_ship", "gated_sitting", "decision_map",
+    "known_variance_ship", "retest_memory", "gated_sitting", "decision_map", "lucb_shortfall_by_cell",
+    # The headline numbers under t and landscape x seed intervals, and the selection share against opt_z
+    # (both from tracked tables; the review round of 2026-11-07), and that round's three experiments (E1-E3,
+    # scored as configs/review_round_plan.json fixes; needs the review-round arms of run_review_experiments.sh).
+    "headline_intervals", "selection_share_optz", "acq_ranking_shiprule", "review_experiments",
     # Sec. 6 and the appendices; winners_curse reports from its git-ignored scan parquet.
     "floor_deployed", "ceiling_clean_runs", "friedman_multiplicity", "instrument_scale", "mo_onset_bound",
     "extra_reach", "winners_curse",
@@ -71,12 +86,18 @@ CHECKS = [
     # runs with reruns under newer releases; needs output-version-check/, which
     # `version_sensitivity.py run` writes from a separate environment.
     "version_sensitivity",
-    # Last: it re-scores deployed numbers from every arm with ties.
-    "tie_break",
+    # Last: it re-scores deployed numbers from every arm with ties, and the rank rule's family-wise test with
+    # random ties at the cap reads its scan.
+    "tie_break", "rank_rule_random_ties",
 ]
 ARGS = {"ehmi_sigmaf": ["datasets.json"], "nugget_threshold": ["datasets.json"], "tie_break": ["rescore"],
         "version_sensitivity": ["compare", "--out-dir", "output-version-check"],
-        "known_variance_ship": ["--stage", "score"], "gated_sitting": ["score"], "winners_curse": ["report"]}
+        "known_variance_ship": ["--stage", "score"], "retest_memory": ["--stage", "score"], "gated_sitting": ["score"],
+        "sitting_order_effects": ["score"], "rerating_memory": ["score"], "review_experiments": ["score"],
+        "winners_curse": ["report"]}
+# Checks that write their own register file and print more than it holds (progress lines, the run time); the
+# runner must not overwrite that file with their standard output.
+SELF_WRITTEN = {"known_variance_ship", "oracle_perseed"}
 
 
 def main(argv=None) -> None:
@@ -96,7 +117,8 @@ def main(argv=None) -> None:
         cmd = [sys.executable, str(REPO / "scripts" / "checks" / f"{name}.py")] + ARGS.get(name, [])
         r = subprocess.run(cmd, cwd=REPO, capture_output=True, text=True, encoding="utf-8", env=env)
         if r.returncode == 0:
-            (out / f"{name}.txt").write_text(r.stdout, encoding="utf-8")
+            if name not in SELF_WRITTEN:
+                (out / f"{name}.txt").write_text(r.stdout, encoding="utf-8")
             status = "ok"
         else:
             # A failed check leaves its last good register file in place.

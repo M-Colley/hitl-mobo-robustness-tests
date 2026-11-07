@@ -825,3 +825,169 @@ Final implementation-suite result: **1,334 passed, 11 skipped, zero failures**
 The skipped tests require absent historical logs/metadata or OpenBO selector
 integration. Fatal Python lint, PowerShell parsing and static paper checks
 passed. Published study outputs were not overwritten.
+
+## 13. The 2026-11-05 round: open items of the Limitations
+
+Every analysis below was built after the procedures it tests and lies outside
+the paper's Holm families; each adjusted p it prints names its own family. In
+run order.
+
+The rank rule's family-wise test with tied ratings at the cap broken at random
+(app:heldout, Limitations). Needs `tie_break.py scan` (Section 6):
+
+```
+python scripts/checks/rank_rule_random_ties.py > output-boba/analysis/review/register_checks/rank_rule_random_ties.txt
+    # control: the first-index tests reproduce heldout_remedies.py section 4b exactly; then the gross-fault and
+    # capped-scale arms' ordinal_lcb1 tests on seeds 12-16 with the standard process's regret replaced by the
+    # exact expectation over a uniformly random tied design, Holm over the core family with the two main-sweep
+    # rank tests replaced. run_checks.py runs it last.
+```
+
+Test-retest pairs whose second rating remembers the first (app:knownvar, Section 7, Limitations):
+
+```
+python scripts/checks/retest_memory.py --workers 8
+    # refits the three-pair level of known_variance_ship.py with the estimate scaled by (1 - rho_m), rho_m in
+    # 0, 0.5, 0.75, 0.9; LogEI and qNEI, four processes, seeds 7-16 (12,800 noisy runs; the control rho_m = 0
+    # reproduces known_variance_ship_per_run.csv's retest3 regrets in every run). Needs the run logs; caches the
+    # refits in review/retest_memory/per_run/ (git-ignored). Writes review/retest_memory_per_run.csv.gz,
+    # review/retest_memory_cells.csv and register_checks/retest_memory.txt
+python scripts/checks/retest_memory.py --stage score
+    # the same outputs from the tracked per-run table only
+```
+
+The best-arm sitting's shortfall per cell (app:remedies):
+
+```
+python scripts/checks/lucb_shortfall_by_cell.py > output-boba/analysis/review/register_checks/lucb_shortfall_by_cell.txt
+    # from hitl_remedies_per_run.csv.gz: the LUCB sitting of eight less one look each, per magnitude and onset
+```
+
+Order effects between the designs of the final sitting (app:endofstudy, Limitations):
+
+```
+python scripts/checks/sitting_order_effects.py replay --workers 2
+    # anchoring, contrast and fatigue at assumed sizes, the candidates in rank and in random order, for the
+    # sitting of two at 1 sigma from the first rating and of sixteen at 5 sigma from trial 21 (main sweep,
+    # LogEI and qNEI, four processes, seeds 7-16). Needs the run logs; checks every run's published sitting
+    # against replay_end_of_study.tournament. Writes review/sitting_order_effects_inputs.csv.gz
+python scripts/checks/sitting_order_effects.py score > output-boba/analysis/review/register_checks/sitting_order_effects.txt
+    # checks every run against the published per-run tables bit for bit, then writes
+    # review/sitting_order_effects{,_by_process}.csv and review/sitting_order_effects_per_run.csv.gz
+```
+
+The held-out stage of the finite-candidate feedback benchmark, with the
+selection frozen before any held-out run (`docs/FEEDBACK_HELDOUT_2026-11-05.md`;
+not in the paper):
+
+```
+python scripts/human_feedback_benchmark.py --config configs/feedback_screen.json --output-dir output-feedback-screen --workers 16 --run
+python scripts/feedback_select.py freeze --screen output-feedback-screen --out configs/feedback_frozen_selection.json
+    # 2026-11-05T19:31Z; records the sha256 of every screen output it read and of itself. single = the one
+    # (method, ship rule) with the largest V over the 48 cells; map = per cell the largest screen gain, or the
+    # reference. The file's own sha256 was recorded before the held-out run and checked before scoring
+python scripts/human_feedback_benchmark.py --config configs/feedback_heldout.json --output-dir output-feedback-heldout --workers 14 --run
+python scripts/feedback_select.py score --heldout output-feedback-heldout --selection configs/feedback_frozen_selection.json
+    # output-feedback-heldout/analysis/frozen_selection_scores.{csv,txt}: landscape bootstrap (2,000), Wilcoxon
+    # over the 20 landscapes, Holm over the cells where each policy acts
+```
+
+The clip a study can run: each rating after the initial design clipped to two
+robust SDs (1.4826 MAD) beyond the range of the ratings recorded so far, the
+margin fixed before any run (`--response-clip running2`). It acts on the clean
+twin as well, so every setting has its own directory and is scored against the
+standard process; a clean twin's resume fingerprint holds the error settings,
+so two spike sizes cannot share one directory:
+
+```
+bash run_boba_cliprun.sh 8
+    # output-boba-cliprun2-sp{0.05-5,0.15-5,0.05-20} (seeds 7-11), output-boba-cliprun2-sp0.15-20 (seeds 7-16)
+    # and output-boba-cliprun2-gaussian (gaussian 1 sigma from the first rating, seeds 7-16); LogEI and qNEI,
+    # 0.25 sigma from the first rating for the spikes; evaluate_research_question.py per landscape
+python scripts/analyse_boba_adaptations.py --arms cliprun-sp0.05-5,cliprun-sp0.15-5,cliprun-sp0.05-20,cliprun-sp0.15-20,cliprun-sp0.15-20-heldout,cliprun-gaussian --no-extra-trials
+    # adds the cliprun-* rows to adaptations_recovery.csv and adaptations_per_dataset.csv (against
+    # output-boba-spike at the same spike size, or the main sweep for cliprun-gaussian): tab:budgetneutral,
+    # tab:remedies, app:budgetneutral. Every earlier row is unchanged bit for bit (the merge re-reads with
+    # float_precision="round_trip") except pooled_wilcoxon_p_fdr, whose BH family gains the new arms
+python scripts/checks/tie_break.py scan --workers 4 --arms output-boba-cliprun2-sp0.05-5 output-boba-cliprun2-sp0.15-5 output-boba-cliprun2-sp0.05-20 output-boba-cliprun2-sp0.15-20 output-boba-cliprun2-gaussian
+    # merges the five directories into review/tie_break/tie_runs.parquet: no noisy run of the running clip has a
+    # tied top rating, and no clean twin's tie matters, so its numbers need no second tie rule
+```
+
+The oracle-isolation arms rerun with each run seed's error grid scaled to that
+seed's own oracle (Section 4, app:fitted, Limitations). Never edit
+`bo_sensor_error_simulation.py` while `run` is in progress:
+
+```
+python scripts/run_oracle_isolation_perseed.py manifest
+    # manifest_seeds.csv per family from output-oracle-iso/oracle_sigmaf_seeds.csv; seed 7 must reproduce the
+    # published grid exactly
+python scripts/run_oracle_isolation_perseed.py check-clean
+    # one clean twin per family (and per tree oracle model) rerun and compared exactly: <arm>/clean_identity.json
+python scripts/run_oracle_isolation_perseed.py copy-clean
+    # the published clean twins of seeds 7-11 copied into the new arms, with their sha256 in <arm>/clean_copies.csv
+python scripts/run_oracle_isolation_perseed.py run --n-jobs 6
+    # 300 (family, landscape, seed) invocations into output-oracle-iso{,-gaussian_process,-mlp}-perseed/runs
+    # (5,400 noisy runs; seed 7's noisy runs equal the published configuration), then evaluation per dataset
+python scripts/checks/oracle_perseed.py
+    # control: the published pipeline reproduces its own files byte for byte; then the per-seed arms' floor-gap
+    # and achievable-improvement files in their own directories, register_checks/oracle_perseed.txt and
+    # review/oracle_perseed_comparison.csv (both calibrations side by side under the four normalisers)
+```
+
+## 14. The 2026-11-07 review round: three mock reviews and three experiments
+
+Three mock TMLR reviews (methodology, Bayesian optimization, human-in-the-loop) read
+a frozen copy of the paper. Their requests that need data are E1-E3 below; the rest
+is writing and analysis of existing outputs. Everything here is post hoc with
+respect to the paper's procedures. The analysis of E1-E3 was fixed in
+`configs/review_round_plan.json` before any of their runs; its sha256
+(75ccf817d949cc702ff2716049354511c126b7e348e590d0b86e043efbbe7cd2) is written into
+`scripts/checks/review_experiments.py`, which refuses to score if the file changed.
+
+```
+python scripts/checks/headline_intervals.py
+    # 24 headline quantities (deployed loss, selection shares, LCB1, LCB2, sittings of 2 and 16 and their
+    # increments, cautious rule, rank refit, prices) under the paper's percentile landscape bootstrap, a t
+    # interval (19 df, delta method) and a two-way landscape x seed bootstrap, plus a seed-effect permutation
+    # test; every estimate reproduces its producer. Writes review/headline_intervals.csv and
+    # register_checks/headline_intervals.txt (app:estimands, Section 3.4)
+python scripts/checks/rerating_memory.py replay --workers 2
+    # needs the git-ignored output-boba run logs (about 45 minutes): the sitting of 2 (1 sigma, trial 1) and of 16
+    # (5 sigma, trial 21) and the four confirmation trials, with a look's error carrying rho_m of the design's
+    # earlier rating error; writes review/rerating_memory_{sitting,confirm}_inputs.csv.gz
+python scripts/checks/rerating_memory.py score
+    # rho_m = 0 reproduces every published run bit for bit; review/rerating_memory_*.csv and
+    # register_checks/rerating_memory.txt (Section 7, app:endofstudy, Limitations, tab:evidence)
+python scripts/checks/acq_ranking_shiprule.py > output-boba/analysis/review/register_checks/acq_ranking_shiprule.txt
+    # the ten acquisitions ranked on the deployed design's cost of error under the best observed rating (reproduces
+    # tab:acq), the posterior-mean maximiser and LCB2: Spearman with the trajectory ranking 0.59, 0.83 and 0.79;
+    # Greedy falls to seventh (Section 6)
+python scripts/checks/selection_share_optz.py > output-boba/analysis/review/register_checks/selection_share_optz.txt
+    # Spearman over the twenty landscapes, 1 sigma from the first rating: opt_z against the selection share
+    # -0.82 (p 8e-6), against the deployed loss -0.01 (Section 5, Contributions)
+python scripts/make_boba_paper_tables.py --analysis output-boba/analysis
+    # tab:acq gains the noisy run's absolute deployed regret (the floors 52.6% against 32-36%); the excess
+    # column is reproduced from the per-landscape evaluations or the table is refused; no other table changes
+bash run_review_experiments.sh 16
+    # E1 output-boba-confirm4p-{1s-t1,5s-t21}: seeds 27-36, bias, drift, ar1 (gaussian is output-boba-confirmatory's)
+    # E2 output-boba-driftdown-{1s-t1,5s-t21}: seeds 7-16, drift_down, paired with the main sweep's drift
+    # E3 output-boba-gplegacy-{1s-t1,5s-t21}: seeds 7-16, four processes, --gp-prior legacy
+    # LogEI and qNEI, T = 50, the two headline cells, one directory per cell; evaluate_research_question.py per
+    # landscape and ARM_COMPLETE per directory
+python scripts/checks/review_experiments.py verify-plan
+python scripts/checks/review_experiments.py replay --workers 4
+    # rescore_ship_rules.py on all six directories (E3 refits with the legacy prior); replay_end_of_study.py
+    # (sitting of 2 in the 1-sigma cell, 16 in the 5-sigma trial-21 cell, rho 1, shared sitting) on E1 and E2
+    # into <dir>/analysis/end_of_study_review
+python scripts/checks/review_experiments.py score > output-boba/analysis/review/register_checks/review_experiments.txt
+    # review/review_experiments_{e1,e2,e3}.csv: E1's family H1-H4 with Holm, every quantity per process,
+    # three interval methods; E2 and E3 as paired contrasts with the main sweep. E1: all four tests positive
+    # (LCB2 7.4% at 1 sigma, Holm 0.019; sitting of 16 41.5% at 5 sigma trial 21). E2: reversed drift costs
+    # 0.304 against 0.267 at 1 sigma (selection) and 0.493 against 0.637 at 5 sigma trial 21; the sitting's lead
+    # over LCB2 falls to +0.020. E3 (legacy GP): cost +0.036 at 1 sigma (LogEI's search loss), -0.134 at 5 sigma
+    # trial 21 (selection loss); LCB2 2.7% [-9, 12] against 8.1% [1, 15]. E3's per-acquisition and per-process
+    # rows are beyond the plan (point estimates). Abstract, Claims, Contributions, tab:evidence, Section 7,
+    # Section 5, Limitations, Discussion, sec:robustness (B.1), sec:noisediag, app:endofstudy
+    # (run_checks.py runs this score stage as the check review_experiments)
+```

@@ -25,6 +25,7 @@ import re
 import sys
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -349,15 +350,46 @@ def _floor_deployed_excess(analysis: Path, stats_path: Path | None = None) -> fl
     return float((cells["inference_excess"] / cells["dataset"].map(opt_z)).mean())
 
 
+def _deployed_absolute(analysis: Path, stats_path: Path | None = None) -> pd.Series:
+    """The noisy run's ABSOLUTE deployed regret at the final trial, as a fraction of opt_z, per acquisition and
+    for the model-free floors ("floor"), averaged as the excess column is: seeds within a cell, then cells.
+
+    The excess column alone flatters the floors (a mock review, 2026-11-07): their search excess is zero by
+    construction, so their deployed excess is selection loss alone, while their clean run already ships a poor
+    design. Read from the per-landscape evaluations the cell means were built from; the excess formed the same
+    way must reproduce cell_means.csv's, or the table is refused.
+    """
+    files = sorted(analysis.parent.glob("*/evaluation/paired_excess_metrics.csv"))
+    if not files:
+        raise FileNotFoundError(f"no per-landscape evaluations under {analysis.parent}")
+    cols = ["dataset", "acquisition", "error_model", "jitter_std", "jitter_iteration", "seed",
+            "final_inference_simple_regret_true_jitter", "final_inference_simple_regret_excess_true"]
+    runs = pd.concat([pd.read_csv(f, usecols=cols) for f in files], ignore_index=True)
+    stats = bb.load_stats(stats_path or bb.DEFAULT_STATS_PATH)
+    opt_z = runs["dataset"].map({k: float(v["opt_z"]) for k, v in stats.items() if "opt_z" in v})
+    runs = runs.assign(absolute=runs["final_inference_simple_regret_true_jitter"] / opt_z,
+                       excess=runs["final_inference_simple_regret_excess_true"])
+    keys = ["error_model", "jitter_std", "jitter_iteration", "dataset", "acquisition"]
+    cells = runs.groupby(keys, as_index=False)[["absolute", "excess"]].mean()
+    reference = pd.read_csv(analysis / "cell_means.csv")
+    check = cells.merge(reference[keys + ["inference_excess"]], on=keys, validate="one_to_one")
+    if len(check) != len(reference) or not np.allclose(check["excess"], check["inference_excess"], rtol=0, atol=1e-9):
+        raise ValueError("the per-run evaluations do not reproduce cell_means.csv's deployed excess")
+    cells["acquisition"] = cells["acquisition"].where(~cells["acquisition"].isin(["random", "sobol"]), "floor")
+    return cells.groupby("acquisition")["absolute"].mean()
+
+
 def table_acquisitions(analysis: Path, out: Path) -> None:
     overall = pd.read_csv(analysis / "overall_acquisition_rankings.csv")
     floor = pd.read_csv(analysis / "floor_reference.csv")
     dep = _deployed_ranks(analysis)
+    absolute = _deployed_absolute(analysis)
     rows = [
         f"{PRETTY_ACQ.get(r['acquisition'], r['acquisition'])} & {r['mean_rank']:.2f} & "
         f"{r['mean_fragility'] * 100:.2f}\\% & {r['mean_absolute_loss'] * 100:.1f}\\% & "
         f"{dep.loc[r['acquisition'], 'deployed_rank']:.2f} & "
-        f"{dep.loc[r['acquisition'], 'deployed'] * 100:.1f}\\% \\\\"
+        f"{dep.loc[r['acquisition'], 'deployed'] * 100:.1f}\\% & "
+        f"{absolute.loc[r['acquisition']] * 100:.1f}\\% \\\\"
         for _, r in overall.iterrows()
     ]
     rows.append(r"\midrule")
@@ -374,13 +406,13 @@ def table_acquisitions(analysis: Path, out: Path) -> None:
     rows.append(
         f"model-free floor & -- & {worst * 100:.2f}\\% & "
         f"{floor['mean_absolute_loss'].mean() * 100:.1f}\\% & -- & "
-        f"{_floor_deployed_excess(analysis) * 100:.1f}\\% \\\\"
+        f"{_floor_deployed_excess(analysis) * 100:.1f}\\% & {absolute.loc['floor'] * 100:.1f}\\% \\\\"
     )
-    write(out / "acquisitions.tex", f"""\\begin{{tabular}}{{lrrrrr}}
+    write(out / "acquisitions.tex", f"""\\begin{{tabular}}{{lrrrrrr}}
 \\toprule
- & \\multicolumn{{3}}{{c}}{{search loss, trajectory}} & \\multicolumn{{2}}{{c}}{{deployed design}} \\\\
-\\cmidrule(lr){{2-4}} \\cmidrule(lr){{5-6}}
-acquisition & mean rank & excess & absolute & mean rank & excess \\\\
+ & \\multicolumn{{3}}{{c}}{{search loss, trajectory}} & \\multicolumn{{3}}{{c}}{{deployed design, final trial}} \\\\
+\\cmidrule(lr){{2-4}} \\cmidrule(lr){{5-7}}
+acquisition & mean rank & excess & absolute & mean rank & excess & absolute \\\\
 \\midrule
 {chr(10).join(rows)}
 \\bottomrule

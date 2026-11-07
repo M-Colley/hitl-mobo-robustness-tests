@@ -61,11 +61,12 @@ BOOTSTRAP_SEED = 20260912
 GRID = (0.05, 0.25, 1.0, 5.0)
 
 STEM = re.compile(r"^bo_sensor_error_(?P<dataset>.+)_(?P<objective>[a-z]+)_(?P<acq>[a-z]+)_seed(?P<seed>\d+)$")
-# The two missing-rating labels carry an underscore, which [a-z0-9]+ would split
-# into oracle "exact_missing" and model "mcar"; they are named first. No other
-# label is affected, so existing directories parse exactly as before.
+# The two missing-rating labels and drift_down (2026-11-07) carry an underscore,
+# which [a-z0-9]+ would split into oracle "exact_missing" and model "mcar" (or
+# "exact_drift" and "down"); they are named first. No other label is affected,
+# so existing directories parse exactly as before.
 JITTERED = re.compile(
-    r"^(?P<oracle>[a-z_]+?)_(?P<model>missing_mcar|missing_low|[a-z0-9]+)_jit(?P<onset>\d+)_std(?P<std>[0-9.]+)(?P<suffix>.*)$"
+    r"^(?P<oracle>[a-z_]+?)_(?P<model>missing_mcar|missing_low|drift_down|[a-z0-9]+)_jit(?P<onset>\d+)_std(?P<std>[0-9.]+)(?P<suffix>.*)$"
 )
 
 

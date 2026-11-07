@@ -224,20 +224,28 @@ def _range(x: pd.Series) -> str:
     return f"median {x.median():.3f}, range [{x.min():.3f}, {x.max():.3f}]"
 
 
-def main() -> None:
+def main(roots: dict[str, Path] | None = None, out_roots: dict[str, Path] | None = None) -> None:
+    """``roots`` maps each family label of ROOTS to its arm (manifest.csv, runs/;
+    default ROOTS); ``out_roots`` to the directory that holds the arm's floor-gap
+    per-landscape files and receives the files written here (default: the arm).
+    scripts/checks/oracle_perseed.py passes the per-seed arms, and the published
+    arms with a scratch ``out_roots`` for its control."""
+    roots = ROOTS if roots is None else roots
+    out_roots = roots if out_roots is None else out_roots
     table = pd.read_csv(REPO / "output-oracle-iso" / "oracle_sigmaf_seeds.csv")
     if "mean_f" not in table:
         raise SystemExit("oracle_sigmaf_seeds.csv has no mean_f; rerun scripts/checks/oracle_sigmaf_seeds.py")
     stats = bb.load_stats()
     opt_z = pd.Series({k: float(v["opt_z"]) for k, v in stats.items()})
-    names = sorted(pd.read_csv(ROOTS["tree"] / "manifest.csv").landscape)
+    names = sorted(pd.read_csv(roots["tree"] / "manifest.csv").landscape)
     exact_bc = pd.Series({n: exact_best_clean(iso.exact_runs(n, REPO / "output-boba"), opt_z[n]) for n in names})
     print("Share of the achievable improvement: fitted mean_s(excess_s) / mean_s(y_opt_s - mean_f,s) "
           "against exact excess / opt_z.")
     q = exact_bc / opt_z.reindex(exact_bc.index)
     print(f"\n== exact arm: best clean value over opt_z (mean over seeds 7-11, the six acquisitions): {_range(q)}; "
           f"below 0.9 on {', '.join(f'{k} {v:.3f}' for k, v in q[q < 0.9].sort_values().items())}")
-    for family, root in ROOTS.items():
+    for family, root in roots.items():
+        out = out_roots[family]
         A = achievable(root, family, table, opt_z, exact_bc)
         print(f"\n== {family}: achievable improvement of the fitted oracle (oracle units), mean over seeds: "
               f"median {A.achievable_fitted.median():.2f}, range [{A.achievable_fitted.min():.2f}, "
@@ -255,14 +263,14 @@ def main() -> None:
               f"{_range(A.achievable_fitted / A.achievable_fitted_sigma_f_seed7)}; best-clean A over sigma_f * opt_z "
               f"{_range(A.achievable_fitted_best_clean / A.achievable_fitted_sigma_f)}")
         for suffix, label in METRICS:
-            fg = pd.read_csv(root / f"oracle_isolation_per_landscape{suffix}.csv")
+            fg = pd.read_csv(out / f"oracle_isolation_per_landscape{suffix}.csv")
             per = per_landscape(fg, A, opt_z)
-            per.to_csv(root / f"oracle_isolation_per_landscape{UNIT}{suffix}.csv", index=False)
+            per.to_csv(out / f"oracle_isolation_per_landscape{UNIT}{suffix}.csv", index=False)
             jobs = [(how, f"frac_fitted{osuffix}", "frac_exact", osuffix) for how, osuffix in ESTIMATORS.items()]
             jobs += [(how, fit, ex, f"_{how}") for how, (fit, ex) in PAIRED.items()]
             for how, fit, ex, osuffix in jobs:
                 summary = iso.summarise(per, fit, ex)
-                summary.to_csv(root / f"oracle_isolation_summary{UNIT}{suffix}{osuffix}.csv", index=False)
+                summary.to_csv(out / f"oracle_isolation_summary{UNIT}{suffix}{osuffix}.csv", index=False)
                 cells = "; ".join(
                     f"{r.sigma_multiple:g}s {r.ratio_fitted_over_exact:.3f} [{r.ratio_lo:.3f}, {r.ratio_hi:.3f}] "
                     f"median {r.median_ratio:.3f} lower {int(r.n_lower)}/{int(r.n_landscapes)} p {r.wilcoxon_p:.2g}"

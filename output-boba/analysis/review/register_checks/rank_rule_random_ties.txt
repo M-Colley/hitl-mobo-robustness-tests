@@ -1,0 +1,9 @@
+The rank refit (ordinal_lcb1) on the held-out seeds 12-16 of the gross-fault and capped-scale arms, with the
+standard process shipping the earliest tied design (first) or a uniformly random one (uniform, the exact
+expectation); two-sided Wilcoxon over the twenty landscapes (heldout_remedies' test); Holm over section 4's
+core family with its two main-sweep rank-rule tests replaced by the two arms' tests (27 tests).
+  first   output-boba-spike    recovers 48.8% [35, 63] of the cost, gains on 19/20 landscapes, Wilcoxon p 5.7e-06, Holm p 0.00014
+  first   output-boba-ceiling  recovers 37.9% [31, 45] of the cost, gains on 20/20 landscapes, Wilcoxon p 1.9e-06, Holm p 5.1e-05
+  uniform output-boba-spike    recovers 48.8% [35, 63] of the cost, gains on 19/20 landscapes, Wilcoxon p 5.7e-06, Holm p 0.00014
+  uniform output-boba-ceiling  recovers 21.3% [16, 27] of the cost, gains on 19/20 landscapes, Wilcoxon p 3.8e-06, Holm p 9.5e-05
+control: the first-index rows reproduce heldout_remedies.csv section 4b (p, Holm p, recovery) to 1e-12

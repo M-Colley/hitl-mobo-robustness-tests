@@ -1,0 +1,57 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+       dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_rosenbrock composite gaussian_process    gaussian                 0    0.253558        5               6           random  friedman  13.705882 0.017590        0.070359               NaN          True    0.548235
+iso_rosenbrock composite gaussian_process    gaussian                 0    1.014231        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+iso_rosenbrock composite gaussian_process    gaussian                 0    1.014232        3               6           random  friedman  14.019608 0.015485        0.070359               NaN          True    0.934641
+iso_rosenbrock composite gaussian_process    gaussian                 0    1.014233        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+iso_rosenbrock composite gaussian_process    gaussian                 0    5.071153        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+iso_rosenbrock composite gaussian_process    gaussian                 0    5.071159        2               6           random  friedman   7.941176 0.159507        0.415880               NaN          True    0.794118
+iso_rosenbrock composite gaussian_process    gaussian                 0    5.071160        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+iso_rosenbrock composite gaussian_process    gaussian                 0    5.071163        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_rosenbrock / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.115000            3.504167                            0.000000                           23.883575               8           8
+      sobol              0.115000            3.220833                            0.000000                           24.578845               8           8
+       qnei              0.593333            2.875000                            0.251750                           22.527888               0           8
+        ucb              0.595000            3.491667                            0.240140                           24.013256               0           8
+         ei              0.692500            3.143750                            0.275555                           23.498019               0           8
+

@@ -1,0 +1,64 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=1
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+    dataset objective      oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_stevens composite gradient_boosting    gaussian                 0    0.262155        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    0.263039        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    0.269654        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    0.272048        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    0.275049        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    1.048620        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    1.052157        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    1.078614        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    1.088191        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    1.100197        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    5.243102        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    5.260786        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    5.393070        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    5.440953        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_stevens composite gradient_boosting    gaussian                 0    5.500983        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_stevens / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+      logei              0.266667            2.100000                           -0.037888                           68.969750               7          15
+     random              0.353333            5.266667                            0.000000                          108.937750               5          15
+      sobol              0.353333            4.600000                            0.000000                          107.334238               5          15
+         ei              0.533333            3.200000                            0.171329                           79.718155               2          15
+       qnei              0.640000            2.466667                            0.327130                           74.034701               1          15
+

@@ -1,0 +1,7 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,ar1,20,5.0,,logei,10,2,1.5,0.5,1.6,0.0,0.0,0.0,25.75301702402847,-3.4714876026724184,True
+hicks_law,value,exact,ar1,20,5.0,,qnei,10,2,1.5,0.5,1.4,0.0,0.0,0.0,25.715945016412576,0.6023394968020158,True
+hicks_law,value,exact,bias,20,5.0,bias5,logei,10,2,1.5,0.5,1.6,0.0,0.0,0.0,25.75301702402847,-6.197478092213302,True
+hicks_law,value,exact,bias,20,5.0,bias5,qnei,10,2,1.5,0.5,1.4,0.0,0.0,0.0,25.715945016412576,-2.060870537236646,True
+hicks_law,value,exact,drift,20,5.0,,logei,10,2,1.5,0.5,1.6,0.0,0.0,0.0,25.75301702402847,-3.5894961994334538,True
+hicks_law,value,exact,drift,20,5.0,,qnei,10,2,1.5,0.5,1.4,0.0,0.0,0.0,25.715945016412576,0.7231223084137822,True

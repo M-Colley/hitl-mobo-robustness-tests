@@ -1,0 +1,63 @@
+{
+  "frozen": "2026-11-07, before any run of E1, E2 or E3; its sha256 is recorded before the runs start and checked before scoring. Never edit this file.",
+  "context": "Three mock TMLR reviews (2026-11-07) asked for (E1) an untouched test of the end-of-study claims under all four error processes, (E2) a drift of the other sign, and (E3) a second standard GP surrogate. All three are post hoc with respect to the paper's procedures and lie outside the paper's Holm families; E1's family is declared here.",
+  "common": {
+    "simulator": "scripts/bo_synthetic_error_simulation.py",
+    "landscapes": "all twenty of the main sweep",
+    "acquisitions": ["logei", "qnei"],
+    "iterations": 50,
+    "initial_samples": 5,
+    "cells": {"A": {"jitter_std": 1.0, "onset_index": 0, "label": "1 sigma from the first rating"},
+              "B": {"jitter_std": 5.0, "onset_index": 20, "label": "5 sigma from trial 21"}},
+    "estimand": "deployed design at the final trial, regret as a fraction of opt_z; gain = standard process (best observed rating) noisy regret less the procedure's noisy regret; price = procedure's clean-twin regret less the standard process's clean-twin regret; cost = standard noisy less standard clean; shares are ratios of landscape means (analyse_boba_adaptations' estimand)",
+    "intervals": {"primary": "95% percentile landscape bootstrap, 2,000 resamples, as in the paper",
+                  "also_reported": ["t interval over the 20 landscape means", "two-way landscape x seed bootstrap (landscapes and seeds resampled independently)"]},
+    "test": "two-sided Wilcoxon signed-rank over the 20 landscape means"
+  },
+  "E1": {
+    "question": "Do the paper's end-of-study results hold on seeds no analysis has used to choose or score them, under all four error processes?",
+    "runs": {"seeds": [27, 28, 29, 30, 31, 32, 33, 34, 35, 36], "error_models": ["bias", "drift", "ar1"],
+             "directories": {"A": "output-boba-confirm4p-1s-t1", "B": "output-boba-confirm4p-5s-t21"},
+             "gaussian": "taken from output-boba-confirmatory (the same seeds, already run), so the four processes pool"},
+    "procedures": {
+      "standard": "best observed rating at the final trial",
+      "LCB1": "visited design with the highest posterior mean less one latent SD after all 50 trials (rescore_ship_rules)",
+      "LCB2": "the same less two latent SDs; the rule seeds 7-11 chose in both cells",
+      "sitting2": "the last 2 of 50 trials re-rate the top 2 visited designs by LCB1 once each, ship the best-rated (replay_end_of_study, rho 1, shared sitting model); cell A",
+      "sitting16": "the same with 16 designs; cell B"
+    },
+    "primary_family": {
+      "H1": "LCB2's gain over the standard process in cell A, four processes pooled, is positive",
+      "H2": "sitting16's gain over the standard process in cell B, four processes pooled, is positive",
+      "H3": "sitting16's gain over LCB1 in cell B, four processes pooled, is positive",
+      "H4": "sitting16's gain over LCB2 in cell B, four processes pooled, is positive",
+      "correction": "Holm over H1-H4 (this family only)",
+      "expected": "all four positive, from the held-out seeds 12-16: H1 about +0.02 to +0.03, H2 about +0.2, H3 about +0.25, H4 about +0.2"
+    },
+    "secondary_descriptive": ["LCB1's gain in cell A", "sitting2's gain in cell A and its increments over LCB1 and LCB2",
+                              "every quantity per error process", "prices on the clean twins",
+                              "control: the new directories' clean twins equal output-boba-confirmatory's, run for run"]
+  },
+  "E2": {
+    "question": "Does the direction of the drift change the cost of error, the selection share or what the end-of-study procedures recover?",
+    "runs": {"seeds": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "error_models": ["drift_down"],
+             "directories": {"A": "output-boba-driftdown-1s-t1", "B": "output-boba-driftdown-5s-t21"},
+             "pairing": "drift_down shares drift's noise seed (sim.error_model_seed_index), so each run pairs with the main sweep's upward-drift run of the same landscape, acquisition, cell and seed and differs only in the ramp's sign"},
+    "reported": ["deployed cost of error and final search loss under each direction, and their difference (down less up)",
+                 "the selection share of the deployed cost under each direction",
+                 "the gains of LCB1, LCB2 and the sitting (2 in cell A, 16 in cell B) over the standard process under each direction"],
+    "inference": "descriptive sensitivity; landscape-bootstrap intervals and Wilcoxon p of the paired differences, no family-wise correction"
+  },
+  "E3": {
+    "question": "Do the cost of error, its split into search and selection, and the posterior ship rules depend on the GP surrogate?",
+    "runs": {"seeds": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16], "error_models": ["gaussian", "bias", "drift", "ar1"],
+             "gp_prior": "legacy: BoTorch's default before 0.12 (scaled Matern-5/2 ARD, Gamma(3, 6) lengthscale and Gamma(2, 0.15) outputscale priors, Gamma(1.1, 0.05) noise prior)",
+             "directories": {"A": "output-boba-gplegacy-1s-t1", "B": "output-boba-gplegacy-5s-t21"},
+             "pairing": "the same noise streams as the main sweep's runs of the same landscape, acquisition, cell, error model and seed; only the surrogate differs"},
+    "reported": ["deployed cost of error (against the arm's own clean twin) and the selection share, beside the default GP's on the same runs",
+                 "the clean twins' deployed regret under each surrogate",
+                 "the gains of LCB1, LCB2 and the posterior-mean rule over the standard process within the arm, refitted with the arm's own surrogate, beside the default GP's"],
+    "not_done": "the sittings are not replayed under the legacy prior (replay_end_of_study refits only the default GP)",
+    "inference": "descriptive sensitivity; landscape-bootstrap intervals and Wilcoxon p, no family-wise correction"
+  }
+}

@@ -1,0 +1,12 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_moving_peaks,composite,gaussian_process,gaussian,0,0.254375,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,0.254376,,4,6,random,2.25,friedman,8.823529411764705,0.11631340569276405,0.4411764705882352,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,1.017501,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,1.017503,,2,6,random,2.0,friedman,5.29411764705882,0.3810497939610337,0.529411764705882,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,1.017504,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,1.017505,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,5.087506,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,5.087513,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,5.087516,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,5.087519,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_moving_peaks,composite,gaussian_process,gaussian,0,5.087527,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

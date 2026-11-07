@@ -1,0 +1,4 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+levy_10,value,exact,ar1,0,1.0,,10,2,logei,1.5,wilcoxon,23.0,0.6953125,,0.001953125,False,0.6953125,False
+levy_10,value,exact,bias,0,1.0,bias1,10,2,qnei,1.4,wilcoxon,15.0,0.232421875,,0.001953125,False,0.3486328125,False
+levy_10,value,exact,drift,0,1.0,,10,2,qnei,1.2,wilcoxon,14.0,0.193359375,,0.001953125,False,0.3486328125,False

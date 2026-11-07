@@ -1,0 +1,39 @@
+The best-arm sitting's shortfall against one look each (LUCB regret - one-look regret, per run / opt_z;
+landscape means, then over landscapes; positive = the best-arm sitting ships worse); main sweep, LogEI and qNEI,
+four processes, seeds 7-16
+-- k = 8, rho = 1: pooled +0.0141; share of the summed cell shortfall at 5 sigma from trial 21 0.80
+   0.05 sigma from trial 1   +0.0067
+   0.05 sigma from trial 21  +0.0068
+   0.25 sigma from trial 1   +0.0021
+   0.25 sigma from trial 21  +0.0019
+   1 sigma from trial 1   -0.0066
+   1 sigma from trial 21  +0.0007
+   5 sigma from trial 1   +0.0111
+   5 sigma from trial 21  +0.0900
+-- k = 8, rho = 0.5: pooled +0.0204; share of the summed cell shortfall at 5 sigma from trial 21 0.60
+   0.05 sigma from trial 1   +0.0079
+   0.05 sigma from trial 21  +0.0078
+   0.25 sigma from trial 1   +0.0061
+   0.25 sigma from trial 21  +0.0066
+   1 sigma from trial 1   +0.0068
+   1 sigma from trial 21  +0.0124
+   5 sigma from trial 1   +0.0185
+   5 sigma from trial 21  +0.0972
+-- k = 4, rho = 1: pooled +0.0145; share of the summed cell shortfall at 5 sigma from trial 21 0.53
+   0.05 sigma from trial 1   +0.0062
+   0.05 sigma from trial 21  +0.0053
+   0.25 sigma from trial 1   +0.0032
+   0.25 sigma from trial 21  +0.0043
+   1 sigma from trial 1   -0.0021
+   1 sigma from trial 21  +0.0034
+   5 sigma from trial 1   +0.0348
+   5 sigma from trial 21  +0.0611
+-- k = 4, rho = 0.5: pooled +0.0174; share of the summed cell shortfall at 5 sigma from trial 21 0.49
+   0.05 sigma from trial 1   +0.0065
+   0.05 sigma from trial 21  +0.0062
+   0.25 sigma from trial 1   +0.0051
+   0.25 sigma from trial 21  +0.0068
+   1 sigma from trial 1   +0.0067
+   1 sigma from trial 21  +0.0076
+   5 sigma from trial 1   +0.0324
+   5 sigma from trial 21  +0.0683

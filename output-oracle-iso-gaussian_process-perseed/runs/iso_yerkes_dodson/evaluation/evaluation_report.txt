@@ -1,0 +1,53 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=4.5, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+          dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_yerkes_dodson composite gaussian_process    gaussian                 0    0.256715        5               6              ucb  friedman  12.058824 0.033991        0.067981               NaN          True    0.482353
+iso_yerkes_dodson composite gaussian_process    gaussian                 0    1.026861        5               6           random  friedman  10.882353 0.053763        0.071684               NaN          True    0.435294
+iso_yerkes_dodson composite gaussian_process    gaussian                 0    5.134304        4               6           random  friedman  14.558824 0.012424        0.049694               NaN          True    0.727941
+iso_yerkes_dodson composite gaussian_process    gaussian                 0    5.134306        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_yerkes_dodson / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random                0.2400             4.01250                            0.000000                           59.474514               3           4
+      sobol                0.2400             3.51250                            0.000000                           62.122163               3           4
+        ucb                0.4275             2.80000                            0.301659                           52.374254               1           4
+         ei                0.6400             3.18125                            0.564413                           54.682420               0           4
+       qnei                0.6975             3.63125                            0.646418                           60.429382               0           4
+

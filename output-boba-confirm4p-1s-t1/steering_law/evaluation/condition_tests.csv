@@ -1,0 +1,4 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+steering_law,value,exact,ar1,0,1.0,,10,2,logei,1.2,wilcoxon,13.0,0.16015625,,0.001953125,False,0.16015625,False
+steering_law,value,exact,bias,0,1.0,bias1,10,2,qnei,1.2,wilcoxon,6.0,0.02734375,,0.001953125,False,0.0732421875,False
+steering_law,value,exact,drift,0,1.0,,10,2,qnei,1.2,wilcoxon,8.0,0.048828125,,0.001953125,False,0.0732421875,False

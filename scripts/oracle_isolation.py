@@ -51,7 +51,11 @@ functions.
 
 The magnitudes and the fidelity figure (corr_oracle_truth) come from the seed-7
 oracle only (calibrate()); scripts/checks/oracle_sigmaf_seeds.py reports
-how far the other seeds' sigma_f are from it.
+how far the other seeds' sigma_f are from it. The per-seed reruns
+(output-oracle-iso*-perseed, scripts/run_oracle_isolation_perseed.py) scale each
+seed's grid to that seed's own oracle and carry manifest_seeds.csv, which
+_analyse_one reads in place of the seed-7 sigma_f (sigma_multiples);
+scripts/checks/oracle_perseed.py compares them with the published arms.
 
 If the fitted fraction is well below the exact fraction on the same landscape,
 the fitted design understates the cost. If the two agree, the threefold gap
@@ -380,18 +384,76 @@ def analyse(args) -> None:
         _analyse_one(response, suffix)
 
 
-def _analyse_one(response: str, suffix: str) -> None:
-    manifest = pd.read_csv(ROOT / "manifest.csv").set_index("landscape")
+# A per-seed calibration (scripts/run_oracle_isolation_perseed.py) scales each run
+# seed's error grid to that seed's own oracle and records it in this file of the
+# arm's root, one row per (landscape, seed); the published arms have none and
+# scale every seed's grid to the seed-7 oracle (manifest.csv, calibrate()).
+SEEDS_MANIFEST = "manifest_seeds.csv"
+GRID_TOL = 1e-4  # a per-seed magnitude must lie this close to a SIGMA_GRID value
+
+
+def seed_sigma_f(root: Path) -> pd.DataFrame | None:
+    """sigma_f of every run seed's oracle, indexed by (landscape, seed), when the
+    arm's error grid was scaled per seed (root/manifest_seeds.csv); else None."""
+    path = Path(root) / SEEDS_MANIFEST
+    if not path.is_file():
+        return None
+    table = pd.read_csv(path).set_index(["landscape", "seed"])["sigma_f"]
+    if table.index.duplicated().any():
+        raise ValueError(f"{path}: more than one row for a (landscape, seed)")
+    return table
+
+
+def sigma_multiples(runs: pd.DataFrame, sigma_f) -> pd.Series:
+    """Each run's error magnitude in sigma_f of the oracle that scaled its grid.
+
+    A scalar ``sigma_f`` is the published design (every seed's grid scaled to
+    the seed-7 oracle): jitter_std / sigma_f rounded to two decimals. A Series
+    indexed by seed is a per-seed calibration: each run is divided by its own
+    seed's sigma_f, and the quotient must lie within GRID_TOL of a SIGMA_GRID
+    value, which it then takes exactly; anything else is an error, because a
+    run whose grid came from another oracle would otherwise drop out of every
+    cell silently.
+    """
+    if np.ndim(sigma_f) == 0:
+        return (runs["jitter_std"] / float(sigma_f)).round(2)
+    per_run = runs["seed"].map(pd.Series(sigma_f))
+    if per_run.isna().any():
+        raise ValueError(f"no sigma_f for seeds {sorted(set(runs.loc[per_run.isna(), 'seed']))}")
+    raw = (runs["jitter_std"] / per_run).to_numpy(dtype=float)
+    grid = np.asarray(SIGMA_GRID, dtype=float)
+    nearest = grid[np.abs(raw[:, None] - grid[None, :]).argmin(axis=1)]
+    off = np.abs(raw - nearest)
+    if (off > GRID_TOL).any():
+        bad = runs.loc[off > GRID_TOL, ["seed", "acquisition", "jitter_std"]].head(3).to_dict("records")
+        raise ValueError(f"{int((off > GRID_TOL).sum())} runs are not on the grid {SIGMA_GRID} of their "
+                         f"seed's sigma_f (largest miss {off.max():.3g}), e.g. {bad}")
+    return pd.Series(nearest, index=runs.index)
+
+
+def _analyse_one(response: str, suffix: str, root: Path | None = None, out_dir: Path | None = None) -> pd.DataFrame:
+    """The per-landscape comparison on one response, written to ``out_dir``.
+
+    ``root`` is the arm (manifest.csv, runs/; default ROOT) and ``out_dir`` where
+    the per-landscape and summary files go (default: the root). An arm with a
+    manifest_seeds.csv has a per-seed error grid (sigma_multiples)."""
+    root = ROOT if root is None else Path(root)
+    out_dir = root if out_dir is None else Path(out_dir)
+    manifest = pd.read_csv(root / "manifest.csv").set_index("landscape")
+    per_seed = seed_sigma_f(root)
+    if per_seed is None and "calibration" in manifest.columns:
+        # read with the seed-7 sigma_f, a cell would hold only the seeds whose grid happens to match it
+        raise ValueError(f"{root / 'manifest.csv'} declares a per-seed grid but {SEEDS_MANIFEST} is missing")
     stats = bb.load_stats()
     rows = []
     for name in manifest.index:
-        fitted = _paired(ROOT / "runs" / f"iso_{name}")
+        fitted = _paired(root / "runs" / f"iso_{name}")
         if fitted.empty:
             print(f"  {name}: no fitted runs yet")
             continue
         fitted = fitted[(fitted.jitter_iteration == 0) & fitted.seed.isin(SEEDS)]
-        sigma_f = float(manifest.loc[name, "sigma_f_fitted"])
-        fitted["sigma_multiple"] = (fitted["jitter_std"] / sigma_f).round(2)
+        sigma_f = float(manifest.loc[name, "sigma_f_fitted"]) if per_seed is None else per_seed.loc[name]
+        fitted["sigma_multiple"] = sigma_multiples(fitted, sigma_f)
         # One oracle per run seed: the gap is formed within each seed's oracle,
         # for the primary optimum (the logged y_opt) and the best-clean one.
         optima = {how: seed_optima(fitted, how) for how in OPTIMA}
@@ -430,16 +492,18 @@ def _analyse_one(response: str, suffix: str) -> None:
                             "max_visited_over_y_opt": float(raised.max())})
                 rows.append(row)
     per = pd.DataFrame(rows)
-    per.to_csv(ROOT / f"oracle_isolation_per_landscape{suffix}.csv", index=False)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    per.to_csv(out_dir / f"oracle_isolation_per_landscape{suffix}.csv", index=False)
     if per.empty:
         raise SystemExit("nothing to compare yet")
 
     for how, osuffix in OPTIMA.items():
         summary = summarise(per, f"frac_fitted{osuffix}")
-        summary.to_csv(ROOT / f"oracle_isolation_summary{suffix}{osuffix}.csv", index=False)
+        summary.to_csv(out_dir / f"oracle_isolation_summary{suffix}{osuffix}.csv", index=False)
         print(f"\n-- optimum: {how}")
         print(summary.drop(columns=["small_gap_landscapes"], errors="ignore").to_string(
             index=False, float_format=lambda v: f"{v:+.3f}"))
+    return per
 
 
 def bootstrap_indices(sizes, seed: int = DATA_SEED) -> list[np.ndarray]:

@@ -1,0 +1,64 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=1
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+      dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_hicks_law composite          mlp    gaussian                 0    0.267671        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    0.280695        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    0.292822        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    0.297522        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    0.301677        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    1.070683        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    1.122782        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    1.171288        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    1.190086        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    1.206707        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    5.353414        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    5.613909        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    5.856439        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    5.950431        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_hicks_law composite          mlp    gaussian                 0    6.033535        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_hicks_law / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.273333            5.133333                            0.000000                          149.883177               8          15
+      sobol              0.273333            5.266667                            0.000000                          155.367927               8          15
+        ucb              0.533333            2.333333                            0.668392                           58.382652               0          15
+      logei              0.560000            2.400000                            0.836625                           66.920865               4          15
+       qnei              0.573333            2.400000                            0.782915                           64.254658               2          15
+

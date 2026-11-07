@@ -334,7 +334,26 @@ DEFAULT_ACQUISITION_CHOICES = (
 # of this list for the same reason, and so that "--error-models all" keeps its
 # meaning. It is handled explicitly where it is used, and run_error_label()
 # keeps it reserved for the clean baseline.
-ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
+# "drift_down" (appended 2026-11-07): the drift ramp with its sign reversed, a
+# rater who grows harsher. It takes drift's place in the noise seed
+# (error_model_seed_index), so a downward and an upward drift run of one
+# acquisition, cell and seed draw the same jitter and differ only in the ramp.
+ERROR_MODEL_CHOICES = ["gaussian", "bias", "dropout", "spike", "drift", "ar1", "drift_down"]
+
+
+def error_model_seed_index(error_model: str) -> int:
+    """The error model's entry in a run's noise SeedSequence.
+
+    Its position in ERROR_MODEL_CHOICES, except that drift_down shares drift's,
+    so the two directions of drift are paired draw for draw. A script that
+    re-derives a run's noise stream must call this, never .index() directly.
+    """
+    return ERROR_MODEL_CHOICES.index("drift" if error_model == "drift_down" else error_model)
+
+
+# What "--error-models all" means: the models it meant before drift_down was
+# appended. drift_down is opt-in, so no driver that asks for "all" changes.
+ALL_ERROR_MODELS = [m for m in ERROR_MODEL_CHOICES if m != "drift_down"]
 
 DEFAULT_ERROR_MODELS = "gaussian,bias"
 DEFAULT_JITTER_ITERATIONS = "10,20,40"
@@ -449,6 +468,10 @@ class SimulationConfig:
     response_clip_low: np.ndarray | None = None
     response_clip_high: np.ndarray | None = None
     response_round: float | None = None
+    # The running clip (running_clip): after the initial design, clip each recorded rating to the range of the
+    # ratings recorded so far, widened by this many robust SDs of them. It needs no knowledge of the landscape,
+    # so it is the clip a study can run, and it acts on the clean twin too. None: off.
+    response_clip_running: float | None = None
 
     # --- INPUT error: the person acts on the wrong design ---------------------
     # Every error model above corrupts the reported VALUE: the optimizer is told
@@ -534,6 +557,9 @@ class SimulationConfig:
     #   sensor faults that a Gaussian likelihood bends through. Single-objective,
     #   learned noise only.
     likelihood: str = "gaussian"
+    # gp_prior: the Gaussian surrogate's kernel and priors (GP_PRIOR_CHOICES);
+    #   "legacy" changes the clean run, so it needs its own --output-dir.
+    gp_prior: str = "default"
 
     # --- acquisition-side follow-ups (equal-trial: none of them adds a rating)
     # input_uncertain_acq / input_uncertain_scale: average the acquisition over
@@ -613,6 +639,36 @@ INFERENCE_RULE_CHOICES = ["best_observed", "best_mean"]
 # relevance_pursuit (appended): Ament et al.'s robust GP, which gives each
 # training point its own outlier variance and selects how many are non-zero.
 LIKELIHOOD_CHOICES = ["gaussian", "student_t", "relevance_pursuit", "student_t_rbf"]
+# The Gaussian surrogate's kernel and priors. "default" is BoTorch's own
+# SingleTaskGP default (an RBF kernel with dimension-scaled log-normal
+# lengthscale priors, Hvarfner et al. 2024, and a log-normal noise prior), the
+# surrogate of every published arm. "legacy" is BoTorch's default before 0.12:
+# a scaled Matern-5/2 ARD kernel with Gamma(3, 6) lengthscale and Gamma(2, 0.15)
+# outputscale priors and a Gamma(1.1, 0.05) noise prior, built by BoTorch's own
+# helpers so nothing about it is chosen here.
+GP_PRIOR_CHOICES = ["default", "legacy"]
+
+
+def gp_prior_modules(gp_prior: str, d: int, fixed_noise: bool = False) -> dict:
+    """SingleTaskGP keyword arguments that set the kernel and noise prior of ``gp_prior``.
+
+    "default" returns {}, so the default surrogate is built exactly as it always
+    was. With a fixed noise (train_Yvar) the likelihood is BoTorch's fixed-noise
+    one and only the kernel is replaced.
+    """
+    if gp_prior == "default":
+        return {}
+    if gp_prior == "legacy":
+        from botorch.models.utils.gpytorch_modules import (
+            get_gaussian_likelihood_with_gamma_prior,
+            get_matern_kernel_with_gamma_prior,
+        )
+
+        modules = {"covar_module": get_matern_kernel_with_gamma_prior(ard_num_dims=int(d))}
+        if not fixed_noise:
+            modules["likelihood"] = get_gaussian_likelihood_with_gamma_prior()
+        return modules
+    raise ValueError(f"--gp-prior {gp_prior!r} is not one of {GP_PRIOR_CHOICES}.")
 MISSING_HANDLING_CHOICES = ["drop", "impute_low"]
 RATER_MODEL_CHOICES = ["none", "backfit"]
 CEILING_MODE_CHOICES = ["fixed", "anchored"]
@@ -724,6 +780,7 @@ def adaptation_fields(args: "argparse.Namespace") -> dict:
         "input_noise_model": getattr(args, "input_noise_model", "none") or "none",
         "inference_rule": rule,
         "likelihood": getattr(args, "likelihood", "gaussian") or "gaussian",
+        "gp_prior": getattr(args, "gp_prior", "default") or "default",
         # The acquisition-side follow-ups. Read with getattr defaults because the
         # fitted-oracle driver has no such flags and must keep running with them off.
         "input_uncertain_acq": int(getattr(args, "input_uncertain_acq", 0) or 0),
@@ -1846,7 +1903,7 @@ def parse_error_models(error_model: str | None, error_models: str | None) -> lis
     if raw is None:
         raw = DEFAULT_ERROR_MODELS
     if raw == "all":
-        return ERROR_MODEL_CHOICES
+        return list(ALL_ERROR_MODELS)
     values = [v.strip() for v in raw.split(",") if v.strip()]
     if not values:
         raise ValueError("At least one error model must be specified.")
@@ -2513,6 +2570,29 @@ def _postprocess_response(observed: np.ndarray, config: SimulationConfig) -> np.
     return observed
 
 
+RUNNING_CLIP_MIN_RECORD = 3   # ratings needed before the running clip has a range and a spread to read
+
+
+def running_clip(observed: np.ndarray, history, margin: float) -> np.ndarray:
+    """Clip a rating to [min, max] of the ratings recorded so far, widened by ``margin`` robust SDs of them.
+
+    The robust SD is 1.4826 times the median absolute deviation of the record (its sample SD where the MAD is
+    zero); missing ratings are ignored, and a record too short or flat to give a spread clips nothing. Unlike the
+    'sample' clip it needs no knowledge of where the landscape's range ends, so a study can run it, and it reads
+    only the study's own record, which holds the ratings as clipped.
+    """
+    h = np.asarray([v for v in history if np.isfinite(v)], dtype=float)
+    if h.size < RUNNING_CLIP_MIN_RECORD:
+        return observed
+    med = float(np.median(h))
+    spread = 1.4826 * float(np.median(np.abs(h - med)))
+    if not spread > 0.0:
+        spread = float(np.std(h, ddof=1))
+    if not spread > 0.0:
+        return observed
+    return np.clip(observed, float(h.min()) - margin * spread, float(h.max()) + margin * spread)
+
+
 def self_reported_variance(error_magnitude, config: "SimulationConfig",
                            rng: np.random.Generator, apply_error: bool) -> float:
     """The variance a rater who reports their own confidence implies.
@@ -3115,6 +3195,7 @@ def validate_error_extensions(
     ceiling_mode = str(get("ceiling_mode", "fixed"))
     for value, choices, flag in (
         (likelihood, LIKELIHOOD_CHOICES, "--likelihood"),
+        (str(get("gp_prior", "default")), GP_PRIOR_CHOICES, "--gp-prior"),
         (input_error, INPUT_ERROR_CHOICES, "--input-error"),
         (missing_handling, MISSING_HANDLING_CHOICES, "--missing-handling"),
         (rater_model, RATER_MODEL_CHOICES, "--rater-model"),
@@ -3128,6 +3209,17 @@ def validate_error_extensions(
         raise ValueError(
             f"observation_noise={observation_noise!r} is single-objective only; "
             "the multi-objective surrogate supports observation_noise='learned'."
+        )
+
+    # The surrogate's priors apply to the plain Gaussian GP only: every other
+    # surrogate builds its own kernel and likelihood.
+    if str(get("gp_prior", "default")) != "default" and (
+        is_multi or likelihood != "gaussian" or input_noise_model != "none" or rater_model != "none"
+    ):
+        raise ValueError(
+            "--gp-prior other than 'default' sets the plain single-objective Gaussian GP's kernel and priors; "
+            "it cannot be combined with another likelihood, the noisy-input GP, the rater backfit or "
+            "multi-objective runs."
         )
 
     # (2) relevance pursuit: the restrictions of the Student-t surrogate.
@@ -3372,7 +3464,7 @@ def apply_sensor_error(
         if rng.random() < config.error_spike_prob:
             spike = rng.normal(0.0, config.error_spike_std, size=true_value.shape)
         observed = true_value + spike + jitter
-    elif config.error_model == "drift":
+    elif config.error_model in ("drift", "drift_down"):
         # Systematic drift/fatigue: bias ramps linearly from 0 at onset to
         # jitter_std at the final iteration, ON TOP of the ordinary gaussian
         # rating inconsistency (real fatigue adds to noise rather than
@@ -3380,9 +3472,12 @@ def apply_sensor_error(
         # "drift" the only deterministic, jitter-free condition). Peak ramp
         # = jitter_std keeps the sweep a single swept factor; note the
         # drift condition therefore carries more total error energy than
-        # pure gaussian at the same nominal std.
+        # pure gaussian at the same nominal std. drift_down ramps to
+        # -jitter_std instead: later designs, usually the better ones, are
+        # rated lower, so the ramp works against the best-rating ship rule.
         span = max(1, config.iterations - config.jitter_iteration)
-        ramp = config.jitter_std * (iteration - config.jitter_iteration) / span
+        sign = -1.0 if config.error_model == "drift_down" else 1.0
+        ramp = sign * config.jitter_std * (iteration - config.jitter_iteration) / span
         observed = true_value + np.full_like(true_value, ramp, dtype=float) + jitter
     elif config.error_model == "ar1":
         # Serially correlated rating error: e_t = rho * e_{t-1} + innovation,
@@ -4182,6 +4277,10 @@ def run_simulation(
     rater_estimates: dict[int, float] = {}
     ceiling_on = apply_error and config.response_ceiling > 0
     ceiling_base = landscape_quantile(oracle, bounds, config.response_ceiling) if ceiling_on else None
+    # The running clip acts on every run, clean twins included: the study cannot tell an exact rater from a noisy one.
+    running_clip_on = getattr(config, "response_clip_running", None) is not None
+    if running_clip_on and is_multi:
+        raise ValueError("the running response clip is defined for a scalar rating only")
     ceiling_values: list[float] = []
     min_distance_redirects: list[bool] = []
     # Halo backfit state: the latest fit's correction (trials it saw x objectives)
@@ -4372,6 +4471,8 @@ def run_simulation(
                             train_Yvar=train_Yvar,
                             input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
                             outcome_transform=Standardize(m=1),
+                            **gp_prior_modules(getattr(config, "gp_prior", "default"), train_X.shape[-1],
+                                               fixed_noise=train_Yvar is not None),
                         )
                         mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
                         fit_gpytorch_mll(mll)
@@ -4532,6 +4633,12 @@ def run_simulation(
             if missing:
                 observed_value = np.full_like(true_value, np.nan, dtype=float)
                 error_magnitude = np.full_like(true_value, np.nan, dtype=float)
+        if running_clip_on and iteration > config.initial_samples:
+            # After the error process has carried the value it drew: the clip is the study's reading of the
+            # rating, not the rater's state. It reads the record of earlier ratings, as clipped.
+            observed_value = running_clip(observed_value, objective_observed_scalar,
+                                          float(config.response_clip_running))
+            error_magnitude = observed_value - true_value
 
         X_list.append(recorded_np)
         input_error_l2s.append(input_error_l2)
@@ -5145,7 +5252,7 @@ def run_single_seed(
                                     ACQUISITION_CHOICES.index(acq.name),
                                     int(jitter_iteration),
                                     int(round(float(jitter_std) * 1_000_000)),
-                                    ERROR_MODEL_CHOICES.index(error_model),
+                                    error_model_seed_index(error_model),
                                 ]
                             )
                             jitter_rng = np.random.default_rng(jitter_seed)

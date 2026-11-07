@@ -1,0 +1,63 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=2
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+          dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_weber_fechner composite gaussian_process    gaussian                 0    0.273970        1               6               ei  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    0.273981        1               6               ei  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    0.273983        2               6             qnei  friedman   4.705882 0.452818        0.452818               NaN          True    0.470588
+iso_weber_fechner composite gaussian_process    gaussian                 0    0.273984        1               6               ei  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    1.095879        1               6             qnei  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    1.095923        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    1.095931        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    1.095934        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    1.095937        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    5.479393        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    5.479616        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    5.479653        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    5.479668        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+iso_weber_fechner composite gaussian_process    gaussian                 0    5.479687        1               6           random  friedman   5.000000 0.415880        0.447871               NaN          True    1.000000
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_weber_fechner / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.192857            4.696429                            0.000000                           23.909286               9          14
+      sobol              0.192857            4.517857                            0.000000                           20.240795               9          14
+         ei              0.564286            2.892857                            0.145665                           15.492901               3          14
+       qnei              0.650000            2.964286                            0.150698                           15.377961               2          14
+        ucb              0.671429            2.642857                            0.142940                           14.882884               0          14
+

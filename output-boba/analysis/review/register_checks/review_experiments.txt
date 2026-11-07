@@ -1,0 +1,151 @@
+Review-round experiments (configs/review_round_plan.json, sha256 75ccf817d949cc70..., frozen before the runs).
+Deployed design at the final trial, fractions of opt_z; [percentile landscape bootstrap], t (19 df), two-way landscape x seed bootstrap; Wilcoxon over the twenty landscape means. Post hoc with respect to the paper's procedures.
+
+== E1: seeds 27-36, LogEI and qNEI, four processes pooled (gaussian from output-boba-confirmatory)
+   control: 800 of 800 clean twins equal output-boba-confirmatory's in ['iteration', 'objective_true', 'objective_observed', 'inference_simple_regret_true', 'simple_regret_true'] (largest difference 0)
+-- cell A: 1 sigma from the first rating, sitting of 2; 1600 noisy runs, standard process's cost 0.247 of opt_z
+   sitting            +0.020 [+0.008, +0.032]  t [+0.007, +0.032]  two-way [+0.002, +0.036]  15/20 positive, p 0.0049  share 8.0% [3%, 12%]
+   LCB1               +0.020 [+0.003, +0.037]  t [+0.001, +0.038]  two-way [-0.001, +0.040]  14/20 positive, p 0.03  share 8.1% [2%, 15%]
+   LCB2               +0.018 [+0.002, +0.032]  t [+0.001, +0.035]  two-way [-0.002, +0.036]  14/20 positive, p 0.019  share 7.4% [1%, 13%]
+   sitting over LCB1  -0.000 [-0.009, +0.009]  t [-0.010, +0.010]  two-way [-0.012, +0.012]  8/20 positive, p 0.67
+   sitting over LCB2  +0.001 [-0.006, +0.010]  t [-0.007, +0.010]  two-way [-0.009, +0.012]  10/20 positive, p 0.93
+   sitting price      0.018
+   LCB1 price         0.021
+   LCB2 price         0.023
+     gaussian  sitting +0.028, LCB1 +0.036, LCB2 +0.030, sitting over LCB1 -0.008, sitting over LCB2 -0.002
+     bias      sitting +0.022, LCB1 +0.021, LCB2 +0.020, sitting over LCB1 +0.001, sitting over LCB2 +0.003
+     drift     sitting +0.015, LCB1 +0.013, LCB2 +0.012, sitting over LCB1 +0.002, sitting over LCB2 +0.003
+     ar1       sitting +0.014, LCB1 +0.010, LCB2 +0.011, sitting over LCB1 +0.004, sitting over LCB2 +0.002
+-- cell B: 5 sigma from trial 21, sitting of 16; 1600 noisy runs, standard process's cost 0.557 of opt_z
+   sitting            +0.231 [+0.165, +0.300]  t [+0.157, +0.306]  two-way [+0.160, +0.309]  20/20 positive, p 1.9e-06  share 41.5% [33%, 49%]
+   LCB1               +0.008 [-0.022, +0.040]  t [-0.026, +0.042]  two-way [-0.039, +0.057]  13/20 positive, p 0.29  share 1.5% [-4%, 7%]
+   LCB2               +0.032 [+0.003, +0.061]  t [+0.001, +0.063]  two-way [-0.008, +0.081]  15/20 positive, p 0.024  share 5.8% [1%, 10%]
+   sitting over LCB1  +0.223 [+0.160, +0.287]  t [+0.152, +0.294]  two-way [+0.153, +0.296]  19/20 positive, p 9.5e-06
+   sitting over LCB2  +0.199 [+0.142, +0.255]  t [+0.138, +0.260]  two-way [+0.137, +0.263]  19/20 positive, p 9.5e-06
+   sitting price      0.030
+   LCB1 price         0.021
+   LCB2 price         0.023
+     gaussian  sitting +0.146, LCB1 +0.026, LCB2 +0.083, sitting over LCB1 +0.121, sitting over LCB2 +0.064
+     bias      sitting +0.208, LCB1 +0.014, LCB2 +0.032, sitting over LCB1 +0.194, sitting over LCB2 +0.176
+     drift     sitting +0.310, LCB1 -0.038, LCB2 -0.028, sitting over LCB1 +0.348, sitting over LCB2 +0.338
+     ar1       sitting +0.261, LCB1 +0.032, LCB2 +0.043, sitting over LCB1 +0.229, sitting over LCB2 +0.218
+-- primary family (configs/review_round_plan.json), Holm over H1-H4:
+   H1: LCB2 in cell A: +0.018 [+0.002, +0.032], Wilcoxon p 0.019, Holm 0.019 -> positive
+   H2: sitting in cell B: +0.231 [+0.165, +0.300], Wilcoxon p 1.9e-06, Holm 7.6e-06 -> positive
+   H3: sitting over LCB1 in cell B: +0.223 [+0.160, +0.287], Wilcoxon p 9.5e-06, Holm 2.9e-05 -> positive
+   H4: sitting over LCB2 in cell B: +0.199 [+0.142, +0.255], Wilcoxon p 9.5e-06, Holm 2.9e-05 -> positive
+-- beyond the plan: the three processes new to this replication (bias, drift, ar1), pooled:
+   cell A LCB2               +0.014 [-0.001, +0.028]  t [-0.002, +0.031]  two-way [-0.005, +0.033]  14/20 positive, p 0.064  share 6.0% [-0%, 12%]
+   cell A LCB1               +0.015 [-0.002, +0.031]  t [-0.003, +0.033]  two-way [-0.007, +0.036]  14/20 positive, p 0.064  share 6.1% [-1%, 12%]
+   cell A sitting            +0.017 [+0.008, +0.026]  t [+0.006, +0.027]  two-way [+0.000, +0.034]  16/20 positive, p 0.0042  share 7.0% [3%, 11%]
+   cell A sitting over LCB1  +0.002 [-0.007, +0.013]  t [-0.009, +0.014]  two-way [-0.011, +0.016]  7/20 positive, p 0.78
+   cell B sitting            +0.260 [+0.184, +0.336]  t [+0.175, +0.344]  two-way [+0.180, +0.353]  20/20 positive, p 1.9e-06  share 43.9% [35%, 52%]
+   cell B sitting over LCB1  +0.257 [+0.184, +0.331]  t [+0.175, +0.339]  two-way [+0.177, +0.344]  19/20 positive, p 5.7e-06
+   cell B sitting over LCB2  +0.244 [+0.174, +0.312]  t [+0.170, +0.319]  two-way [+0.168, +0.316]  19/20 positive, p 3.8e-06
+
+== E2: drift_down against the main sweep's drift, seeds 7-16, LogEI and qNEI (paired noise draws)
+-- cell A: 1 sigma from the first rating
+   cost of error        down +0.304 [+0.262, +0.347]  t [+0.258, +0.350]  two-way [+0.237, +0.370]  20/20 positive, p 1.9e-06
+                        up   +0.267 [+0.228, +0.307]  t [+0.223, +0.312]  two-way [+0.212, +0.329]  20/20 positive, p 1.9e-06
+                        down - up +0.037 [+0.006, +0.068], p 0.048
+   final search loss    down +0.124 [+0.089, +0.164]  t [+0.083, +0.165]  two-way [+0.082, +0.173]  20/20 positive, p 1.9e-06
+                        up   +0.125 [+0.086, +0.165]  t [+0.081, +0.168]  two-way [+0.078, +0.179]  19/20 positive, p 3.8e-06
+                        down - up -0.001 [-0.015, +0.015], p 0.9
+   LCB1 gain            down +0.035 [-0.014, +0.072]  t [-0.011, +0.081]  two-way [-0.021, +0.082]  14/20 positive, p 0.017  share 11.5% [-4%, 23%]
+                        up   +0.005 [-0.011, +0.021]  t [-0.012, +0.023]  two-way [-0.021, +0.029]  12/20 positive, p 0.26  share 2.0% [-4%, 8%]
+                        down - up +0.029 [-0.018, +0.066], p 0.014
+   LCB2 gain            down +0.031 [-0.005, +0.062]  t [-0.006, +0.068]  two-way [-0.020, +0.075]  14/20 positive, p 0.053  share 10.1% [-2%, 19%]
+                        up   +0.012 [-0.004, +0.027]  t [-0.004, +0.029]  two-way [-0.013, +0.034]  14/20 positive, p 0.044  share 4.6% [-1%, 10%]
+                        down - up +0.018 [-0.015, +0.046], p 0.16
+   sitting of 2 gain    down +0.041 [+0.018, +0.068]  t [+0.014, +0.068]  two-way [+0.006, +0.079]  15/20 positive, p 0.0064  share 13.5% [6%, 21%]
+                        up   +0.018 [+0.007, +0.030]  t [+0.005, +0.031]  two-way [-0.003, +0.039]  14/20 positive, p 0.014  share 6.8% [3%, 11%]
+                        down - up +0.023 [+0.001, +0.047], p 0.076
+   selection share of the cost, down: 59.2%
+   selection share of the cost, up: 53.3%
+   sitting of 2 over LCB1, down (beyond the plan): +0.006 [-0.014, +0.038]  t [-0.024, +0.036]  two-way [-0.019, +0.045]  8/20 positive, p 0.35
+   sitting of 2 over LCB2, down (beyond the plan): +0.010 [-0.005, +0.030]  t [-0.009, +0.030]  two-way [-0.011, +0.038]  10/20 positive, p 0.45
+   sitting of 2 over LCB1, up (beyond the plan): +0.013 [-0.000, +0.027]  t [-0.002, +0.028]  two-way [-0.005, +0.032]  12/20 positive, p 0.2
+   sitting of 2 over LCB2, up (beyond the plan): +0.006 [-0.005, +0.017]  t [-0.006, +0.018]  two-way [-0.009, +0.022]  10/20 positive, p 0.73
+-- cell B: 5 sigma from trial 21
+   cost of error        down +0.493 [+0.417, +0.571]  t [+0.408, +0.578]  two-way [+0.396, +0.623]  20/20 positive, p 1.9e-06
+                        up   +0.637 [+0.529, +0.749]  t [+0.510, +0.764]  two-way [+0.505, +0.802]  20/20 positive, p 1.9e-06
+                        down - up -0.144 [-0.192, -0.096], p 1.3e-05
+   final search loss    down +0.056 [+0.028, +0.089]  t [+0.022, +0.089]  two-way [+0.025, +0.092]  17/20 positive, p 0.00028
+                        up   +0.061 [+0.031, +0.097]  t [+0.024, +0.098]  two-way [+0.027, +0.099]  16/20 positive, p 0.001
+                        down - up -0.006 [-0.013, +0.000], p 0.1
+   LCB1 gain            down +0.166 [+0.114, +0.223]  t [+0.105, +0.226]  two-way [+0.075, +0.274]  19/20 positive, p 9.5e-06  share 33.6% [24%, 43%]
+                        up   -0.066 [-0.114, -0.019]  t [-0.119, -0.014]  two-way [-0.154, +0.034]  3/20 positive, p 0.0042  share -10.4% [-18%, -2%]
+                        down - up +0.232 [+0.147, +0.316], p 3.6e-05
+   LCB2 gain            down +0.186 [+0.132, +0.248]  t [+0.121, +0.251]  two-way [+0.102, +0.281]  20/20 positive, p 1.9e-06  share 37.7% [28%, 47%]
+                        up   -0.011 [-0.057, +0.043]  t [-0.067, +0.045]  two-way [-0.095, +0.086]  9/20 positive, p 0.41  share -1.7% [-10%, 6%]
+                        down - up +0.197 [+0.127, +0.264], p 6.3e-05
+   sitting of 16 gain   down +0.206 [+0.131, +0.298]  t [+0.115, +0.296]  two-way [+0.101, +0.350]  19/20 positive, p 1.3e-05  share 41.7% [30%, 54%]
+                        up   +0.307 [+0.198, +0.417]  t [+0.185, +0.429]  two-way [+0.180, +0.477]  19/20 positive, p 1.9e-05  share 48.2% [38%, 56%]
+                        down - up -0.101 [-0.153, -0.052], p 0.002
+   selection share of the cost, down: 88.7%
+   selection share of the cost, up: 90.4%
+   sitting of 16 over LCB1, down (beyond the plan): +0.040 [-0.013, +0.098]  t [-0.021, +0.101]  two-way [-0.037, +0.147]  12/20 positive, p 0.22
+   sitting of 16 over LCB2, down (beyond the plan): +0.020 [-0.031, +0.075]  t [-0.039, +0.079]  two-way [-0.055, +0.127]  11/20 positive, p 0.7
+   sitting of 16 over LCB1, up (beyond the plan): +0.373 [+0.251, +0.499]  t [+0.239, +0.508]  two-way [+0.240, +0.537]  19/20 positive, p 1.9e-05
+   sitting of 16 over LCB2, up (beyond the plan): +0.318 [+0.210, +0.425]  t [+0.204, +0.432]  two-way [+0.197, +0.471]  18/20 positive, p 2.7e-05
+
+== E3: BoTorch's pre-0.12 default GP (legacy) against its current default, seeds 7-16, LogEI and qNEI, four processes (paired noise draws)
+-- cell A: 1 sigma from the first rating
+   cost of error                 legacy  +0.287 [+0.257, +0.320]  t [+0.252, +0.322]  two-way [+0.248, +0.329]  20/20 positive, p 1.9e-06
+                                 default +0.250 [+0.218, +0.284]  t [+0.215, +0.286]  two-way [+0.211, +0.291]  20/20 positive, p 1.9e-06
+                                 legacy - default +0.036 [+0.005, +0.071], p 0.04
+   final search loss             legacy  +0.150 [+0.116, +0.182]  t [+0.113, +0.188]  two-way [+0.108, +0.192]  20/20 positive, p 1.9e-06
+                                 default +0.107 [+0.079, +0.135]  t [+0.076, +0.139]  two-way [+0.074, +0.143]  20/20 positive, p 1.9e-06
+                                 legacy - default +0.043 [+0.018, +0.071], p 0.0017
+   clean twin's deployed regret  legacy  +0.109 [+0.042, +0.185]  t [+0.030, +0.189]  two-way [+0.043, +0.196]  17/20 positive, p 0.00029
+                                 default +0.118 [+0.048, +0.199]  t [+0.037, +0.199]  two-way [+0.052, +0.198]  17/20 positive, p 0.00029
+                                 legacy - default -0.009 [-0.020, +0.002], p 0.078
+   LCB1 gain                     legacy  +0.011 [-0.018, +0.035]  t [-0.018, +0.040]  two-way [-0.019, +0.037]  15/20 positive, p 0.083  share 3.9% [-7%, 12%]
+                                 default +0.019 [+0.002, +0.033]  t [+0.001, +0.036]  two-way [-0.001, +0.038]  14/20 positive, p 0.064  share 7.5% [1%, 14%]
+                                 legacy - default -0.008 [-0.025, +0.006], p 0.7
+   LCB2 gain                     legacy  +0.008 [-0.023, +0.035]  t [-0.025, +0.040]  two-way [-0.026, +0.036]  15/20 positive, p 0.083  share 2.7% [-9%, 12%]
+                                 default +0.020 [+0.003, +0.037]  t [+0.002, +0.039]  two-way [+0.001, +0.042]  15/20 positive, p 0.058  share 8.1% [1%, 15%]
+                                 legacy - default -0.013 [-0.032, +0.003], p 0.41
+   posterior-mean gain           legacy  +0.011 [-0.012, +0.030]  t [-0.013, +0.035]  two-way [-0.016, +0.034]  14/20 positive, p 0.14  share 3.9% [-4%, 11%]
+                                 default +0.013 [-0.007, +0.031]  t [-0.009, +0.034]  two-way [-0.011, +0.035]  14/20 positive, p 0.26  share 5.1% [-3%, 12%]
+                                 legacy - default -0.002 [-0.012, +0.008], p 0.76
+   selection share of the cost, legacy: 47.7% [39%, 57%]
+   selection share of the cost, default: 57.2% [48%, 67%]
+   LCB1 price: legacy 0.021, default 0.022
+   LCB2 price: legacy 0.024, default 0.022
+   beyond the plan, acquisition logei     legacy / default: cost 0.342 / 0.250, search 0.218 / 0.128, selection 0.124 / 0.123, LCB2 gain 0.012 / 0.011
+   beyond the plan, acquisition qnei      legacy / default: cost 0.231 / 0.251, search 0.082 / 0.086, selection 0.149 / 0.164, LCB2 gain 0.003 / 0.029
+   beyond the plan, error_model gaussian  legacy / default: cost 0.308 / 0.265, search 0.156 / 0.110, selection 0.151 / 0.155, LCB2 gain 0.020 / 0.021
+   beyond the plan, error_model bias      legacy / default: cost 0.295 / 0.261, search 0.157 / 0.114, selection 0.139 / 0.147, LCB2 gain 0.010 / 0.039
+   beyond the plan, error_model drift     legacy / default: cost 0.291 / 0.267, search 0.166 / 0.125, selection 0.124 / 0.143, LCB2 gain 0.001 / 0.012
+   beyond the plan, error_model ar1       legacy / default: cost 0.254 / 0.209, search 0.121 / 0.080, selection 0.133 / 0.129, LCB2 gain -0.001 / 0.009
+-- cell B: 5 sigma from trial 21
+   cost of error                 legacy  +0.413 [+0.354, +0.470]  t [+0.351, +0.475]  two-way [+0.352, +0.473]  20/20 positive, p 1.9e-06
+                                 default +0.547 [+0.468, +0.628]  t [+0.460, +0.633]  two-way [+0.462, +0.639]  20/20 positive, p 1.9e-06
+                                 legacy - default -0.134 [-0.220, -0.053], p 0.0056
+   final search loss             legacy  +0.054 [+0.028, +0.082]  t [+0.024, +0.083]  two-way [+0.026, +0.087]  19/20 positive, p 0.00013
+                                 default +0.061 [+0.032, +0.093]  t [+0.026, +0.096]  two-way [+0.030, +0.097]  18/20 positive, p 0.0002
+                                 legacy - default -0.007 [-0.026, +0.010], p 0.72
+   clean twin's deployed regret  legacy  +0.109 [+0.045, +0.188]  t [+0.030, +0.189]  two-way [+0.042, +0.192]  17/20 positive, p 0.00029
+                                 default +0.118 [+0.052, +0.196]  t [+0.037, +0.199]  two-way [+0.052, +0.199]  17/20 positive, p 0.00029
+                                 legacy - default -0.009 [-0.020, +0.002], p 0.078
+   LCB1 gain                     legacy  +0.006 [-0.005, +0.017]  t [-0.006, +0.019]  two-way [-0.027, +0.036]  14/20 positive, p 0.22  share 1.5% [-1%, 4%]
+                                 default -0.001 [-0.030, +0.030]  t [-0.033, +0.030]  two-way [-0.063, +0.067]  8/20 positive, p 0.81  share -0.2% [-5%, 5%]
+                                 legacy - default +0.007 [-0.019, +0.030], p 0.31
+   LCB2 gain                     legacy  +0.013 [+0.001, +0.025]  t [+0.000, +0.026]  two-way [-0.018, +0.044]  16/20 positive, p 0.015  share 3.2% [0%, 6%]
+                                 default +0.032 [+0.003, +0.065]  t [-0.002, +0.066]  two-way [-0.027, +0.102]  14/20 positive, p 0.027  share 5.9% [1%, 11%]
+                                 legacy - default -0.019 [-0.051, +0.010], p 0.35
+   posterior-mean gain           legacy  -0.008 [-0.020, +0.003]  t [-0.020, +0.005]  two-way [-0.043, +0.024]  10/20 positive, p 0.29  share -1.9% [-5%, 1%]
+                                 default -0.049 [-0.078, -0.017]  t [-0.082, -0.015]  two-way [-0.115, +0.024]  6/20 positive, p 0.012  share -8.9% [-15%, -4%]
+                                 legacy - default +0.041 [+0.015, +0.068], p 0.0083
+   selection share of the cost, legacy: 87.0% [80%, 93%]
+   selection share of the cost, default: 88.9% [82%, 94%]
+   LCB1 price: legacy 0.021, default 0.022
+   LCB2 price: legacy 0.024, default 0.022
+   beyond the plan, acquisition logei     legacy / default: cost 0.361 / 0.479, search 0.059 / 0.064, selection 0.302 / 0.415, LCB2 gain 0.023 / 0.029
+   beyond the plan, acquisition qnei      legacy / default: cost 0.464 / 0.615, search 0.048 / 0.058, selection 0.416 / 0.557, LCB2 gain 0.004 / 0.035
+   beyond the plan, error_model gaussian  legacy / default: cost 0.385 / 0.524, search 0.053 / 0.065, selection 0.332 / 0.459, LCB2 gain 0.086 / 0.157
+   beyond the plan, error_model bias      legacy / default: cost 0.442 / 0.558, search 0.060 / 0.065, selection 0.382 / 0.493, LCB2 gain -0.006 / -0.042
+   beyond the plan, error_model drift     legacy / default: cost 0.429 / 0.637, search 0.056 / 0.061, selection 0.373 / 0.576, LCB2 gain -0.048 / -0.011
+   beyond the plan, error_model ar1       legacy / default: cost 0.395 / 0.467, search 0.045 / 0.051, selection 0.349 / 0.416, LCB2 gain 0.021 / 0.025
+

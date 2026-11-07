@@ -1,0 +1,16 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_powell,composite,gradient_boosting,gaussian,0,0.248502,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.249662,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.252036,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.253413,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.259485,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.994006,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,0.998646,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,1.008144,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,1.013651,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,1.037939,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,4.970032,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,4.993231,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,5.04072,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,5.068255,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gradient_boosting,gaussian,0,5.189695,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

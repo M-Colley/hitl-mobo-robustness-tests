@@ -1,0 +1,16 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,0.276809,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,0.294535,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,0.295708,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,0.303539,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,0.303636,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,1.107237,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,1.178139,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,1.182833,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,1.214156,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,1.214544,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,5.536185,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,5.890693,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,5.914165,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,6.070781,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gradient_boosting,gaussian,0,6.072722,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

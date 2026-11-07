@@ -1,0 +1,2 @@
+arm,k,n_runs,n_clean_twins,share_short_noisy,mean_looks_noisy,min_looks_noisy,mean_unused_noisy,share_short_clean,mean_looks_clean,min_looks_clean,mean_unused_clean
+output-boba-driftdown-1s-t1,2,400,400,0.0,2.0,2,0.0,0.0,2.0,2,0.0

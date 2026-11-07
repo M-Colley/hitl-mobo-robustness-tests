@@ -1,0 +1,7 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+iso_moving_peaks,composite,random,0.22,3.6,0.0,36.81531860819997,,8,15
+iso_moving_peaks,composite,sobol,0.22,4.066666666666666,0.0,37.47299015355887,,8,15
+iso_moving_peaks,composite,ucb,0.5333333333333333,3.1,0.23817144751912384,35.07456916235819,0.05482520285899725,3,15
+iso_moving_peaks,composite,ei,0.6266666666666667,3.2,0.33165354759504545,36.07791820847747,0.21508387892816508,1,15
+iso_moving_peaks,composite,logei,0.64,3.1666666666666665,0.3021381472805547,34.84815135069171,0.1957984326354051,2,15
+iso_moving_peaks,composite,qnei,0.76,3.8666666666666667,0.42171621012504196,38.18583751921551,0.22477511500584,1,15

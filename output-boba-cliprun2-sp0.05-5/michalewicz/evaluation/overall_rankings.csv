@@ -1,0 +1,3 @@
+dataset,objective,acquisition,mean_rank_normalized,mean_rank_absolute,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_wins,conditions
+michalewicz,value,logei,0.3999999999999999,1.4,0.41157795704862654,270.8029164350877,-0.2672854591947339,1,1
+michalewicz,value,qnei,0.6000000000000001,1.6,0.8552288517345807,268.74257521034383,-0.21793535282720145,0,1

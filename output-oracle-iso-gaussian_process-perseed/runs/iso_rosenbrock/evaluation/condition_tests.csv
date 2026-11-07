@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_rosenbrock,composite,gaussian_process,gaussian,0,0.253558,,5,6,random,2.1,friedman,13.70588235294118,0.017589678991209123,0.5482352941176472,,True,0.07035871596483649,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,1.014231,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,1.014232,,3,6,random,1.5,friedman,14.019607843137257,0.015485343045873273,0.9346405228758171,,True,0.07035871596483649,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,1.014233,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,5.071153,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,5.071159,,2,6,random,1.5,friedman,7.941176470588229,0.15950744315395607,0.7941176470588229,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,5.07116,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_rosenbrock,composite,gaussian_process,gaussian,0,5.071163,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

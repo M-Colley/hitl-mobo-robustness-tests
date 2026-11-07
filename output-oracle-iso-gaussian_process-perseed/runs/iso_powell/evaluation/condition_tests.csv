@@ -1,0 +1,11 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_powell,composite,gaussian_process,gaussian,0,0.276042,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,0.276043,,4,6,random,2.0,friedman,11.470588235294114,0.04280795038199713,0.5735294117647057,,True,0.21403975190998564,False
+iso_powell,composite,gaussian_process,gaussian,0,1.104168,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,1.10417,,3,6,random,1.5,friedman,12.450980392156856,0.029104471932699185,0.8300653594771237,,True,0.21403975190998564,False
+iso_powell,composite,gaussian_process,gaussian,0,1.104173,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,5.520842,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,5.52085,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,5.520851,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,5.520852,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_powell,composite,gaussian_process,gaussian,0,5.520863,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False

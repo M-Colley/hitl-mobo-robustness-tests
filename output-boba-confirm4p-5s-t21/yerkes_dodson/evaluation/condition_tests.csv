@@ -1,0 +1,4 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+yerkes_dodson,value,exact,ar1,20,5.0,,10,2,qnei,1.4,wilcoxon,25.0,0.845703125,,0.001953125,False,0.845703125,False
+yerkes_dodson,value,exact,bias,20,5.0,bias5,10,2,qnei,1.4,wilcoxon,25.0,0.845703125,,0.001953125,False,0.845703125,False
+yerkes_dodson,value,exact,drift,20,5.0,,10,2,qnei,1.4,wilcoxon,25.0,0.845703125,,0.001953125,False,0.845703125,False

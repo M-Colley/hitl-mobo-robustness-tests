@@ -128,7 +128,7 @@ def _expected_training_targets(frame: pd.DataFrame, initial: int = 5) -> list[li
 def test_new_names_are_appended():
     assert sim.INPUT_ERROR_CHOICES == ["none", "slip", "misclick", "missing_mcar", "missing_low"]
     assert sim.LIKELIHOOD_CHOICES == ["gaussian", "student_t", "relevance_pursuit", "student_t_rbf"]
-    assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1"]
+    assert sim.ERROR_MODEL_CHOICES == ["gaussian", "bias", "dropout", "spike", "drift", "ar1", "drift_down"]
     assert sim.ACQUISITION_CHOICES[-3:] == ["ts", "aei", "shiplcb"]
 
 

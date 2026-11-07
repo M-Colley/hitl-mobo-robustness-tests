@@ -1,5 +1,5 @@
 Tie-break of the standard ship rule (best observed rating): first index, as logged, against a uniformly random choice among tied maxima (exact expectation, no seed).
-runs scanned: 238,762 in 63 arm directories; logged final deployed regret reproduced by the first-index rule in 233,543 of 236,172 single-objective runs.
+runs scanned: 241,562 in 68 arm directories; logged final deployed regret reproduced by the first-index rule in 236,343 of 238,972 single-objective runs.
 main sweep noisy runs: 76,800; tied maximum in 407, a tie between designs of different true value in 0.
 main sweep clean runs: 2,400; tied maximum in 336, a tie between designs of different true value in 0.
 main sweep noisy runs with a tied maximum, re-read from their logs: 407; every tied rating exact (equal to the true value within 1e-12) in 407; error onset trial 21: 407; every tied trial before the onset in 407; tied designs of different true value in 0.
@@ -92,7 +92,7 @@ arm contrasts (analyse_boba_adaptations.ARMS, deployed design): first-index rows
   spike-clip-sp0.05-20: re-scored (0 reference and 112 treatment runs move)
   spike-clip-sp0.15-5: re-scored (0 reference and 121 treatment runs move)
   spike-clip-sp0.15-20: re-scored (0 reference and 153 treatment runs move)
-  47 other arms touch no directory with consequential ties and are unchanged
+  53 other arms touch no directory with consequential ties and are unchanged
   rerate-slip:
     first   0.01 sigma, onset 0    cost 0.0247 gain -0.0016 price +0.0084 recovered -6.3% [-82.1%, +21.1%]
     first   0.01 sigma, onset 20   cost 0.0229 gain -0.0008 price +0.0084 recovered -3.5% [-82.1%, +23.6%]

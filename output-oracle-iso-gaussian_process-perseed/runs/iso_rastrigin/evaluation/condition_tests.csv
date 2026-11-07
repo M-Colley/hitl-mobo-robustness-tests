@@ -1,0 +1,14 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.070214,,2,6,random,2.25,friedman,3.615384615384612,0.6060048509918472,0.3615384615384612,,True,0.6565052552411678,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.100083,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.100084,,1,6,logei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.108729,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.280857,,2,6,random,2.5,friedman,2.4576271186440652,0.7828625498857161,0.2457627118644065,,True,0.7828625498857161,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.400334,,1,6,ei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.400335,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,0.434918,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,1.404283,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,1.404284,,1,6,ei,2.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,2.001669,,1,6,qnei,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,2.001676,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False
+iso_rastrigin,composite,gaussian_process,gaussian,0,2.174589,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.491494766449237,False

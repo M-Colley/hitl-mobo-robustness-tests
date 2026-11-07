@@ -1,0 +1,59 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=4
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+   dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_ackley composite gaussian_process    gaussian                 0    0.216385        1               6              ucb  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    0.216386        4               6               ei  friedman   3.235294 0.663762        0.663762               NaN          True    0.161765
+iso_ackley composite gaussian_process    gaussian                 0    0.865541        1               6            logei  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    0.865542        1               6           random  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    0.865543        1               6              ucb  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    0.865544        2               6              ucb  friedman   5.294118 0.381050        0.462089               NaN          True    0.529412
+iso_ackley composite gaussian_process    gaussian                 0    4.327705        1               6           random  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    4.327711        1               6           random  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    4.327713        1               6              ucb  friedman   5.000000 0.415880        0.462089               NaN          True    1.000000
+iso_ackley composite gaussian_process    gaussian                 0    4.327722        2               6           random  friedman   5.294118 0.381050        0.462089               NaN          True    0.529412
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_ackley / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random                 0.305               2.050                            0.000000                          458.808946               4          10
+      sobol                 0.305               3.425                            0.000000                          520.535233               4          10
+        ucb                 0.350               3.925                           -0.219612                          478.294310               4          10
+      logei                 0.595               3.900                            2.435440                          471.046674               1          10
+       qnei                 0.700               3.050                            1.505076                          441.263471               0          10
+

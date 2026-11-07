@@ -1,0 +1,98 @@
+Headline intervals three ways (scripts/checks/headline_intervals.py)
+
+percentile = the paper's landscape bootstrap (2000 resamples of the 20 landscapes);
+t          = estimate +/- t(19, 0.975) x delta-method SE of the ratio of landscape means (SE of the mean for a mean);
+two-way    = landscapes and seeds resampled independently (2000 resamples, the percentile interval's landscape
+             draws), each drawn landscape averaged over the drawn seeds, then the ratio of landscape means.
+Shares and losses in %; gains, increments and prices in units of the achievable improvement (opt_z).
+Every estimate matches its producer's published value to 4 decimals and the paper's rounding, and every
+percentile interval (and sitting_by_magnitude's two published two-way intervals) matches the published one
+to within 4 Monte Carlo SEs; otherwise the script stops.
+
+key                 estimate  percentile          t (19 df)           two-way               w t  w 2w  seed p  percentile verdict change
+----------------------------------------------------------------------------------------------------------------------------------------
+a                      29.7%  [26.6, 32.9]        [26.2, 33.2]        [26.2, 33.4]         1.11  1.15   0.102  excl 0             none
+b1                     41.8%  [34.1, 50.4]        [32.7, 51.0]        [33.6, 50.9]         1.12  1.06   0.158  excl 0, excl 1     none
+b2                     83.1%  [75.2, 89.6]        [75.3, 90.9]        [75.2, 89.9]         1.08  1.02   0.315  excl 0, excl 1     none
+c-lcb1-gain          +0.0270  [+0.0066, +0.0475]  [+0.0044, +0.0495]  [+0.0025, +0.0508]   1.10  1.18   0.730  excl 0             none
+c-lcb1-share           10.3%  [2.6, 18.0]         [2.0, 18.7]         [1.0, 18.8]          1.08  1.15   0.874  excl 0, excl 1     none
+c-lcb1-price          0.0211  [0.0063, 0.0423]    [0.0003, 0.0418]    [0.0050, 0.0442]     1.15  1.09   0.484  excl 0             none
+c-lcb2-gain          +0.0260  [+0.0048, +0.0471]  [+0.0028, +0.0492]  [+0.0006, +0.0521]   1.10  1.22   0.635  excl 0             none
+c-lcb2-share           10.0%  [1.7, 17.3]         [1.4, 18.5]         [0.3, 18.7]          1.09  1.18   0.821  excl 0, excl 1     none
+c-lcb2-price          0.0231  [0.0076, 0.0457]    [0.0014, 0.0448]    [0.0058, 0.0510]     1.14  1.19   0.401  excl 0             none
+d-k2-gain            +0.0303  [+0.0124, +0.0493]  [+0.0104, +0.0502]  [+0.0093, +0.0531]   1.08  1.19   0.861  excl 0             none
+d-k2-share             11.6%  [4.8, 18.1]         [4.4, 18.8]         [3.4, 19.4]          1.09  1.21   0.978  excl 0, excl 1     none
+d-k2-over-lcb1       +0.0034  [-0.0031, +0.0093]  [-0.0036, +0.0103]  [-0.0086, +0.0146]   1.12  1.88   0.317  incl 0             none
+d-k2-price            0.0176  [0.0060, 0.0331]    [0.0022, 0.0329]    [0.0045, 0.0361]     1.13  1.17   0.618  excl 0             none
+d-k16-gain           +0.2271  [+0.1449, +0.3189]  [+0.1317, +0.3226]  [+0.1187, +0.3646]   1.10  1.41   0.003  excl 0             none
+d-k16-share            40.8%  [30.2, 50.0]        [29.9, 51.8]        [26.6, 53.8]         1.10  1.37   0.007  excl 0, excl 1     none
+d-k16-over-lcb1      +0.2492  [+0.1667, +0.3343]  [+0.1535, +0.3449]  [+0.1501, +0.3730]   1.14  1.33   0.008  excl 0             none
+d-k16-over-lcb2      +0.2180  [+0.1459, +0.2925]  [+0.1382, +0.2978]  [+0.1281, +0.3383]   1.09  1.43   0.010  excl 0             none
+d-k16-price           0.0325  [0.0148, 0.0518]    [0.0113, 0.0537]    [0.0137, 0.0545]     1.15  1.10   0.874  excl 0             none
+e-lcb2-recovery        10.1%  [4.8, 15.9]         [4.1, 16.2]         [4.6, 16.3]          1.09  1.05   0.482  excl 0, excl 1     none
+e-lcb2-price          0.0147  [0.0051, 0.0278]    [0.0019, 0.0275]    [0.0048, 0.0284]     1.13  1.04   0.328  excl 0             none
+f-rank-7-11            50.5%  [36.4, 62.6]        [36.2, 64.9]        [34.0, 65.8]         1.09  1.21   0.779  excl 0, excl 1     none
+f-rank-7-11-price     0.0292  [0.0123, 0.0505]    [0.0080, 0.0503]    [0.0111, 0.0523]     1.11  1.08   0.995  excl 0             none
+f-rank-12-16           48.8%  [34.6, 61.9]        [33.5, 64.2]        [33.5, 64.4]         1.12  1.13   0.509  excl 0, excl 1     none
+f-rank-12-16-price    0.0240  [0.0084, 0.0443]    [0.0042, 0.0438]    [0.0075, 0.0467]     1.10  1.09   0.743  excl 0             none
+
+w t, w 2w: width of the t and two-way intervals over the percentile interval's. seed p: permutation test
+of the seed main effect (2000 within-landscape permutations of the seed labels, unadjusted).
+SE ratio crossed: the moment estimate of the SE under crossed landscape and seed effects over the
+landscape-only SE of the t interval; below 1 where the seed mean square falls below the residual one (no
+seed effect). SE ratio pigeonhole: the two-way bootstrap's own SE over that SE; it exceeds the crossed
+ratio because it counts the residual 2.5 (5 seeds) to 2.7 (10 seeds) times (see the module docstring).
+
+Scopes, producers and checks (estimate to 4 decimals; published and paper values; percentile-interval gap
+to the published one in Monte Carlo SEs; crossed-model and pigeonhole SE over the landscape-only SE):
+a: deployed loss, 1 sigma from trial 1. deployed design at the final trial, excess over the clean twin / opt_z; 1 sigma from trial 1; ten model-based acquisitions; gaussian, bias, drift and ar1 pooled; seeds 7-16; 8000 runs, 20 landscapes x 10 seeds.
+    estimate 0.2970; published 0.2970 [26.6, 32.9] (B = 20000), review/bootstrap_coverage.csv (deployed_cost, percentile); paper 29.7% [26.6, 32.9]; gap 0.3 MC SE; SE ratio crossed 1.04, pigeonhole 1.14.
+b1: selection share, 1 sigma from trial 1. selection loss / deployed excess over the clean twin, final trial; 1 sigma from trial 1; ten model-based acquisitions; four processes pooled; seeds 7-16; 8000 runs, 20 landscapes x 10 seeds.
+    estimate 0.4184; published 0.4184 [34.1, 50.4] (B = 2000), regret_decomposition.csv (pooled row); paper 41.8% [34.1, 50.4]; gap 0.2 MC SE; SE ratio crossed 1.01, pigeonhole 1.02.
+b2: selection share, 5 sigma from trial 21. selection loss / deployed excess over the clean twin, final trial; 5 sigma from trial 21; ten model-based acquisitions; four processes pooled; seeds 7-16; 8000 runs, 20 landscapes x 10 seeds.
+    estimate 0.8308; published 0.8308 [75.1, 89.8] (B = 2000), regret_decomposition.csv (pooled row); paper 83.1% [75, 90]; gap 0.3 MC SE; SE ratio crossed 1.00, pigeonhole 1.00.
+c-lcb1-gain: LCB1 gain, 1 sigma from trial 1. LCB1 after 50 trials, gain over the standard process, deployed design / opt_z; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0270; published 0.0270 [+0.0059, +0.0479] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.027 [+0.006, +0.048]; gap 1.4 MC SE; SE ratio crossed 0.91, pigeonhole 1.17.
+c-lcb1-share: LCB1 share of the cost, 1 sigma from trial 1. LCB1 gain / the standard process's cost of error, deployed design; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.1032; published 0.1032 [2.2, 18.1] (B = 2000), review/sitting_by_magnitude_selection.json; paper 10% [2, 18]; gap 1.0 MC SE; SE ratio crossed 0.88, pigeonhole 1.13.
+c-lcb1-price: LCB1 price. LCB1 on the clean twin, (LCB1 - standard) / opt_z, deployed design; LogEI and qNEI; seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0211; published 0.0211 [0.0064, 0.0430] (B = 2000), review/sitting_by_magnitude_selection.json (clean_twin_prices); paper 0.021; gap 1.1 MC SE; SE ratio crossed 0.99, pigeonhole 1.10.
+c-lcb2-gain: LCB2 gain, 1 sigma from trial 1. LCB2 after 50 trials, gain over the standard process, deployed design / opt_z; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0260; published 0.0260 [+0.0040, +0.0462] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.026 [+0.004, +0.046]; gap 0.9 MC SE; SE ratio crossed 0.94, pigeonhole 1.17.
+c-lcb2-share: LCB2 share of the cost, 1 sigma from trial 1. LCB2 gain / the standard process's cost of error, deployed design; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0996; published 0.0996 [1.2, 17.8] (B = 2000), review/sitting_by_magnitude_selection.json; paper 10% [1, 18]; gap 1.2 MC SE; SE ratio crossed 0.90, pigeonhole 1.13.
+c-lcb2-price: LCB2 price. LCB2 on the clean twin, (LCB2 - standard) / opt_z, deployed design; LogEI and qNEI; seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0231; published 0.0231 [0.0075, 0.0460] (B = 2000), review/sitting_by_magnitude_selection.json (clean_twin_prices); paper 0.023; gap 0.4 MC SE; SE ratio crossed 1.01, pigeonhole 1.14.
+d-k2-gain: sitting of 2 gain, 1 sigma from trial 1. sitting of 2 (tournament, LCB1 candidates, rho 1, best look ships) after 48 trials, gain over the standard process, deployed design / opt_z; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0303; published 0.0303 [+0.0125, +0.0496] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.030 [+0.012, +0.050]; gap 0.4 MC SE; published two-way gap 0.3 MC SE; SE ratio crossed 0.87, pigeonhole 1.15.
+d-k2-share: sitting of 2 share of the cost, 1 sigma from trial 1. sitting of 2 (tournament, LCB1 candidates, rho 1, best look ships) after 48 trials, gain / the standard process's cost of error; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.1160; published 0.1160 [4.9, 18.2] (B = 2000), review/sitting_by_magnitude_selection.json; paper 12% [5, 18]; gap 0.4 MC SE; SE ratio crossed 0.83, pigeonhole 1.12.
+d-k2-over-lcb1: sitting of 2 over LCB1, 1 sigma from trial 1. sitting of 2 (tournament, LCB1 candidates, rho 1, best look ships) after 48 trials, paired increment over LCB1 after 50 trials / opt_z; 1 sigma from trial 1; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0034; published 0.0034 [-0.0030, +0.0091] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.003 [-0.003, +0.009]; gap 0.7 MC SE; SE ratio crossed 1.12, pigeonhole 1.75.
+d-k2-price: sitting of 2 price. sitting of 2 on the clean twin, (sitting - standard) / opt_z, deployed design; LogEI and qNEI; seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0176; published 0.0176 [0.0056, 0.0337] (B = 2000), review/sitting_by_magnitude_selection.json (clean_twin_prices); paper 0.018; gap 1.7 MC SE; SE ratio crossed 0.96, pigeonhole 1.16.
+d-k16-gain: sitting of 16 gain, 5 sigma from trial 21. sitting of 16 (tournament, LCB1 candidates, rho 1, best look ships) after 34 trials, gain over the standard process, deployed design / opt_z; 5 sigma from trial 21; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.2271; published 0.2271 [+0.1474, +0.3214] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.227 [+0.147, +0.321]; gap 0.6 MC SE; published two-way gap 3.1 MC SE; SE ratio crossed 1.23, pigeonhole 1.30.
+d-k16-share: sitting of 16 share of the cost, 5 sigma from trial 21. sitting of 16 (tournament, LCB1 candidates, rho 1, best look ships) after 34 trials, gain / the standard process's cost of error; 5 sigma from trial 21; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.4084; published 0.4084 [29.7, 49.9] (B = 2000), review/sitting_by_magnitude_selection.json; paper 41% [30, 50]; gap 1.0 MC SE; SE ratio crossed 1.29, pigeonhole 1.37.
+d-k16-over-lcb1: sitting of 16 over LCB1, 5 sigma from trial 21. sitting of 16 (tournament, LCB1 candidates, rho 1, best look ships) after 34 trials, paired increment over LCB1 after 50 trials / opt_z; 5 sigma from trial 21; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.2492; published 0.2492 [+0.1644, +0.3392] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.249 [+0.164, +0.339]; gap 1.3 MC SE; SE ratio crossed 1.24, pigeonhole 1.30.
+d-k16-over-lcb2: sitting of 16 over LCB2, 5 sigma from trial 21. sitting of 16 (tournament, LCB1 candidates, rho 1, best look ships) after 34 trials, paired increment over LCB2 after 50 trials / opt_z; 5 sigma from trial 21; LogEI and qNEI; four processes pooled; held-out seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.2180; published 0.2180 [+0.1458, +0.2910] (B = 2000), review/sitting_by_magnitude_selection.json; paper +0.218 [+0.146, +0.291]; gap 0.4 MC SE; SE ratio crossed 1.28, pigeonhole 1.39.
+d-k16-price: sitting of 16 price. sitting of 16 on the clean twin, (sitting - standard) / opt_z, deployed design; LogEI and qNEI; seeds 12-16; 800 runs, 20 landscapes x 5 seeds.
+    estimate 0.0325; published 0.0325 [0.0151, 0.0527] (B = 2000), review/sitting_by_magnitude_selection.json (clean_twin_prices); paper 0.033; gap 0.9 MC SE; SE ratio crossed 0.94, pigeonhole 1.06.
+e-lcb2-recovery: cautious rule (LCB2) recovery. LCB2 after 50 trials, gain / the standard process's cost of error, deployed design; gaussian; 0.25, 1 and 5 sigma, both onsets pooled; ten model-based acquisitions; seeds 7-16; 12000 runs, 20 landscapes x 10 seeds.
+    estimate 0.1014; published 0.1014 [4.6, 15.9] (B = 2000), ship_rules_recovery.csv (lcb2, gaussian, pooled_std_ge_0.25); paper 10.1% [4.6, 15.9]; gap 0.7 MC SE; SE ratio crossed 1.00, pigeonhole 1.03.
+e-lcb2-price: cautious rule (LCB2) price. LCB2 on the clean twin, (LCB2 - standard) / opt_z, deployed design; gaussian; 0.25, 1 and 5 sigma, both onsets pooled; ten model-based acquisitions; seeds 7-16; 12000 runs, 20 landscapes x 10 seeds.
+    estimate 0.0147; published 0.0147, ship_rules_recovery.csv (lcb2, gaussian, pooled_std_ge_0.25); paper 0.015; SE ratio crossed 1.00, pigeonhole 1.01.
+f-rank-7-11: rank refit recovery, seeds 7-11. rank refit (ordinal_lcb1), gain / the standard process's cost of error, deployed design; spike arm, 15% of trials spiking at 20 SD (sp0.15-20), 0.25 sigma from trial 1; LogEI and qNEI; seeds 7-11; 200 runs, 20 landscapes x 5 seeds.
+    estimate 0.5052; published 0.5052 [36.1, 62.5] (B = 2000), output-boba-spike/analysis/hitl_remedies/hitl_remedies_recovery.csv (ordinal_lcb1, pooled); paper 51% [36, 63]; gap 0.3 MC SE; SE ratio crossed 0.88, pigeonhole 1.18.
+f-rank-7-11-price: rank refit price, seeds 7-11. rank refit on the clean twin, (refit - standard) / opt_z, deployed design; spike arm, 15% of trials spiking at 20 SD (sp0.15-20), 0.25 sigma from trial 1; LogEI and qNEI; seeds 7-11; 200 runs, 20 landscapes x 5 seeds.
+    estimate 0.0292; published 0.0292, output-boba-spike/analysis/hitl_remedies/hitl_remedies_recovery.csv (ordinal_lcb1, pooled); paper 0.029; SE ratio crossed 0.88, pigeonhole 1.07.
+f-rank-12-16: rank refit recovery, seeds 12-16. rank refit (ordinal_lcb1), gain / the standard process's cost of error, deployed design; spike arm, 15% of trials spiking at 20 SD (sp0.15-20), 0.25 sigma from trial 1; LogEI and qNEI; held-out seeds 12-16; 200 runs, 20 landscapes x 5 seeds.
+    estimate 0.4884; published 0.4884 [33.9, 62.6] (B = 2000), output-boba-spike/analysis/hitl_remedies_heldout/hitl_remedies_recovery.csv (ordinal_lcb1, pooled); paper 49% [34, 63]; gap 1.4 MC SE; SE ratio crossed 0.98, pigeonhole 1.11.
+f-rank-12-16-price: rank refit price, seeds 12-16. rank refit on the clean twin, (refit - standard) / opt_z, deployed design; spike arm, 15% of trials spiking at 20 SD (sp0.15-20), 0.25 sigma from trial 1; LogEI and qNEI; held-out seeds 12-16; 200 runs, 20 landscapes x 5 seeds.
+    estimate 0.0240; published 0.0240, output-boba-spike/analysis/hitl_remedies_heldout/hitl_remedies_recovery.csv (ordinal_lcb1, pooled); paper 0.024; SE ratio crossed 0.97, pigeonhole 1.06.
+
+Conclusions that change against the percentile interval: none.
+Seed main effect at p < 0.05 (unadjusted): d-k16-gain, d-k16-share, d-k16-over-lcb1, d-k16-over-lcb2.

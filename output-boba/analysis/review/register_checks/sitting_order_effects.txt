@@ -1,0 +1,207 @@
+Order effects between the designs of a final comparative sitting (a post-hoc sensitivity analysis).
+
+POST HOC: the design was fixed before any result of this check, after the sitting's own results were
+known. Outside every Holm family of the paper; each adjusted p below is Holm over the 20 (cell, effect, order) rows of this analysis, per seed set and estimand.
+
+Control: every one of 3200 noisy runs (and its clean twin) reproduces the published sitting (tournament_k2_lcb_rho1_look of end_of_study_ksweep, tournament_k16_lcb_rho1_look of end_of_study_kwide) bit for bit, in the regret of the noisy run and of its clean twin and the standard process of both: (1) against the replay's own per-stem outputs (per_run/output-boba/<landscape>/<stem>.csv), largest difference 0.0e+00; (2) against end_of_study_per_run.csv.gz once the reproduced values take the replay's own CSV round trip (load_per_run re-reads the per-stem files with pandas' default float parser, which is not round-trip exact), largest difference 0.0e+00. Without that round trip 1812 runs differ from the table by at most 7.1e-15 (7.5e-13 relative), the parser's rounding of the published table, not a different sitting. 'none' under a random order ships the same regret as under rank order in every run and clean twin.
+Inputs: 4000 rows (3200 noisy runs, 800 clean-twin prefixes); GP fallbacks 0; sittings short of k looks: k = 2: 0.0%, k = 16: 1.3%
+
+Units: shares of the achievable improvement opt_z, deployed design at T = 50. gain = standard process less the sitting with the effect (noisy run); price = the sitting with the effect less the standard process on the clean twin; 'over published sitting' = regret of the published (effect-free) sitting less the regret with the effect, per run (negative: the effect costs the sitting); 'over LCB1' = regret of LCB1 after all 50 trials less the regret with the effect. [95% landscape bootstrap, 2,000 resamples; the landscapes share their random numbers, so it treats correlated clusters as independent]; gain/ahd = landscapes of 20 with a positive value; p = two-sided Wilcoxon over the 20 landscape means; Holm = the 20 (cell, effect, order) rows of this analysis, per seed set and estimand; share of cost = gain over the standard process's cost of error, a ratio of landscape means, withheld where that cost is below 0.01 or negative on a landscape; moved = share of noisy runs whose shipped design differs from the published sitting's.
+
+=== 1sigma from trial 1, sitting of k = 2; held-out seeds 12-16; LogEI and qNEI, four processes pooled; 800 noisy runs on 20 landscapes ===
+cost of error of the standard process 0.261 of opt_z; LCB1 after 50 trials gains +0.027 at a price of 0.021
+effect         order           gain over standard gain        share of cost                    price     over published sitting ahd     p  Holm                  over LCB1 ahd     p  Holm  moved
+none           -          +0.030 [+0.012, +0.049]   14     +12% [+5%, +18%]  +0.018 [+0.006, +0.033]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.003 [-0.003, +0.009]  11 0.388   nan   0.0%
+anchoring 0.25 random     +0.030 [+0.013, +0.048]   14     +12% [+5%, +18%]  +0.018 [+0.006, +0.033]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.003 [-0.003, +0.009]  11 0.388 1.000   0.0%
+anchoring 0.25 rank       +0.030 [+0.012, +0.049]   14     +12% [+5%, +18%]  +0.018 [+0.005, +0.033]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.003 [-0.003, +0.010]  11 0.388 1.000   0.0%
+anchoring 0.5  random     +0.030 [+0.013, +0.049]   14     +12% [+5%, +19%]  +0.018 [+0.005, +0.033]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.003 [-0.003, +0.009]  11 0.388 1.000   0.0%
+anchoring 0.5  rank       +0.030 [+0.012, +0.049]   14     +12% [+5%, +18%]  +0.018 [+0.006, +0.033]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.003 [-0.004, +0.009]  11 0.388 1.000   0.0%
+contrast 0.25  random     +0.033 [+0.016, +0.053]   14     +13% [+6%, +20%]  +0.018 [+0.006, +0.034]    +0.003 [+0.001, +0.006]   8 0.012 0.082    +0.006 [+0.001, +0.012]  13 0.040 0.400   1.4%
+contrast 0.25  rank       +0.033 [+0.016, +0.052]   14     +13% [+6%, +20%]  +0.018 [+0.006, +0.035]    +0.003 [+0.001, +0.006]   8 0.012 0.082    +0.006 [+0.001, +0.011]  13 0.040 0.400   1.4%
+contrast 0.5   random     +0.034 [+0.016, +0.052]   14     +13% [+7%, +20%]  +0.018 [+0.006, +0.033]    +0.004 [+0.002, +0.007]  10 0.005 0.046    +0.007 [+0.002, +0.013]  13 0.040 0.400   2.6%
+contrast 0.5   rank       +0.034 [+0.016, +0.053]   14     +13% [+6%, +20%]  +0.018 [+0.006, +0.034]    +0.004 [+0.002, +0.007]  10 0.005 0.046    +0.007 [+0.002, +0.013]  13 0.040 0.400   2.6%
+fatigue 1      random     +0.027 [+0.008, +0.045]   14     +10% [+3%, +17%]  +0.018 [+0.006, +0.033]    -0.004 [-0.006, -0.002]   1 <.001 0.007    -0.000 [-0.006, +0.005]  11 0.812 1.000   8.0%
+fatigue 1      rank       +0.029 [+0.009, +0.049]   14     +11% [+4%, +18%]  +0.018 [+0.006, +0.034]    -0.001 [-0.005, +0.002]   8 0.409 0.818    +0.002 [-0.004, +0.007]  13 0.330 1.000   9.4%
+
+=== 5sigma from trial 21, sitting of k = 16; held-out seeds 12-16; LogEI and qNEI, four processes pooled; 800 noisy runs on 20 landscapes ===
+cost of error of the standard process 0.556 of opt_z; LCB1 after 50 trials gains -0.022 at a price of 0.021
+effect         order           gain over standard gain        share of cost                    price     over published sitting ahd     p  Holm                  over LCB1 ahd     p  Holm  moved
+none           -          +0.227 [+0.144, +0.319]   19    +41% [+30%, +50%]  +0.033 [+0.015, +0.053]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.249 [+0.167, +0.337]  18 <.001   nan   0.0%
+anchoring 0.25 random     +0.202 [+0.134, +0.277]   18    +36% [+28%, +44%]  +0.039 [+0.022, +0.059]    -0.025 [-0.046, -0.007]   6 0.048 0.242    +0.224 [+0.152, +0.296]  18 <.001 <.001  25.5%
+anchoring 0.25 rank       +0.230 [+0.152, +0.328]   19    +41% [+31%, +51%]  +0.034 [+0.015, +0.054]    +0.002 [-0.014, +0.017]  13 0.154 0.461    +0.252 [+0.171, +0.345]  19 <.001 <.001  23.1%
+anchoring 0.5  random     +0.201 [+0.134, +0.271]   17    +36% [+28%, +43%]  +0.057 [+0.034, +0.082]    -0.027 [-0.061, -0.000]   8 0.105 0.422    +0.223 [+0.152, +0.290]  17 <.001 <.001  48.1%
+anchoring 0.5  rank       +0.215 [+0.139, +0.307]   20    +39% [+28%, +48%]  +0.035 [+0.017, +0.057]    -0.013 [-0.038, +0.007]  11 0.756 0.818    +0.237 [+0.159, +0.328]  19 <.001 <.001  43.4%
+contrast 0.25  random     +0.242 [+0.160, +0.335]   20    +44% [+33%, +52%]  +0.041 [+0.024, +0.060]    +0.015 [+0.009, +0.021]  16 <.001 0.005    +0.264 [+0.183, +0.350]  20 <.001 <.001   7.1%
+contrast 0.25  rank       +0.235 [+0.153, +0.326]   19    +42% [+32%, +51%]  +0.033 [+0.016, +0.054]    +0.008 [+0.004, +0.012]  14 0.004 0.036    +0.257 [+0.175, +0.343]  19 <.001 <.001   6.6%
+contrast 0.5   random     +0.267 [+0.187, +0.357]   20    +48% [+39%, +56%]  +0.046 [+0.029, +0.065]    +0.040 [+0.028, +0.052]  19 <.001 <.001    +0.289 [+0.210, +0.370]  20 <.001 <.001  15.5%
+contrast 0.5   rank       +0.250 [+0.171, +0.341]   20    +45% [+35%, +53%]  +0.035 [+0.016, +0.057]    +0.023 [+0.013, +0.034]  17 <.001 <.001    +0.272 [+0.183, +0.365]  18 <.001 <.001  12.5%
+fatigue 1      random     +0.174 [+0.092, +0.270]   16    +31% [+19%, +41%]  +0.033 [+0.014, +0.053]    -0.053 [-0.074, -0.033]   2 <.001 <.001    +0.196 [+0.110, +0.286]  16 <.001 0.005  29.8%
+fatigue 1      rank       +0.174 [+0.090, +0.269]   16    +31% [+17%, +42%]  +0.033 [+0.014, +0.053]    -0.054 [-0.083, -0.027]   2 <.001 0.001    +0.196 [+0.105, +0.291]  16 <.001 0.008  27.4%
+
+=== 1sigma from trial 1, sitting of k = 2; seeds 7-16; LogEI and qNEI, four processes pooled; 1600 noisy runs on 20 landscapes ===
+cost of error of the standard process 0.250 of opt_z; LCB1 after 50 trials gains +0.019 at a price of 0.022
+effect         order           gain over standard gain        share of cost                    price     over published sitting ahd     p  Holm                  over LCB1 ahd     p  Holm  moved
+none           -          +0.026 [+0.012, +0.039]   14     +10% [+5%, +15%]  +0.015 [+0.005, +0.029]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.007 [-0.000, +0.015]  12 0.154   nan   0.0%
+anchoring 0.25 random     +0.026 [+0.013, +0.038]   14     +10% [+5%, +15%]  +0.015 [+0.005, +0.029]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.007 [-0.000, +0.014]  12 0.154 0.922   0.0%
+anchoring 0.25 rank       +0.026 [+0.013, +0.039]   14     +10% [+5%, +15%]  +0.015 [+0.005, +0.029]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.007 [+0.000, +0.014]  12 0.154 0.922   0.0%
+anchoring 0.5  random     +0.026 [+0.013, +0.039]   14     +10% [+5%, +16%]  +0.015 [+0.005, +0.028]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.007 [-0.000, +0.014]  12 0.154 0.922   0.0%
+anchoring 0.5  rank       +0.026 [+0.012, +0.038]   14     +10% [+5%, +15%]  +0.015 [+0.005, +0.029]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.007 [-0.000, +0.014]  12 0.154 0.922   0.0%
+contrast 0.25  random     +0.028 [+0.016, +0.042]   14     +11% [+6%, +17%]  +0.015 [+0.005, +0.030]    +0.002 [+0.001, +0.004]  14 <.001 0.008    +0.009 [+0.003, +0.017]  14 0.040 0.320   1.8%
+contrast 0.25  rank       +0.028 [+0.015, +0.042]   14     +11% [+6%, +17%]  +0.015 [+0.005, +0.030]    +0.002 [+0.001, +0.004]  14 <.001 0.008    +0.009 [+0.003, +0.017]  14 0.040 0.320   1.8%
+contrast 0.5   random     +0.029 [+0.016, +0.042]   14     +12% [+7%, +17%]  +0.015 [+0.005, +0.029]    +0.004 [+0.002, +0.005]  17 <.001 0.003    +0.010 [+0.003, +0.018]  14 0.027 0.266   2.9%
+contrast 0.5   rank       +0.029 [+0.016, +0.042]   14     +12% [+6%, +17%]  +0.015 [+0.005, +0.030]    +0.004 [+0.002, +0.006]  17 <.001 0.003    +0.010 [+0.003, +0.018]  14 0.027 0.266   2.9%
+fatigue 1      random     +0.022 [+0.009, +0.035]   14      +9% [+3%, +14%]  +0.015 [+0.005, +0.029]    -0.004 [-0.006, -0.002]   3 0.002 0.014    +0.003 [-0.004, +0.011]  12 0.546 0.922   9.5%
+fatigue 1      rank       +0.023 [+0.008, +0.037]   14      +9% [+3%, +15%]  +0.015 [+0.005, +0.030]    -0.002 [-0.005, -0.000]   7 0.105 0.422    +0.004 [-0.003, +0.012]  13 0.245 0.922   8.8%
+
+=== 5sigma from trial 21, sitting of k = 16; seeds 7-16; LogEI and qNEI, four processes pooled; 1600 noisy runs on 20 landscapes ===
+cost of error of the standard process 0.547 of opt_z; LCB1 after 50 trials gains -0.001 at a price of 0.022
+effect         order           gain over standard gain        share of cost                    price     over published sitting ahd     p  Holm                  over LCB1 ahd     p  Holm  moved
+none           -          +0.226 [+0.157, +0.298]   20    +41% [+33%, +49%]  +0.028 [+0.015, +0.045]    +0.000 [+0.000, +0.000]   0   nan   nan    +0.227 [+0.165, +0.291]  19 <.001   nan   0.0%
+anchoring 0.25 random     +0.214 [+0.154, +0.275]   20    +39% [+32%, +45%]  +0.037 [+0.023, +0.053]    -0.012 [-0.022, -0.002]   7 0.083 0.413    +0.215 [+0.157, +0.270]  19 <.001 <.001  24.1%
+anchoring 0.25 rank       +0.226 [+0.164, +0.296]   20    +41% [+33%, +48%]  +0.029 [+0.015, +0.045]    -0.000 [-0.011, +0.009]  11 0.674 1.000    +0.227 [+0.166, +0.288]  19 <.001 <.001  22.6%
+anchoring 0.5  random     +0.215 [+0.152, +0.281]   19    +39% [+32%, +46%]  +0.053 [+0.036, +0.072]    -0.011 [-0.030, +0.004]   9 0.546 1.000    +0.216 [+0.153, +0.273]  17 <.001 <.001  44.8%
+anchoring 0.5  rank       +0.211 [+0.150, +0.279]   20    +39% [+31%, +46%]  +0.031 [+0.016, +0.047]    -0.014 [-0.033, +0.001]   9 0.216 0.649    +0.212 [+0.152, +0.272]  19 <.001 <.001  42.4%
+contrast 0.25  random     +0.244 [+0.178, +0.316]   20    +45% [+36%, +52%]  +0.036 [+0.022, +0.052]    +0.019 [+0.013, +0.025]  19 <.001 <.001    +0.246 [+0.183, +0.308]  20 <.001 <.001   6.8%
+contrast 0.25  rank       +0.237 [+0.169, +0.312]   20    +43% [+35%, +50%]  +0.029 [+0.015, +0.046]    +0.011 [+0.006, +0.017]  17 <.001 0.004    +0.238 [+0.176, +0.302]  20 <.001 <.001   6.5%
+contrast 0.5   random     +0.262 [+0.196, +0.331]   20    +48% [+40%, +54%]  +0.041 [+0.027, +0.057]    +0.036 [+0.025, +0.048]  19 <.001 <.001    +0.263 [+0.195, +0.326]  20 <.001 <.001  14.3%
+contrast 0.5   rank       +0.250 [+0.184, +0.320]   20    +46% [+37%, +52%]  +0.032 [+0.016, +0.048]    +0.024 [+0.015, +0.036]  20 <.001 <.001    +0.251 [+0.182, +0.320]  20 <.001 <.001  11.6%
+fatigue 1      random     +0.182 [+0.116, +0.252]   17    +33% [+24%, +41%]  +0.028 [+0.014, +0.045]    -0.043 [-0.058, -0.030]   1 <.001 <.001    +0.184 [+0.119, +0.247]  16 <.001 <.001  29.2%
+fatigue 1      rank       +0.186 [+0.114, +0.264]   16    +34% [+22%, +43%]  +0.028 [+0.015, +0.045]    -0.039 [-0.058, -0.022]   1 <.001 <.001    +0.188 [+0.118, +0.262]  16 <.001 0.002  25.3%
+
+By error process, held-out seeds 12-16 (landscape means, then the mean over landscapes; no intervals):
+
+1sigma_from_trial_1, gain over the standard process:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.042  0.047  0.021  0.012
+anchoring 0.25 random     0.042  0.047  0.021  0.012
+anchoring 0.25 rank       0.042  0.047  0.021  0.012
+anchoring 0.5 random      0.042  0.047  0.021  0.012
+anchoring 0.5 rank        0.042  0.047  0.021  0.012
+contrast 0.25 random      0.043  0.055  0.021  0.014
+contrast 0.25 rank        0.043  0.055  0.021  0.014
+contrast 0.5 random       0.045  0.056  0.022  0.014
+contrast 0.5 rank         0.045  0.056  0.022  0.014
+fatigue 1 random          0.040  0.047  0.015  0.005
+fatigue 1 rank            0.040  0.050  0.016  0.009
+
+1sigma_from_trial_1, increment over the published sitting:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.000  0.000  0.000  0.000
+anchoring 0.25 random     0.000  0.000  0.000  0.000
+anchoring 0.25 rank       0.000  0.000  0.000  0.000
+anchoring 0.5 random      0.000  0.000  0.000  0.000
+anchoring 0.5 rank        0.000  0.000  0.000  0.000
+contrast 0.25 random      0.001  0.008  0.000  0.003
+contrast 0.25 rank        0.001  0.008  0.000  0.003
+contrast 0.5 random       0.003  0.010  0.001  0.003
+contrast 0.5 rank         0.003  0.010  0.001  0.003
+fatigue 1 random         -0.002  0.000 -0.006 -0.007
+fatigue 1 rank           -0.002  0.003 -0.004 -0.002
+
+1sigma_from_trial_1, increment over LCB1:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.008 -0.000  0.007 -0.001
+anchoring 0.25 random     0.008 -0.000  0.007 -0.001
+anchoring 0.25 rank       0.008 -0.000  0.007 -0.001
+anchoring 0.5 random      0.008 -0.000  0.007 -0.001
+anchoring 0.5 rank        0.008 -0.000  0.007 -0.001
+contrast 0.25 random      0.009  0.008  0.007  0.002
+contrast 0.25 rank        0.009  0.008  0.007  0.002
+contrast 0.5 random       0.010  0.010  0.008  0.002
+contrast 0.5 rank         0.010  0.010  0.008  0.002
+fatigue 1 random          0.006  0.000  0.001 -0.008
+fatigue 1 rank            0.006  0.003  0.003 -0.003
+
+5sigma_from_trial_21, gain over the standard process:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.210  0.109  0.346  0.244
+anchoring 0.25 random     0.187  0.055  0.332  0.235
+anchoring 0.25 rank       0.217  0.105  0.363  0.233
+anchoring 0.5 random      0.203  0.049  0.319  0.232
+anchoring 0.5 rank        0.194  0.085  0.356  0.222
+contrast 0.25 random      0.227  0.121  0.371  0.249
+contrast 0.25 rank        0.223  0.115  0.354  0.247
+contrast 0.5 random       0.262  0.141  0.379  0.286
+contrast 0.5 rank         0.245  0.126  0.365  0.263
+fatigue 1 random          0.196  0.034  0.270  0.196
+fatigue 1 rank            0.147  0.078  0.287  0.182
+
+5sigma_from_trial_21, increment over the published sitting:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.000  0.000  0.000  0.000
+anchoring 0.25 random    -0.023 -0.054 -0.013 -0.009
+anchoring 0.25 rank       0.007 -0.004  0.018 -0.011
+anchoring 0.5 random     -0.007 -0.061 -0.026 -0.012
+anchoring 0.5 rank       -0.016 -0.024  0.011 -0.022
+contrast 0.25 random      0.016  0.012  0.026  0.006
+contrast 0.25 rank        0.013  0.006  0.009  0.004
+contrast 0.5 random       0.052  0.032  0.033  0.043
+contrast 0.5 rank         0.034  0.017  0.019  0.020
+fatigue 1 random         -0.014 -0.075 -0.075 -0.048
+fatigue 1 rank           -0.063 -0.031 -0.058 -0.062
+
+5sigma_from_trial_21, increment over LCB1:
+error_model            gaussian   bias  drift    ar1
+row                                                 
+none                      0.097  0.224  0.425  0.250
+anchoring 0.25 random     0.074  0.170  0.412  0.241
+anchoring 0.25 rank       0.104  0.220  0.443  0.240
+anchoring 0.5 random      0.090  0.164  0.399  0.238
+anchoring 0.5 rank        0.081  0.201  0.436  0.229
+contrast 0.25 random      0.113  0.236  0.451  0.256
+contrast 0.25 rank        0.110  0.230  0.434  0.254
+contrast 0.5 random       0.149  0.256  0.458  0.293
+contrast 0.5 rank         0.131  0.241  0.444  0.270
+fatigue 1 random          0.083  0.149  0.350  0.202
+fatigue 1 rank            0.034  0.193  0.367  0.189
+
+Price of each effect over the published sitting's price (clean twins, opt_z units; the clean rater is exact, so only anchoring and contrast can move it), and the share of clean twins whose shipped design moves:
+  seeds 12-16  1sigma_from_trial_1    anchoring 0.25  random  +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1    anchoring 0.25  rank    +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1    anchoring 0.5   random  +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1    anchoring 0.5   rank    +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1     contrast 0.25  random  +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1     contrast 0.25  rank    +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1     contrast 0.5   random  +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1     contrast 0.5   rank    +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1      fatigue 1     random  +0.0000   moved 0.0%
+  seeds 12-16  1sigma_from_trial_1      fatigue 1     rank    +0.0000   moved 0.0%
+  seeds 12-16  5sigma_from_trial_21   anchoring 0.25  random  +0.0067   moved 44.5%
+  seeds 12-16  5sigma_from_trial_21   anchoring 0.25  rank    +0.0012   moved 13.0%
+  seeds 12-16  5sigma_from_trial_21   anchoring 0.5   random  +0.0241   moved 65.5%
+  seeds 12-16  5sigma_from_trial_21   anchoring 0.5   rank    +0.0026   moved 19.5%
+  seeds 12-16  5sigma_from_trial_21    contrast 0.25  random  +0.0085   moved 44.5%
+  seeds 12-16  5sigma_from_trial_21    contrast 0.25  rank    +0.0008   moved 12.0%
+  seeds 12-16  5sigma_from_trial_21    contrast 0.5   random  +0.0135   moved 55.0%
+  seeds 12-16  5sigma_from_trial_21    contrast 0.5   rank    +0.0028   moved 19.0%
+  seeds 12-16  5sigma_from_trial_21     fatigue 1     random  +0.0000   moved 0.0%
+  seeds 12-16  5sigma_from_trial_21     fatigue 1     rank    +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1    anchoring 0.25  random  +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1    anchoring 0.25  rank    +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1    anchoring 0.5   random  +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1    anchoring 0.5   rank    +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1     contrast 0.25  random  +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1     contrast 0.25  rank    +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1     contrast 0.5   random  +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1     contrast 0.5   rank    +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1      fatigue 1     random  +0.0000   moved 0.0%
+  seeds 7-16   1sigma_from_trial_1      fatigue 1     rank    +0.0000   moved 0.0%
+  seeds 7-16   5sigma_from_trial_21   anchoring 0.25  random  +0.0085   moved 47.2%
+  seeds 7-16   5sigma_from_trial_21   anchoring 0.25  rank    +0.0008   moved 11.8%
+  seeds 7-16   5sigma_from_trial_21   anchoring 0.5   random  +0.0246   moved 65.2%
+  seeds 7-16   5sigma_from_trial_21   anchoring 0.5   rank    +0.0021   moved 17.0%
+  seeds 7-16   5sigma_from_trial_21    contrast 0.25  random  +0.0076   moved 43.5%
+  seeds 7-16   5sigma_from_trial_21    contrast 0.25  rank    +0.0007   moved 12.5%
+  seeds 7-16   5sigma_from_trial_21    contrast 0.5   random  +0.0127   moved 53.0%
+  seeds 7-16   5sigma_from_trial_21    contrast 0.5   rank    +0.0032   moved 20.8%
+  seeds 7-16   5sigma_from_trial_21     fatigue 1     random  +0.0000   moved 0.0%
+  seeds 7-16   5sigma_from_trial_21     fatigue 1     rank    +0.0000   moved 0.0%
+
+Structural notes (algebra, not findings). With two designs, anchoring cannot reverse the comparison: y_1 = (1 - a)(t_1 + e_1) + a y_0 exceeds y_0 exactly when t_1 + e_1 does, so the sitting of two is unchanged by it in every run. With two designs, contrast ships the second design when (1 + c)(t_1 - t_0) > e_0 - e_1 in either order: it scales the true difference by 1 + c, so as specified (on the true values, not on the previous rating) it can only sharpen a comparison of two. With more designs it also favours a design shown just after a poor one, which is what its price on the clean twins measures. Fatigue scales only the look error, so it is inert on a clean twin and its price is the published sitting's.
+
+Wrote output-boba/analysis/review/sitting_order_effects_per_run.csv.gz, output-boba/analysis/review/sitting_order_effects.csv, output-boba/analysis/review/sitting_order_effects_by_process.csv

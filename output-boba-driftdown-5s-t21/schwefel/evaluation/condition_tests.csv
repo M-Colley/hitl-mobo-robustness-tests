@@ -1,0 +1,2 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+schwefel,value,exact,drift_down,20,5.0,,10,2,qnei,1.45,wilcoxon,20.0,0.8203125,,0.00390625,False,0.8203125,False

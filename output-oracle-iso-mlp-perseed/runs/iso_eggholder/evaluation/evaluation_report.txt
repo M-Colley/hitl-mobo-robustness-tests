@@ -1,0 +1,64 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=1
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+      dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_eggholder composite          mlp    gaussian                 0    0.058231        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.072161        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.078124        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.083816        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.084069        1               6              ucb  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.232924        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.288645        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.312495        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.335265        1               6              ucb  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    0.336277        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    1.164622        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    1.443223        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    1.562475        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    1.676323        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite          mlp    gaussian                 0    1.681384        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_eggholder / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.246667            4.466667                            0.000000                           11.178703               7          15
+      sobol              0.246667            5.166667                            0.000000                           12.948441               7          15
+       qnei              0.533333            2.000000                            0.059310                            7.466868               2          15
+        ucb              0.613333            3.066667                            0.074762                            8.627813               2          15
+         ei              0.653333            3.100000                            0.074593                            8.437136               3          15
+

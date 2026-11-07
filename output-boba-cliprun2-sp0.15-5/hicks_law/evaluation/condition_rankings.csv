@@ -1,0 +1,3 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+hicks_law,value,exact,spike,0,0.25,sp0.15-5_clip-run2,logei,5,2,1.4,0.3999999999999999,1.4,18.061114334623564,0.005585038574540846,0.3685941700943586,44.41985013739672,-0.5395179440383273,True
+hicks_law,value,exact,spike,0,0.25,sp0.15-5_clip-run2,qnei,5,2,1.6,0.6000000000000001,1.6,11.657863332790667,6.3441680644495335,0.23791557822021775,38.041164441986325,-2.2441555400201034,False

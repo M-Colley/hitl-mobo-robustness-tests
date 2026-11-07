@@ -1,0 +1,7 @@
+arm,procedure,family,k,error_model,scope,jitter_std,jitter_iteration,n_runs,n_landscapes,claim_rate,claim_rate_lo,claim_rate_hi,false_claim_rate,false_claim_rate_lo,false_claim_rate_hi,false_discovery_share,false_discovery_share_lo,false_discovery_share_hi,power,power_lo,power_hi,size,size_lo,size_hi,truly_better_share,truly_better_share_lo,truly_better_share_hi,clean_claim_rate
+output-boba-confirm4p-5s-t21,standard,standard,,ar1,cell,5.0,20.0,400,20,1.0,1.0,1.0,0.455,0.3625,0.5475,0.455,0.3625,0.5475,1.0,1.0,1.0,1.0,1.0,1.0,0.545,0.4525,0.6375,0.995
+output-boba-confirm4p-5s-t21,standard,standard,,ar1,pooled,,,400,20,1.0,1.0,1.0,0.455,0.3625,0.5475624999999996,0.455,0.3625,0.5475624999999996,1.0,1.0,1.0,1.0,1.0,1.0,0.545,0.4524375,0.6375,0.995
+output-boba-confirm4p-5s-t21,standard,standard,,bias,cell,5.0,20.0,400,20,1.0,1.0,1.0,0.5375,0.4325,0.635,0.5375,0.4325,0.635,1.0,1.0,1.0,1.0,1.0,1.0,0.4625,0.365,0.5675,0.995
+output-boba-confirm4p-5s-t21,standard,standard,,bias,pooled,,,400,20,1.0,1.0,1.0,0.5375,0.4375,0.6425,0.5375,0.4375,0.6425,1.0,1.0,1.0,1.0,1.0,1.0,0.4625,0.3575,0.5625,0.995
+output-boba-confirm4p-5s-t21,standard,standard,,drift,cell,5.0,20.0,400,20,1.0,1.0,1.0,0.55,0.445,0.6475,0.55,0.445,0.6475,1.0,1.0,1.0,1.0,1.0,1.0,0.45,0.3525,0.555,0.995
+output-boba-confirm4p-5s-t21,standard,standard,,drift,pooled,,,400,20,1.0,1.0,1.0,0.55,0.45,0.6525,0.55,0.45,0.6525,1.0,1.0,1.0,1.0,1.0,1.0,0.45,0.3475,0.55,0.995

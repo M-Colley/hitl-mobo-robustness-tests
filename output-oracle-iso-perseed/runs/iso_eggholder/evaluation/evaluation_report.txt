@@ -1,0 +1,64 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=1
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+      dataset objective oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_eggholder composite  extra_trees    gaussian                 0    0.194734        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.195499        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.196311        1               6              ucb  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.198348        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.199605        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.778935        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.781998        1               6            logei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.785246        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.793392        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    0.798419        1               6              ucb  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    3.894675        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    3.909988        1               6           random  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    3.926228        1               6               ei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    3.966960        1               6             qnei  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+iso_eggholder composite  extra_trees    gaussian                 0    3.992096        1               6              ucb  friedman        5.0  0.41588         0.41588               NaN          True         1.0
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_eggholder / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+         ei              0.420000            3.133333                            0.091542                           57.537702               5          15
+     random              0.473333            4.533333                            0.000000                           66.645971               3          15
+      sobol              0.473333            4.133333                            0.000000                           64.353056               3          15
+      logei              0.486667            3.300000                            0.025887                           59.820095               5          15
+       qnei              0.573333            3.233333                           -0.014089                           56.162770               3          15
+

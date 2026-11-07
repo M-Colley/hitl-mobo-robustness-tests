@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,metric,n_pairs,mean_diff,median_diff,std_diff,cohens_dz,ci95_low,ci95_high,dz_ci95_low,dz_ci95_high,t_stat,p_value_t,wilcoxon_stat,p_value_wilcoxon,p_value_t_fdr_bh,p_value_wilcoxon_fdr_bh
+weber_fechner,value,exact,ar1,20,5.0,,logei,auc_simple_regret_excess_true,10,-0.005795323516038664,0.0,0.018326422088217532,-0.3162277660168379,-0.018905256118578406,0.007314609086501078,,,-1.0,0.3434363961379136,0.0,1.0,0.3434363961379136,1.0
+weber_fechner,value,exact,ar1,20,5.0,,qnei,auc_simple_regret_excess_true,10,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,bias,20,5.0,bias5,logei,auc_simple_regret_excess_true,10,0.13402886337842546,0.0,0.4238364804793546,0.31622776601683794,-0.1691654899347817,0.4372232166916326,-0.3282592818098966,0.9443202569417117,1.0,0.3434363961379136,0.0,1.0,0.3434363961379136,1.0
+weber_fechner,value,exact,bias,20,5.0,bias5,qnei,auc_simple_regret_excess_true,10,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,drift,20,5.0,,logei,auc_simple_regret_excess_true,10,0.13402886337842546,0.0,0.4238364804793546,0.31622776601683794,-0.1691654899347817,0.4372232166916326,-0.3282592818098966,0.9443202569417117,1.0,0.3434363961379136,0.0,1.0,0.3434363961379136,1.0
+weber_fechner,value,exact,drift,20,5.0,,qnei,auc_simple_regret_excess_true,10,0.0,0.0,0.0,,,,,,,,,,,
+weber_fechner,value,exact,gaussian,20,5.0,,logei,auc_simple_regret_excess_true,10,0.02159230937688612,0.0,0.06828087757397121,0.3162277660168379,-0.027252887941391666,0.07043750669516391,-0.3282592818098969,0.9443202569417117,1.0,0.3434363961379136,0.0,1.0,0.3434363961379136,1.0
+weber_fechner,value,exact,gaussian,20,5.0,,qnei,auc_simple_regret_excess_true,10,0.0,0.0,0.0,,,,,,,,,,,

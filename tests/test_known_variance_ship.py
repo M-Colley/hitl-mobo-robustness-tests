@@ -182,10 +182,10 @@ def test_every_level_reaches_the_refit_with_its_own_vector(toy_arm, monkeypatch)
     learned_fits, picks_calls = [], []
     real_fit, real_picks = rs.fit_loop_gp, kvs.posterior_picks
 
-    def fit_spy(X, y, lo, hi, yvar=None, seed=0):
+    def fit_spy(X, y, lo, hi, yvar=None, seed=0, gp_prior="default"):
         if yvar is None:
             learned_fits.append(len(y))
-        return real_fit(X, y, lo, hi, yvar=yvar, seed=seed)
+        return real_fit(X, y, lo, hi, yvar=yvar, seed=seed, gp_prior=gp_prior)
 
     def picks_spy(X, y, lo, hi, yvar, seed, n_cand=None):
         picks_calls.append((len(y), n_cand, np.asarray(yvar, float).copy()))

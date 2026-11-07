@@ -273,7 +273,26 @@ def fidelity_matched(per: dict[tuple[str, str, str], pd.DataFrame], unit: str, f
                   f"median {np.median(b.frac_fitted / b.frac_exact):.3f}, lower {int((b.frac_fitted < b.frac_exact).sum())}/{len(b)}")
 
 
-def main() -> None:
+def main(roots: dict[str, Path] | None = None, selection_roots: dict[str, Path] | None = None) -> None:
+    """``roots`` maps each family label of ROOTS, in order, to the directory that
+    holds its manifest.csv and analysis files (default ROOTS); ``selection_roots``
+    to the arm whose selection/ gives the grouped CV R2 (default: roots).
+    scripts/checks/oracle_perseed.py passes the per-seed arms, whose oracles and
+    selection files are the published arms'. Every helper here reads ROOTS, so
+    it is set for the call and restored after it."""
+    global ROOTS
+    saved = ROOTS
+    if roots is not None:
+        if list(roots) != list(saved):
+            raise ValueError(f"roots must name the families {list(saved)} in that order")
+        ROOTS = dict(roots)
+    try:
+        _main(selection_roots if selection_roots is not None else ROOTS)
+    finally:
+        ROOTS = saved
+
+
+def _main(selection_roots: dict[str, Path]) -> None:
     manifests, cvs = {}, {}
     for family, root in ROOTS.items():
         manifest = root / "manifest.csv"
@@ -281,7 +300,7 @@ def main() -> None:
             print(f"== {family}: no manifest yet")
             return
         m = pd.read_csv(manifest).set_index("landscape")
-        manifests[family], cvs[family] = m, cv_r2(root)
+        manifests[family], cvs[family] = m, cv_r2(selection_roots[family])
         r2 = cvs[family]
         print(f"== {family}: {len(m)} landscapes; models {m.oracle_model.value_counts().to_dict()}")
         print(f"   fidelity median {m.corr_oracle_truth.median():.3f} range [{m.corr_oracle_truth.min():.3f}, "

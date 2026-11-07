@@ -352,6 +352,25 @@ for _sp in ("sp0.05-5", "sp0.05-20", "sp0.15-5", "sp0.15-20"):
         "output-boba-spike-rrp", "output-boba-spike", "logei,qnei",
         f"a relevance-pursuit GP, {_prob} of trials spiking at {_size} SD",
         error_model="spike", variant=f"{_sp}_relevancepursuit", ref_variant=_sp)
+    # The clip a study can run (run_boba_cliprun.sh, 2026-11-05): each rating after the initial design is clipped
+    # to two robust SDs beyond the range of the ratings recorded so far, a margin fixed before any run. Unlike the
+    # known-range clip it acts on the clean twin too, so its directory has its own clean runs and its price is
+    # measured, not zero by construction. Each setting has its own directory: a clean twin's resume fingerprint
+    # holds the error settings, so two spike sizes cannot share one directory's clean twins.
+    ARMS[f"cliprun-{_sp}"] = arm(
+        f"output-boba-cliprun2-{_sp}", "output-boba-spike", "logei,qnei",
+        f"the response clipped to two robust SDs beyond the running range, {_prob} of trials spiking at {_size} SD",
+        error_model="spike", variant=f"{_sp}_clip-run2", ref_variant=_sp)
+ARMS["cliprun-sp0.15-20-heldout"] = arm(
+    "output-boba-cliprun2-sp0.15-20", "output-boba-spike", "logei,qnei",
+    "the running clip on the held-out seeds 12-16, 0.15 of trials spiking at 20 SD",
+    seeds="12,13,14,15,16", error_model="spike", variant="sp0.15-20_clip-run2", ref_variant="sp0.15-20")
+# What the running clip costs a study whose rater has no gross fault: gaussian error at 1 sigma from the first
+# rating, against the main sweep's standard process on seeds 7-16.
+ARMS["cliprun-gaussian"] = arm(
+    "output-boba-cliprun2-gaussian", "output-boba", "logei,qnei",
+    "the running clip under gaussian error at 1 sigma from the first rating (no gross fault)",
+    seeds=S10, error_model="gaussian", variant="clip-run2", ref_variant="")
 
 # Relay raters: the per-rater offset model against the same handover with none.
 # The backfit changes the clean run, so each assignment has its own directory
@@ -659,7 +678,7 @@ def main(argv=None) -> None:
         print("\nNone of the requested arms has results yet; nothing written.")
         return
     if recovery_path.is_file():
-        previous = pd.read_csv(recovery_path)
+        previous = pd.read_csv(recovery_path, float_precision="round_trip")
         kept = previous[~previous["arm"].isin(set(out["arm"]))]
         if len(kept):
             print(f"  keeping {kept['arm'].nunique()} arm(s) "
@@ -684,7 +703,7 @@ def main(argv=None) -> None:
         ["arm", "reference", "response", "scale", "dataset", "scale_value", "n_cells",
          "cost", "gain", "price", "recovered", "cost_share"]]
     if per_path.is_file():
-        previous = pd.read_csv(per_path)
+        previous = pd.read_csv(per_path, float_precision="round_trip")
         per_out = pd.concat([previous[~previous["arm"].isin(set(per_out["arm"]))], per_out], ignore_index=True)
     per_out.sort_values(["arm", "response", "dataset"], kind="stable").to_csv(per_path, index=False)
     # The extra-trials file is merged the same way, and a call that computed no
@@ -695,7 +714,7 @@ def main(argv=None) -> None:
     extra = pd.DataFrame(extra_rows)
     if len(extra):
         if extra_path.is_file() and extra_path.stat().st_size > 10:
-            previous = pd.read_csv(extra_path)
+            previous = pd.read_csv(extra_path, float_precision="round_trip")
             if "arm" in previous.columns:
                 extra = pd.concat([previous[~previous["arm"].isin(set(extra["arm"]))], extra],
                                   ignore_index=True)

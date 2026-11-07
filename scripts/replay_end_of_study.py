@@ -127,7 +127,8 @@ from botorch.models.transforms.input import Normalize  # noqa: E402
 from botorch.models.transforms.outcome import Standardize  # noqa: E402
 from gpytorch.mlls import ExactMarginalLogLikelihood  # noqa: E402
 
-RESPONSE_MODELS = ("gaussian", "bias", "drift", "ar1", "spike")
+# drift_down (2026-11-07): the drift ramp with its sign reversed (sim.ERROR_MODEL_CHOICES).
+RESPONSE_MODELS = ("gaussian", "bias", "drift", "ar1", "spike", "drift_down")
 # Only for idiosyncratic_sd called without the run's spike parameters: it then
 # assumes the scaled spike (size = the magnitude) at this probability. That is
 # wrong for the fixed-size spike arms (sp0.05-5 ... sp0.15-20), so the replays
@@ -138,7 +139,7 @@ SPIKE_VARIANT = re.compile(r"^sp(?P<p>\d*\.?\d+(?:e[+-]?\d+)?)-(?P<s>\d*\.?\d+(?
 SITTING_PROCESSES = ("shared", "sequential")
 SITTING_ORDERS = ("random", "rank")
 # Processes whose error moves from trial to trial through a sitting.
-SEQUENTIAL_MODELS = ("drift", "ar1")
+SEQUENTIAL_MODELS = ("drift", "ar1", "drift_down")
 ORDER_STREAM, SPIKE_STREAM = 101, 102
 INPUT_MODELS = ("slip", "misclick")
 DEFAULT_ARMS = "output-boba,output-boba-slip,output-boba-misclick"
@@ -291,6 +292,8 @@ def load_arm(root: Path, rerate: str = "auto") -> ArmInfo:
         problems.append("its GP was given the noise (observation_noise)")
     if (args.get("likelihood") or "gaussian") != "gaussian":
         problems.append("its surrogate is not the Gaussian GP (likelihood)")
+    if (args.get("gp_prior") or "default") != "default":
+        problems.append("its GP has other priors than BoTorch's default (gp_prior), which this replay does not refit")
     if (args.get("input_noise_model") or "none") != "none":
         problems.append("its surrogate is a noisy-input GP (input_noise_model)")
     if args.get("single_error"):
@@ -384,7 +387,7 @@ def idiosyncratic_sd(error_model: str, jitter_std: float, ar1_rho: float = 0.8,
     """
     if error_model == "none":
         return 0.0
-    if error_model in ("gaussian", "bias", "drift"):
+    if error_model in ("gaussian", "bias", "drift", "drift_down"):
         # Under the shared model the constant bias and the drift ramp are held
         # fixed across the sitting, so they cancel; the gaussian jitter does not.
         return float(jitter_std)
@@ -469,7 +472,8 @@ class SittingNoise:
         if trial <= self.onset:
             return 0.0
         span = max(1, int(self.iterations) - int(self.onset))
-        return float(self.jitter_std) * (int(trial) - int(self.onset)) / span
+        sign = -1.0 if self.error_model == "drift_down" else 1.0
+        return sign * float(self.jitter_std) * (int(trial) - int(self.onset)) / span
 
 
 def sitting_sd_fn(arm: ArmInfo, error_model: str, jitter_std: float, onset: int, settings: Settings,
@@ -535,7 +539,7 @@ def process_errors(noise: SittingNoise, trials: np.ndarray, z: np.ndarray, rho: 
         t = int(trials[r])
         if t <= noise.onset:
             e = 0.0
-        elif noise.moves and noise.error_model == "drift":
+        elif noise.moves and noise.error_model in ("drift", "drift_down"):
             e = noise.ramp(t) + rho * sigma * z[r]
         elif noise.moves and noise.error_model == "ar1":
             # The simulator: the first post-onset error is a stationary draw, every

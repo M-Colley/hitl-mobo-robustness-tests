@@ -1,0 +1,55 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=2.5, max=5
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+   dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_branin composite gaussian_process    gaussian                 0    0.227754        5               6           random  friedman   7.117647 0.212037        0.318055               NaN          True    0.284706
+iso_branin composite gaussian_process    gaussian                 0    0.911017        3               6           random  friedman  11.862745 0.036718        0.128424               NaN          True    0.790850
+iso_branin composite gaussian_process    gaussian                 0    0.911018        2               6           random  friedman   8.529412 0.129372        0.258744               NaN          True    0.852941
+iso_branin composite gaussian_process    gaussian                 0    4.555085        3               6           random  friedman  11.470588 0.042808        0.128424               NaN          True    0.764706
+iso_branin composite gaussian_process    gaussian                 0    4.555088        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+iso_branin composite gaussian_process    gaussian                 0    4.555089        1               6           random  friedman   5.000000 0.415880        0.415880               NaN          True    1.000000
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_branin / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.140000            2.966667                            0.000000                            7.588168               6           6
+      sobol              0.140000            2.250000                            0.000000                            5.620395               6           6
+       qnei              0.612222            2.994444                            0.085043                            7.989995               0           6
+        ucb              0.615556            3.988889                            0.114510                           10.157459               0           6
+         ei              0.710000            4.233333                            0.166904                           12.271100               0           6
+

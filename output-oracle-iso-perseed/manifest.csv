@@ -1,0 +1,21 @@
+landscape,dataset,oracle_model,cv_r2,sigma_f_fitted,sigma_f_true,corr_oracle_truth,calibration
+ackley,iso_ackley,extra_trees,,0.9617902810678,1.0,0.8400119112995624,per_seed: manifest_seeds.csv
+branin,iso_branin,gradient_boosting,,1.0335587136642896,1.0,0.935434188242573,per_seed: manifest_seeds.csv
+eggholder,iso_eggholder,extra_trees,,0.7819976702251801,1.0,0.452515686439015,per_seed: manifest_seeds.csv
+griewank,iso_griewank,gradient_boosting,,0.9746110074097826,1.0,0.8853690592558223,per_seed: manifest_seeds.csv
+hartmann_3,iso_hartmann_3,gradient_boosting,,0.923188707251316,1.0,0.8381345413889283,per_seed: manifest_seeds.csv
+hartmann_6,iso_hartmann_6,catboost,,1.1510034035406402,1.0,0.8197985477147857,per_seed: manifest_seeds.csv
+hicks_law,iso_hicks_law,gradient_boosting,,1.1055408063253471,1.0,0.9165655812987002,per_seed: manifest_seeds.csv
+levy_10,iso_levy_10,gradient_boosting,,0.9483205413482392,1.0,0.7272611304022533,per_seed: manifest_seeds.csv
+michalewicz,iso_michalewicz,gradient_boosting,,0.9123508091543964,1.0,0.7399130478215014,per_seed: manifest_seeds.csv
+moving_peaks,iso_moving_peaks,catboost,,0.9323101801992334,1.0,0.7910408158158935,per_seed: manifest_seeds.csv
+powell,iso_powell,gradient_boosting,,1.0081439137694088,1.0,0.8730125496333896,per_seed: manifest_seeds.csv
+power_law_practice,iso_power_law_practice,gradient_boosting,,1.1166499061274238,1.0,0.9058190335654462,per_seed: manifest_seeds.csv
+rastrigin,iso_rastrigin,gradient_boosting,,0.9069280905177658,1.0,0.6383554289651807,per_seed: manifest_seeds.csv
+rosenbrock,iso_rosenbrock,gradient_boosting,,1.1828329563671742,1.0,0.9065295634236972,per_seed: manifest_seeds.csv
+schwefel,iso_schwefel,gradient_boosting,,0.7946501015064604,1.0,0.7308034661959335,per_seed: manifest_seeds.csv
+shekel,iso_shekel,extra_trees,,1.2078904316242165,1.0,0.7584495311021529,per_seed: manifest_seeds.csv
+steering_law,iso_steering_law,gradient_boosting,,1.1317481361385948,1.0,0.8398150792581665,per_seed: manifest_seeds.csv
+stevens,iso_stevens,gradient_boosting,,1.0786140161429545,1.0,0.87363502781501,per_seed: manifest_seeds.csv
+weber_fechner,iso_weber_fechner,gradient_boosting,,1.1585558165260477,1.0,0.8696251224294701,per_seed: manifest_seeds.csv
+yerkes_dodson,iso_yerkes_dodson,gradient_boosting,,1.0659495279688915,1.0,0.902460554792354,per_seed: manifest_seeds.csv

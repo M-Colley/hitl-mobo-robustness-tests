@@ -1,0 +1,3 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+ackley,value,exact,gaussian,0,1.0,clip-run2,qnei,10,2,1.4,0.3999999999999999,1.5,104.23429542881263,63.62728213979506,2.12723051895536,678.8289800530728,-3.4873013248455904,True
+ackley,value,exact,gaussian,0,1.0,clip-run2,logei,10,2,1.6,0.6000000000000001,1.5,176.50637198501272,162.96446229859194,3.6021708568369943,719.1909488496624,-12.92351431061012,False

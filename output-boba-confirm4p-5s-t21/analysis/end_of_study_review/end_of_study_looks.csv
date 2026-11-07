@@ -1,0 +1,2 @@
+arm,k,n_runs,n_clean_twins,share_short_noisy,mean_looks_noisy,min_looks_noisy,mean_unused_noisy,share_short_clean,mean_looks_clean,min_looks_clean,mean_unused_clean
+output-boba-confirm4p-5s-t21,16,1200,400,0.015833333333333335,15.960833333333333,10,0.03916666666666667,0.0075,15.9775,10,0.0225

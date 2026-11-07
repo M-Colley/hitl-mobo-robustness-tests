@@ -336,3 +336,20 @@ output-oracle-iso/*_tmp.csv
 
 # Library version-sensitivity reruns (scripts/checks/version_sensitivity.py); the comparison is in output-boba/analysis/review.
 output-version-check/
+
+# Arms of the rounds of 2026-11-05 and 2026-11-07 whose run logs stay on the simulation machine
+# (about 20,000 files, 0.6 GB). Their summaries, evaluation/ and analysis/ files are tracked.
+output-boba-cliprun2-*/*/bo_sensor_error_*.csv
+output-boba-confirm4p-*/*/bo_sensor_error_*.csv
+output-boba-driftdown-*/*/bo_sensor_error_*.csv
+output-boba-gplegacy-*/*/bo_sensor_error_*.csv
+output-boba-cliprun2-*/*_COMPLETE
+output-boba-confirm4p-*/*_COMPLETE
+output-boba-driftdown-*/*_COMPLETE
+output-boba-gplegacy-*/*_COMPLETE
+output-boba-confirm4p-*/analysis/*.jsonl
+output-boba-driftdown-*/analysis/*.jsonl
+output-boba-gplegacy-*/analysis/*.jsonl
+output-oracle-iso*-perseed/runs/*/bo_sensor_error_iso_*_seed*.csv
+output-oracle-iso*-perseed/runs/*/.done*
+output-oracle-iso*-perseed/logs/

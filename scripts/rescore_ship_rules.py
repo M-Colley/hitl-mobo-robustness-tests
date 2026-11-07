@@ -208,7 +208,9 @@ def arm_settings(input_dir: Path, rule_override: str = "auto") -> dict:
         raise ValueError(f"unknown inference rule {rule!r}")
     return {"inference_rule": rule, "source": "run_metadata.json" if meta_path.is_file() else
             "default (no run_metadata.json)" if rule_override == "auto" else "--inference-rule",
-            "observation_noise": args.get("observation_noise", "learned") or "learned"}
+            "observation_noise": args.get("observation_noise", "learned") or "learned",
+            # The loop's kernel and priors (sim.GP_PRIOR_CHOICES): the refit must be the loop's surrogate.
+            "gp_prior": fields["gp_prior"]}
 
 
 # ---------------------------------------------------------------------------
@@ -222,11 +224,12 @@ def file_seed(file: str) -> int:
 
 
 def fit_loop_gp(X: np.ndarray, y: np.ndarray, bounds_low: np.ndarray, bounds_high: np.ndarray,
-                yvar: np.ndarray | None = None, seed: int = 0):
+                yvar: np.ndarray | None = None, seed: int = 0, gp_prior: str = "default"):
     """Refit the loop's surrogate; returns (model, fit diagnostics).
 
     Built exactly as run_simulation builds it for a single objective, so no
-    kernel, prior or transform is chosen here.
+    kernel, prior or transform is chosen here; ``gp_prior`` is the loop's own
+    (sim.gp_prior_modules), "default" for every published arm.
     """
     import torch
     from botorch.fit import fit_gpytorch_mll
@@ -245,6 +248,7 @@ def fit_loop_gp(X: np.ndarray, y: np.ndarray, bounds_low: np.ndarray, bounds_hig
         train_X, train_Y, train_Yvar=train_Yvar,
         input_transform=Normalize(d=train_X.shape[-1], bounds=bounds_tensor),
         outcome_transform=Standardize(m=1),
+        **sim.gp_prior_modules(gp_prior, train_X.shape[-1], fixed_noise=train_Yvar is not None),
     )
     mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
     error = ""
@@ -334,7 +338,8 @@ def rescore_frame(df: pd.DataFrame, info: dict, expected_rule: str, seed: int) -
     yvar = df["known_noise_var"].to_numpy(dtype=float)[rows] if known else None
 
     t0 = time.perf_counter()
-    gp, diag = fit_loop_gp(X, observed, spec.bounds_low, spec.bounds_high, yvar=yvar, seed=seed)
+    gp, diag = fit_loop_gp(X, observed, spec.bounds_low, spec.bounds_high, yvar=yvar, seed=seed,
+                           gp_prior=str(info.get("gp_prior", "default")))
     mu, sd = latent_posterior(gp, X)
     fit_sec = time.perf_counter() - t0
     idx = select_indices(X, observed, score, mu, sd)
@@ -487,6 +492,7 @@ def main(argv=None) -> pd.DataFrame:
         todo = todo[: args.max_files]
     for t in todo:
         t["expected_rule"] = settings["inference_rule"]
+        t["gp_prior"] = settings["gp_prior"]
     workers = max(1, min(args.workers, os.cpu_count() or 1, len(todo) or 1))
     print(f"{input_dir}: {len(tasks):,} runs match, {len(done & {t['file'] for t in tasks}):,} already done, "
           f"{len(todo):,} to re-score with {workers} worker(s); ship rule to reproduce: "

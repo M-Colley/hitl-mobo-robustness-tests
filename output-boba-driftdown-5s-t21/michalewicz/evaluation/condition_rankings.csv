@@ -1,0 +1,3 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,acquisition,n_seeds,n_acquisitions,mean_rank,mean_rank_normalized,mean_rank_absolute,mean_auc_simple_regret_excess_true,median_auc_simple_regret_excess_true,mean_auc_excess_postonset_per_iter,mean_auc_simple_regret_true_jitter,mean_response_l2_excess,condition_win
+michalewicz,value,exact,drift_down,20,5.0,,qnei,10,2,1.35,0.3500000000000001,1.5,11.043396972001323,2.3116402722580744,0.3808067921379764,252.224436223744,0.16718538389621726,True
+michalewicz,value,exact,drift_down,20,5.0,,logei,10,2,1.65,0.6499999999999999,1.5,13.692769644713985,22.22163148349854,0.4721644705073794,248.83560397923299,-0.06510001342341867,False

@@ -1,0 +1,26 @@
+Mean rank of the ten acquisitions on the deployed design's cost of error, by ship rule (rank within each
+condition and landscape, then the mean; seeds 7-16, four processes, every magnitude and onset; lower is
+more robust); the best-observed column reproduces tab:acq's deployed ranks.
+             best observed rating  posterior-mean maximiser  LCB2  trajectory
+acquisition                                                                  
+qucb                         5.12                      4.56  4.56        3.95
+logei                        4.85                      4.68  4.83        4.61
+qei                          5.27                      5.07  4.94        4.73
+ei                           5.21                      5.25  5.11        4.98
+ucb                          4.99                      5.22  5.21        4.41
+qnei                         5.94                      5.33  5.48        4.34
+greedy                       5.20                      5.68  5.61        6.56
+qpi                          5.52                      5.81  5.89        6.29
+logpi                        6.20                      6.41  6.54        7.48
+pi                           6.69                      6.98  6.84        7.66
+
+Spearman(best observed rating, posterior-mean maximiser) = +0.81
+Spearman(best observed rating, LCB2) = +0.77
+Spearman(best observed rating, trajectory) = +0.59
+Spearman(posterior-mean maximiser, LCB2) = +0.99
+Spearman(posterior-mean maximiser, trajectory) = +0.83
+Spearman(LCB2, trajectory) = +0.79
+
+best observed rating: mean cost of error over acquisitions 0.218 of opt_z (range 0.195 to 0.239)
+posterior-mean maximiser: mean cost of error over acquisitions 0.213 of opt_z (range 0.193 to 0.244)
+LCB2: mean cost of error over acquisitions 0.198 of opt_z (range 0.179 to 0.226)

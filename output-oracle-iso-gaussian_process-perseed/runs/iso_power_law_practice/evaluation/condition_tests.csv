@@ -1,0 +1,9 @@
+dataset,objective,oracle_model,error_model,jitter_iteration,jitter_std,variant,n_seeds,n_acquisitions,best_acquisition,best_mean_rank,test_name,statistic,p_value,kendalls_w,min_attainable_p,underpowered,p_value_fdr_bh,p_value_rejected
+iso_power_law_practice,composite,gaussian_process,gaussian,0,0.300558,,5,6,random,2.0,friedman,20.688622754491007,0.0009274378723273169,0.8275449101796403,,True,0.007419502978618535,True
+iso_power_law_practice,composite,gaussian_process,gaussian,0,1.202231,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,1.202232,,1,6,ucb,1.0,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,1.202233,,3,6,random,1.5,friedman,12.647058823529404,0.026920523280090224,0.8431372549019602,,True,0.1076820931203609,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,6.011153,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,6.011158,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,6.011166,,1,6,random,1.5,friedman,4.999999999999997,0.4158801869955082,0.9999999999999994,,True,0.4158801869955082,False
+iso_power_law_practice,composite,gaussian_process,gaussian,0,6.011167,,2,6,random,1.5,friedman,8.823529411764705,0.11631340569276405,0.8823529411764705,,True,0.3101690818473708,False

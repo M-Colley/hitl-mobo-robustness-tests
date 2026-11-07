@@ -1,0 +1,35 @@
+{
+  "family": "gaussian_process",
+  "checked_at": "2026-11-05T20:29:12",
+  "simulator_sha256": "9ab680f230e6a694b0075431e085ad0a736b4c659a7c27ae9090ce7f9d79a21b",
+  "simulator_sha256_after": "9ab680f230e6a694b0075431e085ad0a736b4c659a7c27ae9090ce7f9d79a21b",
+  "python": "~\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "work_dir": "~\\AppData\\Local\\Temp\\claude\\accecced7da7ba97\\dff25bfb-8e8c-430b-a449-db7a8c1fc4b5\\scratchpad\\identity",
+  "identical": true,
+  "checks": [
+    {
+      "landscape": "branin",
+      "seed": 9,
+      "acquisition": "logei",
+      "oracle_model": "gaussian_process",
+      "logged": "output-oracle-iso-gaussian_process/runs/iso_branin/bo_sensor_error_iso_branin_composite_logei_seed9_baseline_gaussian_process.csv",
+      "rerun": "~\\AppData\\Local\\Temp\\claude\\accecced7da7ba97\\dff25bfb-8e8c-430b-a449-db7a8c1fc4b5\\scratchpad\\identity\\gaussian_process\\iso_branin_seed9_logei\\bo_sensor_error_iso_branin_composite_logei_seed9_baseline_gaussian_process.csv",
+      "seconds": 123.5,
+      "excluded_columns": [
+        "run_id",
+        "fit_time_sec"
+      ],
+      "n_rows_logged": 50,
+      "n_rows_new": 50,
+      "columns_only_logged": "",
+      "columns_only_new": "initial_samples;run_config_fingerprint",
+      "first_diff_column": "",
+      "first_diff_trial": "",
+      "max_abs_diff": 0.0,
+      "n_diff_columns": 0,
+      "n_diff_rows": 0,
+      "n_columns_compared": 27,
+      "status": "exact"
+    }
+  ]
+}

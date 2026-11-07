@@ -1,0 +1,24 @@
+Selection share against opt_z, 1 sigma from the first rating (four processes, ten acquisitions, seeds 7-16),
+per landscape, ordered by opt_z:
+  powell               opt_z    0.76  deployed 0.246  selection share 0.846
+  rosenbrock           opt_z    1.03  deployed 0.183  selection share 0.792
+  branin               opt_z    1.25  deployed 0.233  selection share 0.720
+  steering_law         opt_z    1.29  deployed 0.287  selection share 0.595
+  power_law_practice   opt_z    1.72  deployed 0.410  selection share 0.474
+  weber_fechner        opt_z    2.15  deployed 0.341  selection share 0.417
+  levy_10              opt_z    2.62  deployed 0.308  selection share 0.515
+  griewank             opt_z    2.75  deployed 0.387  selection share 0.386
+  moving_peaks         opt_z    2.96  deployed 0.360  selection share 0.498
+  hartmann_3           opt_z    3.05  deployed 0.306  selection share 0.364
+  stevens              opt_z    3.06  deployed 0.293  selection share 0.338
+  eggholder            opt_z    3.21  deployed 0.212  selection share 0.591
+  yerkes_dodson        opt_z    3.54  deployed 0.370  selection share 0.373
+  rastrigin            opt_z    3.64  deployed 0.304  selection share 0.530
+  schwefel             opt_z    4.33  deployed 0.258  selection share 0.436
+  hicks_law            opt_z    5.40  deployed 0.258  selection share 0.171
+  hartmann_6           opt_z    7.97  deployed 0.466  selection share 0.144
+  michalewicz          opt_z    8.05  deployed 0.246  selection share 0.306
+  ackley               opt_z   20.10  deployed 0.285  selection share 0.098
+  shekel               opt_z   56.77  deployed 0.187  selection share 0.040
+Spearman(opt_z, selection share) = -0.82 (p = 8e-06, n = 20)
+Spearman(opt_z, deployed excess / opt_z) = -0.01 (p = 0.96)

@@ -1,0 +1,60 @@
+ROBUSTNESS EVALUATION REPORT
+================================================================================
+
+Recommended primary evaluation
+- Report BOTH excess regret (robustness) and absolute noisy-run regret
+  (deployment quality): excess regret alone can crown acquisitions that
+  are uniformly bad in baseline and noisy conditions alike.
+- Lower excess AUC simple regret is better (within one condition).
+- For ANY comparison across jitter onsets use the post-onset,
+  per-noisy-iteration excess AUC; whole-run AUC scales with the window.
+- Inference regret (the *_inference_* metrics) scores the design the
+  experimenter would actually pick from noisy observations; it is the
+  deployment-relevant recommendation quality.
+- Response-step excess L2 is descriptive only.
+
+Data coverage
+- Response rows: 120
+- Paired baseline/jitter rows: 90
+- Seeds per condition: min=1, median=1.0, max=4
+- Acquisition-optimization fallbacks in jittered runs: 0
+
+Statistical notes
+- WARNING: only 1 seeds in the smallest condition. Two-method
+  Wilcoxon cells cannot reach p<0.05 below n=6 (min attainable p at n=5
+  is 0.0625); treat per-condition p-values as descriptive and rely on
+  effect sizes, CIs and replication across conditions instead.
+- FDR (Benjamini-Hochberg): ONE family covers every condition-level omnibus
+  test in the table below (Friedman for k>2 acquisitions, Wilcoxon signed-rank
+  for k=2). The noisy-vs-clean effect-size p-values (t and Wilcoxon, in
+  effect_sizes_cohens_dz.csv) are corrected per column, each as one family.
+- Kendall's W accompanies every Friedman test as the effect size.
+- Dataset comparisons should stay stratified by dataset rather than pooling
+  unless outcomes are explicitly normalized across datasets.
+
+Condition-level omnibus tests
+         dataset objective     oracle_model error_model  jitter_iteration  jitter_std  n_seeds  n_acquisitions best_acquisition test_name  statistic  p_value  p_value_fdr_bh  min_attainable_p  underpowered  kendalls_w
+iso_moving_peaks composite gaussian_process    gaussian                 0    0.254375        1               6            logei  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    0.254376        4               6           random  friedman   8.823529 0.116313         0.41588               NaN          True    0.441176
+iso_moving_peaks composite gaussian_process    gaussian                 0    1.017501        1               6              ucb  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    1.017503        2               6           random  friedman   5.294118 0.381050         0.41588               NaN          True    0.529412
+iso_moving_peaks composite gaussian_process    gaussian                 0    1.017504        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    1.017505        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    5.087506        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    5.087513        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    5.087516        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    5.087519        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+iso_moving_peaks composite gaussian_process    gaussian                 0    5.087527        1               6           random  friedman   5.000000 0.415880         0.41588               NaN          True    1.000000
+
+Overall acquisition ranking by dataset/objective
+(normalized ranks and per-noisy-iteration excess AUC; pooled across
+error conditions -- treat as a secondary, descriptive aggregate)
+
+iso_moving_peaks / composite
+acquisition  mean_rank_normalized  mean_rank_absolute  mean_auc_excess_postonset_per_iter  mean_auc_simple_regret_true_jitter  condition_wins  conditions
+     random              0.177273            3.704545                            0.000000                           37.795393               9          11
+      sobol              0.177273            3.227273                            0.000000                           32.008199               9          11
+        ucb              0.486364            2.704545                            0.150110                           30.118235               1          11
+      logei              0.690909            3.704545                            0.462932                           39.301084               1          11
+         ei              0.727273            3.659091                            0.442720                           38.402222               0          11
+

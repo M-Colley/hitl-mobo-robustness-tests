@@ -1,0 +1,26 @@
+{
+  "artifact_version": "1.0.0",
+  "input_archives": 100,
+  "archived_trials": 5000,
+  "guarded_new_operations_attempted": {
+    "objective_evaluations": 0,
+    "gp_fits": 0
+  },
+  "exact_reference_matches": {
+    "comparison_summary.csv": true,
+    "comparison_per_problem.csv": true,
+    "per_archive_metrics.csv": true,
+    "preference_groups.csv": true,
+    "report.txt": true,
+    "per_preference_decisions_uncompressed": true
+  },
+  "scored_rows": 98100,
+  "status": "passed",
+  "method": "Fresh ZIP extraction into a new work directory; exact historical replay with bundled sources and raw input logs.",
+  "command": "python run_replay.py --output-dir ../replayed-results",
+  "tested_python": "3.15.0",
+  "tested_platform": "Windows x86-64 CPU",
+  "original_measurement_records_modified": false,
+  "full_run_archive_sha256": "e8f1a4739cb2f542fdd1263e6dcea767511d78afc2981e7d9d4b61a571a508d1",
+  "final_package_change": "Added validation.json and .gitattributes after full replay; replay inputs, executable sources, environment pins and reference outputs remain byte-identical."
+}

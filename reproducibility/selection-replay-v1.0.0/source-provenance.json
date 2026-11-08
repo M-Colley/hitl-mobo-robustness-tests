@@ -1,0 +1,84 @@
+{
+  "artifact_version": "1.0.0",
+  "hitl_repository": "https://github.com/M-Colley/hitl-mobo-robustness-tests",
+  "hitl_base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+  "openbo_base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+  "original_measurement_manifest_sha256": "d7f702059dd9de445e5a15ca30471eec0e61084eea2cfc8b828791d53978dfcb",
+  "source_records": [
+    {
+      "path": "source/hitl/scripts/analyse_boba_adaptations.py",
+      "base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+      "tracked_base_bytes": false,
+      "base_blob_sha256": "023559e94a010d5b292d27492f22eb8d7af2c319a5b63d94223fadfbc608a934",
+      "bundled_sha256": "3e5a3038f6b1e331592994ae770d090aaa99cb6cd5d29b3651fdb9d9062bd2dc",
+      "base_equivalence": "Exact after CRLF-to-LF translation only; bundled bytes preserve measurement-time Windows working-tree line endings."
+    },
+    {
+      "path": "source/hitl/scripts/replay_mo_front.py",
+      "base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+      "tracked_base_bytes": false,
+      "base_blob_sha256": "3160ca845de4afa954ef2d8075607f5d1556de08fa189889b8af1d99f8d79853",
+      "bundled_sha256": "6c5daf34541cbb7c900ae4e9b8b8dc4b13837719b6617a0627aa2b67625e5b73",
+      "base_equivalence": "Exact after CRLF-to-LF translation only; bundled bytes preserve measurement-time Windows working-tree line endings."
+    },
+    {
+      "path": "source/hitl/scripts/boba_benchmarks.py",
+      "base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+      "tracked_base_bytes": false,
+      "base_blob_sha256": "8855c36ceb3d2d2a10e50affed0ac617cd39c48a5565ced88451adf770978f5f",
+      "bundled_sha256": "6037ab87afd719ae1036acadb06a7d41e64cd6696643c070ec2c8f91b987a337",
+      "base_equivalence": "Exact after CRLF-to-LF translation only; bundled bytes preserve measurement-time Windows working-tree line endings."
+    },
+    {
+      "path": "source/hitl/scripts/boba_multiobjective.py",
+      "base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+      "tracked_base_bytes": false,
+      "base_blob_sha256": "ed33c21ec085700c6133e7399148673a48dd1dd6c5a6e356df21e4609af9a9ef",
+      "bundled_sha256": "e312c9683872507e6dbbb974b3d7a59ae3b1b6430240940c515245f93a89df6d",
+      "base_equivalence": "Exact after CRLF-to-LF translation only; bundled bytes preserve measurement-time Windows working-tree line endings."
+    },
+    {
+      "path": "source/hitl/scripts/replay_schmitt_decisions.py",
+      "base_commit": "e16f588b87f74f8c33ac4676e1df9b35488b82cd",
+      "tracked_base_bytes": false,
+      "note": "Needed uncommitted measurement source, included exactly."
+    },
+    {
+      "path": "source/openbo/src/openbo/decision_making/__init__.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": false,
+      "note": "Historical uncommitted selector/FPBI bytes from the measurement manifest."
+    },
+    {
+      "path": "source/openbo/src/openbo/decision_making/_fpbi.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": false,
+      "note": "Historical uncommitted selector/FPBI bytes from the measurement manifest."
+    },
+    {
+      "path": "source/openbo/src/openbo/decision_making/_selection.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": false,
+      "note": "Historical uncommitted selector/FPBI bytes from the measurement manifest."
+    },
+    {
+      "path": "source/openbo/src/openbo/__init__.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": true,
+      "note": "Import dependency only; benchmark functions are never evaluated."
+    },
+    {
+      "path": "source/openbo/src/openbo/test_functions/__init__.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": true,
+      "note": "Import dependency only; benchmark functions are never evaluated."
+    },
+    {
+      "path": "source/openbo/src/openbo/test_functions/synthetic.py",
+      "base_commit": "2057d1a9cb4299b2bc8393b163a2081f91abc1c9",
+      "tracked_base_bytes": true,
+      "note": "Import dependency only; benchmark functions are never evaluated."
+    }
+  ],
+  "policy": "Whitelisted files only. No unrelated dirty worktree files included. New replay and historical selector bytes are bundled, not assumed to exist at the base commits."
+}

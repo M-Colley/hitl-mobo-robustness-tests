@@ -1,0 +1,14 @@
+{
+  "synthetic_only": true,
+  "archives": 100,
+  "trials": 5000,
+  "datasets": {
+    "branincurrin": 25,
+    "dtlz2": 25,
+    "vehiclesafety": 25,
+    "zdt1": 25
+  },
+  "unexpected_fields": [],
+  "original_hash_mismatches": [],
+  "review": "Allowlisted analytic dataset names, exact oracle, design/outcome columns, categorical metadata and simulator UUIDs only; no participant/rater/name/contact/free-text columns."
+}
